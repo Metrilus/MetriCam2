@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="error_cameraNotConnected" xml:space="preserve">
+    <value>The camera is not connected.</value>
+  </data>
+  <data name="error_cannotReleaseInterface" xml:space="preserve">
+    <value>Interface cannot be released.</value>
+  </data>
+  <data name="error_changeParameterConnected" xml:space="preserve">
+    <value>The parameter '{0}' cannot be changed while the camera is connected.</value>
+  </data>
+  <data name="error_connectionFailed" xml:space="preserve">
+    <value>Connecting to camera failed.</value>
+  </data>
+  <data name="error_connectionToManualIpFailed" xml:space="preserve">
+    <value>Could not connect to camera with IP address {0}.</value>
+  </data>
+  <data name="error_coordinateTransformationFailed" xml:space="preserve">
+    <value>Coordinate transformation failed.</value>
+  </data>
+  <data name="error_disconnectionFailed" xml:space="preserve">
+    <value>Disconnecting from camera failed.</value>
+  </data>
+  <data name="error_get3DCoordinates" xml:space="preserve">
+    <value>Could not get 3D coordinates.</value>
+  </data>
+  <data name="error_getAmplitudeImage" xml:space="preserve">
+    <value>Amplitude image not supported.</value>
+  </data>
+  <data name="error_getConfidenceMap" xml:space="preserve">
+    <value>No confidence map available.</value>
+  </data>
+  <data name="error_getData" xml:space="preserve">
+    <value>Could not retrieve data.</value>
+  </data>
+  <data name="error_getDataDescription" xml:space="preserve">
+    <value>Could not retrieve data description.</value>
+  </data>
+  <data name="error_getDistances" xml:space="preserve">
+    <value>Could not retrieve distance data.</value>
+  </data>
+  <data name="error_getFlags" xml:space="preserve">
+    <value>Could not retrieve flags.</value>
+  </data>
+  <data name="error_getIntegrationTime" xml:space="preserve">
+    <value>Could not get integration time.</value>
+  </data>
+  <data name="error_getIntensities" xml:space="preserve">
+    <value>Could not retrieve intensity data.</value>
+  </data>
+  <data name="error_getModulationFrequency" xml:space="preserve">
+    <value>Could not get modulation frequency.</value>
+  </data>
+  <data name="error_getSerial" xml:space="preserve">
+    <value>The camera has to be connected to determine the serial number.</value>
+  </data>
+  <data name="error_getSerialNumber" xml:space="preserve">
+    <value>Could not get serial number.</value>
+  </data>
+  <data name="error_getSetExposureMode" xml:space="preserve">
+    <value>Camera type does not support exposure mode settings.</value>
+  </data>
+  <data name="error_getSetIntegrationTime" xml:space="preserve">
+    <value>Integration time settings not supported for this camera type.</value>
+  </data>
+  <data name="error_getSetModulationFrequency" xml:space="preserve">
+    <value>Modulation frequency settings not supported for this camera type.</value>
+  </data>
+  <data name="error_getSetTriggerMode" xml:space="preserve">
+    <value>Camera type does not support trigger mode settings.</value>
+  </data>
+  <data name="error_inactiveChannelName" xml:space="preserve">
+    <value>The channel with the name '{0}' is not active.</value>
+  </data>
+  <data name="error_initSDK" xml:space="preserve">
+    <value>Camera SDK initialization failed.</value>
+  </data>
+  <data name="error_invalidChannelName" xml:space="preserve">
+    <value>No channel by the name '{0}' supported.</value>
+  </data>
+  <data name="error_invalidChannelNumber" xml:space="preserve">
+    <value>The channel '{0}' is not active, or unsupported by the camera.</value>
+  </data>
+  <data name="error_invalidModulationFrequency" xml:space="preserve">
+    <value>No valid modulation frequency adjusted.</value>
+  </data>
+  <data name="error_invalidParameterValue" xml:space="preserve">
+    <value>Invalid value for parameter '{0}'.</value>
+  </data>
+  <data name="error_mesaSDKCorrdinateTransformFailed" xml:space="preserve">
+    <value>Mesa SDK: Coordinate transform float failed.</value>
+  </data>
+  <data name="error_outOfMemoryBitmapBuffer" xml:space="preserve">
+    <value>Could not allocate memory for bitmap buffer.</value>
+  </data>
+  <data name="error_outOfWebcams" xml:space="preserve">
+    <value>All available webcams are currently in use or newly connected webcams have not been recognized.</value>
+  </data>
+  <data name="error_parameterValueInvalid" xml:space="preserve">
+    <value>Parameter value is invalid.</value>
+  </data>
+  <data name="error_parseString" xml:space="preserve">
+    <value>The input string has a wrong format.</value>
+  </data>
+  <data name="error_propertyNotSupported" xml:space="preserve">
+    <value>The property '{0}' is not supported by the camera.</value>
+  </data>
+  <data name="error_registry" xml:space="preserve">
+    <value>Registry key not found! Please reinstall.</value>
+  </data>
+  <data name="error_registryPathInvalid" xml:space="preserve">
+    <value>Either the registry key was not found, or the path set in the registry is not valid! Please ensure, that your ppp and pap files of your PMD camera and the pmdaccess2.dll file are present in the execution directory of this application or in the MetriCam SDK folder.</value>
+  </data>
+  <data name="error_setExposureMode" xml:space="preserve">
+    <value>Could not set exposure mode.</value>
+  </data>
+  <data name="error_setIntegrationTime" xml:space="preserve">
+    <value>Could not set integration time.</value>
+  </data>
+  <data name="error_setIP" xml:space="preserve">
+    <value>IP may not be set for a connected camera.</value>
+  </data>
+  <data name="error_setModulationFrequency" xml:space="preserve">
+    <value>Could not set modulation frequency.</value>
+  </data>
+  <data name="error_setResolution" xml:space="preserve">
+    <value>Could not set resolution.</value>
+  </data>
+  <data name="error_setROI" xml:space="preserve">
+    <value>Could not set ROI.</value>
+  </data>
+  <data name="error_setSerial" xml:space="preserve">
+    <value>Serial number may not be set for a connected camera.</value>
+  </data>
+  <data name="error_strideMatch" xml:space="preserve">
+    <value>Stride does not match.</value>
+  </data>
+  <data name="error_unsupportedSensorType" xml:space="preserve">
+    <value>The sensor type '{0}' is not supported by the camera.</value>
+  </data>
+  <data name="error_updateFailed" xml:space="preserve">
+    <value>Update failed.</value>
+  </data>
+  <data name="error_wrongDevice" xml:space="preserve">
+    <value>Wrong device.</value>
+  </data>
+  <data name="unknown" xml:space="preserve">
+    <value>Unknow error ocurred.</value>
+  </data>
+  <data name="error_invalidChannelCombination" xml:space="preserve">
+    <value>Invalid Channels combination: {0}.</value>
+  </data>
+  <data name="error_getParameterValues" xml:space="preserve">
+    <value>Could not determine valid parameter values for "{0}".</value>
+  </data>
+  <data name="error_getParameter" xml:space="preserve">
+    <value>Could not get current value of paramter "{0}".</value>
+  </data>
+  <data name="error_setParameter" xml:space="preserve">
+    <value>Could not set parameter "{0}" to value "{1}".</value>
+  </data>
+</root>

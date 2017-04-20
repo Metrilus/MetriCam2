@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MetriCam2.Samples.SimpleViewer.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="CameraDLLPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MetriCam2.Cameras.Kinect2.dll</Value>
+    </Setting>
+    <Setting Name="CameraName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MetriCam2.Cameras.Kinect2</Value>
+    </Setting>
+    <Setting Name="ChannelName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Amplitude</Value>
+    </Setting>
+    <Setting Name="PreConnectParameters" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+  </Settings>
+</SettingsFile>

@@ -1,3 +1,6 @@
+MetriCam 2 uses code from the log4net project which is licensed under the Apache 2.0 license.
+You can find a copy of the license online: http://www.apache.org/licenses/LICENSE-2.0
+
 MIT License
 
 Copyright (c) 2017 Metrilus GmbH
