@@ -9,7 +9,7 @@ pipeline {
 		def gitBranch = 'master'
 		def filesContainingAssemblyVersion = 'SolutionAssemblyInfo.cs'
 						
-		def solution = '"MetriCam2 SDK.sln"'
+		def solution = 'MetriCam2_SDK.sln'
 		def msbuildToolName = 'MSBuild Release/x64 [v4.0.30319]'
 		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
 		// For per-project encryption config see map at the beginning of this file.
