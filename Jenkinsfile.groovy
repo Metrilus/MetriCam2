@@ -13,7 +13,7 @@ pipeline {
 		def msbuildToolName = 'MSBuild Release/x64 [v4.0.30319]'
 		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
 		// For per-project encryption config see map at the beginning of this file.
-		def dllsToDeploy = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.CameraTemplate MetriCam2.Cameras.ifm MetriCam2.Cameras.SVS MetriCam2.Cameras.TheImagingSource MetriCam2.Cameras.UEye MetriCam2.Cameras.V3S MetriCam2.Cameras.WebCam MetriCam2 Metrilus.Util Newtonsoft.Json TIS.Imaging.ICImagingControl33'
+		def dllsToDeploy = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.CameraTemplate MetriCam2.Cameras.ifm MetriCam2.Cameras.SVS MetriCam2.Cameras.TheImagingSource MetriCam2.Cameras.UEye MetriCam2.Cameras.V3S MetriCam2.Cameras.WebCam MetriCam2 Metrilus.Util Newtonsoft.Json'
 		// End of Config
 		def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
 	}
@@ -48,8 +48,6 @@ pipeline {
 			steps {
 				echo 'Restore NuGet packages'
 				bat '%NUGET_EXE% restore'
-				echo 'Run reference checker'
-				bat '%REFERENCE_CHECKER% -j "%JOB_NAME%" "%WORKSPACE%"'
 				echo 'Build'
 				bat "${tool msbuildToolName} ${solution} ${msbuildArgs}"
 			}
