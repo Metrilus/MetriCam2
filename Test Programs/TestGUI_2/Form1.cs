@@ -113,7 +113,7 @@ namespace TestGUI_2
 
         private void TestV3S()
         {
-            VistorT cam = new VistorT();
+            VisionaryT cam = new VisionaryT();
             cam.IPAddress = "192.168.1.137"; // DHCP
             cam.Connect();
 

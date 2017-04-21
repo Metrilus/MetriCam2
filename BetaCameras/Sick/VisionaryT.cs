@@ -7,7 +7,7 @@ namespace MetriCam2.Cameras
     /// <summary>
     /// MetriCam2 Wrapper for V3S100 Cameras.
     /// </summary>
-    public class VistorT : Camera
+    public class VisionaryT : Camera
     {
         #region Private Variables
         // ipAddress to connect to
@@ -93,7 +93,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Creates a new instance of V3S 100 camera.
         /// </summary>
-        public VistorT()
+        public VisionaryT()
             : base()
         {
             ipAddress   = "";

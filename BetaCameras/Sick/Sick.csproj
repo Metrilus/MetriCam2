@@ -80,7 +80,7 @@
     <Compile Include="FrameData.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="Utils.cs" />
-    <Compile Include="VistorT.cs" />
+    <Compile Include="VisionaryT.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
