@@ -35,6 +35,33 @@ namespace MetriCam2.Cameras
 
         #region Public Properties
         /// <summary>
+        /// Frequency channel
+        /// </summary>
+        public int FrequencyChannel
+        {
+            get
+            {
+                return GetFrequencyChannel();
+            }
+            set
+            {
+                SetFrequencyChannel(value);
+            }
+        }
+
+        private RangeParamDesc<int> FrequencyChannelDesc
+        {
+            get
+            {
+                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 3);
+                res.Description = "Frequency Channel"; ;
+                res.Unit = "";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+        /// <summary>
         /// The camera framerate.
         /// </summary>
         public int Framerate
@@ -133,10 +160,12 @@ namespace MetriCam2.Cameras
             }
         }
         #endregion
+
         #region Private Fields
         private Socket clientSocket;
         private bool configurationMode = false;
         private int triggeredMode = 1;
+        private int frequencyChannel = 0;
         private int framerate = 25;
         private int exposureTime = 1234;
         private int applicationId;
@@ -165,8 +194,7 @@ namespace MetriCam2.Cameras
 
         private string serverUrl;
         #endregion
-
-
+        
         #region Constructor
         public O3D3xx()
                 : base()
@@ -240,6 +268,7 @@ namespace MetriCam2.Cameras
             app.SetParameter("TriggerMode", triggeredMode.ToString());
             appImager.SetParameter("ExposureTime", exposureTime.ToString());
             appImager.SetParameter("FrameRate", framerate.ToString());
+            
 
             int clippingTop = Convert.ToInt32(appImager.GetParameter("ClippingTop"));
             int clippingBottom = Convert.ToInt32(appImager.GetParameter("ClippingBottom"));
@@ -725,6 +754,36 @@ namespace MetriCam2.Cameras
             SetConfigurationMode(true);
             edit.DeleteApplication(applicationId);
             device.Save();
+            SetConfigurationMode(false);
+        }
+
+        private int GetFrequencyChannel()
+        {
+            if (!IsConnected)
+            {
+                return -1;
+            }
+            SetConfigurationMode(true);
+            edit.EditApplication(applicationId);
+
+            frequencyChannel = Convert.ToInt32(appImager.GetParameter("Channel"));
+
+            SetConfigurationMode(false);
+            return frequencyChannel;
+        }
+
+        private void SetFrequencyChannel(int value)
+        {
+            frequencyChannel = value;
+            if (!IsConnected)
+            {
+                return;
+            }
+            SetConfigurationMode(true);
+            edit.EditApplication(applicationId);
+            appImager.SetParameter("Channel", value.ToString());
+            app.Save();
+            edit.StopEditingApplication();
             SetConfigurationMode(false);
         }
         #endregion
