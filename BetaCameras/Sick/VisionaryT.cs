@@ -45,7 +45,34 @@ namespace MetriCam2.Cameras
             get { return ipAddress; }
             set { ipAddress = value; }
         }
-
+        private RangeParamDesc<int> IntegrationTimeDesc
+        {
+            get
+            {
+                return new RangeParamDesc<int>(80, 4000)
+                {
+                    Description = "Integration time of camera in microseconds.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                    Unit = "Microseconds",
+                };
+            }
+        }
+        /// <summary>
+        /// Integration time of ToF-sensor.
+        /// </summary>
+        public int IntegrationTime
+        {
+            get
+            {
+                return device.Control_GetIntegrationTime();
+            }
+            set
+            {
+                device.Control_SetServiceAccessMode();
+                device.Control_SetIntegrationTime(value);
+            }
+        }
         private ParamDesc<int> WidthDesc
         {
             get

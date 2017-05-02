@@ -164,6 +164,14 @@ namespace MetriCam2.Cameras.Internal.Sick
             Control_WriteVariable("integrationTimeUs", value);
             log.Debug("Done: Setting integration time");
         }
+        public int Control_GetIntegrationTime()
+        {
+            log.Debug("Getting integration time");
+            int value = Control_ReadVariable("integrationTimeUs");
+            log.Debug("Done: Getting integration time");
+
+            return value;
+        }
         private void Control_WriteVariable(string name, int value)
         {
             List<byte> bytes = new List<byte>(Encoding.ASCII.GetBytes("sWN " + name + " "));
