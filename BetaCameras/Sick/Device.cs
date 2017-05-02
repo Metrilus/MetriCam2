@@ -219,7 +219,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             {
                 // TODO: Check if header matches expected.
                 // Remark: On big endian machines this won't work:
-                byte[] payloadLengthBytes = new byte[] { receiveHeader[8], receiveHeader[7], receiveHeader[6], receiveHeader[5] };
+                byte[] payloadLengthBytes = new byte[] { receiveHeader[7], receiveHeader[6], receiveHeader[5], receiveHeader[4] };
                 int payloadLength = BitConverter.ToInt32(payloadLengthBytes, 0);
                 byte[] receivePayload = new byte[payloadLength + 1];
                 streamControl.Read(receivePayload, 0, receivePayload.Length);
