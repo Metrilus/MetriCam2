@@ -16,6 +16,9 @@ namespace MetriCam2.Cameras.Internal.Sick
         private const int TCP_PORT_BLOBSERVER = 2113;
         private const int TCP_PORT_SOPAS      = 2112;
         private readonly byte[] START_STX     = { 0x02, 0x02, 0x02, 0x02 };
+        // The following command was generated with the python sample
+        private readonly byte[] commandServiceLevel = { 0x02, 0x02, 0x02, 0x02, 0x00, 0x00, 0x00, 0x17, 0x73, 0x4d,
+            0x4e, 0x20, 0x53, 0x65, 0x74, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x4d, 0x6f, 0x64, 0x65, 0x20, 0x04, 0xed, 0x78, 0x4b, 0xaa, 0x45 };
         private const int FRAGMENT_SIZE       = 1024;
         private const string HEARTBEAT_MSG    = "BlbReq";
         #endregion
@@ -132,6 +135,94 @@ namespace MetriCam2.Cameras.Internal.Sick
             log.Debug("Done: Stopping Stream");
         }
 
+        /// <summary>
+        /// Sets the access mode on the device.
+        /// </summary>
+        public void Control_SetServiceAccessMode()
+        {
+            byte[] receive = new byte[28];
+            // TODO: Instead of using hard-coded command, implement propper command builder.
+            streamControl.Write(commandServiceLevel, 0, commandServiceLevel.Length);
+
+            // get response
+            if (streamControl.Read(receive, 0, receive.Length) == 0)
+            {
+                log.Error("Got no answer from camera");
+                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_setParameter", "Failed to stop stream.");
+            }
+            else
+            {
+                string response = Encoding.ASCII.GetString(receive);
+                log.DebugFormat("Got response: {0}", response);
+            }
+
+            log.Debug("Done: Setting access mode");
+        }
+        public void Control_SetIntegrationTime(int value)
+        {
+            log.Debug("Setting integration time");
+            Control_WriteVariable("integrationTimeUs", value);
+            log.Debug("Done: Setting integration time");
+        }
+        private void Control_WriteVariable(string name, int value)
+        {
+            List<byte> bytes = new List<byte>(Encoding.ASCII.GetBytes("sWN " + name + " "));
+            byte[] valueBytes = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(valueBytes);
+            }
+            bytes.AddRange(valueBytes);
+            byte[] toSend = AddFraming(bytes.ToArray());
+            byte[] receive = new byte[14];
+
+            // send ctrl message
+            streamControl.Write(toSend, 0, toSend.Length);
+
+            // get response
+            if (streamControl.Read(receive, 0, receive.Length) == 0)
+            {
+                log.Error("Got no answer from camera");
+                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_setParameter", "Failed to start stream.");
+            }
+            else
+            {
+                string response = Encoding.ASCII.GetString(receive);
+                log.DebugFormat("Got response: {0}", response);
+            }
+        }
+        private int Control_ReadVariable(string name)
+        {
+            List<byte> bytes = new List<byte>(Encoding.ASCII.GetBytes("sRN " + name));
+            byte[] toSend = AddFraming(bytes.ToArray());
+            byte[] receiveHeader = new byte[8];
+
+            // send ctrl message
+            streamControl.Write(toSend, 0, toSend.Length);
+
+            // get response
+            if (streamControl.Read(receiveHeader, 0, receiveHeader.Length) == 0)
+            {
+                log.Error("Got no answer from camera");
+                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_setParameter", "Failed to start stream.");
+                return 0;
+            }
+            else
+            {
+                // TODO: Check if header matches expected.
+                // Remark: On big endian machines this won't work:
+                byte[] payloadLengthBytes = new byte[] { receiveHeader[8], receiveHeader[7], receiveHeader[6], receiveHeader[5] };
+                int payloadLength = BitConverter.ToInt32(payloadLengthBytes, 0);
+                byte[] receivePayload = new byte[payloadLength + 1];
+                streamControl.Read(receivePayload, 0, receivePayload.Length);
+                // last byte is checksum, the 4 bytes before are the response value in big endian.
+                int l = receivePayload.Length;
+                byte[] responseValueBytes = new byte[] { receivePayload[l - 5], receivePayload[l - 4], receivePayload[l - 3], receivePayload[l - 2] };
+                int value = BitConverter.ToInt32(responseValueBytes, 0);
+                log.DebugFormat("Got value: {0}", value);
+                return value;
+            }
+        }
         /// <summary>
         /// Gets the raw frame data from camera.
         /// </summary>
@@ -255,23 +346,36 @@ namespace MetriCam2.Cameras.Internal.Sick
             // transform to ASCII (1 byte per character)
             byte[] bytes = Encoding.ASCII.GetBytes(payload);
 
+            return AddFraming(bytes);
+        }
+
+        private byte[] AddFraming(byte[] bytes)
+        {
             // calculate sizes and prepare message
             int msgSize = bytes.Length + START_STX.Length + 1 + 4; // +1 for checksum, +4 for size of payload
             uint payloadSize = (uint)bytes.Length;
             byte[] payloadSizeBytes = BitConverter.GetBytes(payloadSize);
             if (BitConverter.IsLittleEndian)
+            {
                 Array.Reverse(payloadSizeBytes);
+            }
             byte[] message = new byte[msgSize];
-            byte checksum = ChkSumCola(payload);
+            byte checksum = ChkSumCola(bytes);
 
             // build message
             int i;
             for (i = 0; i < START_STX.Length; ++i)
+            {
                 message[i] = START_STX[i];
+            }
             for (int j = 0; j < 4; ++j)
+            {
                 message[i++] = payloadSizeBytes[j];
+            }
             for (int j = 0; j < bytes.Length; ++j)
+            {
                 message[i++] = bytes[j];
+            }
             message[i] = checksum;
 
             return message;

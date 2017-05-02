@@ -112,7 +112,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                return "3vistor-T CX";
+                return "Visionary-T";
             }
         }
         #endregion
