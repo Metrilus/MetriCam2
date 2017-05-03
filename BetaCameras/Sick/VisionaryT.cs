@@ -181,8 +181,38 @@ namespace MetriCam2.Cameras
             // select intensity channel
             ActivateChannel(ChannelNames.Intensity);
             SelectChannel(ChannelNames.Intensity);
+
+            this.UpdateImpl();
         }
 
+        /// <summary>
+        /// Loads the intrisic parameters from the camera.
+        /// </summary>
+        /// <param name="channelName">Channel for which intrisics are loaded.</param>
+        /// <returns>ProjectiveTransformationZhang object holding the intrinsics.</returns>
+        public override IProjectiveTransformation GetIntrinsics(string channelName)
+        {
+            if (channelName == ChannelNames.Intensity || channelName == ChannelNames.Distance)
+            {
+                ProjectiveTransformationZhang proj;
+                lock (cameraLock)
+                {
+                    proj = new ProjectiveTransformationZhang(imageData.Width,
+                    imageData.Height,
+                    imageData.FX,
+                    imageData.FY,
+                    imageData.CX,
+                    imageData.CY,
+                    imageData.K1,
+                    imageData.K2,
+                    0,
+                    0,
+                    0);
+                }
+                return proj;
+            }
+            throw new ArgumentException(string.Format("Channel {0} intrinsics not supported.", channelName));
+        }
         /// <summary>
         /// Disconnects the camera.
         /// </summary>
