@@ -385,7 +385,7 @@ namespace MetriCam2.Cameras
                 float fy = imageData.FY;
                 float k1 = imageData.K1;
                 float k2 = imageData.K2;
-                float f2rc = 0; // imageData.F2RC * 0.001f;
+                float f2rc = imageData.F2RC;
 
                 FloatCameraImage distances = CalcDistance();
 
@@ -393,7 +393,7 @@ namespace MetriCam2.Cameras
                 {
                     for (int j = 0; j < imageData.Width; ++j)
                     {
-                        int depth = (int)distances[i, j];
+                        int depth = (int)(distances[i, j] * 1000);
 
                         // we map from image coordinates with origin top left and x horizontal (right) and y vertical 
                         // (downwards) to camera coordinates with origin in center and x to the left and y upwards (seen 
@@ -412,6 +412,10 @@ namespace MetriCam2.Cameras
                         double x = xd * depth / s0; 
                         double y = yd * depth / s0;
                         double z =  depth / s0 - f2rc;
+
+                        x /= 1000;
+                        y /= 1000;
+                        z /= 1000;
 
                         // create point and save it
                         Point3f point = new Point3f((float)-x, (float)-y, (float)z);
