@@ -1179,7 +1179,7 @@ namespace MetriCam2.Cameras
 
             using (BinaryWriter bw = new BinaryWriter(File.Open(filename, FileMode.Create)))
             {
-                Point3f.WriteToMetriStream(bw, wb);
+                bw.Write(wb);
             }
         }
 
