@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.0
+VisualStudioVersion = 15.0.26430.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetriCam2", "MetriCam2\MetriCam2.csproj", "{342F049E-668B-4351-B21D-75E4BEF5A1E4}"
 EndProject
@@ -42,6 +42,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVS", "BetaCameras\SVS\SVS.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F8B72304-05F7-411A-8A32-8D12BB5BA37E}"
 	ProjectSection(SolutionItems) = preProject
+		Jenkinsfile.groovy = Jenkinsfile.groovy
 		MetrilusReferencesVersions.props = MetrilusReferencesVersions.props
 		SolutionAssemblyInfo.cs = SolutionAssemblyInfo.cs
 		SolutionAssemblyInfo.h = SolutionAssemblyInfo.h

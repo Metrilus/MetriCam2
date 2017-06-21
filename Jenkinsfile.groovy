@@ -10,7 +10,7 @@ pipeline {
 		def filesContainingAssemblyVersion = 'SolutionAssemblyInfo.cs'
 						
 		def solution = 'MetriCam2_SDK.sln'
-		def msbuildToolName = 'MSBuild Release/x64 [v4.0.30319]'
+		def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
 		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
 		// For per-project encryption config see map at the beginning of this file.
 		def dllsToDeploy = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.CameraTemplate MetriCam2.Cameras.ifm MetriCam2.Cameras.SVS MetriCam2.Cameras.TheImagingSource MetriCam2.Cameras.UEye MetriCam2.Cameras.V3S MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.WebCam MetriCam2 Metrilus.Util Newtonsoft.Json'
@@ -49,7 +49,7 @@ pipeline {
 				echo 'Restore NuGet packages'
 				bat '%NUGET_EXE% restore'
 				echo 'Build'
-				bat "${tool msbuildToolName} ${solution} ${msbuildArgs}"
+				bat "\"${tool msbuildToolName}\" ${solution} ${msbuildArgs}"
 			}
 		}
 		stage('Deploy') {
