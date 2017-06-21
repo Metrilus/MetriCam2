@@ -33,8 +33,8 @@ void MetriCam2::Cameras::AstraOpenNI::LogOpenNIError(String^ status) {
 }
 
 bool MetriCam2::Cameras::AstraOpenNI::OpenNIInit() {
-	int counter = *openNIInitCounter++;
-	if (counter > 0) {
+	int counter = System::Threading::Interlocked::Increment(openNIInitCounter);
+	if (counter > 1) {
 		// OpenNI is already intialized
 		return true;
 	}
@@ -51,7 +51,7 @@ bool MetriCam2::Cameras::AstraOpenNI::OpenNIInit() {
 }
 
 bool MetriCam2::Cameras::AstraOpenNI::OpenNIShutdown() {
-	int counter = *--openNIInitCounter;
+	int counter = System::Threading::Interlocked::Decrement(openNIInitCounter);
 
 	if (0 != counter) {
 		// Someone is still using OpenNI

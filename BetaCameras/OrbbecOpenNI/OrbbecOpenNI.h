@@ -97,7 +97,7 @@ namespace MetriCam2 {
 			static bool OpenNIInit();
 			static bool OpenNIShutdown();
 			static void LogOpenNIError(String^ status);
-			static std::atomic<int>* openNIInitCounter = 0;
+			static int openNIInitCounter = 0;
 
 			bool emitterEnabled = true;
 			OrbbecNativeCameraData* camData;
