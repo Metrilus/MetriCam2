@@ -56,7 +56,7 @@ namespace MetriCam2
         /// <returns></returns>
         public static MetriCam2Exception BuildFromID(Type exceptionType, Camera cam, int exceptionID, string additionalInformation = null)
         {
-            ResourceManager rm = new ResourceManager(cam.GetType());
+            ResourceManager rm = new ResourceManager("MetriCam2.Cameras.Properties.Resources", cam.GetType().Assembly);
             string resourceID = "_" + exceptionID.ToString("000");
             string fullExceptionID = cam.GetType().Name + resourceID;
             string message = null;
