@@ -1,6 +1,7 @@
 // OrbbecOpenNI.h
 
 #include <msclr/marshal.h>
+#include <atomic>
 #include <OpenNI.h>
 #pragma once
 
@@ -93,9 +94,14 @@ namespace MetriCam2 {
 			Point3fCameraImage^ CalcPoint3fImage();
 			FloatCameraImage^ CalcIRImage();
 
+			static bool OpenNIInit();
+			static bool OpenNIShutdown();
+			static void LogOpenNIError(String^ status);
+			static std::atomic<int>* openNIInitCounter = 0;
+
 			bool emitterEnabled = true;
 			OrbbecNativeCameraData* camData;
-			MetriLog^ log;
+			static MetriLog^ log = gcnew MetriLog();
 
 			// for converting managed strings to const char*
 			msclr::interop::marshal_context oMarshalContext;
