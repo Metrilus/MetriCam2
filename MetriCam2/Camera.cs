@@ -1241,12 +1241,12 @@ namespace MetriCam2
         /// <seealso cref="OnDisconnected"/>
         public void Disconnect(bool useLockedCall = true)
         {
-            log.Debug("Disconnecting camera.");
-
             if (!IsConnected)
             {
                 return;
             }
+
+            log.Debug("Disconnecting camera.");
 
             if (OnDisconnecting != null)
             {
