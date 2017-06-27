@@ -2,7 +2,6 @@
 
 #include "stdafx.h"
 #include <string>
-// #include <msclr\marshal_cppstd.h>
 
 #include "OrbbecOpenNI.h"
 
@@ -25,6 +24,9 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 
 MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
 {
+	delete camData->device;
+	delete camData->depth;
+	delete camData->ir;
 	delete camData;
 }
 
@@ -129,6 +131,11 @@ array<String^, 1>^ MetriCam2::Cameras::AstraOpenNI::GetSerialNumbersOfAttachedCa
 			OpenNIShutdown();
 			return nullptr;
 		}
+
+		// Close depth stream and device
+		depthStreams[i].stop();
+		depthStreams[i].destroy();
+		device->close();
 
 		serialNumbersRet[i] = gcnew String(serialNumbers[i]);
 	}
