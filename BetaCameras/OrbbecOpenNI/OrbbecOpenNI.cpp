@@ -5,13 +5,20 @@
 // #include <msclr\marshal_cppstd.h>
 
 #include "OrbbecOpenNI.h"
+#include "COBDevice.h"
 
 #define MAX_DEVICES 20  // There is no limitations, we choose 20 as "reasonable" value in real use case.
 
 // TODO:
-// * static retrieval of list of serial numbers
 // * custom infrared channel
-// * switching emitter on and off
+
+static MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
+{
+	openni::Status rc = openni::STATUS_OK;
+	rc = openni::OpenNI::initialize();
+
+	System::Diagnostics::Debug::WriteLine("After initialization:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+}
 
 MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 {
@@ -21,6 +28,9 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	camData->device = new openni::Device();
 	camData->depth = new openni::VideoStream();
 	camData->ir = new openni::VideoStream();
+
+	emitterEnabled = true;
+	keepEmitterBackgroundWorkerFinished = gcnew AutoResetEvent(false);
 }
 
 MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
@@ -28,7 +38,7 @@ MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
 	delete camData;
 }
 
-array<String^, 1>^ MetriCam2::Cameras::AstraOpenNI::GetSerialNumbersOfAttachedCameras()
+System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::AstraOpenNI::GetSerialToUriMappingOfAttachedCameras()
 {
 	openni::Status rc = openni::STATUS_OK;
 
@@ -36,7 +46,7 @@ array<String^, 1>^ MetriCam2::Cameras::AstraOpenNI::GetSerialNumbersOfAttachedCa
 	const char*            deviceUris[MAX_DEVICES];
 	char                   serialNumbers[MAX_DEVICES][12]; // Astra serial number has 12 numbers
 
-	// Enumerate devices
+														   // Enumerate devices
 	openni::Array<openni::DeviceInfo> deviceList;
 	openni::OpenNI::enumerateDevices(&deviceList);
 	int devicesCount = deviceList.getSize();
@@ -47,6 +57,8 @@ array<String^, 1>^ MetriCam2::Cameras::AstraOpenNI::GetSerialNumbersOfAttachedCa
 		return nullptr;
 	}
 
+	System::Collections::Generic::Dictionary<String^, String^>^ serialToURI = gcnew System::Collections::Generic::Dictionary<String^, String^>();
+
 	array<String^>^ serialNumbersRet = gcnew array<String^>(devicesCount);
 	for (int i = 0; i < devicesCount; i++) {
 		// Open device by Uri
@@ -56,13 +68,15 @@ array<String^, 1>^ MetriCam2::Cameras::AstraOpenNI::GetSerialNumbersOfAttachedCa
 		rc = device->open(deviceUris[i]);
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't open device : ", deviceUris[i]);
-			return nullptr;
+			System::Diagnostics::Debug::WriteLine("GetSerialNumberOfAttachedCameras: cannot open device");
+			continue;
 		}
 
 		rc = depthStreams[i].create(*device, openni::SENSOR_DEPTH);
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't create stream on device : ", deviceUris[i]);
-			return nullptr;
+			System::Diagnostics::Debug::WriteLine("GetSerialNumberOfAttachedCameras: cannot create device");
+			continue;
 		}
 
 		// Read serial number
@@ -72,124 +86,111 @@ array<String^, 1>^ MetriCam2::Cameras::AstraOpenNI::GetSerialNumbersOfAttachedCa
 		rc = depthStreams[i].start();
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't create stream on device : ", serialNumbers[i]);
-			return nullptr;
+			System::Diagnostics::Debug::WriteLine("GetSerialNumberOfAttachedCameras: cannot start depth stream");
+			continue;
 		}
 
 		if (!depthStreams[i].isValid())
 		{
 			// printf("SimpleViewer: No valid streams. Exiting\n");
+			System::Diagnostics::Debug::WriteLine("GetSerialNumberOfAttachedCameras: depth stream not valid");
 			openni::OpenNI::shutdown();
-			return nullptr;
+			continue;
 		}
 
-		serialNumbersRet[i] = gcnew String(serialNumbers[i]);
+		serialToURI[gcnew String(serialNumbers[i])] = gcnew String(deviceUris[i]);
+
+		//serialNumbersRet[i] = gcnew String(serialNumbers[i]);
 	}
 
-	return serialNumbersRet;
+	return serialToURI;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::LoadAllAvailableChannels()
 {
-	log->EnterMethod();
+	//log->EnterMethod();
 	ChannelRegistry^ cr = ChannelRegistry::Instance;
 	Channels->Clear();
-	// Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::Infrared, UShortCameraImage::typeid));
-	//Channels->Add(cr->RegisterChannel(ChannelNames::Color));
+	// Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::Infrared, UShortCameraImage::typeid))
 	Channels->Add(cr->RegisterChannel(ChannelNames::ZImage));
+	Channels->Add(cr->RegisterChannel(ChannelNames::Intensity));
 	Channels->Add(cr->RegisterChannel(ChannelNames::Point3DImage));
-	log->LeaveMethod();
+	Channels->Add(cr->RegisterChannel(ChannelNames::Color));
+	//log->LeaveMethod();
 }
 
 void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 {
-	openni::Status rc = openni::STATUS_OK;
-	rc = openni::OpenNI::initialize();
-
-	log->Info("After initialization:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+	serialToUriDictionary = GetSerialToUriMappingOfAttachedCameras();
 
 	const char* deviceURI = openni::ANY_DEVICE;
-	if (0 != SerialNumber->Length) {
-		deviceURI = oMarshalContext.marshal_as<const char*>(SerialNumber);
+	if (nullptr != SerialNumber && 0 != SerialNumber->Length) 
+	{
+		deviceURI = oMarshalContext.marshal_as<const char*>(serialToUriDictionary[SerialNumber]);
 	}
 
-	rc = camData->device->open(deviceURI);
+	openni::Status rc = camData->device->open(deviceURI);
 	if (rc != openni::STATUS_OK)
 	{
-		log->Error("Device open failed:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+		String^ str = gcnew String(openni::OpenNI::getExtendedError());
+		log->Error("Device open failed:\n" + str);
 		openni::OpenNI::shutdown();
 		return;
 	}
 
 	// Start depth stream
 	camData->device->setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
-
-	// Create depth stream reader
-	rc = camData->depth->create(*(camData->device), openni::SENSOR_DEPTH);
-	camData->depth->setMirroringEnabled(false);
-	if (openni::STATUS_OK != rc) {
-		log->Error("Couldn't find depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-		openni::OpenNI::shutdown();
-		return;
-	}
-
-	// Start depth stream
-	rc = camData->depth->start();
-	if (openni::STATUS_OK != rc)
+	if (ActiveChannels->Count == 0)
 	{
-		log->Error("Couldn't start depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-		camData->depth->destroy();
-		openni::OpenNI::shutdown();
-		return;
+		ActivateChannel(ChannelNames::ZImage);
+		ActivateChannel(ChannelNames::Intensity);
+		if (String::IsNullOrWhiteSpace(SelectedChannel))
+		{
+			SelectChannel(ChannelNames::ZImage);
+		}
 	}
+}
 
-	if (!camData->depth->isValid())
+void MetriCam2::Cameras::AstraOpenNI::SetEmitter(bool on)
+{
+	COBDevice  device;
+	device.InitDevice();
+	device.OpenDevice(oMarshalContext.marshal_as<const char*>(serialToUriDictionary[SerialNumber]));
+
+	bool turnOn = true;
+	uint8_t buf1[10];
+	uint8_t buf2[10];
+	if (on)
 	{
-		log->Error("No valid depth stream. Exiting\n");
-		openni::OpenNI::shutdown();
-		return;
+		*(uint16_t*)buf1 = 1;
 	}
-
-	openni::VideoMode depthVideoMode = camData->depth->getVideoMode();
-	camData->depthWidth = depthVideoMode.getResolutionX();
-	camData->depthHeight = depthVideoMode.getResolutionY();
-
-	//Start IR stream
-	rc = camData->ir->create(*(camData->device), openni::SENSOR_IR);
-	camData->ir->setMirroringEnabled(false);
-	if (openni::STATUS_OK != rc) {
-		log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-		openni::OpenNI::shutdown();
-		return;
-	}
-
-	openni::VideoMode irVideoMode = camData->ir->getVideoMode();
-	irVideoMode.setResolution(640, 480);
-	camData->ir->setVideoMode(irVideoMode);
-	if (openni::STATUS_OK != rc) {
-		log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-		openni::OpenNI::shutdown();
-		return;
-	}
-
-	rc = camData->ir->start();
-	if (openni::STATUS_OK != rc)
+	else
 	{
-		log->Error("Couldn't start IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-		camData->ir->destroy();
-		openni::OpenNI::shutdown();
-		return;
+		*(uint16_t*)buf1 = 0;
 	}
 
-	if (!camData->ir->isValid())
+	device.SendCmd(85, buf1, 2, buf2, 2);
+	device.CloseDevice();
+}
+
+void MetriCam2::Cameras::AstraOpenNI::KeepEmitterOff_DoWork(Object^ sender, DoWorkEventArgs^ e)
+{
+	bool emitterOffSent = false;
+	while (!keepEmitterOffBackgroundWorker->CancellationPending)
 	{
-		log->Error("No valid IR stream. Exiting\n");
-		openni::OpenNI::shutdown();
-		return;
+		if (!emitterOffSent)
+		{
+			SetEmitter(false);
+			//emitterOffSent = true; //Does not work -> Emitter is turning on automatically and randomly after around 0.5s - 60s
+			//System::Threading::Thread::Sleep(10); //Too long
+			System::Threading::Thread::Sleep(1);
+		}
+		else
+		{
+			System::Threading::Thread::Sleep(100);
+		}
 	}
-
-	irVideoMode = camData->ir->getVideoMode();
-	camData->irWidth = irVideoMode.getResolutionX();
-	camData->irHeight = irVideoMode.getResolutionY();
+	keepEmitterBackgroundWorkerFinished->Set();
 }
 
 void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
@@ -219,18 +220,115 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 Metrilus::Util::CameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcChannelImpl(String ^ channelName)
 {
 	log->EnterMethod();
-	if (channelName->Equals(ChannelNames::ZImage)) {
+	if (channelName->Equals(ChannelNames::ZImage)) 
+	{
 		return CalcZImage();
 	}
-	else if (channelName->Equals(ChannelNames::Color)) {
+	else if (channelName->Equals(ChannelNames::Intensity))
+	{
+		return CalcIRImage();
+	}
+	else if (channelName->Equals(ChannelNames::Color)) 
+	{
 		return CalcColor();
 	}
-	else if (channelName->Equals(ChannelNames::Point3DImage)) {
+	else if (channelName->Equals(ChannelNames::Point3DImage)) 
+	{
 		return CalcPoint3fImage();
 	}
 
 	log->LeaveMethod();
 	return nullptr;
+}
+
+void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
+{
+	log->EnterMethod();
+
+	openni::Status rc;
+	
+	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
+	{
+		// Create depth stream reader
+		rc = camData->depth->create(*(camData->device), openni::SENSOR_DEPTH);
+		camData->depth->setMirroringEnabled(false);
+		if (openni::STATUS_OK != rc) 
+		{
+			throw gcnew Exception("Couldn't find depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+		}
+
+		// Start depth stream
+		rc = camData->depth->start();
+		if (openni::STATUS_OK != rc)
+		{
+			log->Error("Couldn't start depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+			camData->depth->destroy();
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		if (!camData->depth->isValid())
+		{
+			log->Error("No valid depth stream. Exiting\n");
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		openni::VideoMode depthVideoMode = camData->depth->getVideoMode();
+		camData->depthWidth = depthVideoMode.getResolutionX();
+		camData->depthHeight = depthVideoMode.getResolutionY();
+	}
+	else if (channelName->Equals(ChannelNames::Intensity))
+	{
+		//Start IR stream
+		rc = camData->ir->create(*(camData->device), openni::SENSOR_IR);
+		camData->ir->setMirroringEnabled(false);
+		if (openni::STATUS_OK != rc) {
+			log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		openni::VideoMode irVideoMode = camData->ir->getVideoMode();
+		irVideoMode.setResolution(640, 480);
+		camData->ir->setVideoMode(irVideoMode);
+		if (openni::STATUS_OK != rc) {
+			log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		rc = camData->ir->start();
+		if (openni::STATUS_OK != rc)
+		{
+			log->Error("Couldn't start IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+			camData->ir->destroy();
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		if (!camData->ir->isValid())
+		{
+			log->Error("No valid IR stream. Exiting\n");
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		irVideoMode = camData->ir->getVideoMode();
+		camData->irWidth = irVideoMode.getResolutionX();
+		camData->irHeight = irVideoMode.getResolutionY();
+	}
+	else if (channelName->Equals(ChannelNames::Color))
+	{
+		throw gcnew NotImplementedException();
+	}
+
+	log->LeaveMethod();
+}
+
+void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
+{
+	throw gcnew NotImplementedException();
 }
 
 FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()

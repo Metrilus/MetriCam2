@@ -5,6 +5,8 @@
 #pragma once
 
 using namespace System;
+using namespace System::ComponentModel;
+using namespace System::Threading;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
 
@@ -26,6 +28,7 @@ namespace MetriCam2 {
 		public ref class AstraOpenNI : Camera
 		{
 		public:
+			static AstraOpenNI();
 			AstraOpenNI();
 			~AstraOpenNI();
 
@@ -35,6 +38,32 @@ namespace MetriCam2 {
 				}
 				void set(bool value) {
 					emitterEnabled = value;
+
+					if (emitterEnabled)
+					{
+						if (keepEmitterOffBackgroundWorker != nullptr) //Do not use BackgroundWorker.IsBusy, since this causes problems in GUI threads
+						{
+							keepEmitterOffBackgroundWorker->CancelAsync();
+							keepEmitterBackgroundWorkerFinished->WaitOne();
+							keepEmitterOffBackgroundWorker = nullptr;
+							System::Diagnostics::Debug::WriteLine("BgWorker cancelled");
+						}
+						SetEmitter(true);
+						System::Diagnostics::Debug::WriteLine("Emitter turned on");
+					}
+					else
+					{
+						if (keepEmitterOffBackgroundWorker != nullptr) //Do not use BackgroundWorker.IsBusy, since this causes problems in GUI threads
+						{
+							System::Diagnostics::Debug::WriteLine("BgWorker busy.");
+							return;
+						}
+						System::Diagnostics::Debug::WriteLine("Starting new bgWorker");
+						keepEmitterOffBackgroundWorker = gcnew BackgroundWorker();
+						keepEmitterOffBackgroundWorker->WorkerSupportsCancellation = true;
+						keepEmitterOffBackgroundWorker->DoWork += gcnew DoWorkEventHandler(this, &MetriCam2::Cameras::AstraOpenNI::KeepEmitterOff_DoWork);
+						keepEmitterOffBackgroundWorker->RunWorkerAsync();
+					}
 				}
 			}
 
@@ -46,12 +75,12 @@ namespace MetriCam2 {
 					res->Unit = "";
 					res->Description = "Emitter is enabled";
 					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
 					return res;
 				}
 			}
 
-			static array<String^, 1>^ GetSerialNumbersOfAttachedCameras();
+			static System::Collections::Generic::Dictionary<String^, String^>^ GetSerialToUriMappingOfAttachedCameras();
 
 		protected:
 			/// <summary>
@@ -86,19 +115,36 @@ namespace MetriCam2 {
 			/// <seealso cref="Camera.CalcChannel"/>
 			virtual Metrilus::Util::CameraImage^ CalcChannelImpl(String^ channelName) override;
 
+			/// <summary>
+			/// Activate a channel.
+			/// </summary>
+			/// <param name="channelName">Channel name.</param>
+			virtual void ActivateChannelImpl(String^ channelName) override;
 
+			/// <summary>
+			/// Deactivate a channel.
+			/// </summary>
+			/// <param name="channelName">Channel name.</param>
+			virtual void DeactivateChannelImpl(String^ channelName) override;
 		private:
 			FloatCameraImage^ CalcZImage();
 			ColorCameraImage^ CalcColor();
 			Point3fCameraImage^ CalcPoint3fImage();
 			FloatCameraImage^ CalcIRImage();
 
-			bool emitterEnabled = true;
+			void KeepEmitterOff_DoWork(Object^ sender, DoWorkEventArgs^ e);
+			void SetEmitter(bool on);
+
+			bool emitterEnabled;
 			OrbbecNativeCameraData* camData;
 			MetriLog^ log;
 
 			// for converting managed strings to const char*
 			msclr::interop::marshal_context oMarshalContext;
+			System::Collections::Generic::Dictionary<String^, String^>^ serialToUriDictionary;
+
+			BackgroundWorker^ keepEmitterOffBackgroundWorker;
+			AutoResetEvent^ keepEmitterBackgroundWorkerFinished;
 		};
 	}
 }
