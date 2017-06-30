@@ -28,7 +28,6 @@ namespace MetriCam2 {
 		public ref class AstraOpenNI : Camera
 		{
 		public:
-			static AstraOpenNI();
 			AstraOpenNI();
 			~AstraOpenNI();
 
@@ -132,12 +131,17 @@ namespace MetriCam2 {
 			Point3fCameraImage^ CalcPoint3fImage();
 			FloatCameraImage^ CalcIRImage();
 
+			static bool OpenNIInit();
+			static bool OpenNIShutdown();
+			static void LogOpenNIError(String^ status);
+			static int openNIInitCounter = 0;
+
 			void KeepEmitterOff_DoWork(Object^ sender, DoWorkEventArgs^ e);
 			void SetEmitter(bool on);
 
 			bool emitterEnabled;
 			OrbbecNativeCameraData* camData;
-			MetriLog^ log;
+			static MetriLog^ log = gcnew MetriLog();
 
 			// for converting managed strings to const char*
 			msclr::interop::marshal_context oMarshalContext;
