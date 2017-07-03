@@ -5,28 +5,27 @@
 // #include <msclr\marshal_cppstd.h>
 
 #include "OrbbecOpenNI.h"
-#include "COBDevice.h"
 
 #define MAX_DEVICES 20  // There is no limitations, we choose 20 as "reasonable" value in real use case.
 
 // TODO:
 // * custom infrared channel
+// * color support
 
 MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 {
 	camData = new OrbbecNativeCameraData();
-	log = gcnew MetriLog();
+	camData->openNICam = new cmd();
 
-	camData->device = new openni::Device();
 	camData->depth = new openni::VideoStream();
 	camData->ir = new openni::VideoStream();
 
 	emitterEnabled = true;
-	keepEmitterBackgroundWorkerFinished = gcnew AutoResetEvent(false);
 }
 
 MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
 {
+	//TODO: clean up camData->openNICam, camData->depth and camData->ir
 	delete camData;
 }
 
@@ -59,14 +58,16 @@ bool MetriCam2::Cameras::AstraOpenNI::OpenNIShutdown()
 {
 	int counter = System::Threading::Interlocked::Decrement(openNIInitCounter);
 
-	if (0 != counter) {
+	if (0 != counter) 
+	{
 		// Someone is still using OpenNI
 		return true;
 	}
 
 	openni::Status rc = openni::STATUS_OK;
 	openni::OpenNI::shutdown();
-	if (openni::Status::STATUS_OK != rc) {
+	if (openni::Status::STATUS_OK != rc) 
+	{
 		LogOpenNIError("Shutdown of OpenNI failed");
 		return false;
 	}
@@ -102,7 +103,6 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 
 	System::Collections::Generic::Dictionary<String^, String^>^ serialToURI = gcnew System::Collections::Generic::Dictionary<String^, String^>();
 
-	array<String^>^ serialNumbersRet = gcnew array<String^>(devicesCount);
 	for (int i = 0; i < devicesCount; i++) {
 		// Open device by Uri
 		openni::Device* device = new openni::Device;
@@ -147,8 +147,6 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 		device->close();
 
 		serialToURI[gcnew String(serialNumbers[i])] = gcnew String(deviceUris[i]);
-
-		//serialNumbersRet[i] = gcnew String(serialNumbers[i]);
 	}
 
 	return serialToURI;
@@ -184,17 +182,11 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		deviceURI = oMarshalContext.marshal_as<const char*>(serialToUriDictionary[SerialNumber]);
 	}
 
-	openni::Status rc = camData->device->open(deviceURI);
-	if (rc != openni::STATUS_OK)
-	{
-		String^ str = gcnew String(openni::OpenNI::getExtendedError());
-		log->Error("Device open failed:\n" + str);
-		openni::OpenNI::shutdown();
-		return;
-	}
+	int rc = camData->openNICam->init(deviceURI);
+	camData->openNICam->ldp_set(true); //Ensure eye-safety
 
 	// Start depth stream
-	camData->device->setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
+	camData->openNICam->device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
 	if (ActiveChannels->Count == 0)
 	{
 		ActivateChannel(ChannelNames::ZImage);
@@ -208,44 +200,21 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitter(bool on)
 {
-	COBDevice  device;
-	device.InitDevice();
-	device.OpenDevice(oMarshalContext.marshal_as<const char*>(serialToUriDictionary[SerialNumber]));
+	camData->openNICam->ldp_set(on);
+	System::Threading::Thread::Sleep(100); //Is required, otherwise turning off the emitter did not work in some cases, also not for just waiting 50ms
 
-	bool turnOn = true;
-	uint8_t buf1[10];
-	uint8_t buf2[10];
-	if (on)
-	{
-		*(uint16_t*)buf1 = 1;
-	}
-	else
-	{
-		*(uint16_t*)buf1 = 0;
-	}
+	// Try to activate next code block in future version of experimental SDK (class "cmd"). Currently, the LDP status is alwas unknown
+	//LDPStatus status;
+	//LDPStatus statusToSet = on ? LDPStatus::LDP_ON : LDPStatus::LDP_OFF;
+	////We need to be sure that the proximity sensor status was set properly
+	//do
+	//{
+	//	camData->openNICam->ldp_get(status);
+	//	System::Threading::Thread::Sleep(1);
+	//} 
+	//while (status != statusToSet);
 
-	device.SendCmd(85, buf1, 2, buf2, 2);
-	device.CloseDevice();
-}
-
-void MetriCam2::Cameras::AstraOpenNI::KeepEmitterOff_DoWork(Object^ sender, DoWorkEventArgs^ e)
-{
-	bool emitterOffSent = false;
-	while (!keepEmitterOffBackgroundWorker->CancellationPending)
-	{
-		if (!emitterOffSent)
-		{
-			SetEmitter(false);
-			//emitterOffSent = true; //Does not work -> Emitter is turning on automatically and randomly after around 0.5s - 60s
-			//System::Threading::Thread::Sleep(10); //Too long
-			System::Threading::Thread::Sleep(1);
-		}
-		else
-		{
-			System::Threading::Thread::Sleep(100);
-		}
-	}
-	keepEmitterBackgroundWorkerFinished->Set();
+	camData->openNICam->emitter_set(on);
 }
 
 void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
@@ -305,7 +274,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
 	{
 		// Create depth stream reader
-		rc = camData->depth->create(*(camData->device), openni::SENSOR_DEPTH);
+		rc = camData->depth->create(camData->openNICam->device, openni::SENSOR_DEPTH);
 		camData->depth->setMirroringEnabled(false);
 		if (openni::STATUS_OK != rc)
 		{
@@ -336,7 +305,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{
 		//Start IR stream
-		rc = camData->ir->create(*(camData->device), openni::SENSOR_IR);
+		rc = camData->ir->create(camData->openNICam->device, openni::SENSOR_IR);
 		camData->ir->setMirroringEnabled(false);
 		if (openni::STATUS_OK != rc) {
 			log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));

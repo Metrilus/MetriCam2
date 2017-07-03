@@ -2,6 +2,7 @@
 
 #include <msclr/marshal.h>
 #include <OpenNI.h>
+#include "cmd.h"
 #pragma once
 
 using namespace System;
@@ -10,17 +11,20 @@ using namespace System::Threading;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
 
-namespace MetriCam2 {
-	namespace Cameras {
+namespace MetriCam2 
+{
+	namespace Cameras 
+	{
 
 		struct OrbbecNativeCameraData
 		{
-			openni::Device* device;
+			cmd* openNICam;
+
 			openni::VideoStream* depth;
 			int depthWidth;
 			int depthHeight;
-			openni::VideoStream* ir;
 
+			openni::VideoStream* ir;
 			int irWidth;
 			int irHeight;
 		};
@@ -31,38 +35,18 @@ namespace MetriCam2 {
 			AstraOpenNI();
 			~AstraOpenNI();
 
-			property bool EmitterEnabled {
-				bool get(void) {
+			property bool EmitterEnabled 
+			{
+				bool get(void) 
+				{
+					//Reader the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
 					return emitterEnabled;
 				}
-				void set(bool value) {
+				void set(bool value) 
+				{
 					emitterEnabled = value;
-
-					if (emitterEnabled)
-					{
-						if (keepEmitterOffBackgroundWorker != nullptr) //Do not use BackgroundWorker.IsBusy, since this causes problems in GUI threads
-						{
-							keepEmitterOffBackgroundWorker->CancelAsync();
-							keepEmitterBackgroundWorkerFinished->WaitOne();
-							keepEmitterOffBackgroundWorker = nullptr;
-							System::Diagnostics::Debug::WriteLine("BgWorker cancelled");
-						}
-						SetEmitter(true);
-						System::Diagnostics::Debug::WriteLine("Emitter turned on");
-					}
-					else
-					{
-						if (keepEmitterOffBackgroundWorker != nullptr) //Do not use BackgroundWorker.IsBusy, since this causes problems in GUI threads
-						{
-							System::Diagnostics::Debug::WriteLine("BgWorker busy.");
-							return;
-						}
-						System::Diagnostics::Debug::WriteLine("Starting new bgWorker");
-						keepEmitterOffBackgroundWorker = gcnew BackgroundWorker();
-						keepEmitterOffBackgroundWorker->WorkerSupportsCancellation = true;
-						keepEmitterOffBackgroundWorker->DoWork += gcnew DoWorkEventHandler(this, &MetriCam2::Cameras::AstraOpenNI::KeepEmitterOff_DoWork);
-						keepEmitterOffBackgroundWorker->RunWorkerAsync();
-					}
+					SetEmitter(emitterEnabled);
+					log->InfoFormat("Emitter state set to: {0}", emitterEnabled.ToString());
 				}
 			}
 
@@ -136,19 +120,14 @@ namespace MetriCam2 {
 			static void LogOpenNIError(String^ status);
 			static int openNIInitCounter = 0;
 
-			void KeepEmitterOff_DoWork(Object^ sender, DoWorkEventArgs^ e);
 			void SetEmitter(bool on);
 
 			bool emitterEnabled;
 			OrbbecNativeCameraData* camData;
-			static MetriLog^ log = gcnew MetriLog();
 
 			// for converting managed strings to const char*
 			msclr::interop::marshal_context oMarshalContext;
 			System::Collections::Generic::Dictionary<String^, String^>^ serialToUriDictionary;
-
-			BackgroundWorker^ keepEmitterOffBackgroundWorker;
-			AutoResetEvent^ keepEmitterBackgroundWorkerFinished;
 		};
 	}
 }

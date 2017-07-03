@@ -21,10 +21,10 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="COBDevice.h">
+    <ClInclude Include="OrbbecOpenNI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OrbbecOpenNI.h">
+    <ClInclude Include="cmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,13 +32,13 @@
     <ClCompile Include="Stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="COBDevice.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OrbbecOpenNI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AssemblyInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
