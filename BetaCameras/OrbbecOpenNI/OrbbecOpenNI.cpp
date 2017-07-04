@@ -16,8 +16,9 @@
 #define IR_Gain_MAX 0x60
 
 // TODO:
-// * custom infrared channel
 // * color support
+// * support different resolutions (not only VGA) for channels ZImage and Intensity and check whether IR gain/exposure set feature is still working.
+// * At least the mode 1280x1024 seems to be not compatible with the IR exposure set feature. For QVGA there seem to be problems to set the exposure when the Intensity channel is activated.
 
 MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 {
@@ -194,10 +195,14 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 
 	// Start depth stream
 	camData->openNICam->device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
+
+	InitDepthStream();
+	InitIRStream();
+
 	if (ActiveChannels->Count == 0)
 	{
 		ActivateChannel(ChannelNames::ZImage);
-		ActivateChannel(ChannelNames::Intensity);
+		//ActivateChannel(ChannelNames::Intensity);
 		if (String::IsNullOrWhiteSpace(SelectedChannel))
 		{
 			SelectChannel(ChannelNames::ZImage);
@@ -307,22 +312,29 @@ void MetriCam2::Cameras::AstraOpenNI::SetIRExposure(unsigned int value)
 	{
 		log->DebugFormat("IR exposure is set to: {0}", irExposure.ToString());
 	}
-	camData->depth->stop();	
-	camData->ir->start();
-	if (camData->ir->isValid())
+	//camData->depth->stop();	
+	if (!IsChannelActive(ChannelNames::Intensity))
 	{
-		VideoMode videomode = camData->ir->getVideoMode();
-		videomode.setPixelFormat(openni::PIXEL_FORMAT_GRAY16);
-		videomode.setResolution(640, 480);
-		camData->ir->setVideoMode(videomode);
+		camData->ir->start();
+		if (camData->ir->isValid())
+		{
+			VideoMode videomode = camData->ir->getVideoMode();
+			videomode.setPixelFormat(openni::PIXEL_FORMAT_GRAY16);
+			videomode.setResolution(640, 480);
+			camData->ir->setVideoMode(videomode);
+		}
+		camData->ir->stop();
 	}
-	camData->ir->stop();
-	camData->depth->start();
-	if (camData->depth->isValid())
+	if (!IsChannelActive(ChannelNames::ZImage))
 	{
-		VideoMode videoMode = camData->depth->getVideoMode();
-		videoMode.setResolution(640, 480);
-		camData->depth->setVideoMode(videoMode);
+		camData->depth->start();
+		if (camData->depth->isValid())
+		{
+			VideoMode videoMode = camData->depth->getVideoMode();
+			videoMode.setResolution(640, 480);
+			camData->depth->setVideoMode(videoMode);
+		}
+		camData->depth->stop();
 	}
 }
 
@@ -384,6 +396,30 @@ Metrilus::Util::CameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcChannelImpl(S
 	return nullptr;
 }
 
+void MetriCam2::Cameras::AstraOpenNI::InitDepthStream()
+{
+	// Create depth stream reader
+	openni::Status rc = camData->depth->create(camData->openNICam->device, openni::SENSOR_DEPTH);
+	camData->depth->setMirroringEnabled(false);
+	if (openni::STATUS_OK != rc)
+	{
+		throw gcnew Exception("Couldn't find depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+	}
+}
+
+void MetriCam2::Cameras::AstraOpenNI::InitIRStream()
+{
+	//Init IR stream
+	openni::Status rc = camData->ir->create(camData->openNICam->device, openni::SENSOR_IR);
+	camData->ir->setMirroringEnabled(false);
+	if (openni::STATUS_OK != rc) 
+	{
+		log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+		openni::OpenNI::shutdown();
+		return;
+	}
+}
+
 void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 {
 	log->EnterMethod();
@@ -392,13 +428,14 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
 	{
-		// Create depth stream reader
-		rc = camData->depth->create(camData->openNICam->device, openni::SENSOR_DEPTH);
-		camData->depth->setMirroringEnabled(false);
-		if (openni::STATUS_OK != rc)
+		if (IsChannelActive(ChannelNames::Intensity))
 		{
-			throw gcnew Exception("Couldn't find depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+			throw gcnew Exception("IR and depth are not allowed to be active at the same time. Please deactivate channel \"Intensity\" before activating channel \"ZImage\" or \"Point3DImage\"");
 		}
+
+		openni::VideoMode depthVideoMode = camData->depth->getVideoMode();
+		depthVideoMode.setResolution(640, 480);
+		camData->depth->setVideoMode(depthVideoMode);
 
 		// Start depth stream
 		rc = camData->depth->start();
@@ -417,33 +454,24 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 			return;
 		}
 
-		openni::VideoMode depthVideoMode = camData->depth->getVideoMode();
+		depthVideoMode = camData->depth->getVideoMode();
 		camData->depthWidth = depthVideoMode.getResolutionX();
 		camData->depthHeight = depthVideoMode.getResolutionY();
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
-	{
-		//Start IR stream
-		rc = camData->ir->create(camData->openNICam->device, openni::SENSOR_IR);
-		camData->ir->setMirroringEnabled(false);
-		if (openni::STATUS_OK != rc) {
-			log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-			openni::OpenNI::shutdown();
-			return;
-		}
-
-		openni::VideoMode irVideoMode = camData->ir->getVideoMode();
-		irVideoMode.setResolution(640, 480);
-		camData->ir->setVideoMode(irVideoMode);
-		if (openni::STATUS_OK != rc) {
-			log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-			openni::OpenNI::shutdown();
-			return;
+	{	
+		if (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage))
+		{
+			throw gcnew Exception("IR and depth are not allowed to be active at the same time. Please deactivate channel \"ZImage\" and \"Point3DImage\" before activating channel \"Intensity\"");
 		}
 
 		//Changing the exposure is not possible if both depth and ir streams have been running parallel in one session.
 
-		/*rc = camData->ir->start();
+		openni::VideoMode irVideoMode = camData->ir->getVideoMode();
+		irVideoMode.setResolution(640, 480);
+		camData->ir->setVideoMode(irVideoMode);		
+
+		rc = camData->ir->start();
 		if (openni::STATUS_OK != rc)
 		{
 			log->Error("Couldn't start IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
@@ -461,7 +489,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 		irVideoMode = camData->ir->getVideoMode();
 		camData->irWidth = irVideoMode.getResolutionX();
-		camData->irHeight = irVideoMode.getResolutionY();*/
+		camData->irHeight = irVideoMode.getResolutionY();
 	}
 	else if (channelName->Equals(ChannelNames::Color))
 	{
@@ -473,7 +501,14 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 {
-	throw gcnew NotImplementedException();
+	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
+	{
+		camData->depth->stop();
+	}
+	else if (channelName->Equals(ChannelNames::Intensity))
+	{
+		camData->ir->stop();
+	}
 }
 
 FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()

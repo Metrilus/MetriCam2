@@ -147,6 +147,9 @@ namespace MetriCam2
 			static void LogOpenNIError(String^ status);
 			static int openNIInitCounter = 0;
 
+			void InitDepthStream();
+			void InitIRStream();
+
 			String^ GetEmitterStatus();
 			void SetEmitterStatus(bool on);
 
