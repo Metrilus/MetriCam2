@@ -95,16 +95,16 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE64);C:\Users\placht\Downloads\OpenNI2-master\OpenNI2-master\ThirdParty\PSCommon\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE64);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>
       </TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>XnLib.lib;OpenNI2.lib;Ws2_32.lib;setupapi.lib;shell32.lib;glut64.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\placht\Downloads\OpenNI2-master\OpenNI2-master\ThirdParty\PSCommon\XnLib\ThirdParty\GL;C:\Users\placht\Downloads\OpenNI2-master\OpenNI2-master\ThirdParty\PSCommon\XnLib\Bin\x64-Release;$(OutDir);$(OPENNI2_LIB64)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XnLib_x64_debug.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB64)</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>
       </TreatLinkerWarningAsErrors>
     </Link>
@@ -115,9 +115,11 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE32);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies />
+      <AdditionalDependencies>XnLib_win32_debug.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB32)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -125,13 +127,13 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>C:\Kunden\BSN\MultiDepthViewer_v1.21 for Windows and Linux\ThirdParty\GL\Include;$(OPENNI2_INCLUDE32);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE32);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glut32.lib;XnLib_win32_release.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Kunden\BSN\MultiDepthViewer_v1.21 for Windows and Linux\ThirdParty\GL\Lib;Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB32)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XnLib_win32_release.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB32)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -139,13 +141,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE64);C:\Users\placht\Downloads\OpenNI2-master\OpenNI2-master\ThirdParty\PSCommon\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE64);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>XnLib.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\placht\Downloads\OpenNI2-master\OpenNI2-master\ThirdParty\PSCommon\XnLib\ThirdParty\GL;C:\Users\placht\Downloads\OpenNI2-master\OpenNI2-master\ThirdParty\PSCommon\XnLib\Bin\x64-Release;$(OutDir);$(OPENNI2_LIB64)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XnLib_x64_release.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB64)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
@@ -167,6 +170,12 @@
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="cmd.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="OrbbecOpenNI.cpp" />
     <ClCompile Include="Stdafx.cpp">

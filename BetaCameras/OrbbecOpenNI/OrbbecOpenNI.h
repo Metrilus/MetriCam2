@@ -8,6 +8,7 @@
 using namespace System;
 using namespace System::ComponentModel;
 using namespace System::Threading;
+using namespace System::Runtime::InteropServices;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
 
@@ -45,8 +46,33 @@ namespace MetriCam2
 				void set(bool value) 
 				{
 					emitterEnabled = value;
-					SetEmitter(emitterEnabled);
-					log->InfoFormat("Emitter state set to: {0}", emitterEnabled.ToString());
+					SetEmitterStatus(emitterEnabled);
+					log->DebugFormat("Emitter state set to: {0}", emitterEnabled.ToString());
+				}
+			}
+
+			property unsigned char IRGain
+			{
+				unsigned char get(void)
+				{
+					return (unsigned char)GetIRGain();
+				}
+				void set(unsigned char value)
+				{
+					SetIRGain(value);
+				}
+			}
+
+			// Implementation in experimental interface seems to be buggy, changing the value destroys the distance image
+			property unsigned int IRExposure
+			{
+				unsigned int get(void)
+				{
+					return GetIRExposure();
+				}
+				void set(unsigned int value)
+				{
+					SetIRExposure(value);
 				}
 			}
 
@@ -109,6 +135,7 @@ namespace MetriCam2
 			/// </summary>
 			/// <param name="channelName">Channel name.</param>
 			virtual void DeactivateChannelImpl(String^ channelName) override;
+			
 		private:
 			FloatCameraImage^ CalcZImage();
 			ColorCameraImage^ CalcColor();
@@ -120,7 +147,14 @@ namespace MetriCam2
 			static void LogOpenNIError(String^ status);
 			static int openNIInitCounter = 0;
 
-			void SetEmitter(bool on);
+			String^ GetEmitterStatus();
+			void SetEmitterStatus(bool on);
+
+			void SetIRGain(char value);
+			unsigned short GetIRGain();
+
+			void SetIRExposure(unsigned int value);
+			unsigned int GetIRExposure();
 
 			bool emitterEnabled;
 			OrbbecNativeCameraData* camData;

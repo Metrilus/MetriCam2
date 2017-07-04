@@ -8,6 +8,13 @@
 
 #define MAX_DEVICES 20  // There is no limitations, we choose 20 as "reasonable" value in real use case.
 
+//Adpated from SimpleViewer of experimental interface
+#define IR_Exposure_MAX 0x1000
+#define IR_Exposure_MIN 0x0
+#define IR_Exposure_SCALE 256
+#define IR_Gain_MIN 0x08
+#define IR_Gain_MAX 0x60
+
 // TODO:
 // * custom infrared channel
 // * color support
@@ -183,7 +190,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	}
 
 	int rc = camData->openNICam->init(deviceURI);
-	camData->openNICam->ldp_set(true); //Ensure eye-safety
+	camData->openNICam->ldp_set(true); //Ensure eye-safety by turning on the proximity sensor
 
 	// Start depth stream
 	camData->openNICam->device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
@@ -198,10 +205,14 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	}
 }
 
-void MetriCam2::Cameras::AstraOpenNI::SetEmitter(bool on)
+void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
 {
-	camData->openNICam->ldp_set(on);
-	System::Threading::Thread::Sleep(100); //Is required, otherwise turning off the emitter did not work in some cases, also not for just waiting 50ms
+	if (camData->openNICam->ldp_set(on) != openni::STATUS_OK)
+	{
+		LogOpenNIError("LDP set failed");
+	}
+
+	System::Threading::Thread::Sleep(100); //Is required, otherwise turning off the emitter did not work in some cases, also not when just waiting 50ms
 
 	// Try to activate next code block in future version of experimental SDK (class "cmd"). Currently, the LDP status is alwas unknown
 	//LDPStatus status;
@@ -214,7 +225,115 @@ void MetriCam2::Cameras::AstraOpenNI::SetEmitter(bool on)
 	//} 
 	//while (status != statusToSet);
 
-	camData->openNICam->emitter_set(on);
+	if (camData->openNICam->emitter_set(on)!= openni::STATUS_OK)
+	{
+		LogOpenNIError("Emitter set failed");
+	}
+}
+
+String^ MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
+{
+	LaserStatus status;
+	if (camData->openNICam->emitter_get(status) != openni::STATUS_OK)
+	{
+		LogOpenNIError("Emitter get failed");
+	}
+	String^ statusString = "Unknown";
+	if (status == LaserStatus::LASER_OFF)
+	{
+		statusString = "Off";
+	}
+	else if (status == LaserStatus::LASER_ON)
+	{
+		statusString = "On";
+	}
+	log->DebugFormat("Emitter status is: {0}", statusString);
+	return statusString;
+}
+
+void MetriCam2::Cameras::AstraOpenNI::SetIRGain(char valueChar)
+{
+	const char* value;
+	if (valueChar < IR_Gain_MIN)
+	{
+		value = "0x08";
+	}
+	else if (valueChar > IR_Gain_MAX)
+	{
+		value = "0x60";
+	}
+	else
+	{	
+		value = (char*)Marshal::StringToHGlobalAnsi("0x" + Convert::ToString((int)valueChar, 16)).ToPointer();
+	}	
+
+	if (!camData->openNICam->ir_gain_set(value))
+	{
+		LogOpenNIError("Set IR gain failed");
+	}
+	else
+	{
+		log->DebugFormat("IR gain is set to: {0}", gcnew String(value));
+	}
+}
+
+unsigned short MetriCam2::Cameras::AstraOpenNI::GetIRGain()
+{
+	camData->openNICam->ir_gain_get();
+	return camData->openNICam->m_I2CReg;
+}
+
+void MetriCam2::Cameras::AstraOpenNI::SetIRExposure(unsigned int value)
+{
+	unsigned int irExposure;
+	if (value < IR_Exposure_MIN)
+	{
+		irExposure = IR_Exposure_MIN;
+	}
+	else if (value > IR_Exposure_MAX)
+	{
+		irExposure = IR_Exposure_MAX;
+	}
+	else
+	{
+		irExposure = value;
+	}
+
+	if (camData->openNICam->ir_exposure_set(irExposure) != openni::STATUS_OK)
+	{
+		LogOpenNIError("Set IR exposure failed");
+	}
+	else
+	{
+		log->DebugFormat("IR exposure is set to: {0}", irExposure.ToString());
+	}
+	camData->depth->stop();	
+	camData->ir->start();
+	if (camData->ir->isValid())
+	{
+		VideoMode videomode = camData->ir->getVideoMode();
+		videomode.setPixelFormat(openni::PIXEL_FORMAT_GRAY16);
+		videomode.setResolution(640, 480);
+		camData->ir->setVideoMode(videomode);
+	}
+	camData->ir->stop();
+	camData->depth->start();
+	if (camData->depth->isValid())
+	{
+		VideoMode videoMode = camData->depth->getVideoMode();
+		videoMode.setResolution(640, 480);
+		camData->depth->setVideoMode(videoMode);
+	}
+}
+
+unsigned int MetriCam2::Cameras::AstraOpenNI::GetIRExposure()
+{
+	unsigned int exposure;
+	if (camData->openNICam->ir_exposure_get(exposure) != openni::STATUS_OK)
+	{
+		LogOpenNIError("Get IR exposure failed");
+	}
+	return exposure;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
@@ -322,7 +441,9 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 			return;
 		}
 
-		rc = camData->ir->start();
+		//Changing the exposure is not possible if both depth and ir streams have been running parallel in one session.
+
+		/*rc = camData->ir->start();
 		if (openni::STATUS_OK != rc)
 		{
 			log->Error("Couldn't start IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
@@ -340,7 +461,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 		irVideoMode = camData->ir->getVideoMode();
 		camData->irWidth = irVideoMode.getResolutionX();
-		camData->irHeight = irVideoMode.getResolutionY();
+		camData->irHeight = irVideoMode.getResolutionY();*/
 	}
 	else if (channelName->Equals(ChannelNames::Color))
 	{
