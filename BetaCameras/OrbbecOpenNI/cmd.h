@@ -186,8 +186,8 @@ private:
 	uint16_t m_camTag;
 	
 #ifdef WIN32	
-	XN_USB_DEV_HANDLE m_hUSBDevice;	
-	const XnUSBConnectionString* m_astrDevicePaths;
+	XN_USB_DEV_HANDLE m_hUSBDevice;
+	//const XnUSBConnectionString* m_astrDevicePaths; //Metrilus: Not required, since we know the device URI
 #else
 	libusb_device **devs;
 	libusb_device *dev;

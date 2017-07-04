@@ -62,10 +62,9 @@ cmd::~cmd(void)
 int cmd::init(const char* deviceURI)
 {
 	DeviceInfo dInfo;
-	uint32_t n = 0;
-	
 	//Metrilus has own, more flexible mode for initializing OpenNI, therefore the following block needs to be commented out
-	/*int rc = OpenNI::initialize();
+	/*uint32_t n = 0;	
+	int rc = OpenNI::initialize();
 	if (rc != STATUS_OK)
 	{
 		printf("Initialize failed\n%s\n", OpenNI::getExtendedError());
@@ -88,14 +87,15 @@ int cmd::init(const char* deviceURI)
 	if (nRetVal == XN_STATUS_USB_ALREADY_INIT)
 		nRetVal = XN_STATUS_OK;
 
-	rc = xnUSBEnumerateDevices(m_vid, m_pid, &m_astrDevicePaths, &n);
+	//We already know the device URI and thus do not need this block
+	/*rc = xnUSBEnumerateDevices(m_vid, m_pid, &m_astrDevicePaths, &n);
 	if(rc != STATUS_OK)
 	{
 		cout << " Error: failed to enumerate usb devices" << endl;
 	    return -1;
-	}
+	}*/
 
-	rc = xnUSBOpenDeviceByPath(*m_astrDevicePaths, &m_hUSBDevice);
+	rc = xnUSBOpenDeviceByPath(/**m_astrDevicePaths*/deviceURI, &m_hUSBDevice);
 	if (rc != STATUS_OK)
 	{
 		cout << " Error: failed to open device" << m_vid << m_pid << endl;
