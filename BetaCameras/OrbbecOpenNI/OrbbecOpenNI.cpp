@@ -202,6 +202,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	if (ActiveChannels->Count == 0)
 	{
 		ActivateChannel(ChannelNames::ZImage);
+		ActivateChannel(ChannelNames::Point3DImage);
 		//ActivateChannel(ChannelNames::Intensity);
 		if (String::IsNullOrWhiteSpace(SelectedChannel))
 		{
@@ -571,7 +572,7 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 			float c = -1;
 			//TODO: Wait until Orbbec devices support this feature
 			openni::CoordinateConverter::convertDepthToWorld(*(camData->depth), x, y, *pDepth, &a, &b, &c);
-			depthDataMeters[y, x] = Point3f(a, b, c);
+			depthDataMeters[y, x] = Point3f(a * 0.001f, b * 0.001f, c * 0.001f);
 		}
 		pDepthRow += rowSize;
 	}

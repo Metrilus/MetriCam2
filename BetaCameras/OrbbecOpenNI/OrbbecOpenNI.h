@@ -68,7 +68,9 @@ namespace MetriCam2
 			{
 				unsigned int get(void)
 				{
-					return GetIRExposure();
+					//ir_exposure_get in cmd class not yet functional and can destroy the current state of the camera
+					throw gcnew NotImplementedException();
+					//return GetIRExposure();
 				}
 				void set(unsigned int value)
 				{
