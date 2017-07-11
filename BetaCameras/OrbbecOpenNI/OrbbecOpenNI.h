@@ -60,6 +60,7 @@ namespace MetriCam2
 				void set(unsigned char value)
 				{
 					SetIRGain(value);
+					irGain = value;
 				}
 			}
 
@@ -75,6 +76,8 @@ namespace MetriCam2
 				void set(unsigned int value)
 				{
 					SetIRExposure(value);
+					// Set IRExposure resets the gain to its default value (96 for Astra and 8 for AstraS). We have to set the gain to the memorized value (member irGain).
+					SetIRGain(irGain);
 				}
 			}
 
@@ -148,6 +151,8 @@ namespace MetriCam2
 			static bool OpenNIShutdown();
 			static void LogOpenNIError(String^ status);
 			static int openNIInitCounter = 0;
+
+			unsigned short irGain = 0;
 
 			void InitDepthStream();
 			void InitIRStream();

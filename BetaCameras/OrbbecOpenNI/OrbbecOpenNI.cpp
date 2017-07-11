@@ -209,6 +209,8 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 			SelectChannel(ChannelNames::ZImage);
 		}
 	}
+
+	irGain = GetIRGain();
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
