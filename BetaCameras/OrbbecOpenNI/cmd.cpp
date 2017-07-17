@@ -685,7 +685,14 @@ int cmd::emitter_set(bool emitter_status)
 
 	data_len = 2;
 
-	ret = init_header(req_buf, CMD_ENABLE_EMITTER, data_len);
+	if (m_vid == 0x1d27) //Asus-Carmine devices
+	{
+		ret = init_header(req_buf, 42, data_len);
+	}
+	else //Orbbec devices
+	{
+		ret = init_header(req_buf, CMD_ENABLE_EMITTER, data_len);
+	}
 	if (ret)
 	{
 		cout << "init header of Emitter failed" << endl;

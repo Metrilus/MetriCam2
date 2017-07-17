@@ -215,12 +215,14 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
 {
-	if (camData->openNICam->ldp_set(on) != openni::STATUS_OK)
+	if (camData->openNICam->m_vid != 0x1d27) //Check if our device is not an Asus-Carmine device (no proximity sensors for Asus devices)
 	{
-		LogOpenNIError("LDP set failed");
+		if (camData->openNICam->ldp_set(on) != openni::STATUS_OK)
+		{
+			LogOpenNIError("LDP set failed");
+		}
+		System::Threading::Thread::Sleep(100); //Is required, otherwise turning off the emitter did not work in some cases, also not when just waiting 50ms
 	}
-
-	System::Threading::Thread::Sleep(100); //Is required, otherwise turning off the emitter did not work in some cases, also not when just waiting 50ms
 
 	// Try to activate next code block in future version of experimental SDK (class "cmd"). Currently, the LDP status is alwas unknown
 	//LDPStatus status;
