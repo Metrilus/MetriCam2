@@ -211,6 +211,9 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	}
 
 	irGain = GetIRGain();
+
+	camData->openNICam->get_version();
+	camData->openNICam->get_cmos_params();
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
@@ -462,6 +465,12 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		depthVideoMode = camData->depth->getVideoMode();
 		camData->depthWidth = depthVideoMode.getResolutionX();
 		camData->depthHeight = depthVideoMode.getResolutionY();
+
+		if (this->IsConnected)
+		{
+			//Activating the depth channel resets the IR gain to the default value -> we need to restore the value that was set before.
+			SetIRGain(irGain);
+		}
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{	
