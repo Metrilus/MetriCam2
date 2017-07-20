@@ -97,14 +97,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE64);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0\x64\Include;Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>
       </TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>XnLib_x64_debug.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB64)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;Z:\external-libraries\Orbbec\OpenNI2\2.3.0\x64\Lib</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>
       </TreatLinkerWarningAsErrors>
     </Link>
@@ -115,11 +115,11 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE32);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0\Win32\Include;Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>XnLib_win32_debug.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB32)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;Z:\external-libraries\Orbbec\OpenNI2\2.3.0\Win32\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -127,13 +127,13 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE32);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0\Win32\Include;Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>XnLib_win32_release.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB32)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;Z:\external-libraries\Orbbec\OpenNI2\2.3.0\Win32\Lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -143,12 +143,12 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(OPENNI2_INCLUDE64);Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0\x64\Include;Z:\external-libraries\Orbbec\XnLib\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <AdditionalDependencies>XnLib_x64_release.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;$(OPENNI2_LIB64)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;Z:\external-libraries\Orbbec\OpenNI2\2.3.0\x64\Lib</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
