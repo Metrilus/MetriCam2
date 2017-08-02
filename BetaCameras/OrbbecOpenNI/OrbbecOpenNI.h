@@ -9,6 +9,7 @@ using namespace System;
 using namespace System::ComponentModel;
 using namespace System::Threading;
 using namespace System::Runtime::InteropServices;
+using namespace System::Drawing;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
 
@@ -28,6 +29,10 @@ namespace MetriCam2
 			openni::VideoStream* ir;
 			int irWidth;
 			int irHeight;
+
+			openni::VideoStream* color;
+			int colorWidth;
+			int colorHeight;
 		};
 
 		public ref class AstraOpenNI : Camera
@@ -156,6 +161,7 @@ namespace MetriCam2
 
 			void InitDepthStream();
 			void InitIRStream();
+			void InitColorStream();
 
 			String^ GetEmitterStatus();
 			void SetEmitterStatus(bool on);

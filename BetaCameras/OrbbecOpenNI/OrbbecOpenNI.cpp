@@ -27,6 +27,7 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 
 	camData->depth = new openni::VideoStream();
 	camData->ir = new openni::VideoStream();
+	camData->color = new openni::VideoStream();
 
 	emitterEnabled = true;
 }
@@ -198,12 +199,14 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 
 	InitDepthStream();
 	InitIRStream();
+	InitColorStream();
 
 	if (ActiveChannels->Count == 0)
 	{
 		ActivateChannel(ChannelNames::ZImage);
 		ActivateChannel(ChannelNames::Point3DImage);
-		//ActivateChannel(ChannelNames::Intensity);
+		//ActivateChannel(ChannelNames::Color); //Do not activate channel color by default in order to avoid running into bandwidth problems (e.g. when multiple cameras ares used over USB hubs)
+		//ActivateChannel(ChannelNames::Intensity); // Channel intensity cannot be activated, if depth/3D data channel is active
 		if (String::IsNullOrWhiteSpace(SelectedChannel))
 		{
 			SelectChannel(ChannelNames::ZImage);
@@ -369,6 +372,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 	openni::VideoStream** m_streams = new openni::VideoStream*[2];
 	m_streams[0] = camData->depth;
 	m_streams[1] = camData->ir;
+	//m_streams[2] = camData->color;
 
 	int changedIndex;
 	openni::Status rc = openni::OpenNI::waitForAnyStream(m_streams, 2, &changedIndex);
@@ -420,9 +424,22 @@ void MetriCam2::Cameras::AstraOpenNI::InitIRStream()
 	//Init IR stream
 	openni::Status rc = camData->ir->create(camData->openNICam->device, openni::SENSOR_IR);
 	camData->ir->setMirroringEnabled(false);
-	if (openni::STATUS_OK != rc) 
+	if (openni::STATUS_OK != rc)
 	{
 		log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+		openni::OpenNI::shutdown();
+		return;
+	}
+}
+
+void MetriCam2::Cameras::AstraOpenNI::InitColorStream()
+{
+	//Init color stream
+	openni::Status rc = camData->color->create(camData->openNICam->device, openni::SENSOR_COLOR);
+	camData->color->setMirroringEnabled(false);
+	if (openni::STATUS_OK != rc)
+	{
+		log->Error("Couldn't find color stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
 		openni::OpenNI::shutdown();
 		return;
 	}
@@ -474,9 +491,9 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{	
-		if (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage))
+		if (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage) || IsChannelActive(ChannelNames::Color))
 		{
-			throw gcnew Exception("IR and depth are not allowed to be active at the same time. Please deactivate channel \"ZImage\" and \"Point3DImage\" before activating channel \"Intensity\"");
+			throw gcnew Exception("IR and depth/color are not allowed to be active at the same time. Please deactivate channel \"ZImage\", \"Point3DImage\" and \"Color\" before activating channel \"Intensity\"");
 		}
 
 		//Changing the exposure is not possible if both depth and ir streams have been running parallel in one session.
@@ -507,7 +524,37 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 	}
 	else if (channelName->Equals(ChannelNames::Color))
 	{
-		throw gcnew NotImplementedException();
+		if (IsChannelActive(ChannelNames::Intensity))
+		{
+			throw gcnew Exception("IR and color are not allowed to be active at the same time. Please deactivate channel \"Intensity\" before activating channel \"Color\"");
+		}
+
+		openni::VideoMode colorVideoMode = camData->color->getVideoMode();
+		//Setting the resolution to 1280/640 does not work, even if we start only the color channel (image is corrupted)
+		/*colorVideoMode.setResolution(1280, 960);
+		colorVideoMode.setFps(7);*/
+		colorVideoMode.setResolution(640, 480);
+		camData->color->setVideoMode(colorVideoMode);
+
+		rc = camData->color->start();
+		if (openni::STATUS_OK != rc)
+		{
+			log->Error("Couldn't start color stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+			camData->color->destroy();
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		if (!camData->color->isValid())
+		{
+			log->Error("No valid color stream. Exiting\n");
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		colorVideoMode = camData->color->getVideoMode();
+		camData->colorWidth = colorVideoMode.getResolutionX();
+		camData->colorHeight = colorVideoMode.getResolutionY();
 	}
 
 	log->LeaveMethod();
@@ -522,6 +569,10 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{
 		camData->ir->stop();
+	}
+	else if (channelName->Equals(ChannelNames::Color))
+	{
+		camData->color->stop();
 	}
 }
 
@@ -555,8 +606,45 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 
 ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 {
-	throw gcnew System::NotImplementedException();
-	// TODO: insert return statement here
+	openni::VideoFrameRef m_colorFrame;
+	camData->color->readFrame(&m_colorFrame);
+
+	if (!m_colorFrame.isValid())
+	{
+		log->Error("Color frame is not valid...\n");
+		return nullptr;
+	}
+
+	//const RGB888Pixel* pImageRow = (const RGB888Pixel*)m_colorFrame.getData();
+
+	Bitmap^ bitmap = gcnew Bitmap(camData->colorWidth, camData->colorHeight, System::Drawing::Imaging::PixelFormat::Format24bppRgb);
+
+	System::Drawing::Rectangle^ imageRect = gcnew System::Drawing::Rectangle(0, 0, camData->colorWidth, camData->colorHeight);
+
+	System::Drawing::Imaging::BitmapData^ bmpData = bitmap->LockBits(*imageRect, System::Drawing::Imaging::ImageLockMode::WriteOnly, bitmap->PixelFormat);
+
+	const unsigned char* source = (unsigned char*)m_colorFrame.getData();
+	unsigned char* target = (unsigned char*)(void*)bmpData->Scan0;
+	for (int y = 0; y < camData->colorHeight; y++)
+	{
+		const unsigned char* sourceLine = source + y*m_colorFrame.getStrideInBytes();
+		for (int x = 0; x < camData->colorWidth; x++)
+		{
+			target[2] = *sourceLine++;
+			target[1] = *sourceLine++;
+			target[0] = *sourceLine++;
+			target += 3;
+		}
+	}
+
+
+	//memcpy((void*)bmpData->Scan0, pImageRow, camData->colorWidth * camData->colorHeight * 3);
+
+	bitmap->UnlockBits(bmpData);
+
+	ColorCameraImage^ image = gcnew ColorCameraImage(bitmap);
+
+	return image;
 }
 
 Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
@@ -583,8 +671,8 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 			float a = -1;
 			float b = -1;
 			float c = -1;
-			//TODO: Wait until Orbbec devices support this feature
 			openni::CoordinateConverter::convertDepthToWorld(*(camData->depth), x, y, *pDepth, &a, &b, &c);
+
 			depthDataMeters[y, x] = Point3f(a * 0.001f, b * 0.001f, c * 0.001f);
 		}
 		pDepthRow += rowSize;
