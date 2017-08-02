@@ -101,6 +101,9 @@ namespace MetriCam2
 
 			static System::Collections::Generic::Dictionary<String^, String^>^ GetSerialToUriMappingOfAttachedCameras();
 
+			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
+			virtual Metrilus::Util::RigidBodyTransformation^ GetExtrinsics(String^ channelFromName, String^ channelToName) override;
+
 		protected:
 			/// <summary>
 			/// Resets list of available channels (<see cref="Channels"/>) to union of all cameras supported by the implementing class.

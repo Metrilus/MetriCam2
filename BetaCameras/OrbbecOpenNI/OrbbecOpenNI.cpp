@@ -16,7 +16,6 @@
 #define IR_Gain_MAX 0x60
 
 // TODO:
-// * color support
 // * support different resolutions (not only VGA) for channels ZImage and Intensity and check whether IR gain/exposure set feature is still working.
 // * At least the mode 1280x1024 seems to be not compatible with the IR exposure set feature. For QVGA there seem to be problems to set the exposure when the Intensity channel is activated.
 
@@ -710,4 +709,90 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 		pIRRow += rowSize;
 	}
 	return irDataMeters;
+}
+
+Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIntrinsics(String^ channelName)
+{
+	Metrilus::Util::IProjectiveTransformation^ result = nullptr;
+
+	log->Info("Trying to load projective transformation from file.");
+	try
+	{
+		result = Camera::GetIntrinsics(channelName);
+	}
+	catch (...) 
+	{ 
+		/* empty */ 
+	}
+
+	if (result == nullptr)
+	{
+		log->Info("Projective transformation file not found.");
+		log->Info("Using Orbbec factory intrinsics as projective transformation.");
+
+		if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
+		{
+			//Extracted from 3-D coordinates
+			result = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 570.3422f, 570.3422f, 320, 240, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+		}
+		else if (channelName->Equals(ChannelNames::Color))
+		{
+			// Extracted from file in Orbbec calibration tool
+			result = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 512.408f, 512.999, 327.955f, 236.763f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+		}
+		else
+		{
+			log->Error("Unsupported channel in GetIntrinsics().");
+			return nullptr;
+		}
+
+	}
+	return result;
+}
+
+Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExtrinsics(String^ channelFromName, String^ channelToName)
+{
+	Metrilus::Util::RigidBodyTransformation^ result = nullptr;
+
+	log->Info("Trying to load extrinsics from file.");
+	try
+	{
+		result = Camera::GetExtrinsics(channelFromName, channelToName);
+	}
+	catch (...)
+	{
+		/* empty */
+	}
+
+	if (result == nullptr)
+	{
+		log->Info("Extrinsices file not found.");
+		log->Info("Using Orbbec factory extrinsics as projective transformation.");
+
+		//Extracted from file in Orbbec calibration tool
+		Metrilus::Util::RotationMatrix^ rotMat = gcnew Metrilus::Util::RotationMatrix(
+			Point3f(0.999983f, -0.00264698f, 0.00526572f),
+			Point3f(0.00264383f, 0.999996f, 0.000603628f),
+			Point3f(-0.0052673f, -0.000589696f, 0.999986f));
+		
+		//TODO: Compare with own calibration, since IR-to-depth shift (in y-direction) can have an effect on the transformation
+		Metrilus::Util::RigidBodyTransformation^ depthToColor = gcnew Metrilus::Util::RigidBodyTransformation(rotMat, Point3f(-0.0242641f, -0.000439535f, -0.000577864));
+
+		if ((channelFromName->Equals(ChannelNames::Intensity) || channelFromName->Equals(ChannelNames::ZImage)) && channelToName->Equals(ChannelNames::Color))
+		{			
+			return depthToColor;
+		}
+		else if (channelFromName->Equals(ChannelNames::Color) && (channelToName->Equals(ChannelNames::Intensity) || channelToName->Equals(ChannelNames::ZImage)))
+		{
+			// Extracted from file in Orbbec calibration tool
+			return depthToColor->GetInverted();
+		}
+		else
+		{
+			log->Error("Unsupported channel combination in GetExtrinsics().");
+			return nullptr;
+		}
+
+	}
+	return result;
 }
