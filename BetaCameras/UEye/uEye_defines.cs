@@ -1,4 +1,7 @@
-﻿#pragma warning disable 0169
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+#pragma warning disable 0169
 #pragma warning disable 0649
 
 namespace MetriCam2.Cameras.Internal.uEye
