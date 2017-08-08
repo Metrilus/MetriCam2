@@ -1,4 +1,6 @@
-// This is the main DLL file.
+// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
 #include "stdafx.h"
 #include "Orbbec.h"
 #include <cmath>

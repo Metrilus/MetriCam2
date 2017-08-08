@@ -1,4 +1,7 @@
-﻿using CookComputing.XmlRpc;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using CookComputing.XmlRpc;
 using MetriCam2.Cameras.IFM;
 using Metrilus.Util;
 using System;

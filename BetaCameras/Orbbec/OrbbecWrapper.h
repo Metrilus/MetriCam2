@@ -1,3 +1,6 @@
+// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
 #pragma once
 #include <astra_core\astra_core.hpp>
 #include <astra\astra.hpp>

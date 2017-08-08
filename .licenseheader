@@ -1,0 +1,19 @@
+extensions: designer.cs generated.cs
+extensions: .cs .cpp .h
+// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+extensions: .aspx .ascx
+<%-- 
+Copyright (c) Metrilus GmbH
+MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+--%>
+extensions: .vb
+'Copyright (c) Metrilus GmbH
+'MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+extensions:  .xml .config .xsd
+<!--
+Copyright (c) Metrilus GmbH
+MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+-->

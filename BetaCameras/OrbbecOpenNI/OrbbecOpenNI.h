@@ -1,9 +1,10 @@
-// OrbbecOpenNI.h
+// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
+#pragma once
 #include <msclr/marshal.h>
 #include <OpenNI.h>
 #include "cmd.h"
-#pragma once
 
 using namespace System;
 using namespace System::ComponentModel;

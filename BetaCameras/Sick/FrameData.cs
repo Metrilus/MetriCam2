@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using System;
 using System.Xml;
 using System.Text;
 using System.IO;

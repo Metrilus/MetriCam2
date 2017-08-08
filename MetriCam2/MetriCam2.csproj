@@ -96,6 +96,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.licenseheader">
+      <Link>.licenseheader</Link>
+    </None>
     <None Include="packages.config" />
     <None Include="Resources\MetriCam-Icon.png" />
   </ItemGroup>
