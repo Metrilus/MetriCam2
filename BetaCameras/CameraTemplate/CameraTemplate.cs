@@ -217,6 +217,25 @@ namespace MetriCam2.Cameras
         }
         public float FloatParam { get; set; }
 
+        private ListParamDesc<float> FormatedFloatWithAllowedValuesDesc
+        {
+            get
+            {
+                var availableValues = new System.Collections.Generic.List<float>();
+                availableValues.Add(8.3f);
+                availableValues.Add(10.0f);
+                availableValues.Add(15.0f);
+                availableValues.Add(25.1f);
+                return new ListParamDesc<float>(availableValues, "0.0")
+                {
+                    Description = "FloatParam with 1 decimal and a list of allowed values",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                };
+            }
+        }
+        public float FormatedFloatWithAllowedValues { get; set; }
+
         private ParamDesc<double> DoubleParamDesc
         {
             get

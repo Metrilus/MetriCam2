@@ -370,6 +370,12 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
             SetParameterToInvalid(paramName, oobHigh.ToString("F2"));
             // invalid values
             TestNonNumericValues(paramName);
+
+            // allowed values are: 8.3, 10.0, 15.0, 25.1
+            paramName = "FormatedFloatWithAllowedValues";
+
+            SetParameterToValid(paramName, 10.0f);
+            SetParameterToInvalid(paramName, 12.3f);
         }
 
         private static void TestDoubleParam()
