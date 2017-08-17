@@ -662,6 +662,7 @@ namespace MetriCam2
                 }
 
                 string valueAsString = GetAsGoodString(value);
+                T castedValue = default(T);
 
                 bool isTypeConvertible = false;
                 if (value is string)
@@ -672,8 +673,7 @@ namespace MetriCam2
                 {
                     try
                     {
-                        T castedValue = (T)Convert.ChangeType(value, this.Type, CultureInfo.InvariantCulture);
-                        isTypeConvertible = (null != castedValue);
+                        castedValue = (T)Convert.ChangeType(value, this.Type, CultureInfo.InvariantCulture);
                     }
                     catch (ArgumentNullException)
                     { /* empty */ }
@@ -683,7 +683,10 @@ namespace MetriCam2
                     { /* empty */ }
                     catch (OverflowException)
                     { /* empty */ }
+
+                    isTypeConvertible = (null != castedValue);
                 }
+
                 if (!isTypeConvertible)
                 {
                     throw new InvalidCastException("Cast failed and returned null.");
@@ -702,7 +705,8 @@ namespace MetriCam2
                     }
                     else
                     {
-                        if (valueAsString.Equals(item.ToString().ToLower()))
+                        T castedItem = (T)Convert.ChangeType(item, this.Type, CultureInfo.InvariantCulture);
+                        if (castedItem.Equals(castedValue))
                         {
                             return true;
                         }
