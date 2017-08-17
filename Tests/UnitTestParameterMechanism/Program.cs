@@ -375,6 +375,8 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
             paramName = "FormatedFloatWithAllowedValues";
 
             SetParameterToValid(paramName, 10.0f);
+            SetParameterToValid(paramName, "10");
+            SetParameterToValid(paramName, "10.0");
             SetParameterToInvalid(paramName, 12.3f);
         }
 
