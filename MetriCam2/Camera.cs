@@ -674,6 +674,7 @@ namespace MetriCam2
                     try
                     {
                         castedValue = (T)Convert.ChangeType(value, this.Type, CultureInfo.InvariantCulture);
+                        isTypeConvertible = (null != castedValue);
                     }
                     catch (ArgumentNullException)
                     { /* empty */ }
@@ -683,8 +684,6 @@ namespace MetriCam2
                     { /* empty */ }
                     catch (OverflowException)
                     { /* empty */ }
-
-                    isTypeConvertible = (null != castedValue);
                 }
 
                 if (!isTypeConvertible)
