@@ -2722,6 +2722,9 @@ namespace MetriCam2
         {
             log.Debug("GetCalibrationPathFromRegistry");
 
+#if NETSTANDARD2_0
+            return null;
+#else
             if (null != calibrationPathRegistry)
             {
                 log.DebugFormat("  using cached value: '{0}'", calibrationPathRegistry);
@@ -2770,6 +2773,7 @@ namespace MetriCam2
             log.DebugFormat(@"Calibration path = '{0}'", calibrationPathRegistry);
 
             return calibrationPathRegistry;
+#endif
         }
 
         /// <summary>
