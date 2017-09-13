@@ -120,6 +120,23 @@ typedef struct {
     } cam_hdr;	
 #endif
 
+typedef struct OBCameraParams
+{
+	float l_intr_p[4];//[fx,fy,cx,cy]
+	float r_intr_p[4];//[fx,fy,cx,cy]
+	float r2l_r[9];//[r00,r01,r02;r10,r11,r12;r20,r21,r22]
+	float r2l_t[3];//[t1,t2,t3]
+	float l_k[5];//[k1,k2,k3,p1,p2]
+	float r_k[5];//[k1,k2,k3,p1,p2]
+	int is_m;
+}OBCameraParams;
+
+typedef struct ParamsResult
+{
+	int error;
+	OBCameraParams params;
+};
+
 
 #define CMD_HEADER_MAGIC	(0x4d47)
 #define CMD_HEADER_LEN		(0x08)
@@ -135,7 +152,7 @@ public:
 	int init(const char* deviceURI); //Metrilus has added parameter deviceURI, otherwise on could not choose the serial of the camera to connect
 	int get_version(void);
 	int get_sn_number(void);
-	int get_cmos_params(void);
+	ParamsResult get_cmos_params(int print);
 	//int get_cmos_data(uint32_t offset, uint16_t size);
 	// the tec data and the temparature of function doesn't apply
 	//float get_temparature(void);
@@ -199,17 +216,6 @@ private:
 	int init_header(void *buf, uint16_t cmd, uint16_t data_len);
 	int send(void *cmd_req, uint16_t req_len, void *cmd_resp, uint16_t *resp_len);
 };
-
-typedef struct OBCameraParams
-{
-	float l_intr_p[4];//[fx,fy,cx,cy]
-	float r_intr_p[4];//[fx,fy,cx,cy]
-	float r2l_r[9];//[r00,r01,r02;r10,r11,r12;r20,r21,r22]
-	float r2l_t[3];//[t1,t2,t3]
-	float l_k[5];//[k1,k2,k3,p1,p2]
-	float r_k[5];//[k1,k2,k3,p1,p2]
-	int is_m;
-}OBCameraParams;
 
 #define IsMirroredTrue		1
 #define IsMirroredFalse		2

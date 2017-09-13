@@ -384,13 +384,15 @@ int cmd::get_version(void)
 
 }
 
-int cmd::get_cmos_params(void)
+ParamsResult cmd::get_cmos_params(int print)
 {
 	int ret;
 	uint16_t data_len;
 	uint16_t resp_len;
 	uint32_t *p = NULL;
 	OBCameraParams param[1];
+	ParamsResult result;
+	OBCameraParams empty;
 
 	memset(param, 0, sizeof(OBCameraParams));
 
@@ -399,7 +401,9 @@ int cmd::get_cmos_params(void)
 	if (ret)
 	{
 		cout << "init header of get_cmos_params failed" << endl;
-		return ret;
+		result.error = ret;
+		result.params = empty;
+		return result;
 	}
 
 	ret = send(req_buf, CMD_HEADER_LEN + data_len, resp_buf, &resp_len);
@@ -407,41 +411,46 @@ int cmd::get_cmos_params(void)
 		cout << "send cmd get_cmos_params failed" << endl;
 
 	memcpy((unsigned char *)param, resp_buf + 10, sizeof(OBCameraParams));
+
+	if (print)
+	{
+		if (param[0].is_m == IsMirroredTrue)
+		{
+			printf("Mirrored : yes\n");
+		}
+		else if (param[0].is_m == IsMirroredFalse)
+		{
+			printf("Mirrored : no\n");
+		}
+		else
+		{
+			printf("Unkonwn status of mirror\n");
+		}
+
+		printf("[IR Camera Intrinsic]\n %.3f %.3f %.3f %.3f\n",
+			param[0].l_intr_p[0], param[0].l_intr_p[1],
+			param[0].l_intr_p[2], param[0].l_intr_p[3]);
+		printf("RGB Camera Intrinsic]\n %.3f %.3f %.3f %.3f\n",
+			param[0].r_intr_p[0], param[0].r_intr_p[1],
+			param[0].r_intr_p[2], param[0].r_intr_p[3]);
+		printf("[Rotate Matrix]\n");
+		printf(" %.3f %.3f %.3f\n %.3f %.3f %.3f\n %.3f %.3f %.3f\n",
+			param[0].r2l_r[0], param[0].r2l_r[1], param[0].r2l_r[2],
+			param[0].r2l_r[3], param[0].r2l_r[4], param[0].r2l_r[5],
+			param[0].r2l_r[6], param[0].r2l_r[7], param[0].r2l_r[8]);
+		printf("[Translate Matrix]\n %.3f %.3f %.3f\n",
+			param[0].r2l_t[0], param[0].r2l_t[1], param[0].r2l_t[2]);
+		printf("[IR Camera Distorted Params ]\n %f %f %f %f %f\n",
+			param[0].l_k[0], param[0].l_k[1], param[0].l_k[2],
+			param[0].l_k[3], param[0].l_k[4]);
+		printf("[RGB Camera Distorted Params]\n %f %f %f %f %f\n",
+			param[0].r_k[0], param[0].r_k[1], param[0].r_k[2],
+			param[0].r_k[3], param[0].r_k[4]);
+	}
 	
-	if (param[0].is_m == IsMirroredTrue)
-	{
-		printf("Mirrored : yes\n");
-	}
-	else if (param[0].is_m == IsMirroredFalse)
-	{
-		printf("Mirrored : no\n");
-	}
-	else
-	{
-		printf("Unkonwn status of mirror\n");
-	}
-
-	printf("[IR Camera Intrinsic]\n %.3f %.3f %.3f %.3f\n",
-		param[0].l_intr_p[0], param[0].l_intr_p[1],
-		param[0].l_intr_p[2], param[0].l_intr_p[3]);
-	printf("RGB Camera Intrinsic]\n %.3f %.3f %.3f %.3f\n",
-		param[0].r_intr_p[0], param[0].r_intr_p[1],
-		param[0].r_intr_p[2], param[0].r_intr_p[3]);
-	printf("[Rotate Matrix]\n");
-	printf(" %.3f %.3f %.3f\n %.3f %.3f %.3f\n %.3f %.3f %.3f\n",
-		param[0].r2l_r[0], param[0].r2l_r[1], param[0].r2l_r[2],
-		param[0].r2l_r[3], param[0].r2l_r[4], param[0].r2l_r[5],
-		param[0].r2l_r[6], param[0].r2l_r[7], param[0].r2l_r[8]);
-	printf("[Translate Matrix]\n %.3f %.3f %.3f\n",
-		param[0].r2l_t[0], param[0].r2l_t[1], param[0].r2l_t[2]);
-	printf("[IR Camera Distorted Params ]\n %f %f %f %f %f\n",
-		param[0].l_k[0], param[0].l_k[1], param[0].l_k[2], 
-		param[0].l_k[3], param[0].l_k[4]);
-	printf("[RGB Camera Distorted Params]\n %f %f %f %f %f\n",
-		param[0].r_k[0], param[0].r_k[1], param[0].r_k[2],
-		param[0].r_k[3], param[0].r_k[4]);
-
-	return ret;
+	result.error = ret;
+	result.params = param[0];
+	return result;
 }
 
 // the tec data and the temparature of function doesn't apply
