@@ -723,6 +723,7 @@ namespace MetriCam2
 
         private void LoadRegistryDirectoryAssemblies()
         {
+#if !NETSTANDARD2_0
             RegistryKey rk = Registry.LocalMachine; // HKLM
             string[] subkeys = new string[] { "SOFTWARE", "Metrilus GmbH" };
 
@@ -753,6 +754,7 @@ namespace MetriCam2
             }
             catch
             { /* empty */ }
+#endif
         }
 
         private void LoadLocalDirectoryAssemblies()
@@ -829,6 +831,6 @@ namespace MetriCam2
         /// <returns></returns>
         [DllImport("kernel32.dll")]
         private static extern IntPtr LoadLibrary(string dllToLoad);
-        #endregion
+#endregion
     }
 }
