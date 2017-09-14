@@ -408,7 +408,12 @@ ParamsResult cmd::get_cmos_params(int print)
 
 	ret = send(req_buf, CMD_HEADER_LEN + data_len, resp_buf, &resp_len);
 	if (ret)
+	{
 		cout << "send cmd get_cmos_params failed" << endl;
+		result.error = ret;
+		result.params = empty;
+		return result;
+	}
 
 	memcpy((unsigned char *)param, resp_buf + 10, sizeof(OBCameraParams));
 

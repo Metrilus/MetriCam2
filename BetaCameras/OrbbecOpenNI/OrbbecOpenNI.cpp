@@ -810,9 +810,12 @@ Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExt
 		ParamsResult res = camData->openNICam->get_cmos_params(0);
 
 		Metrilus::Util::RotationMatrix^ rotMat;
+		Point3f translation;
 
 		if (res.error)
 		{
+			translation = Point3f(-0.0242641f, -0.000439535f, -0.000577864);
+
 			//Extracted from file in Orbbec calibration tool
 			rotMat = gcnew Metrilus::Util::RotationMatrix(
 				Point3f(0.999983f, -0.00264698f, 0.00526572f),
@@ -821,21 +824,12 @@ Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExt
 		}
 		else
 		{
+			translation = Point3f(res.params.r2l_t[0] / 1000, res.params.r2l_t[1] / 1000, res.params.r2l_t[2] / 1000);
+
 			rotMat = gcnew Metrilus::Util::RotationMatrix(
 				Point3f(res.params.r2l_r[0], res.params.r2l_r[3], res.params.r2l_r[6]),
 				Point3f(res.params.r2l_r[1], res.params.r2l_r[4], res.params.r2l_r[7]),
 				Point3f(res.params.r2l_r[2], res.params.r2l_r[5], res.params.r2l_r[8]));
-		}
-		
-		Point3f translation;
-
-		if (res.error)
-		{
-			translation = Point3f(-0.0242641f, -0.000439535f, -0.000577864);
-		}
-		else
-		{
-			translation = Point3f(res.params.r2l_t[0] / 1000, res.params.r2l_t[1] / 1000, res.params.r2l_t[2] / 1000);
 		}
 
 		//TODO: Compare with own calibration, since IR-to-depth shift (in y-direction) can have an effect on the transformation
