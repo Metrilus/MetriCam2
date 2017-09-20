@@ -1,5 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -64,6 +63,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealSense", "BetaCameras\RealSense\RealSense.csproj", "{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIVoxel", "BetaCameras\TIVoxel-VS2013\TIVoxel.vcxproj", "{ECF2A55A-67D9-48B7-936C-873FC6C07364}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaslerToF", "BetaCameras\BaslerToF\BaslerToF.csproj", "{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
