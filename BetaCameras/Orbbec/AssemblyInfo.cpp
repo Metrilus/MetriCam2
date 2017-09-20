@@ -1,3 +1,6 @@
+// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
 #include "stdafx.h"
 #include "../../SolutionAssemblyInfo.h"
 
@@ -12,7 +15,7 @@ using namespace System::Security::Permissions;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 //
-[assembly:AssemblyTitleAttribute("MetriCam 2: Webcam wrapper")];
+[assembly:AssemblyTitleAttribute("MetriCam 2: Orbbec wrapper")];
 [assembly:AssemblyDescriptionAttribute("MetriCam 2 wrapper for Orbbec cameras")];
 [assembly:MetriCam2::Attributes::ContainsCameraImplementations]
 

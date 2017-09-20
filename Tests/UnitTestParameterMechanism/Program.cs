@@ -1,4 +1,7 @@
-﻿using MetriCam2;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using MetriCam2;
 using MetriCam2.Cameras;
 using MetriCam2.Exceptions;
 using Metrilus.Logging;
@@ -367,6 +370,14 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
             SetParameterToInvalid(paramName, oobHigh.ToString("F2"));
             // invalid values
             TestNonNumericValues(paramName);
+
+            // allowed values are: 8.3, 10.0, 15.0, 25.1
+            paramName = "FormatedFloatWithAllowedValues";
+
+            SetParameterToValid(paramName, 10.0f);
+            SetParameterToValid(paramName, "10");
+            SetParameterToValid(paramName, "10.0");
+            SetParameterToInvalid(paramName, 12.3f);
         }
 
         private static void TestDoubleParam()

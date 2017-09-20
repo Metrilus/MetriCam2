@@ -1,4 +1,7 @@
-﻿using MetriCam2.Exceptions;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using MetriCam2.Exceptions;
 using Metrilus.Logging;
 using System;
 using System.Reflection;
@@ -56,7 +59,7 @@ namespace MetriCam2
         /// <returns></returns>
         public static MetriCam2Exception BuildFromID(Type exceptionType, Camera cam, int exceptionID, string additionalInformation = null)
         {
-            ResourceManager rm = new ResourceManager(cam.GetType());
+            ResourceManager rm = new ResourceManager("MetriCam2.Cameras.Properties.Resources", cam.GetType().Assembly);
             string resourceID = "_" + exceptionID.ToString("000");
             string fullExceptionID = cam.GetType().Name + resourceID;
             string message = null;

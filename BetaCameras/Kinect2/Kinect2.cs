@@ -1,4 +1,7 @@
-﻿using MetriCam2.Exceptions;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using MetriCam2.Exceptions;
 using Metrilus.Util;
 using Microsoft.Kinect;
 using System;
@@ -118,6 +121,15 @@ namespace MetriCam2.Cameras
         {
             get { return "Microsoft"; }
         }
+
+        /// <summary>
+        /// Optional timeout for method <see cref="UpdateImpl"/>. If set to Timeout.Infinite (-1), the update-timeout is deactivated.
+        /// </summary>
+        public int UpdateTimeoutMilliseconds
+        {
+            get;
+            set;
+        }
         #endregion
 
         #region Constructor
@@ -126,6 +138,7 @@ namespace MetriCam2.Cameras
         {
             dataAvailable = new AutoResetEvent(false);
             CalcHandPatches = true;
+            UpdateTimeoutMilliseconds = Timeout.Infinite;
             enableImplicitThreadSafety = true;
             //depthHandBuffer = new float[(int)Width, (int)Height];
             //ampHandBuffer = new float[(int)Width, (int)Height];
@@ -228,7 +241,7 @@ namespace MetriCam2.Cameras
             if (this.multiReader != null)
             {
                 this.multiReader.MultiSourceFrameArrived += this.Reader_MultiSourceFrameArrived;
-            }
+            }            
 
             // Opening the sensor may take a short while
             const int NumRetriesIsOpen = 30;
@@ -324,7 +337,10 @@ namespace MetriCam2.Cameras
 
             do
             {
-                dataAvailable.WaitOne();
+                if(!dataAvailable.WaitOne(UpdateTimeoutMilliseconds))
+                {
+                    throw ExceptionBuilder.BuildFromID(typeof(MetriCam2Exception), this, 005);
+                }
 
                 lock (newFrameLock)
                 {

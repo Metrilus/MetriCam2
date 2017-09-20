@@ -1,4 +1,7 @@
-﻿using MetriCam2.Cameras;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using MetriCam2.Cameras;
 using Metrilus.Util;
 using System;
 using System.Collections.Generic;

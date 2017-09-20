@@ -1,5 +1,7 @@
-// Orbbec.h
+// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
+#pragma once
 #include <astra_core\astra_core.hpp>
 #include <astra\streams\Infrared.hpp>
 #include <astra\astra.hpp>
@@ -8,7 +10,6 @@
 #include <iterator>
 #include <set>
 
-#pragma once
 using namespace MetriCam2;
 using namespace MetriCam2::Exceptions;
 using namespace Metrilus::Util;

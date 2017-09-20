@@ -1,4 +1,5 @@
-// This is the main DLL file.
+// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 #include "stdafx.h"
 #include <string>
@@ -16,7 +17,6 @@
 #define IR_Gain_MAX 0x60
 
 // TODO:
-// * color support
 // * support different resolutions (not only VGA) for channels ZImage and Intensity and check whether IR gain/exposure set feature is still working.
 // * At least the mode 1280x1024 seems to be not compatible with the IR exposure set feature. For QVGA there seem to be problems to set the exposure when the Intensity channel is activated.
 
@@ -27,6 +27,7 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 
 	camData->depth = new openni::VideoStream();
 	camData->ir = new openni::VideoStream();
+	camData->color = new openni::VideoStream();
 
 	emitterEnabled = true;
 }
@@ -198,12 +199,14 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 
 	InitDepthStream();
 	InitIRStream();
+	InitColorStream();
 
 	if (ActiveChannels->Count == 0)
 	{
 		ActivateChannel(ChannelNames::ZImage);
 		ActivateChannel(ChannelNames::Point3DImage);
-		//ActivateChannel(ChannelNames::Intensity);
+		//ActivateChannel(ChannelNames::Color); //Do not activate channel color by default in order to avoid running into bandwidth problems (e.g. when multiple cameras ares used over USB hubs)
+		//ActivateChannel(ChannelNames::Intensity); // Channel intensity cannot be activated, if depth/3D data channel is active
 		if (String::IsNullOrWhiteSpace(SelectedChannel))
 		{
 			SelectChannel(ChannelNames::ZImage);
@@ -211,9 +214,6 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	}
 
 	irGain = GetIRGain();
-
-	camData->openNICam->get_version();
-	camData->openNICam->get_cmos_params();
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
@@ -369,6 +369,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 	openni::VideoStream** m_streams = new openni::VideoStream*[2];
 	m_streams[0] = camData->depth;
 	m_streams[1] = camData->ir;
+	//m_streams[2] = camData->color;
 
 	int changedIndex;
 	openni::Status rc = openni::OpenNI::waitForAnyStream(m_streams, 2, &changedIndex);
@@ -420,9 +421,22 @@ void MetriCam2::Cameras::AstraOpenNI::InitIRStream()
 	//Init IR stream
 	openni::Status rc = camData->ir->create(camData->openNICam->device, openni::SENSOR_IR);
 	camData->ir->setMirroringEnabled(false);
-	if (openni::STATUS_OK != rc) 
+	if (openni::STATUS_OK != rc)
 	{
 		log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+		openni::OpenNI::shutdown();
+		return;
+	}
+}
+
+void MetriCam2::Cameras::AstraOpenNI::InitColorStream()
+{
+	//Init color stream
+	openni::Status rc = camData->color->create(camData->openNICam->device, openni::SENSOR_COLOR);
+	camData->color->setMirroringEnabled(false);
+	if (openni::STATUS_OK != rc)
+	{
+		log->Error("Couldn't find color stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
 		openni::OpenNI::shutdown();
 		return;
 	}
@@ -474,9 +488,9 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{	
-		if (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage))
+		if (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage) || IsChannelActive(ChannelNames::Color))
 		{
-			throw gcnew Exception("IR and depth are not allowed to be active at the same time. Please deactivate channel \"ZImage\" and \"Point3DImage\" before activating channel \"Intensity\"");
+			throw gcnew Exception("IR and depth/color are not allowed to be active at the same time. Please deactivate channel \"ZImage\", \"Point3DImage\" and \"Color\" before activating channel \"Intensity\"");
 		}
 
 		//Changing the exposure is not possible if both depth and ir streams have been running parallel in one session.
@@ -507,7 +521,37 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 	}
 	else if (channelName->Equals(ChannelNames::Color))
 	{
-		throw gcnew NotImplementedException();
+		if (IsChannelActive(ChannelNames::Intensity))
+		{
+			throw gcnew Exception("IR and color are not allowed to be active at the same time. Please deactivate channel \"Intensity\" before activating channel \"Color\"");
+		}
+
+		openni::VideoMode colorVideoMode = camData->color->getVideoMode();
+		//Setting the resolution to 1280/640 does not work, even if we start only the color channel (image is corrupted)
+		/*colorVideoMode.setResolution(1280, 960);
+		colorVideoMode.setFps(7);*/
+		colorVideoMode.setResolution(640, 480);
+		camData->color->setVideoMode(colorVideoMode);
+
+		rc = camData->color->start();
+		if (openni::STATUS_OK != rc)
+		{
+			log->Error("Couldn't start color stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+			camData->color->destroy();
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		if (!camData->color->isValid())
+		{
+			log->Error("No valid color stream. Exiting\n");
+			openni::OpenNI::shutdown();
+			return;
+		}
+
+		colorVideoMode = camData->color->getVideoMode();
+		camData->colorWidth = colorVideoMode.getResolutionX();
+		camData->colorHeight = colorVideoMode.getResolutionY();
 	}
 
 	log->LeaveMethod();
@@ -522,6 +566,10 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{
 		camData->ir->stop();
+	}
+	else if (channelName->Equals(ChannelNames::Color))
+	{
+		camData->color->stop();
 	}
 }
 
@@ -555,8 +603,45 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 
 ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 {
-	throw gcnew System::NotImplementedException();
-	// TODO: insert return statement here
+	openni::VideoFrameRef m_colorFrame;
+	camData->color->readFrame(&m_colorFrame);
+
+	if (!m_colorFrame.isValid())
+	{
+		log->Error("Color frame is not valid...\n");
+		return nullptr;
+	}
+
+	//const RGB888Pixel* pImageRow = (const RGB888Pixel*)m_colorFrame.getData();
+
+	Bitmap^ bitmap = gcnew Bitmap(camData->colorWidth, camData->colorHeight, System::Drawing::Imaging::PixelFormat::Format24bppRgb);
+
+	System::Drawing::Rectangle^ imageRect = gcnew System::Drawing::Rectangle(0, 0, camData->colorWidth, camData->colorHeight);
+
+	System::Drawing::Imaging::BitmapData^ bmpData = bitmap->LockBits(*imageRect, System::Drawing::Imaging::ImageLockMode::WriteOnly, bitmap->PixelFormat);
+
+	const unsigned char* source = (unsigned char*)m_colorFrame.getData();
+	unsigned char* target = (unsigned char*)(void*)bmpData->Scan0;
+	for (int y = 0; y < camData->colorHeight; y++)
+	{
+		const unsigned char* sourceLine = source + y*m_colorFrame.getStrideInBytes();
+		for (int x = 0; x < camData->colorWidth; x++)
+		{
+			target[2] = *sourceLine++;
+			target[1] = *sourceLine++;
+			target[0] = *sourceLine++;
+			target += 3;
+		}
+	}
+
+
+	//memcpy((void*)bmpData->Scan0, pImageRow, camData->colorWidth * camData->colorHeight * 3);
+
+	bitmap->UnlockBits(bmpData);
+
+	ColorCameraImage^ image = gcnew ColorCameraImage(bitmap);
+
+	return image;
 }
 
 Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
@@ -583,8 +668,8 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 			float a = -1;
 			float b = -1;
 			float c = -1;
-			//TODO: Wait until Orbbec devices support this feature
 			openni::CoordinateConverter::convertDepthToWorld(*(camData->depth), x, y, *pDepth, &a, &b, &c);
+
 			depthDataMeters[y, x] = Point3f(a * 0.001f, b * 0.001f, c * 0.001f);
 		}
 		pDepthRow += rowSize;
@@ -622,4 +707,149 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 		pIRRow += rowSize;
 	}
 	return irDataMeters;
+}
+
+Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIntrinsics(String^ channelName)
+{
+	Metrilus::Util::IProjectiveTransformation^ result = nullptr;
+
+	log->Info("Trying to load projective transformation from file.");
+	try
+	{
+		result = Camera::GetIntrinsics(channelName);
+	}
+	catch (...) 
+	{ 
+		/* empty */ 
+	}
+
+	if (result == nullptr)
+	{
+		log->Info("Projective transformation file not found.");
+		log->Info("Using Orbbec factory intrinsics as projective transformation.");
+
+		ParamsResult res = camData->openNICam->get_cmos_params(0);
+
+		if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
+		{
+			if (res.error)
+			{
+				//Extracted from 3-D coordinates
+				result = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 570.3422f, 570.3422f, 320, 240, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+			}
+			else
+			{
+				result = gcnew Metrilus::Util::ProjectiveTransformationZhang(
+					640,
+					480,
+					res.params.l_intr_p[0],
+					res.params.l_intr_p[1],
+					res.params.l_intr_p[2],
+					res.params.l_intr_p[3],
+					res.params.l_k[0],
+					res.params.l_k[1],
+					res.params.l_k[2],
+					res.params.l_k[3],
+					res.params.l_k[4]);
+			}
+			
+		}
+		else if (channelName->Equals(ChannelNames::Color))
+		{
+			if (res.error)
+			{
+				// Extracted from file in Orbbec calibration tool
+				result = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 512.408f, 512.999, 327.955f, 236.763f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+			}
+			else
+			{
+				result = gcnew Metrilus::Util::ProjectiveTransformationZhang(
+					640,
+					480,
+					res.params.r_intr_p[0],
+					res.params.r_intr_p[1],
+					res.params.r_intr_p[2],
+					res.params.r_intr_p[3],
+					res.params.r_k[0],
+					res.params.r_k[1],
+					res.params.r_k[2],
+					res.params.r_k[3],
+					res.params.r_k[4]);
+			}
+			
+		}
+		else
+		{
+			log->Error("Unsupported channel in GetIntrinsics().");
+			return nullptr;
+		}
+
+	}
+	return result;
+}
+
+Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExtrinsics(String^ channelFromName, String^ channelToName)
+{
+	Metrilus::Util::RigidBodyTransformation^ result = nullptr;
+
+	log->Info("Trying to load extrinsics from file.");
+	try
+	{
+		result = Camera::GetExtrinsics(channelFromName, channelToName);
+	}
+	catch (...)
+	{
+		/* empty */
+	}
+
+	if (result == nullptr)
+	{
+		log->Info("Extrinsices file not found.");
+		log->Info("Using Orbbec factory extrinsics as projective transformation.");
+
+		ParamsResult res = camData->openNICam->get_cmos_params(0);
+
+		Metrilus::Util::RotationMatrix^ rotMat;
+		Point3f translation;
+
+		if (res.error)
+		{
+			translation = Point3f(-0.0242641f, -0.000439535f, -0.000577864);
+
+			//Extracted from file in Orbbec calibration tool
+			rotMat = gcnew Metrilus::Util::RotationMatrix(
+				Point3f(0.999983f, -0.00264698f, 0.00526572f),
+				Point3f(0.00264383f, 0.999996f, 0.000603628f),
+				Point3f(-0.0052673f, -0.000589696f, 0.999986f));
+		}
+		else
+		{
+			translation = Point3f(res.params.r2l_t[0] / 1000, res.params.r2l_t[1] / 1000, res.params.r2l_t[2] / 1000);
+
+			rotMat = gcnew Metrilus::Util::RotationMatrix(
+				Point3f(res.params.r2l_r[0], res.params.r2l_r[3], res.params.r2l_r[6]),
+				Point3f(res.params.r2l_r[1], res.params.r2l_r[4], res.params.r2l_r[7]),
+				Point3f(res.params.r2l_r[2], res.params.r2l_r[5], res.params.r2l_r[8]));
+		}
+
+		//TODO: Compare with own calibration, since IR-to-depth shift (in y-direction) can have an effect on the transformation
+		Metrilus::Util::RigidBodyTransformation^ depthToColor = gcnew Metrilus::Util::RigidBodyTransformation(rotMat, translation);
+
+		if ((channelFromName->Equals(ChannelNames::Intensity) || channelFromName->Equals(ChannelNames::ZImage)) && channelToName->Equals(ChannelNames::Color))
+		{			
+			return depthToColor;
+		}
+		else if (channelFromName->Equals(ChannelNames::Color) && (channelToName->Equals(ChannelNames::Intensity) || channelToName->Equals(ChannelNames::ZImage)))
+		{
+			// Extracted from file in Orbbec calibration tool
+			return depthToColor->GetInverted();
+		}
+		else
+		{
+			log->Error("Unsupported channel combination in GetExtrinsics().");
+			return nullptr;
+		}
+
+	}
+	return result;
 }

@@ -1,4 +1,7 @@
-﻿using MetriCam2.Exceptions;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using MetriCam2.Exceptions;
 using Metrilus.Logging;
 using Microsoft.Win32;
 using System;
@@ -720,6 +723,7 @@ namespace MetriCam2
 
         private void LoadRegistryDirectoryAssemblies()
         {
+#if !NETSTANDARD2_0
             RegistryKey rk = Registry.LocalMachine; // HKLM
             string[] subkeys = new string[] { "SOFTWARE", "Metrilus GmbH" };
 
@@ -750,6 +754,7 @@ namespace MetriCam2
             }
             catch
             { /* empty */ }
+#endif
         }
 
         private void LoadLocalDirectoryAssemblies()
@@ -826,6 +831,6 @@ namespace MetriCam2
         /// <returns></returns>
         [DllImport("kernel32.dll")]
         private static extern IntPtr LoadLibrary(string dllToLoad);
-        #endregion
+#endregion
     }
 }

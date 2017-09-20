@@ -1,4 +1,7 @@
-﻿using MetriCam2.Exceptions;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using MetriCam2.Exceptions;
 using Metrilus.Logging;
 using Metrilus.Util;
 using Microsoft.Win32;
@@ -659,6 +662,7 @@ namespace MetriCam2
                 }
 
                 string valueAsString = GetAsGoodString(value);
+                T castedValue = default(T);
 
                 bool isTypeConvertible = false;
                 if (value is string)
@@ -669,7 +673,7 @@ namespace MetriCam2
                 {
                     try
                     {
-                        T castedValue = (T)Convert.ChangeType(value, this.Type, CultureInfo.InvariantCulture);
+                        castedValue = (T)Convert.ChangeType(value, this.Type, CultureInfo.InvariantCulture);
                         isTypeConvertible = (null != castedValue);
                     }
                     catch (ArgumentNullException)
@@ -681,6 +685,7 @@ namespace MetriCam2
                     catch (OverflowException)
                     { /* empty */ }
                 }
+
                 if (!isTypeConvertible)
                 {
                     throw new InvalidCastException("Cast failed and returned null.");
@@ -699,7 +704,8 @@ namespace MetriCam2
                     }
                     else
                     {
-                        if (valueAsString.Equals(item.ToString().ToLower()))
+                        T castedItem = (T)Convert.ChangeType(item, this.Type, CultureInfo.InvariantCulture);
+                        if (castedItem.Equals(castedValue))
                         {
                             return true;
                         }
@@ -1241,12 +1247,12 @@ namespace MetriCam2
         /// <seealso cref="OnDisconnected"/>
         public void Disconnect(bool useLockedCall = true)
         {
-            log.Debug("Disconnecting camera.");
-
             if (!IsConnected)
             {
                 return;
             }
+
+            log.Debug("Disconnecting camera.");
 
             if (OnDisconnecting != null)
             {
@@ -2716,6 +2722,9 @@ namespace MetriCam2
         {
             log.Debug("GetCalibrationPathFromRegistry");
 
+#if NETSTANDARD2_0
+            return null;
+#else
             if (null != calibrationPathRegistry)
             {
                 log.DebugFormat("  using cached value: '{0}'", calibrationPathRegistry);
@@ -2764,6 +2773,7 @@ namespace MetriCam2
             log.DebugFormat(@"Calibration path = '{0}'", calibrationPathRegistry);
 
             return calibrationPathRegistry;
+#endif
         }
 
         /// <summary>

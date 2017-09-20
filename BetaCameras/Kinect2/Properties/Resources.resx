@@ -129,4 +129,7 @@
   <data name="_004" xml:space="preserve">
     <value>Connect failed. Could not read UniqueKinectId.</value>
   </data>
+  <data name="_005" xml:space="preserve">
+    <value>Update failed. No data sent within given timeout.</value>
+  </data>
 </root>

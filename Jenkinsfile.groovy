@@ -1,6 +1,5 @@
 #!groovy?
 
-
 pipeline {
 	agent any
 	environment {
@@ -10,10 +9,10 @@ pipeline {
 		def filesContainingAssemblyVersion = 'SolutionAssemblyInfo.cs'
 						
 		def solution = 'MetriCam2_SDK.sln'
-		def msbuildToolName = 'MSBuild Release/x64 [v4.0.30319]'
+		def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
 		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
-		// For per-project encryption config see map at the beginning of this file.
-		def dllsToDeploy = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.CameraTemplate MetriCam2.Cameras.ifm MetriCam2.Cameras.SVS MetriCam2.Cameras.TheImagingSource MetriCam2.Cameras.UEye MetriCam2.Cameras.V3S MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.WebCam MetriCam2 Metrilus.Util Newtonsoft.Json MetriCam2.Cameras.OrbbecOpenNI'
+		def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.Orbbec MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.V3S MetriCam2.Cameras.WebCam MetriCam2.Cameras.RealSense MetriCam2.Cameras.OrbbecOpenNI'
+		def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json'
 		// End of Config
 		def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
 	}
@@ -49,7 +48,7 @@ pipeline {
 				echo 'Restore NuGet packages'
 				bat '%NUGET_EXE% restore'
 				echo 'Build'
-				bat "${tool msbuildToolName} ${solution} ${msbuildArgs}"
+				bat "\"${tool msbuildToolName}\" ${solution} ${msbuildArgs}"
 			}
 		}
 		stage('Deploy') {
@@ -57,7 +56,8 @@ pipeline {
 				def VERSION = 'latest'
 				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\git\\\\${VERSION}\\\\"
 				def BIN_DIR = "${PUBLISH_DIR}bin\\\\"
-				def RELEASE_DIR = 'bin\\\\x64\\\\Release\\\\'
+				def RELEASE_DIR_X64 = 'bin\\\\x64\\\\Release\\\\'
+				def RELEASE_DIR_ANYCPU = 'bin\\\\Release\\\\'
 			}
 			steps {
 				echo 'Publish artefacts to Z:\\releases\\'
@@ -72,10 +72,14 @@ pipeline {
 						'''
 				}
 				echo 'Publish dependencies to Release Folder'
-				bat '''FOR %%p IN (%dllsToDeploy%) DO (
-						COPY /Y "%RELEASE_DIR%%%p.dll" "%BIN_DIR%"
+				bat '''
+					FOR %%p IN (%dllsToDeployX64%) DO (
+						COPY /Y "%RELEASE_DIR_X64%%%p.dll" "%BIN_DIR%"
 					)
-				'''
+					FOR %%p IN (%dllsToDeployAnyCPU%) DO (
+						COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%BIN_DIR%"
+					)
+					'''
 				echo 'Write Build Timestamp to file'
 				bat 'ECHO %BUILD_DATETIME% > "%PUBLISH_DIR%last_build_datetime.txt"'
 				echo 'Write to Info File'

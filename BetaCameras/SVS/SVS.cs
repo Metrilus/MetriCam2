@@ -1,4 +1,7 @@
-﻿using MetriCam2.Cameras.Internal.SVS;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using MetriCam2.Cameras.Internal.SVS;
 using Metrilus.Util;
 using System;
 using System.Collections.Generic;
@@ -1179,7 +1182,7 @@ namespace MetriCam2.Cameras
 
             using (BinaryWriter bw = new BinaryWriter(File.Open(filename, FileMode.Create)))
             {
-                Point3f.WriteToMetriStream(bw, wb);
+                bw.Write(wb);
             }
         }
 
