@@ -10,7 +10,6 @@ namespace MetriCam2.Cameras
 {
     public unsafe class BaslerToF : Camera
     {
-
         #region Private Fields
         private ToFCamera camera;
         private int width;
@@ -21,7 +20,7 @@ namespace MetriCam2.Cameras
         private Coord3D[] bufferPoint3f;
         private AutoResetEvent dataAvailable = new AutoResetEvent(false);
 
-        private FloatCameraImage depthImage;
+        private FloatCameraImage distanceImage;
         private UShortCameraImage intensityImage;
         private UShortCameraImage confidenceImage;
         private Point3fCameraImage point3fImage;
@@ -97,6 +96,7 @@ namespace MetriCam2.Cameras
                     camera.SetParameterValue("ExposureTime", (exposureMilliseconds * 1000.0f).ToString("0.0")); // SDK unit is Microseconds
 
                     // Read out exposure time (the exposure time cannot be set continuously)
+                    // TODO: Check if culture settings could be an issue!
                     exposureMilliseconds = float.Parse(camera.GetParameterValue("ExposureTime")) / 1000.0f;
                 }
             }
@@ -226,7 +226,9 @@ namespace MetriCam2.Cameras
         protected override void ConnectImpl()
         {
             if (camera.IsOpen())
+            {
                 return;
+            }
 
             CameraList cameras = ToFCamera.EnumerateCameras();
 
@@ -332,14 +334,14 @@ namespace MetriCam2.Cameras
 
                     if (IsChannelActive(ChannelNames.Distance))
                     {
-                        depthImage = new FloatCameraImage(width, height);
+                        distanceImage = new FloatCameraImage(width, height);
                         for (int y = 0; y < height; y++)
                         {
                             for (int x = 0; x < width; x++)
                             {
                                 Coord3D c = bufferPoint3f[y * width + x];
                                 Point3f p = new Point3f(c.x * 0.001f, c.y * 0.001f, c.z * 0.001f);
-                                depthImage[y, x] = p.GetLength();
+                                distanceImage[y, x] = p.GetLength();
                             }
                         }
                     }
@@ -349,11 +351,11 @@ namespace MetriCam2.Cameras
                     {
                         intensityImage = new UShortCameraImage(width, height);
 
-                        for (int y = 0; y < height; y++)
+                        for (int y = 0, i = 0; y < height; y++)
                         {
-                            for (int x = 0; x < width; x++)
+                            for (int x = 0; x < width; x++, i++)
                             {
-                                intensityImage[y, x] = bufferIntensity[y * width + x];
+                                intensityImage[y, x] = bufferIntensity[i];
                             }
                         }
                     }
@@ -362,11 +364,11 @@ namespace MetriCam2.Cameras
                     {
                         confidenceImage = new UShortCameraImage(width, height);
 
-                        for (int y = 0; y < height; y++)
+                        for (int y = 0, i = 0; y < height; y++)
                         {
-                            for (int x = 0; x < width; x++)
+                            for (int x = 0; x < width; x++, i++)
                             {
-                                confidenceImage[y, x] = bufferConfidence[y * width + x];
+                                confidenceImage[y, x] = bufferConfidence[i++];
                             }
                         }
                     }
@@ -385,7 +387,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.ConfidenceMap:
                     return CalcConfidenceMap(confidenceImage);
                 case ChannelNames.Distance:
-                    return depthImage;
+                    return distanceImage;
                 case ChannelNames.Intensity:
                     return intensityImage.ToFloatCameraImage();
                 case ChannelNames.Point3DImage:
@@ -420,7 +422,6 @@ namespace MetriCam2.Cameras
 
             return confidenceMap;
         }
-
 
         private void ImageGrabbedHandler(Object sender, ImageGrabbedEventArgs e)
         {
@@ -476,18 +477,6 @@ namespace MetriCam2.Cameras
                 camera.Close();
             }
         }
-
-        private void Copy(IntPtr source, ushort[] destination, int startIndex, int length)
-        {
-            unsafe
-            {
-                var sourcePtr = (ushort*)source;
-                for (int i = startIndex; i < startIndex + length; ++i)
-                {
-                    destination[i] = *sourcePtr++;
-                }
-            }
-        }
         #endregion
 
 
@@ -495,18 +484,18 @@ namespace MetriCam2.Cameras
         {
             Console.WriteLine("Waiting for cameras to negotiate master role ...\n");
 
-                //
-                // Wait until a master camera (if any) and the slave cameras have been chosen.
-                // Note that if a PTP master clock is present in the subnet, all TOF cameras
-                // ultimately assume the slave role.
-                //
-                    camera.ExecuteCommand("GevIEEE1588DataSetLatch");
+            //
+            // Wait until a master camera (if any) and the slave cameras have been chosen.
+            // Note that if a PTP master clock is present in the subnet, all TOF cameras
+            // ultimately assume the slave role.
+            //
+            camera.ExecuteCommand("GevIEEE1588DataSetLatch");
 
             while (camera.GetParameterValue("GevIEEE1588StatusLatched") == "Listening")
             {
                 // Latch GevIEEE1588 status.
                 camera.ExecuteCommand("GevIEEE1588DataSetLatch");
-                Console.Write(".");
+
                 System.Threading.Thread.Sleep(1000);
             }
 
@@ -520,18 +509,15 @@ namespace MetriCam2.Cameras
             }
         }
 
-        /*
-         Make sure that all slave clocks are in sync with the master clock.
+         //Make sure that all slave clocks are in sync with the master clock.
 
-         For each camera with slave role: Check how much the slave clocks deviate from the master clock.
-         Wait until deviation is lower than a preset threshold.
-         */
-
+         //For each camera with slave role: Check how much the slave clocks deviate from the master clock.
+         //Wait until deviation is lower than a preset threshold.
         public void syncCameras()
         {
             // Maximum allowed offset from master clock. 
             const long tsOffsetMax = 10000;
-            Console.WriteLine("Wait until offsets from master clock have settled below {0} ns\n", tsOffsetMax);
+            log.InfoFormat("Wait until offsets from master clock have settled below {0} ns", tsOffsetMax);
 
             // Check all slaves for deviations from master clock.
             if (false == isMaster)
@@ -542,7 +528,6 @@ namespace MetriCam2.Cameras
                     tsOffset = GetMaxAbsGevIEEE1588OffsetFromMasterInTimeWindow(1.0, 0.1);
                 } while (tsOffset >= tsOffsetMax);
             }
-            
         }
 
         public long GetMaxAbsGevIEEE1588OffsetFromMasterInTimeWindow(double timeToMeasureSec, double timeDeltaSec)
