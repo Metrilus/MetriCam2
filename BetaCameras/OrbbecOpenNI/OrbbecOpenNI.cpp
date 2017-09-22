@@ -29,7 +29,9 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	camData->ir = new openni::VideoStream();
 	camData->color = new openni::VideoStream();
 
-	emitterEnabled = true;
+	// Init to most reasonable values; update during ConnectImpl
+	_emitterEnabled = true;
+	_irFlooderEnabled = false;
 }
 
 MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
@@ -214,11 +216,13 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	}
 
 	irGain = GetIRGain();
+	_emitterEnabled = GetEmitterStatus() == "On";
+	_irFlooderEnabled = GetIRFlooderStatus() == "On";
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
 {
-	if (camData->openNICam->m_vid != 0x1d27) //Check if our device is not an Asus-Carmine device (no proximity sensors for Asus devices)
+	if (camData->openNICam->m_vid != 0x1d27) //Check if our device is not an Asus-Carmine device
 	{
 		if (camData->openNICam->ldp_set(on) != openni::STATUS_OK)
 		{
@@ -235,10 +239,10 @@ void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
 	//{
 	//	camData->openNICam->ldp_get(status);
 	//	System::Threading::Thread::Sleep(1);
-	//} 
+	//}
 	//while (status != statusToSet);
 
-	if (camData->openNICam->emitter_set(on)!= openni::STATUS_OK)
+	if (camData->openNICam->emitter_set(on) != openni::STATUS_OK)
 	{
 		LogOpenNIError("Emitter set failed");
 	}
@@ -261,6 +265,46 @@ String^ MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
 		statusString = "On";
 	}
 	log->DebugFormat("Emitter status is: {0}", statusString);
+	return statusString;
+}
+
+void MetriCam2::Cameras::AstraOpenNI::SetIRFlooderStatus(bool on)
+{
+	// Try to activate next code block in future version of experimental SDK (class "cmd"). Currently, the IrFloodLedStatus status is alwas unknown
+	//IrFloodLedStatus statusToSet = on ? IrFloodLedStatus::IR_LED_ON : IrFloodLedStatus::IR_LED_OFF;
+	//camData->openNICam->ir_flood_set(statusToSet);
+	////We need to be sure that the proximity sensor status was set properly
+	//IrFloodLedStatus status;
+	//do
+	//{
+	//	camData->openNICam->ir_flood_get(status);
+	//	System::Threading::Thread::Sleep(1);
+	//}
+	//while (status != statusToSet);
+
+	if (camData->openNICam->ir_flood_set(on) != openni::STATUS_OK)
+	{
+		LogOpenNIError("ir flooder set failed");
+	}
+}
+
+String^ MetriCam2::Cameras::AstraOpenNI::GetIRFlooderStatus()
+{
+	IrFloodLedStatus status;
+	if (camData->openNICam->ir_flood_get(status) != openni::STATUS_OK)
+	{
+		LogOpenNIError("ir_flood_get failed");
+	}
+	String^ statusString = "Unknown";
+	if (status == IrFloodLedStatus::IR_LED_OFF)
+	{
+		statusString = "Off";
+	}
+	else if (status == IrFloodLedStatus::IR_LED_ON)
+	{
+		statusString = "On";
+	}
+	log->DebugFormat("IR flooder status is: {0}", statusString);
 	return statusString;
 }
 
