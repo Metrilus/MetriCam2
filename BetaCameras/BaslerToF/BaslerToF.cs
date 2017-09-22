@@ -15,6 +15,7 @@ namespace MetriCam2.Cameras
         private int width;
         private int height;
 
+        private static double syncTriggerRate;
         private UInt16[] bufferIntensity;
         private UInt16[] bufferConfidence;
         private Coord3D[] bufferPoint3f;
@@ -30,7 +31,6 @@ namespace MetriCam2.Cameras
         private float exposureMilliseconds = 10.0f;
         private bool filterTemporal = false;
         private bool filterSpatial = true;
-        private bool isMaster = false;
 
         private ulong m_TriggerDelay;
         private const ulong c_TriggerBaseDelay = 250000000;    // 250 ms
@@ -40,7 +40,10 @@ namespace MetriCam2.Cameras
         private const ulong c_ReadoutTime = 21000000;
         #endregion
 
-        public bool IsFirst { get; set; }
+        #region Properties
+        public bool IsMaster { get; private set; }
+        private static ulong TriggerDelay { get; set; }
+        #endregion
 
         #region Private Constants
         private const float MinExposureMilliseconds = 0.1f;
@@ -51,6 +54,7 @@ namespace MetriCam2.Cameras
         public BaslerToF()
             : base()
         {
+            IsMaster = false;
             camera = new ToFCamera();
             width = 640;
             height = 480;
@@ -234,8 +238,6 @@ namespace MetriCam2.Cameras
             camera.Open(ToFCamera.EnumerateCameras().Find(camInfo => camInfo.SerialNumber.Equals(SerialNumber)));
 
             camera.SetParameterValue("GevIEEE1588", "true");
-            camera.SetParameterValue("TriggerMode", "On");
-            camera.SetParameterValue("TriggerSource", "SyncTimer");
 
            // camera.SetParameterValue("ExposureAuto", "On");
 
@@ -251,15 +253,15 @@ namespace MetriCam2.Cameras
             IsConnected = true; // sic!
 
             // Disable auto exposure -> causes large regions of invalid pixels
-/*
-            Exposure = exposureMilliseconds;
 
-            // Enable/Disable temporal filtering
-            FilterTemporal = filterTemporal;
+            //Exposure = exposureMilliseconds;
 
-            // Enable/Disable spatial filtering
-            FilterSpatial = filterSpatial;            
-            */
+            //// Enable/Disable temporal filtering
+            //FilterTemporal = filterTemporal;
+
+            //// Enable/Disable spatial filtering
+            //FilterSpatial = filterSpatial;            
+            
             // Activate Channels before streaming starts;
             // Activate standard channels if no channels are selected 
             if (ActiveChannels.Count == 0)
@@ -473,59 +475,203 @@ namespace MetriCam2.Cameras
             }
         }
         #endregion
-
-
-        public void FindMaster()
+        /// <summary>
+        /// Enables interference-free, simultaneous operation of multiple cameras. Please initialize the individual cameras 
+        /// before this call as synchronization might depend on several camera parameters such as exposure time.
+        /// </summary>
+        /// <param name="cameras">Cameras which should be synchronized.</param>
+        /// <remarks>
+        /// If cameras are not connected yet, the will be connected by this method.
+        /// Synchronization of independent groups of cameras is not properly supported.
+        /// </remarks>
+        public static void InitializeSynchronizedAcquisition(BaslerToF[] cameras)
         {
-            Console.WriteLine("Waiting for cameras to negotiate master role ...\n");
-
-            //
-            // Wait until a master camera (if any) and the slave cameras have been chosen.
-            // Note that if a PTP master clock is present in the subnet, all TOF cameras
-            // ultimately assume the slave role.
-            //
-            camera.ExecuteCommand("GevIEEE1588DataSetLatch");
-
-            while (camera.GetParameterValue("GevIEEE1588StatusLatched") == "Listening")
+            // set up trigger mode:
+            for (int i = 0; i < cameras.Length; i++)
             {
-                // Latch GevIEEE1588 status.
-                camera.ExecuteCommand("GevIEEE1588DataSetLatch");
+                if (!cameras[i].IsConnected)
+                {
+                    cameras[i].Connect();
+                }
+                cameras[i].StopGrabbing();
+                cameras[i].camera.SetParameterValue("TriggerMode", "On");
+                cameras[i].camera.SetParameterValue("TriggerSource", "SyncTimer");
+            }
+            log.Info("Waiting for cameras to negotiate master role ...");
+            // negotiate master:
+            int nMaster;
+            do
+            {
+                nMaster = 0;
+                //
+                // Wait until a master camera (if any) and the slave cameras have been chosen.
+                // Note that if a PTP master clock is present in the subnet, all TOF cameras
+                // ultimately assume the slave role.
+                //
+                for (int i = 0; i < cameras.Length; ++i)
+                {
+                    ToFCamera camera = cameras[i].camera;
+                    camera.ExecuteCommand("GevIEEE1588DataSetLatch");
 
-                System.Threading.Thread.Sleep(1000);
+                    while (camera.GetParameterValue("GevIEEE1588StatusLatched") == "Listening")
+                    {
+                        // Latch GevIEEE1588 status.
+                        camera.ExecuteCommand("GevIEEE1588DataSetLatch");
+                        Console.Write(".");
+                        System.Threading.Thread.Sleep(1000);
+                    }
+
+                    if (camera.GetParameterValue("GevIEEE1588StatusLatched") == "Master")
+                    {
+                        cameras[i].IsMaster = true;
+                        nMaster++;
+                    }
+                    else
+                    {
+                        cameras[i].IsMaster = false;
+                    }
+                }
+            } while (nMaster > 1);    // Repeat until there is at most one master left.
+
+            // Use this variable to check whether there is an external master clock.
+            bool externalMasterClock = true;
+
+            for (int i = 0; i < cameras.Length; ++i)
+            {
+                if (cameras[i].IsMaster)
+                {
+                    Console.WriteLine("   Camera {0} is master\n\n", i);
+                    externalMasterClock = false;
+                }
             }
 
-            if (camera.GetParameterValue("GevIEEE1588StatusLatched") == "Master")
+            if (true == externalMasterClock)
             {
-                isMaster = true;
+                Console.WriteLine("External master clock present in subnet: All cameras are slaves.\n");
             }
-            else
-            {
-                isMaster = false;
-            }
-        }
-
-         //Make sure that all slave clocks are in sync with the master clock.
-
-         //For each camera with slave role: Check how much the slave clocks deviate from the master clock.
-         //Wait until deviation is lower than a preset threshold.
-        public void syncCameras()
-        {
+            // Synchronize clocks:
             // Maximum allowed offset from master clock. 
             const long tsOffsetMax = 10000;
-            log.InfoFormat("Wait until offsets from master clock have settled below {0} ns", tsOffsetMax);
+            log.InfoFormat("Wait until offsets from master clock have settled below {0} ns\n", tsOffsetMax);
 
-            // Check all slaves for deviations from master clock.
-            if (false == isMaster)
+            for (int camIdx = 0; camIdx < cameras.Length; camIdx++)
             {
-                long tsOffset;
-                do
+                // Check all slaves for deviations from master clock.
+                if (!cameras[camIdx].IsMaster)
                 {
-                    tsOffset = GetMaxAbsGevIEEE1588OffsetFromMasterInTimeWindow(1.0, 0.1);
-                } while (tsOffset >= tsOffsetMax);
+                    long tsOffset;
+                    do
+                    {
+                        tsOffset = GetMaxAbsGevIEEE1588OffsetFromMasterInTimeWindow(cameras[camIdx], 1.0, 0.1);
+                        log.InfoFormat("max offset of cam {0} = {1} ns", camIdx, tsOffset);
+                    } while (tsOffset >= tsOffsetMax);
+                }
+            }
+            // Set trigger delays:
+            // Current timestamp
+            ulong timestamp = 0;
+            ulong syncStartTimestamp;
+
+            // The low and high part of the timestamp
+            ulong tsLow, tsHigh;
+
+            // Initialize trigger delay.
+            TriggerDelay = 0;
+
+            Console.WriteLine("Configuring start time and trigger delays ...\n");
+
+            //
+            // Cycle through cameras and set trigger delay.
+            //
+            for (int camIdx = 0; camIdx < cameras.Length; camIdx++)
+            {
+                log.InfoFormat("Camera {0} : ", camIdx);
+
+                //
+                // Read timestamp and exposure time.
+                // Calculation of synchronous free run timestamps will all be based 
+                // on timestamp and exposure time(s) of first camera.
+                //
+                if (camIdx == 0)
+                {
+                    // Latch timestamp registers.
+                    cameras[camIdx].camera.ExecuteCommand("TimestampLatch");
+
+                    // Read the two 32-bit halves of the 64-bit timestamp. 
+                    tsLow = ulong.Parse(cameras[camIdx].camera.GetParameterValue("TimestampLow"));
+                    tsHigh = ulong.Parse(cameras[camIdx].camera.GetParameterValue("TimestampHigh"));
+
+                    // Assemble 64-bit timestamp and keep it.
+                    timestamp = tsLow + (tsHigh << 32);
+                    log.InfoFormat("Reading time stamp from first camera.\ntimestamp = {0}\n", timestamp);
+
+                    log.Info("Reading exposure times from first camera:");
+
+                    // Get exposure time count (in case of HDR there will be 2, otherwise 1).
+                    int nExpTimes = int.Parse(cameras[camIdx].camera.GetParameterMaximum("ExposureTimeSelector")) + 1;
+
+                    // Sum up exposure times.
+                    for (int l = 0; l < nExpTimes; l++)
+                    {
+                        cameras[camIdx].camera.SetParameterValue("ExposureTimeSelector", l.ToString());
+                        ulong expTime = ulong.Parse(cameras[camIdx].camera.GetParameterValue("ExposureTime"));
+                        log.InfoFormat("exposure time {0} = ", l);
+                        TriggerDelay += (1000 * expTime);   // Convert from us -> ns
+                    }
+
+                    log.Info("Calculating trigger delay.");
+
+                    // Add readout time.
+                    TriggerDelay += (uint)(nExpTimes - 1) * c_ReadoutTime;
+
+                    // Add safety margin for clock jitter.
+                    TriggerDelay += 1000000;
+
+                    // Calculate synchronous trigger rate.
+                    log.InfoFormat("Calculating maximum synchronous trigger rate ... ");
+                    syncTriggerRate = 1000000000 / ((uint)cameras.Length * TriggerDelay);
+
+                    // If the calculated value is greater than the maximum supported rate, 
+                    // adjust it. 
+                    double maxSyncRate = double.Parse(cameras[camIdx].camera.GetParameterMaximum("SyncRate"));
+                    if (syncTriggerRate > maxSyncRate)
+                    {
+                        syncTriggerRate = maxSyncRate;
+                    }
+
+                    // Print trigger delay and synchronous trigger rate.
+                    log.InfoFormat("Trigger delay = {0} ms", TriggerDelay / 1000000);
+                    log.InfoFormat("Setting synchronous trigger rate to {0} fps\n", syncTriggerRate);
+                }
+
+                // Set synchronization rate.
+                cameras[camIdx].camera.SetParameterValue("SyncRate", syncTriggerRate.ToString());
+
+                // Calculate new timestamp by adding trigger delay.
+                // First camera starts after triggerBaseDelay, nth camera is triggered 
+                // after a delay of triggerBaseDelay +  n * triggerDelay.
+                syncStartTimestamp = timestamp + c_TriggerBaseDelay + (uint)camIdx * TriggerDelay;
+
+                // Disassemble 64-bit timestamp.
+                tsHigh = syncStartTimestamp >> 32;
+                tsLow = syncStartTimestamp - (tsHigh << 32);
+
+                // Set synchronization start time parameters.
+                cameras[camIdx].camera.SetParameterValue("SyncStartLow", tsLow.ToString());
+                cameras[camIdx].camera.SetParameterValue("SyncStartHigh", tsHigh.ToString());
+
+                // Latch synchronization start time & synchronization rate registers.
+                // Until the values have been latched, they won't have any effect.
+                cameras[camIdx].camera.ExecuteCommand("SyncUpdate");
+
+                for (int i = 0; i < cameras.Length; i++)
+                {
+                    cameras[i].StartGrabbing();
+                }
             }
         }
 
-        public long GetMaxAbsGevIEEE1588OffsetFromMasterInTimeWindow(double timeToMeasureSec, double timeDeltaSec)
+        private static long GetMaxAbsGevIEEE1588OffsetFromMasterInTimeWindow(BaslerToF camera, double timeToMeasureSec, double timeDeltaSec)
         {
             System.Diagnostics.Stopwatch stopwatch;
             stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -543,9 +689,9 @@ namespace MetriCam2.Cameras
                 {
                     // Time for next sample has elapsed.
                     // Latch IEEE1588 data set to get offset from master.
-                    camera.ExecuteCommand("GevIEEE1588DataSetLatch");
+                    camera.camera.ExecuteCommand("GevIEEE1588DataSetLatch");
                     // Maximum of offsets from master.
-                    long currOffset = long.Parse(camera.GetParameterValue("GevIEEE1588OffsetFromMaster"));
+                    long currOffset = long.Parse(camera.camera.GetParameterValue("GevIEEE1588OffsetFromMaster"));
                     maxOffset = Math.Max(maxOffset, Math.Abs(currOffset));
                     // Increase number of samples.
                     n++;
@@ -554,118 +700,6 @@ namespace MetriCam2.Cameras
             } while (currTime <= timeToMeasureSec);
             // Return maximum of offsets from master for given time interval.
             return maxOffset;
-        }
-
-        /*
-         Set trigger delay for each camera.
-
-         A trigger delay is set that is equal to or longer than the exposure time of the camera. 
-         A timestamp is read from the first camera.
-         Calculation of synchronous free run timestamps is based on this timestamp.
-         Calculate synchronous free run timestamp by adding trigger delay.
-         First camera starts after triggerBaseDelay, nth camera is triggered after a delay of 
-         triggerBaseDelay +  n * ( triggerDelay + safety margin).
-         For an explanation of the calculation of trigger delays and synchronous free run trigger rate, 
-         please have a look at the documentation block at the top of this file!
-         */
-        public void setTriggerDelays()
-        {
-
-            // Current timestamp
-            ulong timestamp = 0;
-            ulong syncStartTimestamp;
-
-            // The low and high part of the timestamp
-            ulong tsLow, tsHigh;
-
-            // Initialize trigger delay.
-            m_TriggerDelay = 0;
-
-            Console.WriteLine("Configuring start time and trigger delays ...\n");
-
-            //
-            // Cycle through cameras and set trigger delay.
-            //
-
-
-            //
-            // Read timestamp and exposure time.
-            // Calculation of synchronous free run timestamps will all be based 
-            // on timestamp and exposure time(s) of first camera.
-            //
-            if (IsFirst)
-            {
-                // Latch timestamp registers.
-                camera.ExecuteCommand("TimestampLatch");
-
-                // Read the two 32-bit halves of the 64-bit timestamp. 
-                tsLow = ulong.Parse(camera.GetParameterValue("TimestampLow"));
-                tsHigh = ulong.Parse(camera.GetParameterValue("TimestampHigh"));
-
-                // Assemble 64-bit timestamp and keep it.
-                timestamp = tsLow + (tsHigh << 32);
-                Console.WriteLine("Reading time stamp from first camera.\ntimestamp = {0}\n", timestamp);
-
-                Console.WriteLine("Reading exposure times from first camera:");
-
-                // Get exposure time count (in case of HDR there will be 2, otherwise 1).
-                int nExpTimes = int.Parse(camera.GetParameterMaximum("ExposureTimeSelector")) + 1;
-
-                // Sum up exposure times.
-                for (int l = 0; l < nExpTimes; l++)
-                {
-                    camera.SetParameterValue("ExposureTimeSelector", l.ToString());
-                    ulong expTime = ulong.Parse(camera.GetParameterValue("ExposureTime"));
-                    Console.WriteLine("exposure time {0} = ", l);
-                    m_TriggerDelay += (1000 * expTime);   // Convert from us -> ns
-                }
-
-                Console.WriteLine("Calculating trigger delay.");
-
-                // Add readout time.
-                m_TriggerDelay += (uint)(nExpTimes - 1) * c_ReadoutTime;
-
-                // Add safety margin for clock jitter.
-                m_TriggerDelay += 1000000;
-
-                // Calculate synchronous trigger rate.
-                Console.WriteLine("Calculating maximum synchronous trigger rate ... ");
-                m_SyncTriggerRate = 1000000000 / m_TriggerDelay;
-
-                // If the calculated value is greater than the maximum supported rate, 
-                // adjust it. 
-                double maxSyncRate = double.Parse(camera.GetParameterMaximum("SyncRate"));
-                if (m_SyncTriggerRate > maxSyncRate)
-                {
-                    m_SyncTriggerRate = maxSyncRate;
-                }
-
-                // Print trigger delay and synchronous trigger rate.
-                Console.WriteLine("Trigger delay = {0} ms", m_TriggerDelay / 1000000);
-                Console.WriteLine("Setting synchronous trigger rate to {0} fps\n", m_SyncTriggerRate);
-            }
-
-            // Set synchronization rate.
-            camera.SetParameterValue("SyncRate", m_SyncTriggerRate.ToString());
-
-            // Calculate new timestamp by adding trigger delay.
-            // First camera starts after triggerBaseDelay, nth camera is triggered 
-            // after a delay of triggerBaseDelay +  n * triggerDelay.
-            syncStartTimestamp = timestamp + c_TriggerBaseDelay + m_TriggerDelay;
-
-            // Disassemble 64-bit timestamp.
-            tsHigh = syncStartTimestamp >> 32;
-            tsLow = syncStartTimestamp - (tsHigh << 32);
-
-            // Set synchronization start time parameters.
-            camera.SetParameterValue("SyncStartLow", tsLow.ToString());
-            camera.SetParameterValue("SyncStartHigh", tsHigh.ToString());
-
-            // Latch synchronization start time & synchronization rate registers.
-            // Until the values have been latched, they won't have any effect.
-            camera.ExecuteCommand("SyncUpdate");
-
-
         }
     }
 }
