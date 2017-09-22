@@ -107,7 +107,7 @@ namespace MetriCam2
 				void set(unsigned char value)
 				{
 					SetIRGain(value);
-					irGain = value;
+					_irGain = value;
 				}
 			}
 
@@ -124,7 +124,7 @@ namespace MetriCam2
 				{
 					SetIRExposure(value);
 					// Set IRExposure resets the gain to its default value (96 for Astra and 8 for AstraS). We have to set the gain to the memorized value (member irGain).
-					SetIRGain(irGain);
+					SetIRGain(_irGain);
 				}
 			}
 
@@ -187,9 +187,9 @@ namespace MetriCam2
 			static bool OpenNIInit();
 			static bool OpenNIShutdown();
 			static void LogOpenNIError(String^ status);
-			static int openNIInitCounter = 0;
+			static int _openNIInitCounter = 0;
 
-			unsigned short irGain = 0;
+			unsigned short _irGain = 0;
 
 			void InitDepthStream();
 			void InitIRStream();
@@ -209,7 +209,7 @@ namespace MetriCam2
 
 			bool _emitterEnabled;
 			bool _irFlooderEnabled;
-			OrbbecNativeCameraData* camData;
+			OrbbecNativeCameraData* _pCamData;
 
 			// for converting managed strings to const char*
 			msclr::interop::marshal_context oMarshalContext;
