@@ -168,7 +168,6 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region MetriCam2 Camera Interface
-        #region MetriCam2 Camera Interface Methods
         /// <summary>
         /// Resets list of available channels (<see cref="Channels"/>) to union of all cameras supported by the implementing class.
         /// </summary>
@@ -320,14 +319,13 @@ namespace MetriCam2.Cameras
                 {
                     if (IsChannelActive(ChannelNames.Point3DImage))
                     {
-
                         point3fImage = new Point3fCameraImage(width, height);
-                        for (int y = 0; y < height; y++)
+                        for (int y = 0, i = 0; y < height; y++)
                         {
-                            for (int x = 0; x < width; x++)
+                            for (int x = 0; x < width; x++, i++)
                             {
-                                Coord3D c = bufferPoint3f[y * width + x];
-                                point3fImage[y, x] = new Point3f(c.x * 0.001f, c.y * 0.001f, c.z * 0.001f);
+                                Coord3D c = bufferPoint3f[i];
+                                point3fImage[y, x] = new Point3f(c.x, c.y, c.z) * 0.001f;
                             }
                         }
                     }
@@ -335,17 +333,15 @@ namespace MetriCam2.Cameras
                     if (IsChannelActive(ChannelNames.Distance))
                     {
                         distanceImage = new FloatCameraImage(width, height);
-                        for (int y = 0; y < height; y++)
+                        for (int y = 0, i = 0; y < height; y++)
                         {
-                            for (int x = 0; x < width; x++)
+                            for (int x = 0; x < width; x++, i++)
                             {
-                                Coord3D c = bufferPoint3f[y * width + x];
-                                Point3f p = new Point3f(c.x * 0.001f, c.y * 0.001f, c.z * 0.001f);
-                                distanceImage[y, x] = p.GetLength();
+                                Coord3D c = bufferPoint3f[i];
+                                distanceImage[y, x] = (new Point3f(c.x, c.y, c.z) * 0.001f).GetLength();
                             }
                         }
                     }
-                   
 
                     if (IsChannelActive(ChannelNames.Intensity))
                     {
@@ -368,7 +364,7 @@ namespace MetriCam2.Cameras
                         {
                             for (int x = 0; x < width; x++, i++)
                             {
-                                confidenceImage[y, x] = bufferConfidence[i++];
+                                confidenceImage[y, x] = bufferConfidence[i];
                             }
                         }
                     }
@@ -395,7 +391,6 @@ namespace MetriCam2.Cameras
             }
             throw new NotImplementedException();
         }
-        #endregion
         #endregion
 
         #region Private Methods
