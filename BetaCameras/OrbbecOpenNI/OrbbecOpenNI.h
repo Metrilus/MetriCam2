@@ -210,10 +210,6 @@ namespace MetriCam2
 			bool _emitterEnabled;
 			bool _irFlooderEnabled;
 			OrbbecNativeCameraData* _pCamData;
-
-			// for converting managed strings to const char*
-			msclr::interop::marshal_context oMarshalContext;
-			System::Collections::Generic::Dictionary<String^, String^>^ serialToUriDictionary;
 		};
 	}
 }

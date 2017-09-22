@@ -185,12 +185,16 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		return;
 	}
 
-	serialToUriDictionary = GetSerialToUriMappingOfAttachedCameras();
-
 	const char* deviceURI = openni::ANY_DEVICE;
 	if (!String::IsNullOrWhiteSpace(SerialNumber))
 	{
-		deviceURI = oMarshalContext.marshal_as<const char*>(serialToUriDictionary[SerialNumber]);
+		System::Collections::Generic::Dictionary<String^, String^>^ serialsToUris = GetSerialToUriMappingOfAttachedCameras();
+		if (!serialsToUris->ContainsKey(SerialNumber))
+		{
+			throw gcnew MetriCam2::Exceptions::ConnectionFailedException(String::Format("No camera with requested S/N ({0}) found.", SerialNumber));
+		}
+		msclr::interop::marshal_context marshalContext;
+		deviceURI = marshalContext.marshal_as<const char*>(serialsToUris[SerialNumber]);
 	}
 
 	int rc = _pCamData->openNICam->init(deviceURI);
