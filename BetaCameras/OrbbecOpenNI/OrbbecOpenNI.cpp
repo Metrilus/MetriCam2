@@ -754,145 +754,120 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 
 Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIntrinsics(String^ channelName)
 {
-	Metrilus::Util::IProjectiveTransformation^ result = nullptr;
-
 	log->Info("Trying to load projective transformation from file.");
 	try
 	{
-		result = Camera::GetIntrinsics(channelName);
+		return Camera::GetIntrinsics(channelName);
 	}
 	catch (...) 
 	{ 
 		/* empty */ 
 	}
 
-	if (result == nullptr)
+	log->Info("Projective transformation file not found.");
+	log->Info("Using Orbbec factory intrinsics as projective transformation.");
+
+	ParamsResult res = _pCamData->openNICam->get_cmos_params(0);
+
+	if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
 	{
-		log->Info("Projective transformation file not found.");
-		log->Info("Using Orbbec factory intrinsics as projective transformation.");
-
-		ParamsResult res = _pCamData->openNICam->get_cmos_params(0);
-
-		if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
+		if (res.error)
 		{
-			if (res.error)
-			{
-				//Extracted from 3-D coordinates
-				result = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 570.3422f, 570.3422f, 320, 240, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-			}
-			else
-			{
-				result = gcnew Metrilus::Util::ProjectiveTransformationZhang(
-					640,
-					480,
-					res.params.l_intr_p[0],
-					res.params.l_intr_p[1],
-					res.params.l_intr_p[2],
-					res.params.l_intr_p[3],
-					res.params.l_k[0],
-					res.params.l_k[1],
-					res.params.l_k[2],
-					res.params.l_k[3],
-					res.params.l_k[4]);
-			}
-			
+			//Extracted from 3-D coordinates
+			return gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 570.3422f, 570.3422f, 320, 240, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 		}
-		else if (channelName->Equals(ChannelNames::Color))
-		{
-			if (res.error)
-			{
-				// Extracted from file in Orbbec calibration tool
-				result = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 512.408f, 512.999, 327.955f, 236.763f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-			}
-			else
-			{
-				result = gcnew Metrilus::Util::ProjectiveTransformationZhang(
-					640,
-					480,
-					res.params.r_intr_p[0],
-					res.params.r_intr_p[1],
-					res.params.r_intr_p[2],
-					res.params.r_intr_p[3],
-					res.params.r_k[0],
-					res.params.r_k[1],
-					res.params.r_k[2],
-					res.params.r_k[3],
-					res.params.r_k[4]);
-			}
-			
-		}
-		else
-		{
-			log->Error("Unsupported channel in GetIntrinsics().");
-			return nullptr;
-		}
-
+		return gcnew Metrilus::Util::ProjectiveTransformationZhang(
+			640,
+			480,
+			res.params.l_intr_p[0],
+			res.params.l_intr_p[1],
+			res.params.l_intr_p[2],
+			res.params.l_intr_p[3],
+			res.params.l_k[0],
+			res.params.l_k[1],
+			res.params.l_k[2],
+			res.params.l_k[3],
+			res.params.l_k[4]);
 	}
-	return result;
+
+	if (channelName->Equals(ChannelNames::Color))
+	{
+		if (res.error)
+		{
+			// Extracted from file in Orbbec calibration tool
+			return gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 512.408f, 512.999f, 327.955f, 236.763f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+		}
+		return gcnew Metrilus::Util::ProjectiveTransformationZhang(
+			640,
+			480,
+			res.params.r_intr_p[0],
+			res.params.r_intr_p[1],
+			res.params.r_intr_p[2],
+			res.params.r_intr_p[3],
+			res.params.r_k[0],
+			res.params.r_k[1],
+			res.params.r_k[2],
+			res.params.r_k[3],
+			res.params.r_k[4]);
+	}
+
+	log->Error(String::Format("Unsupported channel in GetIntrinsics(): {0}", channelName));
+	return nullptr;
 }
 
 Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExtrinsics(String^ channelFromName, String^ channelToName)
 {
-	Metrilus::Util::RigidBodyTransformation^ result = nullptr;
-
 	log->Info("Trying to load extrinsics from file.");
 	try
 	{
-		result = Camera::GetExtrinsics(channelFromName, channelToName);
+		return Camera::GetExtrinsics(channelFromName, channelToName);
 	}
 	catch (...)
 	{
 		/* empty */
 	}
 
-	if (result == nullptr)
+	log->Info("Extrinsices file not found.");
+	log->Info("Using Orbbec factory extrinsics as projective transformation.");
+
+	ParamsResult res = _pCamData->openNICam->get_cmos_params(0);
+
+	Metrilus::Util::RotationMatrix^ rotMat;
+	Point3f translation;
+
+	if (res.error)
 	{
-		log->Info("Extrinsices file not found.");
-		log->Info("Using Orbbec factory extrinsics as projective transformation.");
+		translation = Point3f(-0.0242641f, -0.000439535f, -0.000577864f);
 
-		ParamsResult res = _pCamData->openNICam->get_cmos_params(0);
-
-		Metrilus::Util::RotationMatrix^ rotMat;
-		Point3f translation;
-
-		if (res.error)
-		{
-			translation = Point3f(-0.0242641f, -0.000439535f, -0.000577864);
-
-			//Extracted from file in Orbbec calibration tool
-			rotMat = gcnew Metrilus::Util::RotationMatrix(
-				Point3f(0.999983f, -0.00264698f, 0.00526572f),
-				Point3f(0.00264383f, 0.999996f, 0.000603628f),
-				Point3f(-0.0052673f, -0.000589696f, 0.999986f));
-		}
-		else
-		{
-			translation = Point3f(res.params.r2l_t[0] / 1000, res.params.r2l_t[1] / 1000, res.params.r2l_t[2] / 1000);
-
-			rotMat = gcnew Metrilus::Util::RotationMatrix(
-				Point3f(res.params.r2l_r[0], res.params.r2l_r[3], res.params.r2l_r[6]),
-				Point3f(res.params.r2l_r[1], res.params.r2l_r[4], res.params.r2l_r[7]),
-				Point3f(res.params.r2l_r[2], res.params.r2l_r[5], res.params.r2l_r[8]));
-		}
-
-		//TODO: Compare with own calibration, since IR-to-depth shift (in y-direction) can have an effect on the transformation
-		Metrilus::Util::RigidBodyTransformation^ depthToColor = gcnew Metrilus::Util::RigidBodyTransformation(rotMat, translation);
-
-		if ((channelFromName->Equals(ChannelNames::Intensity) || channelFromName->Equals(ChannelNames::ZImage)) && channelToName->Equals(ChannelNames::Color))
-		{			
-			return depthToColor;
-		}
-		else if (channelFromName->Equals(ChannelNames::Color) && (channelToName->Equals(ChannelNames::Intensity) || channelToName->Equals(ChannelNames::ZImage)))
-		{
-			// Extracted from file in Orbbec calibration tool
-			return depthToColor->GetInverted();
-		}
-		else
-		{
-			log->Error("Unsupported channel combination in GetExtrinsics().");
-			return nullptr;
-		}
-
+		//Extracted from file in Orbbec calibration tool
+		rotMat = gcnew Metrilus::Util::RotationMatrix(
+			Point3f(0.999983f, -0.00264698f, 0.00526572f),
+			Point3f(0.00264383f, 0.999996f, 0.000603628f),
+			Point3f(-0.0052673f, -0.000589696f, 0.999986f));
 	}
-	return result;
+	else
+	{
+		translation = Point3f(res.params.r2l_t[0] / 1000, res.params.r2l_t[1] / 1000, res.params.r2l_t[2] / 1000);
+
+		rotMat = gcnew Metrilus::Util::RotationMatrix(
+			Point3f(res.params.r2l_r[0], res.params.r2l_r[3], res.params.r2l_r[6]),
+			Point3f(res.params.r2l_r[1], res.params.r2l_r[4], res.params.r2l_r[7]),
+			Point3f(res.params.r2l_r[2], res.params.r2l_r[5], res.params.r2l_r[8]));
+	}
+
+	//TODO: Compare with own calibration, since IR-to-depth shift (in y-direction) can have an effect on the transformation
+	Metrilus::Util::RigidBodyTransformation^ depthToColor = gcnew Metrilus::Util::RigidBodyTransformation(rotMat, translation);
+
+	if ((channelFromName->Equals(ChannelNames::Intensity) || channelFromName->Equals(ChannelNames::ZImage)) && channelToName->Equals(ChannelNames::Color))
+	{			
+		return depthToColor;
+	}
+	if (channelFromName->Equals(ChannelNames::Color) && (channelToName->Equals(ChannelNames::Intensity) || channelToName->Equals(ChannelNames::ZImage)))
+	{
+		// Extracted from file in Orbbec calibration tool
+		return depthToColor->GetInverted();
+	}
+
+	log->Error("Unsupported channel combination in GetExtrinsics().");
+	return nullptr;
 }
