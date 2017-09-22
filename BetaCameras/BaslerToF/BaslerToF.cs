@@ -32,9 +32,7 @@ namespace MetriCam2.Cameras
         private bool filterTemporal = false;
         private bool filterSpatial = true;
 
-        private ulong m_TriggerDelay;
         private const ulong c_TriggerBaseDelay = 250000000;    // 250 ms
-        private double m_SyncTriggerRate;
         // Readout time. [ns]
         // Though basically a constant inherent to the ToF camera, the exact value may still change in future firmware releases.
         private const ulong c_ReadoutTime = 21000000;
@@ -517,7 +515,6 @@ namespace MetriCam2.Cameras
                     {
                         // Latch GevIEEE1588 status.
                         camera.ExecuteCommand("GevIEEE1588DataSetLatch");
-                        Console.Write(".");
                         System.Threading.Thread.Sleep(1000);
                     }
 
@@ -540,19 +537,19 @@ namespace MetriCam2.Cameras
             {
                 if (cameras[i].IsMaster)
                 {
-                    Console.WriteLine("   Camera {0} is master\n\n", i);
+                    log.InfoFormat("Camera {0} is master.", i);
                     externalMasterClock = false;
                 }
             }
 
             if (true == externalMasterClock)
             {
-                Console.WriteLine("External master clock present in subnet: All cameras are slaves.\n");
+                log.Info("External master clock present in subnet: All cameras are slaves.");
             }
             // Synchronize clocks:
             // Maximum allowed offset from master clock. 
             const long tsOffsetMax = 10000;
-            log.InfoFormat("Wait until offsets from master clock have settled below {0} ns\n", tsOffsetMax);
+            log.InfoFormat("Wait until offsets from master clock have settled below {0} ns", tsOffsetMax);
 
             for (int camIdx = 0; camIdx < cameras.Length; camIdx++)
             {
@@ -578,7 +575,7 @@ namespace MetriCam2.Cameras
             // Initialize trigger delay.
             TriggerDelay = 0;
 
-            Console.WriteLine("Configuring start time and trigger delays ...\n");
+            log.Info("Configuring start time and trigger delays ...");
 
             //
             // Cycle through cameras and set trigger delay.
@@ -663,11 +660,10 @@ namespace MetriCam2.Cameras
                 // Latch synchronization start time & synchronization rate registers.
                 // Until the values have been latched, they won't have any effect.
                 cameras[camIdx].camera.ExecuteCommand("SyncUpdate");
-
-                for (int i = 0; i < cameras.Length; i++)
-                {
-                    cameras[i].StartGrabbing();
-                }
+            }
+            for (int i = 0; i < cameras.Length; i++)
+            {
+                cameras[i].StartGrabbing();
             }
         }
 
