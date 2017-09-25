@@ -98,7 +98,7 @@ int cmd::init(const char* deviceURI)
 	rc = xnUSBOpenDeviceByPath(/**m_astrDevicePaths*/deviceURI, &m_hUSBDevice);
 	if (rc != STATUS_OK)
 	{
-		cout << " Error: failed to open device" << m_vid << m_pid << endl;
+		cout << " Error: failed to open device " << m_vid << "/" << m_pid << endl;
 		return -1;
 	}
 #endif

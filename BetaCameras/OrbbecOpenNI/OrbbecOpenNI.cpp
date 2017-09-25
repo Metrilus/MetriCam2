@@ -198,6 +198,10 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	}
 
 	int rc = _pCamData->openNICam->init(deviceURI);
+	if (rc != openni::Status::STATUS_OK)
+	{
+		throw gcnew MetriCam2::Exceptions::ConnectionFailedException(String::Format("Could not init connection to device {0}.", SerialNumber));
+	}
 	_pCamData->openNICam->ldp_set(true); //Ensure eye-safety by turning on the proximity sensor
 
 	// Start depth stream
@@ -220,8 +224,10 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	}
 
 	_irGain = GetIRGain();
-	_emitterEnabled = GetEmitterStatus() == "On";
-	_irFlooderEnabled = GetIRFlooderStatus() == "On";
+	// Turn Emitter on if any depth channel is active.
+	// (querying from device here would return wrong value)
+	EmitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
+	IRFlooderEnabled = false; // Default to IR flooder off.
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
@@ -406,9 +412,9 @@ unsigned int MetriCam2::Cameras::AstraOpenNI::GetIRExposure()
 
 void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
 {
-	// TODO
 	_pCamData->depth->destroy();
 	_pCamData->ir->destroy();
+	_pCamData->color->destroy();
 	OpenNIShutdown();
 }
 
@@ -417,7 +423,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 	openni::VideoStream** ppStreams = new openni::VideoStream*[2];
 	ppStreams[0] = _pCamData->depth;
 	ppStreams[1] = _pCamData->ir;
-	//ppStreams[2] = camData->color;
+	//ppStreams[2] = _pCamData->color;
 
 	int changedIndex;
 	openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, 2, &changedIndex);
