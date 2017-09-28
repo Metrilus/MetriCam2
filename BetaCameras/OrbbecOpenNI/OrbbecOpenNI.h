@@ -42,18 +42,59 @@ namespace MetriCam2
 			AstraOpenNI();
 			~AstraOpenNI();
 
-			property bool EmitterEnabled 
+			property ParamDesc<bool>^ EmitterEnabledDesc
 			{
-				bool get(void) 
+				inline ParamDesc<bool> ^get()
+				{
+					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "Emitter is enabled";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property bool EmitterEnabled
+			{
+				bool get(void)
 				{
 					//Reader the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
-					return emitterEnabled;
+					return _emitterEnabled;
 				}
-				void set(bool value) 
+				void set(bool value)
 				{
-					emitterEnabled = value;
-					SetEmitterStatus(emitterEnabled);
-					log->DebugFormat("Emitter state set to: {0}", emitterEnabled.ToString());
+					_emitterEnabled = value;
+					SetEmitterStatus(_emitterEnabled);
+					log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
+				}
+			}
+
+			property ParamDesc<bool>^ IRFlooderEnabledDesc
+			{
+				inline ParamDesc<bool> ^get()
+				{
+					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "IR flooder is enabled";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property bool IRFlooderEnabled
+			{
+				bool get(void)
+				{
+					//Reader the IrFlood status via the "cmd" class does not yet work. Check in future version of experimental SDK.
+					return _irFlooderEnabled;
+				}
+				void set(bool value)
+				{
+					_irFlooderEnabled = value;
+					SetIRFlooderStatus(_irFlooderEnabled);
+					log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
 				}
 			}
 
@@ -66,7 +107,7 @@ namespace MetriCam2
 				void set(unsigned char value)
 				{
 					SetIRGain(value);
-					irGain = value;
+					_irGain = value;
 				}
 			}
 
@@ -83,20 +124,7 @@ namespace MetriCam2
 				{
 					SetIRExposure(value);
 					// Set IRExposure resets the gain to its default value (96 for Astra and 8 for AstraS). We have to set the gain to the memorized value (member irGain).
-					SetIRGain(irGain);
-				}
-			}
-
-			property ParamDesc<bool>^ EmitterEnabledDesc
-			{
-				inline ParamDesc<bool> ^get()
-				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-					res->Unit = "";
-					res->Description = "Emitter is enabled";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
+					SetIRGain(_irGain);
 				}
 			}
 
@@ -159,13 +187,16 @@ namespace MetriCam2
 			static bool OpenNIInit();
 			static bool OpenNIShutdown();
 			static void LogOpenNIError(String^ status);
-			static int openNIInitCounter = 0;
+			static int _openNIInitCounter = 0;
 
-			unsigned short irGain = 0;
+			unsigned short _irGain = 0;
 
 			void InitDepthStream();
 			void InitIRStream();
 			void InitColorStream();
+
+			String^ GetIRFlooderStatus();
+			void SetIRFlooderStatus(bool on);
 
 			String^ GetEmitterStatus();
 			void SetEmitterStatus(bool on);
@@ -176,12 +207,9 @@ namespace MetriCam2
 			void SetIRExposure(unsigned int value);
 			unsigned int GetIRExposure();
 
-			bool emitterEnabled;
-			OrbbecNativeCameraData* camData;
-
-			// for converting managed strings to const char*
-			msclr::interop::marshal_context oMarshalContext;
-			System::Collections::Generic::Dictionary<String^, String^>^ serialToUriDictionary;
+			bool _emitterEnabled;
+			bool _irFlooderEnabled;
+			OrbbecNativeCameraData* _pCamData;
 		};
 	}
 }
