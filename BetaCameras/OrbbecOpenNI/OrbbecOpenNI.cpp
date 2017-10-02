@@ -15,22 +15,9 @@
 
 MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 {
-	_pCamData = new OrbbecNativeCameraData();
-	_pCamData->openNICam = new cmd();
-
-	_pCamData->depth = new openni::VideoStream();
-	_pCamData->ir = new openni::VideoStream();
-	_pCamData->color = new openni::VideoStream();
-
 	// Init to most reasonable values; update during ConnectImpl
 	_emitterEnabled = true;
 	_irFlooderEnabled = false;
-}
-
-MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
-{
-	//TODO: clean up camData->openNICam, camData->depth and camData->ir
-	delete _pCamData;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::LogOpenNIError(String^ status) 
@@ -171,6 +158,13 @@ void MetriCam2::Cameras::AstraOpenNI::LoadAllAvailableChannels()
 
 void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 {
+	_pCamData = new OrbbecNativeCameraData();
+	_pCamData->openNICam = new cmd();
+
+	_pCamData->depth = new openni::VideoStream();
+	_pCamData->ir = new openni::VideoStream();
+	_pCamData->color = new openni::VideoStream();
+
 	bool initSucceeded = OpenNIInit();
 	if (!initSucceeded) 
 	{
@@ -410,6 +404,12 @@ void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
 	_pCamData->depth->destroy();
 	_pCamData->ir->destroy();
 	_pCamData->color->destroy();
+	delete _pCamData->depth;
+	delete _pCamData->ir;
+	delete _pCamData->color;
+	delete _pCamData->openNICam;
+	delete _pCamData;
+
 	OpenNIShutdown();
 }
 
