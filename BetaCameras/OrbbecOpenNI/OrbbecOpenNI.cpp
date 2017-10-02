@@ -9,13 +9,6 @@
 
 #define MAX_DEVICES 20  // There is no limitations, we choose 20 as "reasonable" value in real use case.
 
-//Adpated from SimpleViewer of experimental interface
-#define IR_Exposure_MAX 0x1000
-#define IR_Exposure_MIN 0x0
-#define IR_Exposure_SCALE 256
-#define IR_Gain_MIN 0x08
-#define IR_Gain_MAX 0x60
-
 // TODO:
 // * support different resolutions (not only VGA) for channels ZImage and Intensity and check whether IR gain/exposure set feature is still working.
 // * At least the mode 1280x1024 seems to be not compatible with the IR exposure set feature. For QVGA there seem to be problems to set the exposure when the Intensity channel is activated.
@@ -202,6 +195,8 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	{
 		throw gcnew MetriCam2::Exceptions::ConnectionFailedException(String::Format("Could not init connection to device {0}.", SerialNumber));
 	}
+	VendorID = _pCamData->openNICam->m_vid;
+	ProductID = _pCamData->openNICam->m_pid;
 	_pCamData->openNICam->ldp_set(true); //Ensure eye-safety by turning on the proximity sensor
 
 	// Start depth stream

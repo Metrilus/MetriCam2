@@ -6,6 +6,13 @@
 #include <OpenNI.h>
 #include "cmd.h"
 
+//Adpated from SimpleViewer of experimental interface
+#define IR_Exposure_MAX 4096
+#define IR_Exposure_MIN 0
+#define IR_Exposure_SCALE 256
+#define IR_Gain_MIN 8
+#define IR_Gain_MAX 96
+
 using namespace System;
 using namespace System::ComponentModel;
 using namespace System::Threading;
@@ -42,24 +49,14 @@ namespace MetriCam2
 			AstraOpenNI();
 			~AstraOpenNI();
 
-			property ParamDesc<bool>^ EmitterEnabledDesc
-			{
-				inline ParamDesc<bool> ^get()
-				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-					res->Unit = "";
-					res->Description = "Emitter is enabled";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
-				}
-			}
+			property int ProductID;
+			property int VendorID;
 
 			property bool EmitterEnabled
 			{
 				bool get(void)
 				{
-					//Reader the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
+					// Reading the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
 					return _emitterEnabled;
 				}
 				void set(bool value)
@@ -70,24 +67,11 @@ namespace MetriCam2
 				}
 			}
 
-			property ParamDesc<bool>^ IRFlooderEnabledDesc
-			{
-				inline ParamDesc<bool> ^get()
-				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-					res->Unit = "";
-					res->Description = "IR flooder is enabled";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
-				}
-			}
-
 			property bool IRFlooderEnabled
 			{
 				bool get(void)
 				{
-					//Reader the IrFlood status via the "cmd" class does not yet work. Check in future version of experimental SDK.
+					// Reading the IrFlood status via the "cmd" class does not yet work. Check in future version of experimental SDK.
 					return _irFlooderEnabled;
 				}
 				void set(bool value)
@@ -102,12 +86,12 @@ namespace MetriCam2
 			{
 				unsigned char get(void)
 				{
-					return (unsigned char)GetIRGain();
+					return _irGain;
 				}
 				void set(unsigned char value)
 				{
-					SetIRGain(value);
 					_irGain = value;
+					SetIRGain(_irGain);
 				}
 			}
 
@@ -179,6 +163,58 @@ namespace MetriCam2
 			virtual void DeactivateChannelImpl(String^ channelName) override;
 			
 		private:
+			property ParamDesc<bool>^ EmitterEnabledDesc
+			{
+				inline ParamDesc<bool> ^get()
+				{
+					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "Emitter is enabled";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property ParamDesc<bool>^ IRFlooderEnabledDesc
+			{
+				inline ParamDesc<bool> ^get()
+				{
+					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "IR flooder is enabled";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property ParamDesc<unsigned int>^ IRExposureDesc
+			{
+				inline ParamDesc<unsigned int> ^get()
+				{
+					ParamDesc<unsigned int> ^res = gcnew ParamDesc<unsigned int>();
+					res->Unit = "";
+					res->Description = "IR exposure";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property ParamDesc<int>^ IRGainDesc
+			{
+				inline ParamDesc<int> ^get()
+				{
+					ParamDesc<int> ^res = ParamDesc::BuildRangeParamDesc(IR_Gain_MIN, IR_Gain_MAX);
+					res->Unit = "";
+					res->Description = "IR gain";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
 			FloatCameraImage^ CalcZImage();
 			ColorCameraImage^ CalcColor();
 			Point3fCameraImage^ CalcPoint3fImage();
