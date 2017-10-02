@@ -1797,7 +1797,11 @@ namespace MetriCam2
         /// </summary>
         /// <remarks><see cref="ParamDesc.IsReadable"/> and <see cref="ParamDesc.IsWritable"/> are set according to the current camera state.</remarks>
         /// <param name="name">The parameter's name.</param>
-        /// <returns>The <see cref="ParamDesc"/> for the parameter.</returns>
+        /// <returns>
+        /// If <paramref name="name"/> is a property name to which a corresponding <see cref="ParamDesc"/> exists, then that <see cref="ParamDesc"/> is returned.
+        /// If <paramref name="name"/> is a property of the base <see cref="Camera"/> type which has no matching <see cref="ParamDesc"/> then null is returned.
+        /// All other cases throw an exception.
+        /// </returns>
         /// <exception cref="ParameterNotSupportedException">If no parameter by that name exists.</exception>
         /// <exception cref="ArgumentException">Thrown if a parameter descriptor is publicly visible.</exception>
         /// <exception cref="InvalidOperationException">Thrown if an exception has been thrown in the parameter descriptor's Getter. See InnerException for details.</exception>
