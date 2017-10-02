@@ -1819,6 +1819,14 @@ namespace MetriCam2
             ParamDesc desc = GetParameterDescriptor(pi);
             if (null == desc)
             {
+                // Test if name is a property of the base Camera class
+                PropertyInfo piBase = typeof(Camera).GetProperty(name);
+                if (null != piBase)
+                {
+                    // this is no error, so do not throw an exception
+                    return null;
+                }
+
                 // Test if name is a valid Auto* parameter
                 ParamDesc baseDesc;
                 if (!IsAutoParameter(name, out baseDesc))
