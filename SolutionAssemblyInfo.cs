@@ -6,7 +6,7 @@
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Metrilus GmbH")]
 [assembly: AssemblyProduct("MetriCam 2")]
-[assembly: AssemblyCopyright("Copyright ©  2013 - 2016")]
+[assembly: AssemblyCopyright("Copyright ©  2013 - 2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -10,7 +10,7 @@ using namespace System::Security::Permissions;
 [assembly:AssemblyConfigurationAttribute("")];
 [assembly:AssemblyCompanyAttribute("Metrilus GmbH")];
 [assembly:AssemblyProductAttribute("MetriCam 2")];
-[assembly:AssemblyCopyrightAttribute("Copyright ©  2013 - 2016")];
+[assembly:AssemblyCopyrightAttribute("Copyright ©  2013 - 2017")];
 [assembly:AssemblyTrademarkAttribute("")];
 [assembly:AssemblyCultureAttribute("")];
 
