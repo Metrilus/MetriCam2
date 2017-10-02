@@ -504,6 +504,8 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 			throw gcnew Exception("IR and depth are not allowed to be active at the same time. Please deactivate channel \"Intensity\" before activating channel \"ZImage\" or \"Point3DImage\"");
 		}
 
+		auto irGainBefore = _irGain;
+
 		openni::VideoMode depthVideoMode = _pCamData->depth->getVideoMode();
 		depthVideoMode.setResolution(640, 480);
 		_pCamData->depth->setVideoMode(depthVideoMode);
@@ -531,8 +533,11 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 		if (this->IsConnected)
 		{
-			//Activating the depth channel resets the IR gain to the default value -> we need to restore the value that was set before.
-			SetIRGain(_irGain);
+			if (GetIRGain() != irGainBefore)
+			{
+				// Activating the depth channel resets the IR gain to the default value -> we need to restore the value that was set before.
+				SetIRGain(irGainBefore);
+			}
 		}
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
