@@ -76,6 +76,8 @@ int cmd::init(const char* deviceURI)
 	if (rc != STATUS_OK)
 	{
 		printf("Couldn't open device\n%s\n", OpenNI::getExtendedError());
+		m_vid = 0;
+		m_pid = 0;
 		return rc;
 	}
 	dInfo = device.getDeviceInfo();
