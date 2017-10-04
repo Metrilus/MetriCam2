@@ -198,7 +198,8 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	int rc = _pCamData->openNICam->init(deviceURI);
 	if (rc != openni::Status::STATUS_OK)
 	{
-		throw gcnew MetriCam2::Exceptions::ConnectionFailedException(String::Format("Could not init connection to device {0}.", SerialNumber));
+		log->WarnFormat("Could not init connection to device {0}.", SerialNumber);
+		//throw gcnew MetriCam2::Exceptions::ConnectionFailedException(String::Format("Could not init connection to device {0}.", SerialNumber));
 	}
 	VendorID = _pCamData->openNICam->m_vid;
 	ProductID = _pCamData->openNICam->m_pid;
