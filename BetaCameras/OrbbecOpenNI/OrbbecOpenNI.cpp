@@ -226,8 +226,11 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	_irGain = GetIRGain();
 	// Turn Emitter on if any depth channel is active.
 	// (querying from device here would return wrong value)
-	EmitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
-	IRFlooderEnabled = false; // Default to IR flooder off.
+	// (do not use properties as they check against their current value which might be wrong)
+	_emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
+	SetEmitterStatus(_emitterEnabled);
+	_irFlooderEnabled = false; // Default to IR flooder off.
+	SetIRFlooderStatus(_irFlooderEnabled);
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
