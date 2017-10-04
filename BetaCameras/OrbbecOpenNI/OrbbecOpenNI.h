@@ -47,6 +47,7 @@ namespace MetriCam2
 		{
 		public:
 			AstraOpenNI();
+			~AstraOpenNI();
 
 			property int ProductID;
 			property int VendorID;

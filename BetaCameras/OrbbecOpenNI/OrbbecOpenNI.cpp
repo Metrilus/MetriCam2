@@ -20,6 +20,17 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	_irFlooderEnabled = false;
 }
 
+MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
+{
+	try
+	{
+		if (IsConnected)
+		{
+			Disconnect(true);
+		}
+	}
+	catch (...) {}
+}
 void MetriCam2::Cameras::AstraOpenNI::LogOpenNIError(String^ status) 
 {
 	log->Error(status + "\n" + gcnew String(openni::OpenNI::getExtendedError()));
