@@ -189,17 +189,19 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		System::Collections::Generic::Dictionary<String^, String^>^ serialsToUris = GetSerialToUriMappingOfAttachedCameras();
 		if (!serialsToUris->ContainsKey(SerialNumber))
 		{
-			throw gcnew MetriCam2::Exceptions::ConnectionFailedException(String::Format("No camera with requested S/N ({0}) found.", SerialNumber));
+			auto msg = String::Format("No camera with requested S/N ({0}) found.", SerialNumber);
+			log->Warn(msg);
+			throw gcnew MetriCam2::Exceptions::ConnectionFailedException(msg);
 		}
-		msclr::interop::marshal_context marshalContext;
 		deviceURI = marshalContext.marshal_as<const char*>(serialsToUris[SerialNumber]);
 	}
 
 	int rc = _pCamData->openNICam->init(deviceURI);
 	if (rc != openni::Status::STATUS_OK)
 	{
-		log->WarnFormat("Could not init connection to device {0}.", SerialNumber);
-		//throw gcnew MetriCam2::Exceptions::ConnectionFailedException(String::Format("Could not init connection to device {0}.", SerialNumber));
+		auto msg = String::Format("Could not init connection to device {0}.", SerialNumber);
+		log->Warn(msg);
+		throw gcnew MetriCam2::Exceptions::ConnectionFailedException(msg);
 	}
 	VendorID = _pCamData->openNICam->m_vid;
 	ProductID = _pCamData->openNICam->m_pid;
