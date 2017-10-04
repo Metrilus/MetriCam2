@@ -61,9 +61,12 @@ namespace MetriCam2
 				}
 				void set(bool value)
 				{
-					_emitterEnabled = value;
-					SetEmitterStatus(_emitterEnabled);
-					log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
+					if (value != _emitterEnabled)
+					{
+						_emitterEnabled = value;
+						SetEmitterStatus(_emitterEnabled);
+						log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
+					}
 				}
 			}
 
@@ -76,9 +79,12 @@ namespace MetriCam2
 				}
 				void set(bool value)
 				{
-					_irFlooderEnabled = value;
-					SetIRFlooderStatus(_irFlooderEnabled);
-					log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
+					if (value != _irFlooderEnabled)
+					{
+						_irFlooderEnabled = value;
+						SetIRFlooderStatus(_irFlooderEnabled);
+						log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
+					}
 				}
 			}
 
@@ -90,8 +96,11 @@ namespace MetriCam2
 				}
 				void set(unsigned char value)
 				{
-					_irGain = value;
-					SetIRGain(_irGain);
+					if (value != _irGain)
+					{
+						_irGain = value;
+						SetIRGain(_irGain);
+					}
 				}
 			}
 
