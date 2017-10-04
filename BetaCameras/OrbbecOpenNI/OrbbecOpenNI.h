@@ -61,12 +61,9 @@ namespace MetriCam2
 				}
 				void set(bool value)
 				{
-					if (value != _emitterEnabled)
-					{
-						_emitterEnabled = value;
-						SetEmitterStatus(_emitterEnabled);
-						log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
-					}
+					_emitterEnabled = value;
+					SetEmitterStatus(_emitterEnabled);
+					log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
 				}
 			}
 
@@ -79,12 +76,9 @@ namespace MetriCam2
 				}
 				void set(bool value)
 				{
-					if (value != _irFlooderEnabled)
-					{
-						_irFlooderEnabled = value;
-						SetIRFlooderStatus(_irFlooderEnabled);
-						log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
-					}
+					_irFlooderEnabled = value;
+					SetIRFlooderStatus(_irFlooderEnabled);
+					log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
 				}
 			}
 
@@ -255,6 +249,8 @@ namespace MetriCam2
 			bool _emitterEnabled;
 			bool _irFlooderEnabled;
 			OrbbecNativeCameraData* _pCamData;
+
+			msclr::interop::marshal_context marshalContext;
 		};
 	}
 }
