@@ -777,6 +777,7 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 	log->Info("Projective transformation file not found.");
 	log->Info("Using Orbbec factory intrinsics as projective transformation.");
 
+	Metrilus::Util::ProjectiveTransformationZhang^ pt = nullptr;
 	ParamsResult res = _pCamData->openNICam->get_cmos_params(0);
 
 	if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
@@ -784,9 +785,9 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 		if (res.error)
 		{
 			//Extracted from 3-D coordinates
-			return gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 570.3422f, 570.3422f, 320, 240, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+			pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 570.3422f, 570.3422f, 320, 240, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 		}
-		return gcnew Metrilus::Util::ProjectiveTransformationZhang(
+		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
 			640,
 			480,
 			res.params.l_intr_p[0],
@@ -805,9 +806,9 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 		if (res.error)
 		{
 			// Extracted from file in Orbbec calibration tool
-			return gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 512.408f, 512.999f, 327.955f, 236.763f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+			pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 512.408f, 512.999f, 327.955f, 236.763f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 		}
-		return gcnew Metrilus::Util::ProjectiveTransformationZhang(
+		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
 			640,
 			480,
 			res.params.r_intr_p[0],
@@ -821,8 +822,16 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 			res.params.r_k[4]);
 	}
 
-	log->Error(String::Format("Unsupported channel in GetIntrinsics(): {0}", channelName));
-	return nullptr;
+	if (nullptr == pt)
+	{
+		log->Error(String::Format("Unsupported channel in GetIntrinsics(): {0}", channelName));
+	}
+	else
+	{
+		pt->CameraSerial = SerialNumber;
+	}
+
+	return pt;
 }
 
 Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExtrinsics(String^ channelFromName, String^ channelToName)
