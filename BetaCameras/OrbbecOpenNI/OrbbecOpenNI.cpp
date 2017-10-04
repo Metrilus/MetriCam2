@@ -641,6 +641,7 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
 	int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
 	FloatCameraImage^ depthDataMeters = gcnew FloatCameraImage(depthFrame.getWidth(), depthFrame.getHeight());
+	depthDataMeters->ChannelName = ChannelNames::ZImage;
 
 	for (int y = 0; y < depthFrame.getHeight(); ++y)
 	{
@@ -689,6 +690,7 @@ ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 	bitmap->UnlockBits(bmpData);
 
 	ColorCameraImage^ image = gcnew ColorCameraImage(bitmap);
+	image->ChannelName = ChannelNames::Color;
 
 	return image;
 }
@@ -706,7 +708,8 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 
 	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
 	int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-	Point3fCameraImage^ depthDataMeters = gcnew Point3fCameraImage(depthFrame.getWidth(), depthFrame.getHeight());
+	Point3fCameraImage^ pointsImage = gcnew Point3fCameraImage(depthFrame.getWidth(), depthFrame.getHeight());
+	pointsImage->ChannelName = ChannelNames::Point3DImage;
 
 	for (int y = 0; y < depthFrame.getHeight(); ++y)
 	{
@@ -719,11 +722,11 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 			float c = -1;
 			openni::CoordinateConverter::convertDepthToWorld(*(_pCamData->depth), x, y, *pDepth, &a, &b, &c);
 
-			depthDataMeters[y, x] = Point3f(a * 0.001f, b * 0.001f, c * 0.001f);
+			pointsImage[y, x] = Point3f(a, b, c) * 0.001f;
 		}
 		pDepthRow += rowSize;
 	}
-	return depthDataMeters;
+	return pointsImage;
 }
 
 FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
@@ -739,7 +742,8 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 
 	const openni::Grayscale16Pixel* pIRRow = (const openni::Grayscale16Pixel*)irFrame.getData();
 	int rowSize = irFrame.getStrideInBytes() / sizeof(openni::Grayscale16Pixel);
-	FloatCameraImage^ irDataMeters = gcnew FloatCameraImage(irFrame.getWidth(), irFrame.getHeight(), 0.0f);
+	FloatCameraImage^ irData = gcnew FloatCameraImage(irFrame.getWidth(), irFrame.getHeight(), 0.0f);
+	irData->ChannelName = ChannelNames::Intensity;
 
 	// Compensate for offset bug: Translate infrared frame by 8 pixels in vertical direction to match infrared with depth image.
 	// Leave first 8 rows black. Constructor of FloatCameraImage assigns zero to every pixel as initial value by default.
@@ -751,11 +755,11 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 
 		for (int x = 0; x < irFrame.getWidth(); ++x, ++pIR)
 		{
-			irDataMeters[y + yTranslation, x] = (float)*pIR;
+			irData[y + yTranslation, x] = (float)*pIR;
 		}
 		pIRRow += rowSize;
 	}
-	return irDataMeters;
+	return irData;
 }
 
 Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIntrinsics(String^ channelName)
