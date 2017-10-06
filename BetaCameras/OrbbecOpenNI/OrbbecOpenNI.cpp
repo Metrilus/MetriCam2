@@ -31,6 +31,7 @@ MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
 	}
 	catch (...) {}
 }
+
 void MetriCam2::Cameras::AstraOpenNI::LogOpenNIError(String^ status) 
 {
 	log->Error(status + "\n" + gcnew String(openni::OpenNI::getExtendedError()));
@@ -324,29 +325,34 @@ String^ MetriCam2::Cameras::AstraOpenNI::GetIRFlooderStatus()
 	return statusString;
 }
 
-void MetriCam2::Cameras::AstraOpenNI::SetIRGain(char valueChar)
+template<typename ... Args>
+string string_format(const std::string& format, Args ... args)
 {
-	const char* value;
-	if (valueChar < IR_Gain_MIN)
-	{
-		value = "0x08";
-	}
-	else if (valueChar > IR_Gain_MAX)
-	{
-		value = "0x60";
-	}
-	else
-	{	
-		value = (char*)Marshal::StringToHGlobalAnsi("0x" + Convert::ToString((int)valueChar, 16)).ToPointer();
-	}	
+	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+	unique_ptr<char[]> buf(new char[size]);
+	snprintf(buf.get(), size, format.c_str(), args ...);
+	return string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+}
 
-	if (!_pCamData->openNICam->ir_gain_set(value))
+void MetriCam2::Cameras::AstraOpenNI::SetIRGain(int value)
+{
+	if (value < IR_Gain_MIN)
+	{
+		value = IR_Gain_MIN;
+	}
+	else if (value > IR_Gain_MAX)
+	{
+		value = IR_Gain_MAX;
+	}
+
+	string buf = string_format("0x%x", value);
+	if (!_pCamData->openNICam->ir_gain_set(buf.c_str()))
 	{
 		LogOpenNIError("Set IR gain failed");
 	}
 	else
 	{
-		log->DebugFormat("IR gain is set to: {0}", gcnew String(value));
+		log->DebugFormat("IR gain is set to: {0}", gcnew String(buf.c_str()));
 	}
 }
 
@@ -449,7 +455,6 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 
 Metrilus::Util::CameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcChannelImpl(String ^ channelName)
 {
-	log->EnterMethod();
 	if (channelName->Equals(ChannelNames::ZImage))
 	{
 		return CalcZImage();

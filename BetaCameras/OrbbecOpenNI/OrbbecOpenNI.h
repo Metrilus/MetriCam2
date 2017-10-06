@@ -82,13 +82,13 @@ namespace MetriCam2
 				}
 			}
 
-			property unsigned char IRGain
+			property int IRGain
 			{
-				unsigned char get(void)
+				int get(void)
 				{
 					return _irGain;
 				}
-				void set(unsigned char value)
+				void set(int value)
 				{
 					if (value != _irGain)
 					{
@@ -192,18 +192,19 @@ namespace MetriCam2
 				}
 			}
 
-			property ParamDesc<unsigned int>^ IRExposureDesc
-			{
-				inline ParamDesc<unsigned int> ^get()
-				{
-					ParamDesc<unsigned int> ^res = gcnew ParamDesc<unsigned int>();
-					res->Unit = "";
-					res->Description = "IR exposure";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
-				}
-			}
+			// Disabled while the IRExposure getter is not implemented
+			//property ParamDesc<unsigned int>^ IRExposureDesc
+			//{
+			//	inline ParamDesc<unsigned int> ^get()
+			//	{
+			//		ParamDesc<unsigned int> ^res = gcnew ParamDesc<unsigned int>();
+			//		res->Unit = "";
+			//		res->Description = "IR exposure";
+			//		res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+			//		res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+			//		return res;
+			//	}
+			//}
 
 			property ParamDesc<int>^ IRGainDesc
 			{
@@ -228,7 +229,7 @@ namespace MetriCam2
 			static void LogOpenNIError(String^ status);
 			static int _openNIInitCounter = 0;
 
-			unsigned short _irGain = 0;
+			int _irGain = 0;
 
 			void InitDepthStream();
 			void InitIRStream();
@@ -240,7 +241,7 @@ namespace MetriCam2
 			String^ GetEmitterStatus();
 			void SetEmitterStatus(bool on);
 
-			void SetIRGain(char value);
+			void SetIRGain(int value);
 			unsigned short GetIRGain();
 
 			void SetIRExposure(unsigned int value);
