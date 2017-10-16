@@ -26,11 +26,37 @@ namespace MetriCam2.Cameras
             set => _colorResolution = value;
         }
 
+        ParamDesc<Point2i> ColorResolutionDesc
+        {
+            get
+            {
+                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                res.Unit = "Pixel";
+                res.Description = "Resolution of the color sensor.";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
         private uint _colorFPS = 30;
         public uint ColorFPS
         {
             get => _colorFPS;
             set => _colorFPS = value;
+        }
+
+        ParamDesc<Point2i> ColorFPSDesc
+        {
+            get
+            {
+                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                res.Unit = "Frames per Second";
+                res.Description = "FPS of the color sensor.";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
         }
 
         Point2i _depthResolution = new Point2i(640, 480);
@@ -40,11 +66,37 @@ namespace MetriCam2.Cameras
             set => _depthResolution = value;
         }
 
+        ParamDesc<Point2i> DepthResolutionDesc
+        {
+            get
+            {
+                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                res.Unit = "Pixel";
+                res.Description = "Resolution of the depth sensor.";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
         private uint _depthFPS = 30;
         public uint DepthFPS
         {
             get => _depthFPS;
             set => _depthFPS = value;
+        }
+
+        ParamDesc<Point2i> DepthFPSDesc
+        {
+            get
+            {
+                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                res.Unit = "Frames per Second";
+                res.Description = "FPS of the depth sensor.";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
         }
 
         #region Constructor
