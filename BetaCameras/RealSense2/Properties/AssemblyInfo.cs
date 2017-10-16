@@ -7,8 +7,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("RealSense2")]
-[assembly: AssemblyDescription("Wrapper for Intel libRealSense2 Cameras")]
+[assembly: AssemblyTitle("MetriCam2: libRealSense2 wrapper")]
+[assembly: AssemblyDescription("Wrapper for Intel libRealSense2 cameras")]
 [assembly: MetriCam2.Attributes.ContainsCameraImplementations]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
