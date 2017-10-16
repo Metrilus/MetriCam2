@@ -24,7 +24,7 @@ namespace MetriCam2.Samples.MinimalSample
             Camera camera;
             try
             {
-                camera = new Kinect2();
+                camera = new RealSense2();
             }
             catch (Exception e)
             {
@@ -47,6 +47,7 @@ namespace MetriCam2.Samples.MinimalSample
                 Console.WriteLine("Accessing color data");
                 ColorCameraImage img = (ColorCameraImage)camera.CalcChannel(ChannelNames.Color);
                 Bitmap rgbBitmapData = img.ToBitmap();
+                rgbBitmapData.Save("0Color.bmp");
             }
             catch (ArgumentException ex)
             {
@@ -56,7 +57,9 @@ namespace MetriCam2.Samples.MinimalSample
             try
             {
                 Console.WriteLine("Accessing distance data");
-                FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.Distance);
+                FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
+                Bitmap depthBitmapData = distancesData.ToBitmap();
+                depthBitmapData.Save("0Depth.bmp");
             }
             catch (ArgumentException ex)
             {
