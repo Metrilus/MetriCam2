@@ -21,6 +21,13 @@ namespace MetriCam2.Cameras
         private RealSense2API.RS2Frame _currentRightFrame = new RealSense2API.RS2Frame();
         private float _depthScale = 0.0f;
 
+
+        public class CustomChannelNames
+        {
+            public const string Left = "LeftInfrared";
+            public const string Right = "RightInfrared";
+        }
+
         Point2i _colorResolution = new Point2i(640, 480);
         public Point2i ColorResolution
         {
@@ -130,8 +137,9 @@ namespace MetriCam2.Cameras
 
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
-            Channels.Add(cr.RegisterChannel(ChannelNames.Left));
-            Channels.Add(cr.RegisterChannel(ChannelNames.Right));
+
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Left, typeof(FloatCameraImage)));
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Right, typeof(FloatCameraImage)));
         }
 
 
@@ -164,8 +172,8 @@ namespace MetriCam2.Cameras
 
             bool getColor = IsChannelActive(ChannelNames.Color);
             bool getDepth = IsChannelActive(ChannelNames.ZImage);
-            bool getLeft = IsChannelActive(ChannelNames.Left);
-            bool getRight = IsChannelActive(ChannelNames.Right);
+            bool getLeft = IsChannelActive(CustomChannelNames.Left);
+            bool getRight = IsChannelActive(CustomChannelNames.Right);
             bool haveColor = false;
             bool haveDepth = false;
             bool haveLeft = false;
@@ -174,6 +182,12 @@ namespace MetriCam2.Cameras
             while (true)
             {
                 RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 500);
+
+                if(!data.IsValid())
+                {
+                    RealSense2API.ReleaseFrame(data);
+                    continue;
+                }
 
                 int frameCount = RealSense2API.FrameSetEmbeddedCount(data);
                 log.Debug(string.Format("RealSense2: Got {0} Frames", frameCount));
@@ -213,7 +227,7 @@ namespace MetriCam2.Cameras
                             }
                             break;
                         case RealSense2API.Stream.INFRARED:
-                            if(index == 0)
+                            if(index == 1)
                             {
                                 if (getLeft)
                                 {
@@ -222,7 +236,7 @@ namespace MetriCam2.Cameras
                                     haveLeft = true;
                                 }
                             }
-                            else if(index == 1)
+                            else if(index == 2)
                             {
                                 if (getRight)
                                 {
@@ -255,6 +269,14 @@ namespace MetriCam2.Cameras
             {
                 return CalcZImage();
             }
+            else if (channelName == CustomChannelNames.Left)
+            {
+                return CalcIRImage(_currentLeftFrame);
+            }
+            else if (channelName == CustomChannelNames.Right)
+            {
+                return CalcIRImage(_currentRightFrame);
+            }
 
             return new Metrilus.Util.FloatCameraImage();
         }
@@ -266,7 +288,7 @@ namespace MetriCam2.Cameras
             int res_x = 640;
             int res_y = 480;
             int fps = 30;
-            int index = 0;
+            int index = -1;
 
             if (channelName == ChannelNames.Color)
             {
@@ -276,19 +298,26 @@ namespace MetriCam2.Cameras
                 res_x = ColorResolution.X;
                 res_y = ColorResolution.Y;
                 fps = (int)ColorFPS;
-                index = 0;
+                index = -1;
             }
             else if (channelName == ChannelNames.ZImage)
             {
+                if (IsChannelActive(CustomChannelNames.Left) || IsChannelActive(CustomChannelNames.Right))
+                {
+                    string msg = string.Format("RealSense2: can't have Left/Right and ZImage active at the same time");
+                    log.Error(msg);
+                    throw new Exception(msg);
+                }
+
                 stream = RealSense2API.Stream.DEPTH;
                 format = RealSense2API.Format.Z16;
 
                 res_x = DepthResolution.X;
                 res_y = DepthResolution.Y;
                 fps = (int)DepthFPS;
-                index = 0;
+                index = -1;
             }
-            else if (channelName == ChannelNames.Left)
+            else if (channelName == CustomChannelNames.Left)
             {
                 if(IsChannelActive(ChannelNames.ZImage))
                 {
@@ -303,9 +332,9 @@ namespace MetriCam2.Cameras
                 res_x = DepthResolution.X;
                 res_y = DepthResolution.Y;
                 fps = (int)DepthFPS;
-                index = 0;
+                index = 1;
             }
-            else if (channelName == ChannelNames.Right)
+            else if (channelName == CustomChannelNames.Right)
             {
                 if (IsChannelActive(ChannelNames.ZImage))
                 {
@@ -320,7 +349,7 @@ namespace MetriCam2.Cameras
                 res_x = DepthResolution.X;
                 res_y = DepthResolution.Y;
                 fps = (int)DepthFPS;
-                index = 1;
+                index = 2;
             }
             else
             {
@@ -346,11 +375,11 @@ namespace MetriCam2.Cameras
             {
                 stream = RealSense2API.Stream.DEPTH;
             }
-            else if (channelName == ChannelNames.Left)
+            else if (channelName == CustomChannelNames.Left)
             {
                 stream = RealSense2API.Stream.INFRARED;
             }
-            else if (channelName == ChannelNames.Right)
+            else if (channelName == CustomChannelNames.Right)
             {
                 stream = RealSense2API.Stream.INFRARED;
             }
@@ -390,32 +419,41 @@ namespace MetriCam2.Cameras
         {
             RealSense2API.RS2StreamProfile profile = new RealSense2API.RS2StreamProfile();
 
-            if (!IsChannelActive(channelName))
-                ActivateChannel(channelName);
-
             switch (channelName)
             {
                 case ChannelNames.Color:
                     if (!_currentColorFrame.IsValid())
+                    {
+                        ActivateChannel(ChannelNames.Color);
                         UpdateImpl();
+                    }
                     profile = RealSense2API.GetStreamProfile(_currentColorFrame);
                     break;
 
                 case ChannelNames.ZImage:
                     if (!_currentDepthFrame.IsValid())
+                    {
+                        ActivateChannel(ChannelNames.ZImage);
                         UpdateImpl();
+                    }
                     profile = RealSense2API.GetStreamProfile(_currentDepthFrame);
                     break;
 
-                case ChannelNames.Left:
+                case CustomChannelNames.Left:
                     if (!_currentLeftFrame.IsValid())
+                    {
+                        ActivateChannel(ChannelNames.Left);
                         UpdateImpl();
+                    }
                     profile = RealSense2API.GetStreamProfile(_currentLeftFrame);
                     break;
 
-                case ChannelNames.Right:
+                case CustomChannelNames.Right:
                     if (!_currentRightFrame.IsValid())
+                    {
+                        ActivateChannel(ChannelNames.Right);
                         UpdateImpl();
+                    }
                     profile = RealSense2API.GetStreamProfile(_currentRightFrame);
                     break;
 
@@ -466,6 +504,32 @@ namespace MetriCam2.Cameras
                 for (int x = 0; x < width; x++)
                 {
                     depthDataMeters[y, x] = (float)(_depthScale * (short)*sourceLine++);
+                }
+            }
+
+            return depthDataMeters;
+        }
+
+        unsafe private FloatCameraImage CalcIRImage(RealSense2API.RS2Frame frame)
+        {
+            if (!frame.IsValid())
+            {
+                log.Error("IR frame is not valid...\n");
+                return null;
+            }
+
+            int height = DepthResolution.Y;
+            int width = DepthResolution.X;
+
+            FloatCameraImage depthDataMeters = new FloatCameraImage(width, height);
+            byte* source = (byte*)RealSense2API.GetFrameData(frame);
+
+            for (int y = 0; y < height; y++)
+            {
+                byte* sourceLine = source + y * width;
+                for (int x = 0; x < width; x++)
+                {
+                    depthDataMeters[y, x] = (float)((byte)*sourceLine++);
                 }
             }
 

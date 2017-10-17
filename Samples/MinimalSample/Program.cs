@@ -42,8 +42,8 @@ namespace MetriCam2.Samples.MinimalSample
 
             camera.LoadConfigPreset(AdvancedMode.Preset.SHORT_RANGE);
             camera.DeactivateChannel(ChannelNames.ZImage);
-            camera.ActivateChannel(ChannelNames.Left);
-            camera.ActivateChannel(ChannelNames.Right);
+            camera.ActivateChannel(RealSense2.CustomChannelNames.Left);
+            camera.ActivateChannel(RealSense2.CustomChannelNames.Right);
 
             Console.WriteLine("Fetching one frame");
 
@@ -53,8 +53,8 @@ namespace MetriCam2.Samples.MinimalSample
             }
 
 
-            ProjectiveTransformationZhang proj = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Color);
-            RigidBodyTransformation rbt = camera.GetExtrinsics(ChannelNames.Color, ChannelNames.ZImage);
+            ProjectiveTransformationZhang proj = (ProjectiveTransformationZhang)camera.GetIntrinsics(RealSense2.CustomChannelNames.Left);
+            RigidBodyTransformation rbt = camera.GetExtrinsics(RealSense2.CustomChannelNames.Left, ChannelNames.Color);
 
             try
             {
@@ -70,12 +70,34 @@ namespace MetriCam2.Samples.MinimalSample
 
             try
             {
+                Console.WriteLine("Accessing left IR data");
+                FloatCameraImage img = (FloatCameraImage)camera.CalcChannel(RealSense2.CustomChannelNames.Left);
+                FloatImage fimg = new FloatImage(ref img);
+                fimg.Save("left.flt");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(String.Format("Error getting channel {0}: {1}.", RealSense2.CustomChannelNames.Left, ex.Message));
+            }
+
+            try
+            {
+                Console.WriteLine("Accessing left IR data");
+                FloatCameraImage img = (FloatCameraImage)camera.CalcChannel(RealSense2.CustomChannelNames.Right);
+                FloatImage fimg = new FloatImage(ref img);
+                fimg.Save("right.flt");
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(String.Format("Error getting channel {0}: {1}.", RealSense2.CustomChannelNames.Right, ex.Message));
+            }
+
+            try
+            {
                 Console.WriteLine("Accessing distance data");
                 FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
                 FloatImage fimg = new FloatImage(ref distancesData);
                 fimg.Save("depth.flt");
-                //Bitmap depthBitmapData = distancesData.ToBitmap();
-                //depthBitmapData.Save("0Depth.bmp");
             }
             catch (ArgumentException ex)
             {
