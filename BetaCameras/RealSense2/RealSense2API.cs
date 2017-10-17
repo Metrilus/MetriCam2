@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace MetriCam2.Cameras
 {
@@ -201,6 +202,18 @@ namespace MetriCam2.Cameras
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_delete_pipeline_profile(IntPtr profile);
+
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_load_json(IntPtr dev, [MarshalAs(UnmanagedType.LPStr)] string json_content, uint content_size, IntPtr* error);
+
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_is_enabled(IntPtr dev, ref int enabled, IntPtr* error);
+
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_toggle_advanced_mode(IntPtr dev, int enable, IntPtr* error);
         #endregion
 
         public struct RS2Context
@@ -213,6 +226,11 @@ namespace MetriCam2.Cameras
             public IntPtr ptr;
         }
 
+        public struct RS2Device
+        {
+            public IntPtr ptr;
+        }
+
         public struct RS2Config
         {
             public IntPtr ptr;
@@ -221,8 +239,15 @@ namespace MetriCam2.Cameras
         public struct RS2Frame
         {
             public IntPtr ptr;
-        }
 
+            public bool IsValid()
+            {
+                if (this.ptr == null)
+                    return false;
+
+                return true;
+            }
+        }
 
         public struct RS2StreamProfile
         {
@@ -399,6 +424,44 @@ namespace MetriCam2.Cameras
             HandleError(error);
 
             return data;
+        }
+
+        unsafe public static RS2Device GetActiveDevice(RS2Pipeline pipe)
+        {
+            IntPtr error = IntPtr.Zero;
+            IntPtr profile = rs2_pipeline_get_active_profile(pipe.ptr, &error);
+            HandleError(error);
+            IntPtr device = rs2_pipeline_profile_get_device(profile, &error);
+            HandleError(error);
+
+            RS2Device dev = new RS2Device();
+            dev.ptr = device;
+
+            return dev;
+        }
+
+        unsafe public static bool AdvancedModeEnabled(RS2Device device)
+        {
+            IntPtr error = IntPtr.Zero;
+            int enabled = 0;
+            rs2_is_enabled(device.ptr, ref enabled, &error);
+            HandleError(error);
+
+            return enabled == 0 ? false : true;
+        }
+
+        unsafe public static void EnabledAdvancedMode(RS2Device device, bool enable)
+        {
+            IntPtr error = IntPtr.Zero;
+            rs2_toggle_advanced_mode(device.ptr, enable ? 1 : 0, &error);
+            HandleError(error);
+        }
+
+        unsafe public static void LoadAdvancedConfig(string config, RS2Device device)
+        {
+            IntPtr error = IntPtr.Zero;
+            rs2_load_json(device.ptr, config, (uint)config.ToCharArray().Length, &error);
+            HandleError(error);
         }
 
         unsafe public static float GetDepthScale(RS2Pipeline pipe)

@@ -165,11 +165,6 @@ namespace MetriCam2.Cameras
             {
                 RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 500);
 
-                //if(data.ptr == null)
-                //{
-                //    continue;
-                //}
-
                 int frameCount = RealSense2API.FrameSetEmbeddedCount(data);
                 log.Debug(string.Format("RealSense2: Got {0} Frames", frameCount));
 
@@ -283,7 +278,7 @@ namespace MetriCam2.Cameras
 
         unsafe private FloatCameraImage CalcZImage()
         {
-            if (_currentDepthFrame.ptr == null)
+            if (!_currentDepthFrame.IsValid())
             {
                 log.Error("Depth frame is not valid...\n");
                 return null;
@@ -309,7 +304,7 @@ namespace MetriCam2.Cameras
 
         unsafe private ColorCameraImage CalcColor()
         {
-            if (_currentColorFrame.ptr == null)
+            if (!_currentColorFrame.IsValid())
             {
                 log.Error("Color frame is not valid...\n");
                 return null;
@@ -344,5 +339,22 @@ namespace MetriCam2.Cameras
 
         #endregion
         #endregion
+
+        public void LoadConfigPreset(AdvancedMode.Preset preset)
+        {
+            LoadCustomConfig(AdvancedMode.GetPreset(preset));
+        }
+        
+        public void LoadCustomConfig(string json)
+        {
+            RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
+
+            if (!RealSense2API.AdvancedModeEnabled(dev))
+            {
+                RealSense2API.EnabledAdvancedMode(dev, true);
+            }
+
+            RealSense2API.LoadAdvancedConfig(json, dev);
+        }
     }
 }

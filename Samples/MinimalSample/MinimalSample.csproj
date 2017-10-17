@@ -66,6 +66,9 @@
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
     </Reference>
+    <Reference Include="MetriPrimitives">
+      <HintPath>Z:\releases\Metrilus.Framework\R18.0\lib\MetriPrimitives.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />

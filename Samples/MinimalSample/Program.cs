@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using MetriPrimitives.Data;
 
 namespace MetriCam2.Samples.MinimalSample
 {
@@ -21,7 +22,7 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("------------------------------------------");
 
             // Create camera object
-            Camera camera;
+            RealSense2 camera;
             try
             {
                 camera = new RealSense2();
@@ -39,8 +40,15 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("Connecting camera");
             camera.Connect();
 
+            camera.LoadConfigPreset(AdvancedMode.Preset.SHORT_RANGE);
+
             Console.WriteLine("Fetching one frame");
-            camera.Update();
+
+            for(int i = 0; i < 150; i++)
+            {
+                camera.Update();
+            }
+            
 
             try
             {
@@ -58,8 +66,10 @@ namespace MetriCam2.Samples.MinimalSample
             {
                 Console.WriteLine("Accessing distance data");
                 FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
-                Bitmap depthBitmapData = distancesData.ToBitmap();
-                depthBitmapData.Save("0Depth.bmp");
+                FloatImage fimg = new FloatImage(ref distancesData);
+                fimg.Save("depth.flt");
+                //Bitmap depthBitmapData = distancesData.ToBitmap();
+                //depthBitmapData.Save("0Depth.bmp");
             }
             catch (ArgumentException ex)
             {
