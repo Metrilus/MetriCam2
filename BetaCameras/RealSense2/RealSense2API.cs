@@ -53,7 +53,7 @@ namespace MetriCam2.Cameras
             COUNT
         }
 
-        enum CameraInfo
+        public enum CameraInfo
         {
             NAME,               /* Friendly name */
             SERIAL_NUMBER,      /* Device serial number */
@@ -65,6 +65,34 @@ namespace MetriCam2.Cameras
             CAMERA_LOCKED,      /* True iff EEPROM is locked */
             COUNT               /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
         }
+
+        public enum DistortionModel
+        {
+            NONE,                   /* Rectilinear images. No distortion compensation required. */
+            MODIFIED_BROWN_CONRADY, /* Equivalent to Brown-Conrady distortion, except that tangential distortion is applied to radially distorted points */
+            INVERSE_BROWN_CONRADY,  /* Equivalent to Brown-Conrady distortion, except undistorts image instead of distorting it */
+            FTHETA,                 /* F-Theta fish-eye distortion model */
+            BROWN_CONRADY,          /* Unmodified Brown-Conrady distortion model */
+            COUNT,                  /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+        };
+
+        public unsafe struct Intrinsics
+        {
+            public int width;              /* Width of the image in pixels */
+            public int height;             /* Height of the image in pixels */
+            public float ppx;              /* Horizontal coordinate of the principal point of the image, as a pixel offset from the left edge */
+            public float ppy;              /* Vertical coordinate of the principal point of the image, as a pixel offset from the top edge */
+            public float fx;               /* Focal length of the image plane, as a multiple of pixel width */
+            public float fy;               /* Focal length of the image plane, as a multiple of pixel height */
+            public DistortionModel model;  /* Distortion model of the image */
+            public fixed float coeffs[5];  /* Distortion coefficients */
+        };
+
+        public unsafe struct Extrinsics
+        {
+            public fixed float rotation[9];    /* Column-major 3x3 rotation matrix */
+            public fixed float translation[3]; /* Three-element translation vector, in meters */
+        };
 
         #region DLLImport
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
@@ -214,6 +242,14 @@ namespace MetriCam2.Cameras
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_toggle_advanced_mode(IntPtr dev, int enable, IntPtr* error);
+
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_get_video_stream_intrinsics(IntPtr profile_from, Intrinsics* intrinsics, IntPtr* error);
+
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_get_extrinsics(IntPtr profile_from, IntPtr profile_to, Extrinsics* extrin, IntPtr* error);
         #endregion
 
         public struct RS2Context
@@ -434,10 +470,16 @@ namespace MetriCam2.Cameras
             IntPtr device = rs2_pipeline_profile_get_device(profile, &error);
             HandleError(error);
 
+            rs2_delete_pipeline_profile(profile);
             RS2Device dev = new RS2Device();
             dev.ptr = device;
 
             return dev;
+        }
+
+        unsafe public static void DeleteDevice(RS2Device device)
+        {
+            rs2_delete_device(device.ptr);
         }
 
         unsafe public static bool AdvancedModeEnabled(RS2Device device)
@@ -462,6 +504,26 @@ namespace MetriCam2.Cameras
             IntPtr error = IntPtr.Zero;
             rs2_load_json(device.ptr, config, (uint)config.ToCharArray().Length, &error);
             HandleError(error);
+        }
+
+        unsafe public static Intrinsics GetIntrinsics(RS2StreamProfile profile)
+        {
+            IntPtr error = IntPtr.Zero;
+            Intrinsics intrinsics = new Intrinsics();
+            rs2_get_video_stream_intrinsics(profile.ptr, &intrinsics, &error);
+            HandleError(error);
+
+            return intrinsics;
+        }
+
+        unsafe public static Extrinsics GetExtrinsics(RS2StreamProfile from, RS2StreamProfile to)
+        {
+            IntPtr error = IntPtr.Zero;
+            Extrinsics extrinsics = new Extrinsics();
+            rs2_get_extrinsics(from.ptr, to.ptr, &extrinsics, &error);
+            HandleError(error);
+
+            return extrinsics;
         }
 
         unsafe public static float GetDepthScale(RS2Pipeline pipe)

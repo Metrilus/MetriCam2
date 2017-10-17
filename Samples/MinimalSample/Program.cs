@@ -44,11 +44,14 @@ namespace MetriCam2.Samples.MinimalSample
 
             Console.WriteLine("Fetching one frame");
 
-            for(int i = 0; i < 150; i++)
+            for(int i = 0; i < 15; i++)
             {
                 camera.Update();
             }
-            
+
+
+            ProjectiveTransformationZhang proj = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Color);
+            RigidBodyTransformation rbt = camera.GetExtrinsics(ChannelNames.Color, ChannelNames.ZImage);
 
             try
             {

@@ -252,6 +252,12 @@ namespace MetriCam2.Cameras
                 res_y = DepthResolution.Y;
                 fps = (int)DepthFPS;
             }
+            else
+            {
+                string msg = string.Format("RealSense2: Channel not supported {0}", channelName);
+                log.Error(msg);
+                throw new Exception(msg);
+            }
 
             RealSense2API.PipelineStop(_pipeline);
             RealSense2API.ConfigEnableStream(_config, stream, 0, res_x, res_y, format, fps);
@@ -274,6 +280,80 @@ namespace MetriCam2.Cameras
             RealSense2API.PipelineStop(_pipeline);
             RealSense2API.ConfigDisableStream(_config, stream);
             RealSense2API.PipelineStart(_pipeline, _config);
+        }
+
+        unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
+        {
+            RealSense2API.RS2StreamProfile profile = GetProfileForChannelName(channelName);
+            RealSense2API.Intrinsics intrinsics = RealSense2API.GetIntrinsics(profile);
+
+            if(intrinsics.model != RealSense2API.DistortionModel.BROWN_CONRADY)
+            {
+                string msg = string.Format("RealSense2: intrinsics distrotion model {0} does not match metrilus framework", intrinsics.model.ToString());
+                log.Error(msg);
+                throw new Exception(msg);
+            }
+
+            return new ProjectiveTransformationZhang(
+                intrinsics.width,
+                intrinsics.height,
+                intrinsics.fx,
+                intrinsics.fy,
+                intrinsics.ppx,
+                intrinsics.ppy,
+                intrinsics.coeffs[0],
+                intrinsics.coeffs[1],
+                intrinsics.coeffs[2],
+                intrinsics.coeffs[3],
+                intrinsics.coeffs[4]);
+        }
+
+        private RealSense2API.RS2StreamProfile GetProfileForChannelName(string channelName)
+        {
+            RealSense2API.RS2StreamProfile profile = new RealSense2API.RS2StreamProfile();
+
+            if (!IsChannelActive(channelName))
+                ActivateChannel(channelName);
+
+            switch (channelName)
+            {
+                case ChannelNames.Color:
+                    if (!_currentColorFrame.IsValid())
+                        UpdateImpl();
+                    profile = RealSense2API.GetStreamProfile(_currentColorFrame);
+                    break;
+
+                case ChannelNames.ZImage:
+                    if (!_currentDepthFrame.IsValid())
+                        UpdateImpl();
+                    profile = RealSense2API.GetStreamProfile(_currentDepthFrame);
+                    break;
+
+                default:
+                    string msg = string.Format("RealSense2: intrinsics for channel {0} not available", channelName);
+                    log.Error(msg);
+                    throw new Exception(msg);
+            }
+
+            return profile;
+        }
+
+        unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
+        {
+            RealSense2API.RS2StreamProfile from = GetProfileForChannelName(channelFromName);
+            RealSense2API.RS2StreamProfile to = GetProfileForChannelName(channelToName);
+
+            RealSense2API.Extrinsics extrinsics = RealSense2API.GetExtrinsics(from, to);
+
+
+            Point3f col1 = new Point3f(extrinsics.rotation[0], extrinsics.rotation[1], extrinsics.rotation[2]);
+            Point3f col2 = new Point3f(extrinsics.rotation[3], extrinsics.rotation[4], extrinsics.rotation[5]);
+            Point3f col3 = new Point3f(extrinsics.rotation[6], extrinsics.rotation[7], extrinsics.rotation[8]);
+            RotationMatrix rot = new RotationMatrix(col1, col2, col3);
+
+            Point3f trans = new Point3f(extrinsics.translation[0], extrinsics.translation[1], extrinsics.translation[2]);
+
+            return new RigidBodyTransformation(rot, trans);
         }
 
         unsafe private FloatCameraImage CalcZImage()
