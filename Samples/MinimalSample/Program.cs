@@ -41,6 +41,9 @@ namespace MetriCam2.Samples.MinimalSample
             camera.Connect();
 
             camera.LoadConfigPreset(AdvancedMode.Preset.SHORT_RANGE);
+            camera.DeactivateChannel(ChannelNames.ZImage);
+            camera.ActivateChannel(ChannelNames.Left);
+            camera.ActivateChannel(ChannelNames.Right);
 
             Console.WriteLine("Fetching one frame");
 
