@@ -12,10 +12,7 @@ namespace MetriCam2.Cameras
         private const int API_PATCH_VERSION = 0;
         private const int API_BUILD_VERSION = 0;
 
-        private static int ApiVersion()
-        {
-            return API_MAJOR_VERSION * 10000 + API_MINOR_VERSION * 100 + API_PATCH_VERSION;
-        }
+        private const int ApiVersion = API_MAJOR_VERSION * 10000 + API_MINOR_VERSION * 100 + API_PATCH_VERSION;
 
         public enum Format
         {
@@ -258,7 +255,7 @@ namespace MetriCam2.Cameras
 
             public RS2Context(IntPtr p)
             {
-                this.ptr = p;
+                ptr = p;
             }
         }
 
@@ -268,7 +265,7 @@ namespace MetriCam2.Cameras
 
             public RS2Pipeline(IntPtr p)
             {
-                this.ptr = p;
+                ptr = p;
             }
         }
 
@@ -278,7 +275,7 @@ namespace MetriCam2.Cameras
 
             public RS2Device(IntPtr p)
             {
-                this.ptr = p;
+                ptr = p;
             }
         }
 
@@ -288,7 +285,7 @@ namespace MetriCam2.Cameras
 
             public RS2Config(IntPtr p)
             {
-                this.ptr = p;
+                ptr = p;
             }
         }
 
@@ -298,7 +295,7 @@ namespace MetriCam2.Cameras
 
             public RS2Frame(IntPtr p)
             {
-                this.ptr = p;
+                ptr = p;
             }
 
             public bool IsValid() => (null != ptr);
@@ -310,19 +307,17 @@ namespace MetriCam2.Cameras
 
             public RS2StreamProfile(IntPtr p)
             {
-                this.ptr = p;
+                ptr = p;
             }
         }
 
         unsafe public static RS2Context CreateContext()
         {
             IntPtr error = IntPtr.Zero;
-            IntPtr ctx = rs2_create_context(ApiVersion(), &error);
+            IntPtr ctx = rs2_create_context(ApiVersion, &error);
             HandleError(error);
 
-            RS2Context context = new RS2Context(ctx);
-
-            return context;
+            return new RS2Context(ctx);
         }
 
         unsafe public static RS2Pipeline CreatePipeline(RS2Context ctx)
@@ -331,9 +326,7 @@ namespace MetriCam2.Cameras
             IntPtr pipe = rs2_create_pipeline(ctx.ptr, &error);
             HandleError(error);
 
-            RS2Pipeline pipeline = new RS2Pipeline(pipe);
-
-            return pipeline;
+            return new RS2Pipeline(pipe);
         }
 
         unsafe public static RS2Config CreateConfig()
@@ -342,9 +335,7 @@ namespace MetriCam2.Cameras
             IntPtr conf = rs2_create_config(&error);
             HandleError(error);
 
-            RS2Config config = new RS2Config(conf);
-
-            return config;
+            return new RS2Config(conf);
         }
 
         unsafe public static void DisableAllStreams(RS2Config conf)
@@ -401,10 +392,7 @@ namespace MetriCam2.Cameras
             IntPtr frameset = rs2_pipeline_wait_for_frames(pipe.ptr, timeout, &error);
             HandleError(error);
 
-            RS2Frame frame = new RS2Frame();
-            frame.ptr = frameset;
-
-            return frame;
+            return new RS2Frame(frameset);
         }
 
         unsafe public static void FrameAddRef(RS2Frame frame)
@@ -429,9 +417,7 @@ namespace MetriCam2.Cameras
             IntPtr extractedFramePtr = rs2_extract_frame(frame.ptr, index, &error);
             HandleError(error);
 
-            RS2Frame extractedFrame = new RS2Frame(extractedFramePtr);
-
-            return extractedFrame;
+            return new RS2Frame(extractedFramePtr);
         }
 
         unsafe public static RS2StreamProfile GetStreamProfile(RS2Frame frame)
@@ -440,9 +426,7 @@ namespace MetriCam2.Cameras
             IntPtr profilePtr = rs2_get_frame_stream_profile(frame.ptr, &error);
             HandleError(error);
 
-            RS2StreamProfile profile = new RS2StreamProfile(profilePtr);
-
-            return profile;
+            return new RS2StreamProfile(profilePtr);
         }
 
         unsafe public static void GetStreamProfileData(RS2StreamProfile profile, out Stream stream, out Format format, out int index, out int uid, out int framerate)
@@ -490,9 +474,7 @@ namespace MetriCam2.Cameras
             HandleError(error);
 
             rs2_delete_pipeline_profile(profile);
-            RS2Device dev = new RS2Device(device);
-
-            return dev;
+            return new RS2Device(device);
         }
 
         unsafe public static void DeleteDevice(RS2Device device)
@@ -604,7 +586,7 @@ namespace MetriCam2.Cameras
 
             rs2_free_error(e);
 
-            throw new Exception(string.Format("Failed function: {0}\nErrormessage: {1}\nArguments: {2}", functionName, errorMsg, arguments));
+            throw new Exception($"Failed function: {functionName}\nErrormessage: {errorMsg}\nArguments: {arguments}");
         }
     }
 }

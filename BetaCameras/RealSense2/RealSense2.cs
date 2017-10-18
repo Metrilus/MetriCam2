@@ -22,12 +22,7 @@ namespace MetriCam2.Cameras
         private float _depthScale = 0.0f;
         private bool _disposed = false;
 
-        Point2i _colorResolution = new Point2i(640, 480);
-        public Point2i ColorResolution
-        {
-            get => _colorResolution;
-            set => _colorResolution = value;
-        }
+        public Point2i ColorResolution { get; set; } = new Point2i(640, 480);
 
         ParamDesc<Point2i> ColorResolutionDesc
         {
@@ -42,12 +37,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private uint _colorFPS = 30;
-        public uint ColorFPS
-        {
-            get => _colorFPS;
-            set => _colorFPS = value;
-        }
+        public uint ColorFPS { get; set; } = 30;
 
         ParamDesc<Point2i> ColorFPSDesc
         {
@@ -62,12 +52,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        Point2i _depthResolution = new Point2i(640, 480);
-        public Point2i DepthResolution
-        {
-            get => _depthResolution;
-            set => _depthResolution = value;
-        }
+        public Point2i DepthResolution { get; set; } = new Point2i(640, 480);
 
         ParamDesc<Point2i> DepthResolutionDesc
         {
@@ -82,12 +67,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private uint _depthFPS = 30;
-        public uint DepthFPS
-        {
-            get => _depthFPS;
-            set => _depthFPS = value;
-        }
+        public uint DepthFPS { get; set; } = 30;
 
         ParamDesc<Point2i> DepthFPSDesc
         {
@@ -127,6 +107,11 @@ namespace MetriCam2.Cameras
             _config = RealSense2API.CreateConfig();
 
             RealSense2API.DisableAllStreams(_config);
+        }
+
+        ~RealSense2()
+        {
+            Dispose(false);
         }
         #endregion
 
