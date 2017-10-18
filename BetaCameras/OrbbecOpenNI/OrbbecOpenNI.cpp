@@ -695,6 +695,10 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 
 FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 {
+	if (!_pCamData->depth->isValid())
+	{
+		return nullptr;
+	}
 	openni::VideoFrameRef depthFrame;
 	_pCamData->depth->readFrame(&depthFrame);
 
@@ -724,6 +728,10 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 
 ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 {
+	if (!_pCamData->color->isValid())
+	{
+		return nullptr;
+	}
 	openni::VideoFrameRef colorFrame;
 	_pCamData->color->readFrame(&colorFrame);
 
@@ -763,6 +771,10 @@ ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 
 Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 {
+	if (!_pCamData->depth->isValid())
+	{
+		return nullptr;
+	}
 	openni::VideoFrameRef depthFrame;
 	_pCamData->depth->readFrame(&depthFrame);
 
@@ -797,6 +809,10 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 
 FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 {
+	if (!_pCamData->ir->isValid())
+	{
+		return nullptr;
+	}
 	openni::VideoFrameRef irFrame;
 	_pCamData->ir->readFrame(&irFrame);
 
