@@ -438,18 +438,62 @@ void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
 
 void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 {
-	openni::VideoStream** ppStreams = new openni::VideoStream*[2];
-	ppStreams[0] = _pCamData->depth;
-	ppStreams[1] = _pCamData->ir;
-	//ppStreams[2] = _pCamData->color;
+	//printf("O/%s: UpdateImpl\n", SerialNumber);
 
-	int changedIndex;
-	openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, 2, &changedIndex);
-
-	if (openni::STATUS_OK != rc)
+	const int NumRequestedStreams = 3;
+	openni::VideoStream** ppStreams = new openni::VideoStream*[NumRequestedStreams];
+	for (size_t i = 0; i < NumRequestedStreams; i++)
 	{
-		log->Error("Wait failed\n");
-		return;
+		ppStreams[i] = NULL;
+	}
+
+	const int DepthIdx = 0, IrIdx = 1, ColorIdx = 2;
+	if (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage))
+	{
+		ppStreams[DepthIdx] = _pCamData->depth;
+		//printf("%s: Added depth at %d\n", SerialNumber, DepthIdx);
+	}
+	if (IsChannelActive(ChannelNames::Intensity))
+	{
+		ppStreams[IrIdx] = _pCamData->ir;
+		//printf("%s: Added IR at %d\n", SerialNumber, IrIdx);
+	}
+	if (IsChannelActive(ChannelNames::Color))
+	{
+		ppStreams[ColorIdx] = _pCamData->color;
+		//printf("%s: Added color at %d\n", SerialNumber, ColorIdx);
+	}
+
+	int iter = 0;
+	bool gotAllRequestedStreams = false;
+	while (!gotAllRequestedStreams)
+	{
+		int changedIndex;
+		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, NumRequestedStreams, &changedIndex, 5000);
+		//printf("%s: Iteration %d: rc = %d, changed = %d\n", SerialNumber, iter++, rc, changedIndex);
+		if (openni::STATUS_OK != rc)
+		{
+			if (openni::STATUS_TIME_OUT == rc)
+			{
+				log->Error(String::Format("{0} {1}: Wait failed: timeout\n", Name, SerialNumber));
+			}
+			else
+			{
+				log->Error(String::Format("{0} {1}: Wait failed: rc={2}\n", Name, SerialNumber, (int)rc));
+			}
+			return;
+		}
+		ppStreams[changedIndex] = NULL;
+
+		gotAllRequestedStreams = true;
+		for (size_t i = 0; i < NumRequestedStreams; i++)
+		{
+			if (ppStreams[i] != NULL)
+			{
+				gotAllRequestedStreams = false;
+				break;
+			}
+		}
 	}
 }
 
@@ -651,6 +695,10 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 
 FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 {
+	if (!_pCamData->depth->isValid())
+	{
+		return nullptr;
+	}
 	openni::VideoFrameRef depthFrame;
 	_pCamData->depth->readFrame(&depthFrame);
 
@@ -680,6 +728,10 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 
 ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 {
+	if (!_pCamData->color->isValid())
+	{
+		return nullptr;
+	}
 	openni::VideoFrameRef colorFrame;
 	_pCamData->color->readFrame(&colorFrame);
 
@@ -719,6 +771,10 @@ ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 
 Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 {
+	if (!_pCamData->depth->isValid())
+	{
+		return nullptr;
+	}
 	openni::VideoFrameRef depthFrame;
 	_pCamData->depth->readFrame(&depthFrame);
 
@@ -753,6 +809,10 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 
 FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 {
+	if (!_pCamData->ir->isValid())
+	{
+		return nullptr;
+	}
 	openni::VideoFrameRef irFrame;
 	_pCamData->ir->readFrame(&irFrame);
 
