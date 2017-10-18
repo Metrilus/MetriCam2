@@ -10,7 +10,7 @@ using System.Drawing.Imaging;
 
 namespace MetriCam2.Cameras
 {
-    public class RealSense2 : Camera
+    public class RealSense2 : Camera, IDisposable
     {
         private RealSense2API.RS2Context _context;
         private RealSense2API.RS2Pipeline _pipeline;
@@ -20,6 +20,7 @@ namespace MetriCam2.Cameras
         private RealSense2API.RS2Frame _currentLeftFrame = new RealSense2API.RS2Frame();
         private RealSense2API.RS2Frame _currentRightFrame = new RealSense2API.RS2Frame();
         private float _depthScale = 0.0f;
+        private bool _disposed = false;
 
         Point2i _colorResolution = new Point2i(640, 480);
         public Point2i ColorResolution
@@ -101,6 +102,23 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            RealSense2API.DeleteConfig(_config);
+            RealSense2API.DeletePipeline(_pipeline);
+            RealSense2API.DeleteContext(_context);
+            _disposed = true;
+        }
+
         #region Constructor
         public RealSense2()
         {
@@ -109,13 +127,6 @@ namespace MetriCam2.Cameras
             _config = RealSense2API.CreateConfig();
 
             RealSense2API.DisableAllStreams(_config);
-        }
-
-        ~RealSense2()
-        {
-            RealSense2API.DeleteConfig(_config);
-            RealSense2API.DeletePipeline(_pipeline);
-            RealSense2API.DeleteContext(_context);
         }
         #endregion
 
