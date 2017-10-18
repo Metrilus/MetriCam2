@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetriCam2", "MetriCam2\MetriCam2.csproj", "{342F049E-668B-4351-B21D-75E4BEF5A1E4}"
 EndProject
@@ -64,6 +64,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealSense", "BetaCameras\RealSense\RealSense.csproj", "{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIVoxel", "BetaCameras\TIVoxel-VS2013\TIVoxel.vcxproj", "{ECF2A55A-67D9-48B7-936C-873FC6C07364}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealSense2", "BetaCameras\RealSense2\RealSense2.csproj", "{3032E9B1-F572-4ECB-906A-F7A2B45EF125}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -261,6 +263,16 @@ Global
 		{ECF2A55A-67D9-48B7-936C-873FC6C07364}.Release|x64.ActiveCfg = Release|x64
 		{ECF2A55A-67D9-48B7-936C-873FC6C07364}.Release|x64.Build.0 = Release|x64
 		{ECF2A55A-67D9-48B7-936C-873FC6C07364}.Release|x86.ActiveCfg = Release|x64
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Debug|x64.ActiveCfg = Debug|x64
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Debug|x64.Build.0 = Debug|x64
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Debug|x86.ActiveCfg = Debug|x86
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Debug|x86.Build.0 = Debug|x86
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Release|Any CPU.ActiveCfg = Release|x86
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Release|x64.ActiveCfg = Release|x64
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Release|x64.Build.0 = Release|x64
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Release|x86.ActiveCfg = Release|x86
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -282,5 +294,9 @@ Global
 		{C82202F8-55DB-4511-B006-C88FF3E4427E} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{ECF2A55A-67D9-48B7-936C-873FC6C07364} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
+		{3032E9B1-F572-4ECB-906A-F7A2B45EF125} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E4CD8F0D-A50B-44DC-80D3-0C789213BF2B}
 	EndGlobalSection
 EndGlobal
