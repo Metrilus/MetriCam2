@@ -142,6 +142,13 @@ namespace MetriCam2.Cameras
             ActivateChannel(ChannelNames.Color);
             ActivateChannel(ChannelNames.ZImage);
 
+            RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
+
+            if (!RealSense2API.AdvancedModeEnabled(dev))
+            {
+                RealSense2API.EnabledAdvancedMode(dev, true);
+            }
+
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
 
@@ -405,53 +412,40 @@ namespace MetriCam2.Cameras
 
         private RealSense2API.RS2StreamProfile GetProfileForChannelName(string channelName)
         {
-            RealSense2API.RS2StreamProfile profile = new RealSense2API.RS2StreamProfile();
+            RealSense2API.RS2Frame frame;
 
             switch (channelName)
             {
                 case ChannelNames.Color:
-                    if (!_currentColorFrame.IsValid())
-                    {
-                        ActivateChannel(ChannelNames.Color);
-                        UpdateImpl();
-                    }
-                    profile = RealSense2API.GetStreamProfile(_currentColorFrame);
+                    frame = _currentColorFrame;
                     break;
 
                 case ChannelNames.ZImage:
-                    if (!_currentDepthFrame.IsValid())
-                    {
-                        ActivateChannel(ChannelNames.ZImage);
-                        UpdateImpl();
-                    }
-                    profile = RealSense2API.GetStreamProfile(_currentDepthFrame);
+                    frame = _currentDepthFrame;
                     break;
 
                 case ChannelNames.Left:
-                    if (!_currentLeftFrame.IsValid())
-                    {
-                        ActivateChannel(ChannelNames.Left);
-                        UpdateImpl();
-                    }
-                    profile = RealSense2API.GetStreamProfile(_currentLeftFrame);
+                    frame = _currentLeftFrame;
                     break;
 
                 case ChannelNames.Right:
-                    if (!_currentRightFrame.IsValid())
-                    {
-                        ActivateChannel(ChannelNames.Right);
-                        UpdateImpl();
-                    }
-                    profile = RealSense2API.GetStreamProfile(_currentRightFrame);
+                    frame = _currentRightFrame;
                     break;
 
                 default:
-                    string msg = string.Format("RealSense2: intrinsics for channel {0} not available", channelName);
+                    string msg = string.Format("RealSense2: stream profile for channel {0} not available", channelName);
                     log.Error(msg);
                     throw new Exception(msg);
             }
 
-            return profile;
+            if (!frame.IsValid())
+            {
+                string msg = string.Format("RealSense2: Can't get channel profile for {0} without having at least one frame available.", channelName);
+                log.Error(msg);
+                throw new InvalidOperationException(msg);
+            }
+
+            return RealSense2API.GetStreamProfile(frame);
         }
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
@@ -569,12 +563,6 @@ namespace MetriCam2.Cameras
         public void LoadCustomConfig(string json)
         {
             RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
-
-            if (!RealSense2API.AdvancedModeEnabled(dev))
-            {
-                RealSense2API.EnabledAdvancedMode(dev, true);
-            }
-
             RealSense2API.LoadAdvancedConfig(json, dev);
             RealSense2API.DeleteDevice(dev);
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
