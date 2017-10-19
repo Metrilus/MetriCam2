@@ -251,63 +251,63 @@ namespace MetriCam2.Cameras
 
         public struct RS2Context
         {
-            public IntPtr ptr;
+            public IntPtr Handle { get; private set; }
 
             public RS2Context(IntPtr p)
             {
-                ptr = p;
+                Handle = p;
             }
         }
 
         public struct RS2Pipeline
         {
-            public IntPtr ptr;
+            public IntPtr Handle { get; private set; }
 
             public RS2Pipeline(IntPtr p)
             {
-                ptr = p;
+                Handle = p;
             }
         }
 
         public struct RS2Device
         {
-            public IntPtr ptr;
+            public IntPtr Handle { get; private set; }
 
             public RS2Device(IntPtr p)
             {
-                ptr = p;
+                Handle = p;
             }
         }
 
         public struct RS2Config
         {
-            public IntPtr ptr;
+            public IntPtr Handle { get; private set; }
 
             public RS2Config(IntPtr p)
             {
-                ptr = p;
+                Handle = p;
             }
         }
 
         public struct RS2Frame
         {
-            public IntPtr ptr;
+            public IntPtr Handle { get; private set; }
 
             public RS2Frame(IntPtr p)
             {
-                ptr = p;
+                Handle = p;
             }
 
-            public bool IsValid() => (null != ptr);
+            public bool IsValid() => (null != Handle);
         }
 
         public struct RS2StreamProfile
         {
-            public IntPtr ptr;
+            public IntPtr Handle { get; private set; }
 
             public RS2StreamProfile(IntPtr p)
             {
-                ptr = p;
+                Handle = p;
             }
         }
 
@@ -323,7 +323,7 @@ namespace MetriCam2.Cameras
         unsafe public static RS2Pipeline CreatePipeline(RS2Context ctx)
         {
             IntPtr error = IntPtr.Zero;
-            IntPtr pipe = rs2_create_pipeline(ctx.ptr, &error);
+            IntPtr pipe = rs2_create_pipeline(ctx.Handle, &error);
             HandleError(error);
 
             return new RS2Pipeline(pipe);
@@ -341,55 +341,55 @@ namespace MetriCam2.Cameras
         unsafe public static void DisableAllStreams(RS2Config conf)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_config_disable_all_streams(conf.ptr, &error);
+            rs2_config_disable_all_streams(conf.Handle, &error);
             HandleError(error);
         }
 
         unsafe public static void DeleteConfig(RS2Config conf)
         {
-            rs2_delete_config(conf.ptr);
+            rs2_delete_config(conf.Handle);
         }
 
         unsafe public static void DeletePipeline(RS2Pipeline pipe)
         {
-            rs2_delete_pipeline(pipe.ptr);
+            rs2_delete_pipeline(pipe.Handle);
         }
 
         unsafe public static void DeleteContext(RS2Context ctx)
         {
-            rs2_delete_context(ctx.ptr);
+            rs2_delete_context(ctx.Handle);
         }
 
         unsafe public static void EnableDevice(RS2Config conf, string serial_number)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_config_enable_device(conf.ptr, serial_number, &error);
+            rs2_config_enable_device(conf.Handle, serial_number, &error);
             HandleError(error);
         }
 
         unsafe public static void PipelineStart(RS2Pipeline pipe, RS2Config conf)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_pipeline_start_with_config(pipe.ptr, conf.ptr, &error);
+            rs2_pipeline_start_with_config(pipe.Handle, conf.Handle, &error);
             HandleError(error);
         }
 
         unsafe public static void PipelineStop(RS2Pipeline pipe)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_pipeline_stop(pipe.ptr, &error);
+            rs2_pipeline_stop(pipe.Handle, &error);
             HandleError(error);
         }
 
         unsafe public static void ReleaseFrame(RS2Frame frame)
         {
-            rs2_release_frame(frame.ptr);
+            rs2_release_frame(frame.Handle);
         }
 
         unsafe public static RS2Frame PipelineWaitForFrames(RS2Pipeline pipe, uint timeout)
         {
             IntPtr error = IntPtr.Zero;
-            IntPtr frameset = rs2_pipeline_wait_for_frames(pipe.ptr, timeout, &error);
+            IntPtr frameset = rs2_pipeline_wait_for_frames(pipe.Handle, timeout, &error);
             HandleError(error);
 
             return new RS2Frame(frameset);
@@ -398,14 +398,14 @@ namespace MetriCam2.Cameras
         unsafe public static void FrameAddRef(RS2Frame frame)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_frame_add_ref(frame.ptr, &error);
+            rs2_frame_add_ref(frame.Handle, &error);
             HandleError(error);
         }
 
         unsafe public static int FrameEmbeddedCount(RS2Frame frame)
         {
             IntPtr error = IntPtr.Zero;
-            int count = rs2_embedded_frames_count(frame.ptr, &error);
+            int count = rs2_embedded_frames_count(frame.Handle, &error);
             HandleError(error);
 
             return count;
@@ -414,7 +414,7 @@ namespace MetriCam2.Cameras
         unsafe public static RS2Frame FrameExtract(RS2Frame frame, int index)
         {
             IntPtr error = IntPtr.Zero;
-            IntPtr extractedFramePtr = rs2_extract_frame(frame.ptr, index, &error);
+            IntPtr extractedFramePtr = rs2_extract_frame(frame.Handle, index, &error);
             HandleError(error);
 
             return new RS2Frame(extractedFramePtr);
@@ -423,7 +423,7 @@ namespace MetriCam2.Cameras
         unsafe public static RS2StreamProfile GetStreamProfile(RS2Frame frame)
         {
             IntPtr error = IntPtr.Zero;
-            IntPtr profilePtr = rs2_get_frame_stream_profile(frame.ptr, &error);
+            IntPtr profilePtr = rs2_get_frame_stream_profile(frame.Handle, &error);
             HandleError(error);
 
             return new RS2StreamProfile(profilePtr);
@@ -438,28 +438,28 @@ namespace MetriCam2.Cameras
             uid = 0;
             framerate = 0;
 
-            rs2_get_stream_profile_data(profile.ptr, ref stream, ref format, ref index, ref uid, ref framerate, &error);
+            rs2_get_stream_profile_data(profile.Handle, ref stream, ref format, ref index, ref uid, ref framerate, &error);
             HandleError(error);
         }
 
         unsafe public static void ConfigEnableStream(RS2Config conf, Stream stream, int index, int width, int height, Format format, int framerate)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_config_enable_stream(conf.ptr, stream, index, width, height, format, framerate, &error);
+            rs2_config_enable_stream(conf.Handle, stream, index, width, height, format, framerate, &error);
             HandleError(error);
         }
 
         unsafe public static void ConfigDisableStream(RS2Config conf, Stream stream)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_config_disable_stream(conf.ptr, stream, &error);
+            rs2_config_disable_stream(conf.Handle, stream, &error);
             HandleError(error);
         }
 
         unsafe public static IntPtr GetFrameData(RS2Frame frame)
         {
             IntPtr error = IntPtr.Zero;
-            IntPtr data = rs2_get_frame_data(frame.ptr, &error);
+            IntPtr data = rs2_get_frame_data(frame.Handle, &error);
             HandleError(error);
 
             return data;
@@ -468,7 +468,7 @@ namespace MetriCam2.Cameras
         unsafe public static RS2Device GetActiveDevice(RS2Pipeline pipe)
         {
             IntPtr error = IntPtr.Zero;
-            IntPtr profile = rs2_pipeline_get_active_profile(pipe.ptr, &error);
+            IntPtr profile = rs2_pipeline_get_active_profile(pipe.Handle, &error);
             HandleError(error);
             IntPtr device = rs2_pipeline_profile_get_device(profile, &error);
             HandleError(error);
@@ -479,14 +479,14 @@ namespace MetriCam2.Cameras
 
         unsafe public static void DeleteDevice(RS2Device device)
         {
-            rs2_delete_device(device.ptr);
+            rs2_delete_device(device.Handle);
         }
 
         unsafe public static bool AdvancedModeEnabled(RS2Device device)
         {
             IntPtr error = IntPtr.Zero;
             int enabled = 0;
-            rs2_is_enabled(device.ptr, ref enabled, &error);
+            rs2_is_enabled(device.Handle, ref enabled, &error);
             HandleError(error);
 
             return enabled != 0;
@@ -495,14 +495,14 @@ namespace MetriCam2.Cameras
         unsafe public static void EnabledAdvancedMode(RS2Device device, bool enable)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_toggle_advanced_mode(device.ptr, enable ? 1 : 0, &error);
+            rs2_toggle_advanced_mode(device.Handle, enable ? 1 : 0, &error);
             HandleError(error);
         }
 
         unsafe public static void LoadAdvancedConfig(string config, RS2Device device)
         {
             IntPtr error = IntPtr.Zero;
-            rs2_load_json(device.ptr, config, (uint)config.ToCharArray().Length, &error);
+            rs2_load_json(device.Handle, config, (uint)config.ToCharArray().Length, &error);
             HandleError(error);
         }
 
@@ -510,7 +510,7 @@ namespace MetriCam2.Cameras
         {
             IntPtr error = IntPtr.Zero;
             Intrinsics intrinsics = new Intrinsics();
-            rs2_get_video_stream_intrinsics(profile.ptr, &intrinsics, &error);
+            rs2_get_video_stream_intrinsics(profile.Handle, &intrinsics, &error);
             HandleError(error);
 
             return intrinsics;
@@ -520,7 +520,7 @@ namespace MetriCam2.Cameras
         {
             IntPtr error = IntPtr.Zero;
             Extrinsics extrinsics = new Extrinsics();
-            rs2_get_extrinsics(from.ptr, to.ptr, &extrinsics, &error);
+            rs2_get_extrinsics(from.Handle, to.Handle, &extrinsics, &error);
             HandleError(error);
 
             return extrinsics;
@@ -531,7 +531,7 @@ namespace MetriCam2.Cameras
             IntPtr error = IntPtr.Zero;
             float res = 0.0f;
 
-            IntPtr profile = rs2_pipeline_get_active_profile(pipe.ptr, &error);
+            IntPtr profile = rs2_pipeline_get_active_profile(pipe.Handle, &error);
             HandleError(error);
             IntPtr device = rs2_pipeline_profile_get_device(profile, &error);
             HandleError(error);
