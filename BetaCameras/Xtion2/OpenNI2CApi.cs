@@ -7,7 +7,8 @@ using System.Drawing.Imaging;
 
 namespace MetriCam2.Cameras
 {
-    public class OpenNICAPI
+    // Basic C# wrapper around the OpenNI2 C-API using PInvoke
+    public class OpenNI2CApi
     {
         #region constants
         private const int ONI_VERSION_MAJOR = 2;
@@ -18,7 +19,7 @@ namespace MetriCam2.Cameras
         private const int ONI_MAX_SENSORS = 10;
         private const int TRUE = 1;
         private const int FALSE = 0;
-        unsafe private static IntPtr ANY_DEVICE = IntPtr.Zero;
+        private static IntPtr ANY_DEVICE = IntPtr.Zero;
         #endregion constants
 
         #region enums
@@ -82,7 +83,7 @@ namespace MetriCam2.Cameras
             public int build;
         };
 
-        public unsafe struct OniVideoMode
+        public struct OniVideoMode
         {
             public OniPixelFormat pixelFormat;
             public int resolutionX;

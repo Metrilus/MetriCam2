@@ -12,13 +12,18 @@ namespace MetriCam2.Cameras
     public class Xtion2 : Camera, IDisposable
     {
         private bool _disposed = false;
-        OpenNICAPI.Device _device = new OpenNICAPI.Device();
-        OpenNICAPI.Stream _colorStream = new OpenNICAPI.Stream();
-        OpenNICAPI.Stream _depthStream = new OpenNICAPI.Stream();
-        OpenNICAPI.Stream _irStream = new OpenNICAPI.Stream();
-        OpenNICAPI.Frame _colorFrame = new OpenNICAPI.Frame();
-        OpenNICAPI.Frame _depthFrame = new OpenNICAPI.Frame();
-        OpenNICAPI.Frame _irFrame = new OpenNICAPI.Frame();
+        OpenNI2CApi.Device _device = new OpenNI2CApi.Device();
+        OpenNI2CApi.Stream _colorStream = new OpenNI2CApi.Stream();
+        OpenNI2CApi.Stream _depthStream = new OpenNI2CApi.Stream();
+        OpenNI2CApi.Stream _irStream = new OpenNI2CApi.Stream();
+        OpenNI2CApi.Frame _colorFrame = new OpenNI2CApi.Frame();
+        OpenNI2CApi.Frame _depthFrame = new OpenNI2CApi.Frame();
+        OpenNI2CApi.Frame _irFrame = new OpenNI2CApi.Frame();
+
+        public override string Name
+        {
+            get => "Xtion2";
+        }
 
 
         public void Dispose()
@@ -32,14 +37,14 @@ namespace MetriCam2.Cameras
             if (_disposed)
                 return;
 
-            OpenNICAPI.Shutdown();
+            OpenNI2CApi.Shutdown();
             _disposed = true;
         }
 
         #region Constructor
         public Xtion2()
         {
-            OpenNICAPI.Init();
+            OpenNI2CApi.Init();
         }
 
         ~Xtion2()
@@ -57,66 +62,69 @@ namespace MetriCam2.Cameras
 
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
-			Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
+            Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
+
+            ActivateChannel(ChannelNames.Color);
         }
 
 
         protected override void ConnectImpl()
         {
-            _device = OpenNICAPI.OpenDevice(this.SerialNumber);
-            _colorStream = OpenNICAPI.CreateStream(_device, OpenNICAPI.OniSensorType.COLOR);
-            _depthStream = OpenNICAPI.CreateStream(_device, OpenNICAPI.OniSensorType.DEPTH);
-            _irStream = OpenNICAPI.CreateStream(_device, OpenNICAPI.OniSensorType.IR);
-
-            ActivateChannel(ChannelNames.Color);
+            _device = OpenNI2CApi.OpenDevice(this.SerialNumber);
+            _colorStream = OpenNI2CApi.CreateStream(_device, OpenNI2CApi.OniSensorType.COLOR);
+            _depthStream = OpenNI2CApi.CreateStream(_device, OpenNI2CApi.OniSensorType.DEPTH);
+            _irStream = OpenNI2CApi.CreateStream(_device, OpenNI2CApi.OniSensorType.IR);
         }
 
         protected override void DisconnectImpl()
         {
-            OpenNICAPI.DestroyStream(_colorStream);
-            OpenNICAPI.DestroyStream(_depthStream);
-            OpenNICAPI.DestroyStream(_irStream);
+            OpenNI2CApi.DestroyStream(_colorStream);
+            OpenNI2CApi.DestroyStream(_depthStream);
+            OpenNI2CApi.DestroyStream(_irStream);
 
-            OpenNICAPI.CloseDevice(_device);
+            OpenNI2CApi.CloseDevice(_device);
         }
 
         protected override void UpdateImpl()
         {
             if(IsChannelActive(ChannelNames.Color))
             {
-                OpenNICAPI.ReleaseFrame(_colorFrame);
-                _colorFrame = OpenNICAPI.ReadFrame(_colorStream);
+                OpenNI2CApi.ReleaseFrame(_colorFrame);
+                _colorFrame = OpenNI2CApi.ReadFrame(_colorStream);
             }
 
             if (IsChannelActive(ChannelNames.ZImage))
             {
-                OpenNICAPI.ReleaseFrame(_depthFrame);
-                _depthFrame = OpenNICAPI.ReadFrame(_depthStream);
+                OpenNI2CApi.ReleaseFrame(_depthFrame);
+                _depthFrame = OpenNI2CApi.ReadFrame(_depthStream);
             }
 
             if (IsChannelActive(ChannelNames.Intensity))
             {
-                OpenNICAPI.ReleaseFrame(_irFrame);
-                _irFrame = OpenNICAPI.ReadFrame(_irStream);
+                OpenNI2CApi.ReleaseFrame(_irFrame);
+                _irFrame = OpenNI2CApi.ReadFrame(_irStream);
             }
         }
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
+            if (!IsChannelActive(channelName))
+                throw new InvalidOperationException(string.Format("{0}: can't capture image from channel {1}, because it is not active.", this.Name, channelName));
+
             if (channelName == ChannelNames.Color)
             {
-                return OpenNICAPI.FrameToColorImage(_colorFrame);
+                return OpenNI2CApi.FrameToColorImage(_colorFrame);
             }
             if (channelName == ChannelNames.ZImage)
             {
-                return OpenNICAPI.FrameToFloatImage(_depthFrame);
+                return OpenNI2CApi.FrameToFloatImage(_depthFrame);
             }
             if (channelName == ChannelNames.Intensity)
             {
-                return OpenNICAPI.FrameToFloatImage(_irFrame);
+                return OpenNI2CApi.FrameToFloatImage(_irFrame);
             }
 
-            log.Error("Unexpected ChannelName in CalcChannel().");
+            log.Error(string.Format("{0}: Unexpected ChannelName {1} in CalcChannel().", this.Name, channelName));
             return null;
         }
 
@@ -126,31 +134,31 @@ namespace MetriCam2.Cameras
             {
                 if (IsChannelActive(ChannelNames.Intensity))
                 {
-                    string msg = string.Format("Xtion2: Can't have {0} stream active while {1} is still active.", channelName, ChannelNames.Intensity);
+                    string msg = string.Format("{0}: Can't have {1} stream active while {2} is still active.", this.Name, channelName, ChannelNames.Intensity);
                     log.Error(msg);
                     throw new InvalidOperationException(msg);
                 }  
                 
-                OpenNICAPI.StartStream(_colorStream);
+                OpenNI2CApi.StartStream(_colorStream);
             }
             else if (channelName == ChannelNames.ZImage)
             {
-                OpenNICAPI.StartStream(_depthStream);
+                OpenNI2CApi.StartStream(_depthStream);
             }
             else if(channelName == ChannelNames.Intensity)
             {
                 if (IsChannelActive(ChannelNames.Color))
                 {
-                    string msg = string.Format("Xtion2: Can't have {0} stream active while {1} is still active.", channelName, ChannelNames.Color);
+                    string msg = string.Format("{0}: Can't have {1} stream active while {2} is still active.", this.Name, channelName, ChannelNames.Color);
                     log.Error(msg);
                     throw new InvalidOperationException(msg);
                 }
 
-                OpenNICAPI.StartStream(_irStream);
+                OpenNI2CApi.StartStream(_irStream);
             }
             else
             {
-                string msg = string.Format("Xtion2: doesn't implement channel.", channelName);
+                string msg = string.Format("{0}: doesn't implement channel {1}.", this.Name, channelName);
                 log.Error(msg);
                 throw new InvalidOperationException(msg);
             }
@@ -160,19 +168,22 @@ namespace MetriCam2.Cameras
         {
             if (channelName == ChannelNames.Color)
             {
-                OpenNICAPI.StopStream(_colorStream);
+                OpenNI2CApi.StopStream(_colorStream);
+                _colorFrame = new OpenNI2CApi.Frame(IntPtr.Zero);
             }
             else if (channelName == ChannelNames.ZImage)
             {
-                OpenNICAPI.StopStream(_depthStream);
+                OpenNI2CApi.StopStream(_depthStream);
+                _depthFrame = new OpenNI2CApi.Frame(IntPtr.Zero);
             }
             else if (channelName == ChannelNames.Intensity)
             {
-                OpenNICAPI.StopStream(_irStream);
+                OpenNI2CApi.StopStream(_irStream);
+                _irFrame = new OpenNI2CApi.Frame(IntPtr.Zero);
             }
             else
             {
-                string msg = string.Format("Xtion2: doesn't implement channel.", channelName);
+                string msg = string.Format("{0}: doesn't implement channel {1}.", this.Name, channelName);
                 log.Error(msg);
                 throw new InvalidOperationException(msg);
             }
