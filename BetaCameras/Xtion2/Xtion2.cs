@@ -68,8 +68,6 @@ namespace MetriCam2.Cameras
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
             Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
-
-            ActivateChannel(ChannelNames.Color);
         }
 
 
