@@ -145,14 +145,14 @@ namespace MetriCam2.Cameras
 
             RealSense2API.PipelineStart(_pipeline, _config);
 
-            //RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
+            RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
 
-            //if (!RealSense2API.AdvancedModeEnabled(dev))
-            //{
-            //    RealSense2API.EnabledAdvancedMode(dev, true);
-            //}
+            if (!RealSense2API.AdvancedModeEnabled(dev))
+            {
+                RealSense2API.EnabledAdvancedMode(dev, true);
+            }
 
-            //_depthScale = RealSense2API.GetDepthScale(_pipeline);
+            _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
 
         protected override void DisconnectImpl()
