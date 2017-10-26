@@ -20,7 +20,12 @@ namespace MetriCam2.Cameras
         OpenNI2CApi.Frame _depthFrame = new OpenNI2CApi.Frame();
         OpenNI2CApi.Frame _irFrame = new OpenNI2CApi.Frame();
 
-        public override string Name
+        public override string Vendor
+        {
+            get => "Asus";
+        }
+
+        public override string Model
         {
             get => "Xtion2";
         }
