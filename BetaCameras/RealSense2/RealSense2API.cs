@@ -14,6 +14,8 @@ namespace MetriCam2.Cameras
 
         private const int ApiVersion = API_MAJOR_VERSION * 10000 + API_MINOR_VERSION * 100 + API_PATCH_VERSION;
 
+        public static bool PipelineRunning { get; private set; } = false;
+
         public enum Format
         {
             ANY,             /* When passed to enable stream, librealsense will try to provide best suited format */
@@ -372,6 +374,8 @@ namespace MetriCam2.Cameras
             IntPtr error = IntPtr.Zero;
             rs2_pipeline_start_with_config(pipe.Handle, conf.Handle, &error);
             HandleError(error);
+
+            PipelineRunning = true;
         }
 
         unsafe public static void PipelineStop(RS2Pipeline pipe)
@@ -379,6 +383,8 @@ namespace MetriCam2.Cameras
             IntPtr error = IntPtr.Zero;
             rs2_pipeline_stop(pipe.Handle, &error);
             HandleError(error);
+
+            PipelineRunning = false;
         }
 
         unsafe public static void ReleaseFrame(RS2Frame frame)
