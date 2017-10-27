@@ -537,11 +537,8 @@ namespace MetriCam2.Cameras
             IntPtr error = IntPtr.Zero;
             float res = 0.0f;
 
-            IntPtr profile = rs2_pipeline_get_active_profile(pipe.Handle, &error);
-            HandleError(error);
-            IntPtr device = rs2_pipeline_profile_get_device(profile, &error);
-            HandleError(error);
-            IntPtr list = rs2_query_sensors(device, &error);
+            RS2Device dev = GetActiveDevice(pipe);
+            IntPtr list = rs2_query_sensors(dev.Handle, &error);
             HandleError(error);
             int sensorCount = rs2_get_sensors_count(list, &error);
             HandleError(error);
@@ -568,10 +565,36 @@ namespace MetriCam2.Cameras
             }
 
             rs2_delete_sensor_list(list);
-            rs2_delete_device(device);
-            rs2_delete_pipeline_profile(profile);
+            DeleteDevice(dev);
 
             return res;
+        }
+
+        unsafe public static string GetFirmwareVersion(RS2Pipeline pipe)
+        {
+            IntPtr error = IntPtr.Zero;
+
+            RS2Device dev = GetActiveDevice(pipe);
+            IntPtr list = rs2_query_sensors(dev.Handle, &error);
+            HandleError(error);
+            int sensorCount = rs2_get_sensors_count(list, &error);
+            HandleError(error);
+
+            if (sensorCount == 0)
+                throw new InvalidOperationException("No sensor detected to get firmware version from");
+
+
+            IntPtr sensor = rs2_create_sensor(list, 0, &error);
+            HandleError(error);
+
+            char* info = rs2_get_sensor_info(sensor, CameraInfo.FIRMWARE_VERSION, &error);
+            string infoString = Marshal.PtrToStringAnsi((IntPtr)info);
+            HandleError(error);
+
+            rs2_delete_sensor_list(list);
+            DeleteDevice(dev);
+
+            return infoString;
         }
 
         unsafe private static void HandleError(IntPtr e)

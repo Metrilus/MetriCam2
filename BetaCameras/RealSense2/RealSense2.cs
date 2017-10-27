@@ -580,6 +580,11 @@ namespace MetriCam2.Cameras
 
         #endregion
 
+        public string GetFirmware()
+        {
+            return RealSense2API.GetFirmwareVersion(_pipeline);
+        }
+
         public void LoadConfigPreset(AdvancedMode.Preset preset)
         {
             LoadCustomConfig(AdvancedMode.GetPreset(preset));
