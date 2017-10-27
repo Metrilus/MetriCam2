@@ -77,6 +77,25 @@ namespace MetriCam2.Cameras
             _colorStream = OpenNI2CApi.CreateStream(_device, OpenNI2CApi.OniSensorType.COLOR);
             _depthStream = OpenNI2CApi.CreateStream(_device, OpenNI2CApi.OniSensorType.DEPTH);
             _irStream = OpenNI2CApi.CreateStream(_device, OpenNI2CApi.OniSensorType.IR);
+
+            if (ActiveChannels.Count == 0)
+            {
+                ActivateChannel(ChannelNames.Color);
+                ActivateChannel(ChannelNames.ZImage);
+            }
+            else
+            {
+                InitActiveChannel(ChannelNames.Color);
+                InitActiveChannel(ChannelNames.ZImage);
+            }
+        }
+
+        private void InitActiveChannel(string channelName)
+        {
+            if (IsChannelActive(channelName))
+            {
+                ActivateChannelImpl(channelName);
+            }
         }
 
         protected override void DisconnectImpl()
