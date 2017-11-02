@@ -104,6 +104,13 @@ namespace MetriCam2
         #region Private Methods
         private void AddChannel(string channelName, Type imageType)
         {
+            // Ignore if a channel with same name and type already exists.
+            // This is the case when a new object of a previously instanciated camera type is created.
+            if (registeredChannels.ContainsKey(channelName) && registeredChannels[channelName] == imageType)
+            {
+                return;
+            }
+
             try
             {
                 registeredChannels.Add(channelName, imageType);
@@ -112,7 +119,7 @@ namespace MetriCam2
             {
                 // TODO: Overthink channel registration best practices. This warning is always issued when a new object of a previously instanciated camera type is created. Possible solution: Do channel registration in Camera base-class and provide a virtual property which is overriden to supply all possible camera channels.
                 // if a channel of that name has been added before, ignore this one.
-                // log.WarnFormat("A channel with the name '{0}' already existed (maybe you used a default channel name of MetriCam 2). Ignoring the new channel.", channelName);
+                log.WarnFormat("A channel with the name '{0}' already existed (maybe you used a default channel name of MetriCam 2). Ignoring the new channel.", channelName);
             }
         }
         #endregion
