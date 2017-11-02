@@ -12,10 +12,6 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{ECF2A55A-67D9-48B7-936C-873FC6C07364}</ProjectGuid>
-    <SccProjectName>SAK</SccProjectName>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccProvider>SAK</SccProvider>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
     <RootNamespace>MetriCam2.Cameras.TIVoxel</RootNamespace>
