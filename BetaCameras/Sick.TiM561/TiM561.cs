@@ -8,7 +8,10 @@ namespace MetriCam2.Cameras
     public sealed class TiM561 : Camera, IDisposable
     {
         public const int DefaultSOPASPort = 2112;
-        private const string _logPrefix = "SICK TiM5xx";
+
+        private const string _vendorName = "SICK";
+        private const string _modelName = "TiM561";
+        private const string _logPrefix = _vendorName + " " + _modelName;
 
         private const int _millisecondsLag = 1000;
         private const int _authenticateTimeout = _millisecondsLag;
@@ -21,6 +24,7 @@ namespace MetriCam2.Cameras
         private UInt16 _scanCounter;
         private UInt32 _timeStamp;
         private string _channelName;
+
         private float _scalingFactor;
         private int _startingAngle;
         private int _angularStepWidth;
@@ -28,6 +32,7 @@ namespace MetriCam2.Cameras
         private float[,] _directions;
 
         public TiM561(IPEndPoint remoteEndPoint)
+            : base(_modelName)
         {
             _remoteEndPoint = remoteEndPoint;
 
@@ -148,7 +153,13 @@ namespace MetriCam2.Cameras
                 UInt16 versionNumber = scanData.ReadUInt16();
                 if (1 != versionNumber) log.Warn($"{_logPrefix}: unexpected version number in telegram: {versionNumber}");
                 scanData.Skip(2);
-                _serialNumber = scanData.ReadUInt32();
+
+                UInt32 serialNumber = scanData.ReadUInt32();
+                if (_serialNumber != serialNumber)
+                {
+                    _serialNumber = serialNumber;
+                    base.serialNumber = serialNumber.ToString();
+                }
 
                 scanData.Skip(1);
                 byte deviceStatus = scanData.ReadByte();
@@ -290,5 +301,11 @@ namespace MetriCam2.Cameras
         }
 
         #endregion Channel Information
+
+        #region Miscellaneous Meta-Data
+
+        public override string Vendor => _vendorName;
+
+        #endregion Miscellaneous Meta-Data
     }
 }

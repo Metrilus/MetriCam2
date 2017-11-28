@@ -223,8 +223,6 @@ namespace MetriCam2.Cameras
             }
             while (telegramPosition < telegram.Length);
 
-            
-
             // Construct and Return CoLa (binary) telegram structure
             return new CoLaBTelegram(telegram);
         }
