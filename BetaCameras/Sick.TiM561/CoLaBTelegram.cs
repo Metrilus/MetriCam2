@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace SICK_TIM561_Client
+namespace MetriCam2.Cameras
 {
     internal sealed class CoLaBTelegram
     {

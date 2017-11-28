@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SICK_TIM561_Client
+namespace MetriCam2.Cameras
 {
     public sealed class TiM561 : IDisposable
     {

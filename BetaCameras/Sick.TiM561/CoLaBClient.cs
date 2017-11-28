@@ -3,7 +3,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 
-namespace SICK_TIM561_Client
+namespace MetriCam2.Cameras
 {
     internal sealed class CoLaBClient : IDisposable
     {

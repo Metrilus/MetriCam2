@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace SICK_TIM561_Client
+namespace MetriCam2.Cameras
 {
     [Serializable]
     public class CoLaBException : ApplicationException
