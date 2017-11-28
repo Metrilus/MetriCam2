@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
@@ -12,12 +13,42 @@ namespace MetriCam2.Cameras
         private MemoryStream _upstreamBuffer;
         private BinaryWriter _upstreamWriter;
 
+        private const int _acknowledgeTimeout = 2000;
+
         private const byte _stx = 0x02;
         private byte[] _downstreamHeaderBuffer;
 
-        internal CoLaBClient(string ipAddress, int port)
+        private CoLaBClient()
         {
-            _client = new TcpClient(ipAddress, port);
+            _client = new TcpClient();
+        }
+
+        internal static CoLaBClient Connect(IPEndPoint remoteEndPoint)
+        {
+            // Construct the Client object
+            CoLaBClient client = new CoLaBClient();
+
+            try
+            {
+                // Attempt to Connect to the remote TCP/IP end-point
+                client._client.Connect(remoteEndPoint);
+                return client;
+            }
+            catch
+            {
+                try
+                {
+                    // Dispose the Client that failed to Connect
+                    client.Dispose();
+                }
+                catch
+                {
+                    // Suppress secondary exceptions
+                }
+
+                // Rethrow the original exception
+                throw;
+            }
         }
 
         ~CoLaBClient()
@@ -95,10 +126,35 @@ namespace MetriCam2.Cameras
             // Send the Telegram
             _client.Client.Send(_upstreamBuffer.GetBuffer(), 0, (int)_upstreamBuffer.Position, SocketFlags.None);
 
-            CoLaBTelegram ack = ReceiveTelegram();
+            // Look for Acknowledgement
+            int receiveTimeout = _client.Client.ReceiveTimeout;
+            _client.Client.ReceiveTimeout = _acknowledgeTimeout;
+            CoLaBTelegram ack;
+            try
+            {
+                ack = ReceiveTelegram();
+            }
+            catch (SocketException socketException)
+            {
+                switch (socketException.SocketErrorCode)
+                {
+                    // Timeouts indicate that the port is not configured for the binary dialect
+                    case SocketError.TimedOut:
+                        throw new CoLaBException($"Upstream CoLa (binary) Telegram not acknowledged: CoLa (binary) dialect ignored", socketException);
+
+                    // Other socket errors are unknown
+                    default:
+                        throw new CoLaBException($"Upstream CoLa (binary) Telegram not acknowledged: socket error", socketException);
+                }
+            }
+            finally
+            {
+                _client.Client.ReceiveTimeout = receiveTimeout;
+            }
+
             if ((null == ack) || (ack.CommandType != "sAN") || (ack.CommandName != commandName))
             {
-                throw new CoLaBException($"Upstream CoLa (binary) Telegram not acknowledged: expected `sAN {commandName}`");
+                throw new CoLaBException($"Upstream CoLa (binary) Telegram acknowledged incorrectly: expected `sAN {commandName}`");
             }
         }
 
