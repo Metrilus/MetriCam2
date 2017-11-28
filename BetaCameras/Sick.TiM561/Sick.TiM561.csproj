@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="CoLaBClient.cs" />
     <Compile Include="CoLaBException.cs" />
+    <Compile Include="NetworkBinaryReader.cs" />
     <Compile Include="CoLaBTelegram.cs" />
     <Compile Include="CoLaCommandType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

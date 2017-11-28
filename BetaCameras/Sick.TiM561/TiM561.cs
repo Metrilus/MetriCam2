@@ -17,9 +17,21 @@ namespace MetriCam2.Cameras
         private IPEndPoint _remoteEndPoint;
         private CoLaBClient _client;
 
+        private float _scalingFactor;
+        private int _startingAngle;
+        private int _angularStepWidth;
+        private UInt16[] _radii;
+        private float[,] _directions;
+
         public TiM561(IPEndPoint remoteEndPoint)
         {
             _remoteEndPoint = remoteEndPoint;
+
+            _scalingFactor = Single.NaN;
+            _startingAngle = Int32.MinValue;
+            _angularStepWidth = Int32.MinValue;
+            _radii = null;
+            _directions = null;
         }
 
         public TiM561(IPAddress address, int port = DefaultSOPASPort)
@@ -124,9 +136,76 @@ namespace MetriCam2.Cameras
 
             try
             {
-                var v = _client.SendTelegram(CoLaCommandType.Read, "LMDscandata", acknowledgeTimeout: _updateTimeout);
+                CoLaBTelegram scanDataTelegram = _client.SendTelegram(CoLaCommandType.Read, "LMDscandata", acknowledgeTimeout: _updateTimeout);
+                NetworkBinaryReader scanData = new NetworkBinaryReader(scanDataTelegram);
 
-                //using (FileStream 
+                UInt16 versionNumber = scanData.ReadUInt16();   // Expect 1
+                UInt16 deviceNumber = scanData.ReadUInt16();
+                UInt32 serialNumber = scanData.ReadUInt32();
+
+                scanData.Skip(1);
+                byte deviceStatus = scanData.ReadByte();
+
+                UInt16 telegramCounter = scanData.ReadUInt16();
+                UInt16 scanCounter = scanData.ReadUInt16();
+
+                UInt32 startTime = scanData.ReadUInt32();
+                UInt32 endTime = scanData.ReadUInt32();
+
+                scanData.Skip(1);
+                byte digitalInputStatus = scanData.ReadByte();
+
+                scanData.Skip(1);
+                byte digitalOutputStatus = scanData.ReadByte();
+
+                scanData.Skip(2);
+
+                // Frequencies
+                UInt32 scanningFrequency = scanData.ReadUInt32();       // Expect 1500
+                UInt32 measurementFrequency = scanData.ReadUInt32();    // Expect 162
+
+                // Encoders
+                UInt16 encoderCount = scanData.ReadUInt16();            // Expect 0
+
+                // 16-bit Channels                
+                UInt16 channelCount16 = scanData.ReadUInt16();          // Expect 1
+                string channelName = scanData.ReadString(5);            // Expect "DIST1"
+
+                _scalingFactor = scanData.ReadSingle() * 0.001f;
+                float scalingOffset = scanData.ReadSingle();
+
+                int startingAngle = scanData.ReadInt32();
+                int angularStepWidth = (int)scanData.ReadUInt16();
+                if ((_startingAngle != startingAngle) || (_angularStepWidth != angularStepWidth))
+                {
+                    _startingAngle = startingAngle;
+                    _angularStepWidth = angularStepWidth;
+                    _directions = null;
+                }
+
+                int dataCount = (int)scanData.ReadUInt16();
+
+                // Initialize or Reinitialize array of Polar Radii
+                if (null == _radii)
+                {
+                    _radii = new UInt16[dataCount];
+                    _directions = null;
+                }
+                else if (_radii.Length != dataCount)
+                {
+                    Array.Resize(ref _radii, dataCount);
+                    _directions = null;
+                }
+
+                // Read 16-bit unsigned pixels (reversed)
+                for (int i = (dataCount - 1); i >= 0; --i)
+                {
+                    _radii[i] = scanData.ReadUInt16();
+                }
+
+                // 8-bit Channels
+                UInt16 channelCount8 = scanData.ReadUInt16();
+
             }
             catch (MetriCam2Exception)
             {
@@ -140,9 +219,58 @@ namespace MetriCam2.Cameras
             }
         }
 
+        private FloatCameraImage CalcDistance()
+        {
+            FloatCameraImage image = new FloatCameraImage(_radii.Length, 1);
+            for (int x = 0; x < _radii.Length; ++x)
+            {
+                image[x] = _scalingFactor * (float)_radii[x];
+            }
+
+            return image;
+        }
+
+        private Point3fCameraImage CalcPoint3DImage()
+        {
+            // Recalculate Directions if necessary
+            if (null == _directions)
+            {
+                int stepCount = _radii.Length;
+                _directions = new float[stepCount, 2];
+                for (int j = 0; j < stepCount; ++j)
+                {
+                    double theta = Math.PI * (double)(_startingAngle + ((stepCount - 1 - j) * _angularStepWidth)) / (180.0 * 10000.0);
+                    _directions[j, 0] = (float)Math.Cos(theta);
+                    _directions[j, 1] = (float)Math.Sin(theta);
+                }
+            }
+
+            // Generate 3D Data
+            Point3fCameraImage image = new Point3fCameraImage(_radii.Length, 1);
+            for (int x = 0; x < _radii.Length; ++x)
+            {
+                float r = _scalingFactor * (float)_radii[x];
+                image[x] = new Point3f(x: (r * _directions[x, 0]),
+                                       y: 0.0f,
+                                       z: (r * _directions[x, 1]));
+            }
+
+            return image;
+        }
+
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            throw new NotImplementedException();
+            switch (channelName)
+            {
+                case ChannelNames.Distance:
+                    return CalcDistance();
+
+                case ChannelNames.Point3DImage:
+                    return CalcPoint3DImage();
+            }
+
+            log.Error("Invalid channelname: " + channelName);
+            return null;
         }
 
         #region Channel Information
@@ -152,6 +280,7 @@ namespace MetriCam2.Cameras
             // The 2D Laser Scanner only yields a single channel of equally-spaced distance values
             Channels.Clear();
             Channels.Add(ChannelRegistry.Instance.RegisterChannel(ChannelNames.Distance));
+            Channels.Add(ChannelRegistry.Instance.RegisterChannel(ChannelNames.Point3DImage));
         }
 
         #endregion Channel Information
