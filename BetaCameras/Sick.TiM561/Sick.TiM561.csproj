@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MetriCam2.Cameras</RootNamespace>
-    <AssemblyName>Sick.TiM561</AssemblyName>
+    <AssemblyName>MetriCam2.Cameras.Sick.TiM561</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
