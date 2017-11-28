@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras
 {
@@ -145,10 +146,12 @@ namespace MetriCam2.Cameras
 
             // Look for Acknowledgement
             _client.Client.ReceiveTimeout = acknowledgeTimeout;
-            CoLaBTelegram ack;
+            CoLaBTelegram acknowledgement;
             try
             {
-                ack = ReceiveTelegram();
+                Task<CoLaBTelegram> acknowledgementTask = ReceiveTelegramAsync();
+                acknowledgementTask.Wait();
+                acknowledgement = acknowledgementTask.Result;
             }
             catch (SocketException socketException)
             {
@@ -164,12 +167,12 @@ namespace MetriCam2.Cameras
                 }
             }
 
-            if ((null == ack) || (ack.CommandPrefix != acknowledgeType) || (ack.CommandName != commandName))
+            if ((null == acknowledgement) || (acknowledgement.CommandPrefix != acknowledgeType) || (acknowledgement.CommandName != commandName))
             {
                 throw new CoLaBException($"Upstream CoLa (binary) Telegram acknowledged incorrectly: expected `{acknowledgeType} {commandName}`");
             }
 
-            return ack;
+            return acknowledgement;
         }
 
         public CoLaBTelegram SendTelegram(CoLaCommandType commandType, string commandName, int acknowledgeTimeout)
@@ -181,7 +184,13 @@ namespace MetriCam2.Cameras
 
         #region Telegrams: Downstream
 
-        private CoLaBTelegram ReceiveTelegram()
+        private Task<int> ReceiveAsync(byte[] buffer, int offset, int size)
+        {
+            IAsyncResult asyncResult = _client.Client.BeginReceive(buffer, offset, size, SocketFlags.None, null, null);
+            return Task<int>.Factory.FromAsync(asyncResult, _client.Client.EndReceive);
+        }
+
+        internal async Task<CoLaBTelegram> ReceiveTelegramAsync()
         {
             // Initialize the Upstream Buffer on first receive
             if (null == _downstreamHeaderBuffer)
@@ -190,7 +199,7 @@ namespace MetriCam2.Cameras
             }
 
             // Receive the Telegram Header
-            int receivedBytes = _client.Client.Receive(_downstreamHeaderBuffer, 0, 4 + 4, SocketFlags.None);
+            int receivedBytes = await ReceiveAsync(_downstreamHeaderBuffer, 0, 4 + 4);
             if (0 == receivedBytes) return null;
 
             // Validate the Header
@@ -213,7 +222,7 @@ namespace MetriCam2.Cameras
             int telegramPosition = 0;
             do
             {
-                receivedBytes = _client.Client.Receive(telegram, telegramPosition, telegram.Length - telegramPosition, SocketFlags.None);
+                receivedBytes = await ReceiveAsync(telegram, telegramPosition, telegram.Length - telegramPosition);
                 if (0 == receivedBytes)
                 {
                     throw new CoLaBException($"Incomplete CoLa (binary) Telegram: {telegramPosition} of {length + 1} downstream bytes received");

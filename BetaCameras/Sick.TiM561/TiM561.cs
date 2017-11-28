@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using MetriCam2.Exceptions;
 using Metrilus.Util;
 
@@ -13,12 +15,13 @@ namespace MetriCam2.Cameras
         private const string _modelName = "TiM561";
         private const string _logPrefix = _vendorName + " " + _modelName;
 
-        private const int _millisecondsLag = 1000;
-        private const int _authenticateTimeout = _millisecondsLag;
-        private const int _updateTimeout = 30000 + _millisecondsLag;
+        private const int _timeoutMilliseconds = 30000 + 1000;
+
+        private bool _disposed;
 
         private IPEndPoint _remoteEndPoint;
         private CoLaBClient _client;
+        private Task<CoLaBTelegram> _receiveTask;
 
         private UInt32 _serialNumber;
         private UInt16 _scanCounter;
@@ -34,6 +37,8 @@ namespace MetriCam2.Cameras
         public TiM561(IPEndPoint remoteEndPoint)
             : base(_modelName)
         {
+            _disposed = false;
+
             _remoteEndPoint = remoteEndPoint;
 
             _scalingFactor = Single.NaN;
@@ -60,6 +65,8 @@ namespace MetriCam2.Cameras
 
         private void Dispose(bool disposing)
         {
+            _disposed = true;
+
             if ((disposing) && (null != _client))
             {
                 _client.Dispose();
@@ -94,13 +101,20 @@ namespace MetriCam2.Cameras
 
                     try
                     {
-                        // Log-In to the Device with the password from the documentation
-                        _client.SendTelegram(CoLaCommandType.Method, "SetAccessMode", (telegramWriter) =>
+                        // Request Scan-Data Telegrams
+                        CoLaBTelegram acknowledgement = _client.SendTelegram(CoLaCommandType.Event, "LMDscandata", (telegramWriter) =>
                         {
-                            telegramWriter.Write(new byte[] { 0x03, 0xf4, 0x72, 0x47, 0x44 });
-                        }, acknowledgeTimeout: _authenticateTimeout);
+                            telegramWriter.Write(0x01);
+                        }, acknowledgeTimeout: _timeoutMilliseconds);
 
-                        log.Debug($"{_logPrefix}: CoLa (binary) protocol authentication complete");
+                        if (acknowledgement.Data[acknowledgement.Offset] != 0)
+                        {
+                            log.Debug($"{_logPrefix}: CoLa (binary) telegram subscription established");
+                        }
+                        else
+                        {
+                            ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "CoLa (binary) telegram subscription failed");
+                        }
                     }
                     catch
                     {
@@ -118,6 +132,9 @@ namespace MetriCam2.Cameras
                         // Rethrow the original exception
                         throw;
                     }
+
+                    // Begin asynchronous receive
+                    ReceiveTelegram();
                 }
             }
             catch (MetriCam2Exception)
@@ -136,17 +153,28 @@ namespace MetriCam2.Cameras
 
         #endregion Connection & Disconnection
 
+        private void ReceiveTelegram()
+        {
+            // Break on Disposed
+            if (_disposed) return;
+
+            // Begin Receiving Telegrams
+            _receiveTask = _client.ReceiveTelegramAsync();
+            _receiveTask.ContinueWith((t) => ReceiveTelegram());
+        }
+
         protected override void UpdateImpl()
         {
-            if ((null == _client) || (!_client.IsConnected))
+            if ((null == _client) || (!_client.IsConnected) || (null == _receiveTask))
             {
                 throw new InvalidOperationException($"{_logPrefix} disconnected");
             }
 
             try
             {
-                // Poll Scan Data
-                CoLaBTelegram scanDataTelegram = _client.SendTelegram(CoLaCommandType.Read, "LMDscandata", acknowledgeTimeout: _updateTimeout);
+                // Wait for the next Scan-Data Telegram
+                _receiveTask.Wait();
+                CoLaBTelegram scanDataTelegram = _receiveTask.Result;
                 NetworkBinaryReader scanData = new NetworkBinaryReader(scanDataTelegram);
 
                 // Miscellaneous Metadata
