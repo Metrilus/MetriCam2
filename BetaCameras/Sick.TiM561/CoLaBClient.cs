@@ -13,9 +13,8 @@ namespace MetriCam2.Cameras
         private MemoryStream _upstreamBuffer;
         private BinaryWriter _upstreamWriter;
 
-        private const int _acknowledgeTimeout = 2000;
-
-        private const byte _stx = 0x02;
+        internal const byte _stx = 0x02;
+        internal const byte _space = 0x20;
         private byte[] _downstreamHeaderBuffer;
 
         private CoLaBClient()
@@ -87,8 +86,20 @@ namespace MetriCam2.Cameras
 
         #region Telegrams: Upstream
 
-        public void SendTelegram(string commandType, string commandName, Action<BinaryWriter> writeTelegram)
+        public CoLaBTelegram SendTelegram(CoLaCommandType commandType, string commandName, Action<BinaryWriter> writeTelegram, int acknowledgeTimeout)
         {
+            // Convert the Command-Type to a String
+            string commandString;
+            string acknowledgeType;
+            switch (commandType)
+            {
+                case CoLaCommandType.Read: commandString = $"sRN " + commandName; acknowledgeType = "sRA"; break;
+                case CoLaCommandType.Write: commandString = $"sWN " + commandName; acknowledgeType = "sWA"; break;
+                case CoLaCommandType.Method: commandString = $"sMN " + commandName; acknowledgeType = "sAN"; break;
+                case CoLaCommandType.Event: commandString = $"sEN " + commandName; acknowledgeType = "sEA"; break;
+                default: throw new ArgumentException("Unknown or unsupported CoLa command type: " + commandType.ToString(), nameof(commandType));
+            }
+
             // Initialize the Upstream Buffer on first telegram
             if (null == _upstreamWriter)
             {
@@ -103,8 +114,14 @@ namespace MetriCam2.Cameras
             }
 
             // Generate the Telegram
-            _upstreamWriter.Write(Encoding.ASCII.GetBytes(commandType + " " + commandName + " "));
-            writeTelegram(_upstreamWriter);
+            _upstreamWriter.Write(Encoding.ASCII.GetBytes(commandString));
+
+            if (null != writeTelegram)
+            {
+                _upstreamWriter.Write(_space);
+                writeTelegram(_upstreamWriter);
+            }
+
             int length = (int)(_upstreamBuffer.Position - 8L);
 
             // Encode the Telegram Size
@@ -127,8 +144,7 @@ namespace MetriCam2.Cameras
             _client.Client.Send(_upstreamBuffer.GetBuffer(), 0, (int)_upstreamBuffer.Position, SocketFlags.None);
 
             // Look for Acknowledgement
-            int receiveTimeout = _client.Client.ReceiveTimeout;
-            _client.Client.ReceiveTimeout = _acknowledgeTimeout;
+            _client.Client.ReceiveTimeout = acknowledgeTimeout;
             CoLaBTelegram ack;
             try
             {
@@ -147,15 +163,18 @@ namespace MetriCam2.Cameras
                         throw new CoLaBException($"Upstream CoLa (binary) Telegram not acknowledged: socket error", socketException);
                 }
             }
-            finally
+
+            if ((null == ack) || (ack.CommandPrefix != acknowledgeType) || (ack.CommandName != commandName))
             {
-                _client.Client.ReceiveTimeout = receiveTimeout;
+                throw new CoLaBException($"Upstream CoLa (binary) Telegram acknowledged incorrectly: expected `{acknowledgeType} {commandName}`");
             }
 
-            if ((null == ack) || (ack.CommandType != "sAN") || (ack.CommandName != commandName))
-            {
-                throw new CoLaBException($"Upstream CoLa (binary) Telegram acknowledged incorrectly: expected `sAN {commandName}`");
-            }
+            return ack;
+        }
+
+        public CoLaBTelegram SendTelegram(CoLaCommandType commandType, string commandName, int acknowledgeTimeout)
+        {
+            return SendTelegram(commandType, commandName, writeTelegram: null, acknowledgeTimeout: acknowledgeTimeout);
         }
 
         #endregion Telegrams: Upstream
@@ -185,17 +204,26 @@ namespace MetriCam2.Cameras
 
             // Decode the Telegram Length
             int length = (_downstreamHeaderBuffer[4] << 24)
-                        | (_downstreamHeaderBuffer[5] << 16)
-                        | (_downstreamHeaderBuffer[6] << 8)
-                        | (_downstreamHeaderBuffer[7]);
+                       | (_downstreamHeaderBuffer[5] << 16)
+                       | (_downstreamHeaderBuffer[6] << 8)
+                       | (_downstreamHeaderBuffer[7]);
 
             // Receive the Telegram Body
             byte[] telegram = new byte[length + 1];
-            receivedBytes = _client.Client.Receive(telegram, 0, length + 1, SocketFlags.None);
-            if (receivedBytes < length + 1)
+            int telegramPosition = 0;
+            do
             {
-                throw new CoLaBException($"Incomplete CoLa (binary) Telegram: {receivedBytes} of {length + 1} downstream bytes received");
+                receivedBytes = _client.Client.Receive(telegram, telegramPosition, telegram.Length - telegramPosition, SocketFlags.None);
+                if (0 == receivedBytes)
+                {
+                    throw new CoLaBException($"Incomplete CoLa (binary) Telegram: {telegramPosition} of {length + 1} downstream bytes received");
+                }
+
+                telegramPosition += receivedBytes;
             }
+            while (telegramPosition < telegram.Length);
+
+            
 
             // Construct and Return CoLa (binary) telegram structure
             return new CoLaBTelegram(telegram);

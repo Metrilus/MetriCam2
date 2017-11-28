@@ -10,6 +10,10 @@ namespace MetriCam2.Cameras
         public const int DefaultSOPASPort = 2112;
         private const string _logPrefix = "SICK TiM5xx";
 
+        private const int _millisecondsLag = 1000;
+        private const int _authenticateTimeout = _millisecondsLag;
+        private const int _updateTimeout = 30000 + _millisecondsLag;
+
         private IPEndPoint _remoteEndPoint;
         private CoLaBClient _client;
 
@@ -70,10 +74,10 @@ namespace MetriCam2.Cameras
                     try
                     {
                         // Log-In to the Device with the password from the documentation
-                        _client.SendTelegram("sMN", "SetAccessMode", (telegramWriter) =>
+                        _client.SendTelegram(CoLaCommandType.Method, "SetAccessMode", (telegramWriter) =>
                         {
                             telegramWriter.Write(new byte[] { 0x03, 0xf4, 0x72, 0x47, 0x44 });
-                        });
+                        }, acknowledgeTimeout: _authenticateTimeout);
 
                         log.Debug($"{_logPrefix}: CoLa (binary) protocol authentication complete");
                     }
@@ -113,7 +117,27 @@ namespace MetriCam2.Cameras
 
         protected override void UpdateImpl()
         {
-            throw new NotImplementedException();
+            if ((null == _client) || (!_client.IsConnected))
+            {
+                throw new InvalidOperationException($"{_logPrefix} disconnected");
+            }
+
+            try
+            {
+                var v = _client.SendTelegram(CoLaCommandType.Read, "LMDscandata", acknowledgeTimeout: _updateTimeout);
+
+                //using (FileStream 
+            }
+            catch (MetriCam2Exception)
+            {
+                // Pass MetriCam API Exceptions without alteration
+                throw;
+            }
+            catch (Exception foreignException)
+            {
+                // Wrap and Throw other exceptions encountered during Connection
+                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ImageAcquisitionFailedException), this, foreignException);
+            }
         }
 
         protected override CameraImage CalcChannelImpl(string channelName)

@@ -5,7 +5,7 @@ namespace MetriCam2.Cameras
 {
     internal sealed class CoLaBTelegram
     {
-        public string CommandType { get; }
+        public string CommandPrefix { get; }
         public string CommandName { get; }
 
         public byte[] Data { get; }
@@ -22,7 +22,7 @@ namespace MetriCam2.Cameras
             {
                 checksum ^= data[i];
 
-                if (0x20 == data[i])
+                if (CoLaBClient._space == data[i])
                 {
                     if (space0 < 0) space0 = i;
                     else if (space1 < 0) space1 = i;
@@ -39,7 +39,7 @@ namespace MetriCam2.Cameras
             }
 
             // Parse SOPAS Command
-            CommandType = Encoding.ASCII.GetString(data, 0, space0);
+            CommandPrefix = Encoding.ASCII.GetString(data, 0, space0);
             CommandName = Encoding.ASCII.GetString(data, space0 + 1, space1 - (space0 + 1));
 
             // Initialize Structure
@@ -50,7 +50,7 @@ namespace MetriCam2.Cameras
 
         public override string ToString()
         {
-            return $"{CommandType} {CommandName}";
+            return $"{CommandPrefix} {CommandName}";
         }
     }
 }

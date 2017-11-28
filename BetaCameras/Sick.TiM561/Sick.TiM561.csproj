@@ -43,6 +43,7 @@
     <Compile Include="CoLaBClient.cs" />
     <Compile Include="CoLaBException.cs" />
     <Compile Include="CoLaBTelegram.cs" />
+    <Compile Include="CoLaCommandType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TiM561.cs" />
   </ItemGroup>
