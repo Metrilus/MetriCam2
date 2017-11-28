@@ -3,7 +3,6 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras
 {
@@ -149,9 +148,7 @@ namespace MetriCam2.Cameras
             CoLaBTelegram acknowledgement;
             try
             {
-                Task<CoLaBTelegram> acknowledgementTask = ReceiveTelegramAsync();
-                acknowledgementTask.Wait();
-                acknowledgement = acknowledgementTask.Result;
+                acknowledgement = ReceiveTelegram();
             }
             catch (SocketException socketException)
             {
@@ -184,13 +181,7 @@ namespace MetriCam2.Cameras
 
         #region Telegrams: Downstream
 
-        private Task<int> ReceiveAsync(byte[] buffer, int offset, int size)
-        {
-            IAsyncResult asyncResult = _client.Client.BeginReceive(buffer, offset, size, SocketFlags.None, null, null);
-            return Task<int>.Factory.FromAsync(asyncResult, _client.Client.EndReceive);
-        }
-
-        internal async Task<CoLaBTelegram> ReceiveTelegramAsync()
+        internal CoLaBTelegram ReceiveTelegram()
         {
             // Initialize the Upstream Buffer on first receive
             if (null == _downstreamHeaderBuffer)
@@ -199,7 +190,7 @@ namespace MetriCam2.Cameras
             }
 
             // Receive the Telegram Header
-            int receivedBytes = await ReceiveAsync(_downstreamHeaderBuffer, 0, 4 + 4);
+            int receivedBytes = _client.Client.Receive(_downstreamHeaderBuffer, 0, 4 + 4, SocketFlags.None);
             if (0 == receivedBytes) return null;
 
             // Validate the Header
@@ -222,7 +213,7 @@ namespace MetriCam2.Cameras
             int telegramPosition = 0;
             do
             {
-                receivedBytes = await ReceiveAsync(telegram, telegramPosition, telegram.Length - telegramPosition);
+                receivedBytes = _client.Client.Receive(telegram, telegramPosition, telegram.Length - telegramPosition, SocketFlags.None);
                 if (0 == receivedBytes)
                 {
                     throw new CoLaBException($"Incomplete CoLa (binary) Telegram: {telegramPosition} of {length + 1} downstream bytes received");

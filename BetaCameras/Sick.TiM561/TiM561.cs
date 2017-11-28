@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 using MetriCam2.Exceptions;
 using Metrilus.Util;
 
@@ -21,7 +20,10 @@ namespace MetriCam2.Cameras
 
         private IPEndPoint _remoteEndPoint;
         private CoLaBClient _client;
-        private Task<CoLaBTelegram> _receiveTask;
+        private Thread _downstreamThread;
+
+        private CoLaBTelegram _lastTelegram;
+        private AutoResetEvent _downstreamTurnstile;
 
         private UInt32 _serialNumber;
         private UInt16 _scanCounter;
@@ -38,6 +40,7 @@ namespace MetriCam2.Cameras
             : base(_modelName)
         {
             _disposed = false;
+            _downstreamTurnstile = new AutoResetEvent(false);
 
             _remoteEndPoint = remoteEndPoint;
 
@@ -65,12 +68,32 @@ namespace MetriCam2.Cameras
 
         private void Dispose(bool disposing)
         {
+            // Raise the Disposed Flag
             _disposed = true;
 
+            // If the Downstream Thread is still live, give it time to end quietly
+            if ((disposing) && (null != _downstreamThread))
+            {
+                if (!_downstreamThread.Join(500))
+                {
+                    _downstreamThread.Abort();
+                }
+
+                _downstreamThread = null;
+            }
+
+            // Dispose the TCP/IP client
             if ((disposing) && (null != _client))
             {
                 _client.Dispose();
                 _client = null;
+            }
+
+            // Dispose of the Turnstile
+            if ((disposing) && (null != _downstreamTurnstile))
+            {
+                _downstreamTurnstile.Dispose();
+                _downstreamTurnstile = null;
             }
         }
 
@@ -133,8 +156,11 @@ namespace MetriCam2.Cameras
                         throw;
                     }
 
-                    // Begin asynchronous receive
-                    ReceiveTelegram();
+                    // Begin receiving telegrams in a background thread
+                    _downstreamThread = new Thread(DownstreamThreadProc);
+                    _downstreamThread.Name = _vendorName + " " + _modelName;
+                    _downstreamThread.IsBackground = true;
+                    _downstreamThread.Start();
                 }
             }
             catch (MetriCam2Exception)
@@ -153,19 +179,20 @@ namespace MetriCam2.Cameras
 
         #endregion Connection & Disconnection
 
-        private void ReceiveTelegram()
+        private void DownstreamThreadProc()
         {
-            // Break on Disposed
-            if (_disposed) return;
-
-            // Begin Receiving Telegrams
-            _receiveTask = _client.ReceiveTelegramAsync();
-            _receiveTask.ContinueWith((t) => ReceiveTelegram());
+            while (!_disposed)
+            {
+                // Fetch a Telegram and Signal any waiting threads
+                // (Note: this will always be a Scan-Data telegram because the thread will be suspended for all other communications.)
+                _lastTelegram = _client.ReceiveTelegram();
+                _downstreamTurnstile.Set();
+            }
         }
 
         protected override void UpdateImpl()
         {
-            if ((null == _client) || (!_client.IsConnected) || (null == _receiveTask))
+            if ((null == _client) || (!_client.IsConnected) || (null == _downstreamTurnstile))
             {
                 throw new InvalidOperationException($"{_logPrefix} disconnected");
             }
@@ -173,8 +200,8 @@ namespace MetriCam2.Cameras
             try
             {
                 // Wait for the next Scan-Data Telegram
-                _receiveTask.Wait();
-                CoLaBTelegram scanDataTelegram = _receiveTask.Result;
+                _downstreamTurnstile.WaitOne();
+                CoLaBTelegram scanDataTelegram = _lastTelegram;
                 NetworkBinaryReader scanData = new NetworkBinaryReader(scanDataTelegram);
 
                 // Miscellaneous Metadata
