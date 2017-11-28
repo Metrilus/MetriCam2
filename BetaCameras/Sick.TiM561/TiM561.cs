@@ -17,6 +17,10 @@ namespace MetriCam2.Cameras
         private IPEndPoint _remoteEndPoint;
         private CoLaBClient _client;
 
+        private UInt32 _serialNumber;
+        private UInt16 _scanCounter;
+        private UInt32 _timeStamp;
+        private string _channelName;
         private float _scalingFactor;
         private int _startingAngle;
         private int _angularStepWidth;
@@ -136,40 +140,34 @@ namespace MetriCam2.Cameras
 
             try
             {
+                // Poll Scan Data
                 CoLaBTelegram scanDataTelegram = _client.SendTelegram(CoLaCommandType.Read, "LMDscandata", acknowledgeTimeout: _updateTimeout);
                 NetworkBinaryReader scanData = new NetworkBinaryReader(scanDataTelegram);
 
-                UInt16 versionNumber = scanData.ReadUInt16();   // Expect 1
-                UInt16 deviceNumber = scanData.ReadUInt16();
-                UInt32 serialNumber = scanData.ReadUInt32();
+                // Miscellaneous Metadata
+                UInt16 versionNumber = scanData.ReadUInt16();
+                if (1 != versionNumber) log.Warn($"{_logPrefix}: unexpected version number in telegram: {versionNumber}");
+                scanData.Skip(2);
+                _serialNumber = scanData.ReadUInt32();
 
                 scanData.Skip(1);
                 byte deviceStatus = scanData.ReadByte();
-
-                UInt16 telegramCounter = scanData.ReadUInt16();
-                UInt16 scanCounter = scanData.ReadUInt16();
-
-                UInt32 startTime = scanData.ReadUInt32();
-                UInt32 endTime = scanData.ReadUInt32();
-
-                scanData.Skip(1);
-                byte digitalInputStatus = scanData.ReadByte();
-
-                scanData.Skip(1);
-                byte digitalOutputStatus = scanData.ReadByte();
+                if (0 != deviceStatus) log.Error($"{_logPrefix}: unexpected device status: {deviceStatus}");
 
                 scanData.Skip(2);
+                _scanCounter = scanData.ReadUInt16();
 
-                // Frequencies
-                UInt32 scanningFrequency = scanData.ReadUInt32();       // Expect 1500
-                UInt32 measurementFrequency = scanData.ReadUInt32();    // Expect 162
+                scanData.Skip(4);
+                _timeStamp = scanData.ReadUInt32();
 
-                // Encoders
-                UInt16 encoderCount = scanData.ReadUInt16();            // Expect 0
+                // Skip: input states, output states, reserved bytes, frequency information, encoders
+                scanData.Skip(2 + 2 + 2 + 4 + 4 + 2);
 
                 // 16-bit Channels                
-                UInt16 channelCount16 = scanData.ReadUInt16();          // Expect 1
-                string channelName = scanData.ReadString(5);            // Expect "DIST1"
+                UInt16 channelCount16 = scanData.ReadUInt16();
+                if (1 != channelCount16) log.Error($"{_logPrefix}: unexpected number of 16-bit channels: {channelCount16}");
+
+                _channelName = scanData.ReadString(5);
 
                 _scalingFactor = scanData.ReadSingle() * 0.001f;
                 float scalingOffset = scanData.ReadSingle();
@@ -202,10 +200,6 @@ namespace MetriCam2.Cameras
                 {
                     _radii[i] = scanData.ReadUInt16();
                 }
-
-                // 8-bit Channels
-                UInt16 channelCount8 = scanData.ReadUInt16();
-
             }
             catch (MetriCam2Exception)
             {
@@ -221,7 +215,13 @@ namespace MetriCam2.Cameras
 
         private FloatCameraImage CalcDistance()
         {
-            FloatCameraImage image = new FloatCameraImage(_radii.Length, 1);
+            FloatCameraImage image = new FloatCameraImage(_radii.Length, 1)
+            {
+                ChannelName = _channelName,
+                FrameNumber = _scanCounter,
+                TimeStamp = _timeStamp
+            };
+
             for (int x = 0; x < _radii.Length; ++x)
             {
                 image[x] = _scalingFactor * (float)_radii[x];
@@ -246,7 +246,13 @@ namespace MetriCam2.Cameras
             }
 
             // Generate 3D Data
-            Point3fCameraImage image = new Point3fCameraImage(_radii.Length, 1);
+            Point3fCameraImage image = new Point3fCameraImage(_radii.Length, 1)
+            {
+                ChannelName = _channelName,
+                FrameNumber = _scanCounter,
+                TimeStamp = _timeStamp
+            };
+
             for (int x = 0; x < _radii.Length; ++x)
             {
                 float r = _scalingFactor * (float)_radii[x];
