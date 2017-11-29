@@ -2775,7 +2775,7 @@ namespace MetriCam2
             log.DebugFormat(@"Calibration path = '{0}'", calibrationPathRegistry);
 
             return calibrationPathRegistry;
-        #endif
+#endif
         }
 
         /// <summary>
