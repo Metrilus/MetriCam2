@@ -1107,13 +1107,15 @@ namespace MetriCam2
         /// </remarks>
         public long TimeStamp { get; protected set; }
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Provides an icon that represents the camera.
         /// </summary>
         public virtual System.Drawing.Bitmap CameraIcon { get { return Properties.Resources.MetriCam_Icon; } }
-        #endregion
+#endif
+#endregion
 
-        #region Constructor
+#region Constructor
         /// <summary>
         /// Default constructor.
         /// </summary>
@@ -1159,9 +1161,9 @@ namespace MetriCam2
 
             log.DebugFormat("Camera of type {0} destroyed (id = {1})", Name, id);
         }
-        #endregion
+#endregion
 
-        #region Connect and Disconnect
+#region Connect and Disconnect
         /// <summary>
         /// Enumerates all currently available (i.e. attached to the computer) devices.
         /// </summary>
@@ -1355,9 +1357,9 @@ namespace MetriCam2
                 }
             }
         }
-        #endregion
+#endregion
 
-        #region Calibration File Loading
+#region Calibration File Loading
         /// <summary>
         /// Loads intrinsic parameters for the Camera.
         /// </summary>
@@ -1477,9 +1479,9 @@ namespace MetriCam2
                     GetCalibrationPathFromRegistry()
                     ));
         }
-        #endregion
+#endregion
 
-        #region Data Acquisition
+#region Data Acquisition
         /// <summary>Tests if a channel is currently active.</summary>
         /// <param name="channelName">Channel name.</param>
         public bool IsChannelActive(string channelName)
@@ -1584,10 +1586,10 @@ namespace MetriCam2
 
             return img;
         }
-        #endregion
+#endregion
 
-        #region Parameter Settings
-        #region Public Interface
+#region Parameter Settings
+#region Public Interface
         /// <summary>
         /// Sets the camera parameter <paramref name="name"/> to <paramref name="value"/>.
         /// </summary>
@@ -1965,9 +1967,9 @@ namespace MetriCam2
                 serializer.Serialize(writer, config);
             }
         }
-        #endregion
+#endregion
 
-        #region Private Helper Methods
+#region Private Helper Methods
         private static bool CanConvert(Type type, object obj)
         {
             var typeConverter = TypeDescriptor.GetConverter(type);
@@ -2269,10 +2271,10 @@ namespace MetriCam2
             pi.SetValue(this, myItem, new object[] { });
             log.InfoFormat("{0}: {1} <- {2}", this.Name, name, myItem);
         }
-        #endregion
-        #endregion
+#endregion
+#endregion
 
-        #region Public Methods
+#region Public Methods
         /// <summary>
         /// Gets the unambiguous range for a single modulation frequency.
         /// Range = C / (2 * f_{mod})
@@ -2312,9 +2314,9 @@ namespace MetriCam2
         {
             return ChannelIdentifier(SerialNumber, channelName);
         }
-        #endregion
+#endregion
 
-        #region Protected Methods
+#region Protected Methods
         /// <summary>
         /// Implementation of <see cref="SetParameter"/> without locks.
         /// </summary>
@@ -2422,9 +2424,9 @@ namespace MetriCam2
             ActiveChannels.Add(GetChannelDescriptor(channelName));
             return true;
         }
-        #endregion
+#endregion
 
-        #region Abstract and Empty Virtual Methods
+#region Abstract and Empty Virtual Methods
         /// <summary>
         /// Reset list of available channels (<see cref="Channels"/>) to union of all cameras supported by the implementing class.
         /// </summary>
@@ -2482,9 +2484,9 @@ namespace MetriCam2
         /// If your implementation needs locking, use <see cref="Camera.cameraLock"/>.
         /// </remarks>
         protected abstract CameraImage CalcChannelImpl(string channelName);
-        #endregion
+#endregion
 
-        #region Private Methods
+#region Private Methods
         /// <summary>
         /// Finds the best matching Projective Transform for a channel of this camera.
         /// </summary>
@@ -2803,6 +2805,6 @@ namespace MetriCam2
             }
             return entryAssembly;
         }
-        #endregion
+#endregion
     }
 }
