@@ -11,7 +11,7 @@ pipeline {
 		def solution = 'MetriCam2_SDK.sln'
 		def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
 		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
-		def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.Orbbec MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.V3S MetriCam2.Cameras.WebCam MetriCam2.Cameras.RealSense MetriCam2.Cameras.OrbbecOpenNI'
+		def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.Orbbec MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.V3S MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.WebCam MetriCam2.Cameras.RealSense MetriCam2.Cameras.OrbbecOpenNI'
 		def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json'
 		// End of Config
 		def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
