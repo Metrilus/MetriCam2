@@ -158,6 +158,12 @@ namespace MetriCam2.Cameras
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
 
+        public void RestartPipeline()
+        {
+            RealSense2API.PipelineStop(_pipeline);
+            RealSense2API.PipelineStart(_pipeline, _config);
+        }
+
         protected override void DisconnectImpl()
         {
             RealSense2API.PipelineStop(_pipeline);            
@@ -183,7 +189,7 @@ namespace MetriCam2.Cameras
             {
                 RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 500);
 
-                if(!data.IsValid())
+                if(!data.IsValid() || data.Handle == IntPtr.Zero)
                 {
                     RealSense2API.ReleaseFrame(data);
                     continue;
@@ -598,7 +604,7 @@ namespace MetriCam2.Cameras
         {
             RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
             RealSense2API.LoadAdvancedConfig(json, dev);
-            RealSense2API.DeleteDevice(dev);
+            //RealSense2API.DeleteDevice(dev);
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
     }
