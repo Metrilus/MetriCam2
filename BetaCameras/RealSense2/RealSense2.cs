@@ -155,6 +155,12 @@ namespace MetriCam2.Cameras
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
 
+        public void RestartPipeline()
+        {
+            RealSense2API.PipelineStop(_pipeline);
+            RealSense2API.PipelineStart(_pipeline, _config);
+        }
+
         protected override void DisconnectImpl()
         {
             if (!IsConnected)
@@ -183,7 +189,7 @@ namespace MetriCam2.Cameras
             {
                 RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 500);
 
-                if(!data.IsValid())
+                if(!data.IsValid() || data.Handle == IntPtr.Zero)
                 {
                     RealSense2API.ReleaseFrame(data);
                     continue;
@@ -554,9 +560,9 @@ namespace MetriCam2.Cameras
             int height = ColorResolution.Y;
             int width = ColorResolution.X;
 
-            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            Metrilus.Util.Bitmap bitmap = new Metrilus.Util.Bitmap(width, height, Metrilus.Util.PixelFormat.Format24bppRgb);
             Rectangle imageRect = new Rectangle(0, 0, width, height);
-            BitmapData bmpData = bitmap.LockBits(imageRect, ImageLockMode.WriteOnly, bitmap.PixelFormat);
+            Metrilus.Util.BitmapData bmpData = bitmap.LockBits(imageRect, Metrilus.Util.ImageLockMode.WriteOnly, bitmap.PixelFormat);
 
             byte* source = (byte*) RealSense2API.GetFrameData(_currentColorFrame);
             byte* target = (byte*) (void*)bmpData.Scan0;
@@ -594,7 +600,7 @@ namespace MetriCam2.Cameras
         {
             RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
             RealSense2API.LoadAdvancedConfig(json, dev);
-            RealSense2API.DeleteDevice(dev);
+            //RealSense2API.DeleteDevice(dev);
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
     }
