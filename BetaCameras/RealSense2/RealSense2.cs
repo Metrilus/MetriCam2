@@ -140,8 +140,11 @@ namespace MetriCam2.Cameras
                 RealSense2API.EnableDevice(_config, SerialNumber);
             }
 
-            ActivateChannel(ChannelNames.Color);
-            ActivateChannel(ChannelNames.ZImage);
+            if (ActiveChannels.Count == 0)
+            {
+                ActivateChannel(ChannelNames.Color);
+                ActivateChannel(ChannelNames.ZImage);
+            }
 
             RealSense2API.PipelineStart(_pipeline, _config);
 
@@ -157,10 +160,7 @@ namespace MetriCam2.Cameras
 
         protected override void DisconnectImpl()
         {
-            if (!IsConnected)
-                return;
-
-            RealSense2API.PipelineStop(_pipeline);
+            RealSense2API.PipelineStop(_pipeline);            
         }
 
         protected override void UpdateImpl()
@@ -397,6 +397,10 @@ namespace MetriCam2.Cameras
                 stream = RealSense2API.Stream.INFRARED;
             }
 
+            _currentColorFrame = new RealSense2API.RS2Frame();
+            _currentDepthFrame = new RealSense2API.RS2Frame();
+            _currentLeftFrame = new RealSense2API.RS2Frame();
+            _currentRightFrame = new RealSense2API.RS2Frame();
 
             bool running = RealSense2API.PipelineRunning;
 
