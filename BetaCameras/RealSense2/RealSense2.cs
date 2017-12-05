@@ -558,9 +558,9 @@ namespace MetriCam2.Cameras
             int height = ColorResolution.Y;
             int width = ColorResolution.X;
 
-            Metrilus.Util.Bitmap bitmap = new Metrilus.Util.Bitmap(width, height, Metrilus.Util.PixelFormat.Format24bppRgb);
+            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
             Rectangle imageRect = new Rectangle(0, 0, width, height);
-            Metrilus.Util.BitmapData bmpData = bitmap.LockBits(imageRect, Metrilus.Util.ImageLockMode.WriteOnly, bitmap.PixelFormat);
+            BitmapData bmpData = bitmap.LockBits(imageRect, ImageLockMode.WriteOnly, bitmap.PixelFormat);
 
             byte* source = (byte*) RealSense2API.GetFrameData(_currentColorFrame);
             byte* target = (byte*) (void*)bmpData.Scan0;
