@@ -83,47 +83,208 @@ namespace MetriCam2.Cameras
 
         public enum Option
         {
-            BACKLIGHT_COMPENSATION,         /* Enable / disable color backlight compensation*/
-            BRIGHTNESS,                     /* Color image brightness*/
-            CONTRAST,                       /* Color image contrast*/
-            EXPOSURE,                       /* Controls exposure time of color camera. Setting any value will disable auto exposure*/
-            GAIN,                           /* Color image gain*/
-            GAMMA,                          /* Color image gamma setting*/
-            HUE,                            /* Color image hue*/
-            SATURATION,                     /* Color image saturation setting*/
-            SHARPNESS,                      /* Color image sharpness setting*/
-            WHITE_BALANCE,                  /* Controls white balance of color image. Setting any value will disable auto white balance*/
-            ENABLE_AUTO_EXPOSURE,           /* Enable / disable color image auto-exposure*/
-            ENABLE_AUTO_WHITE_BALANCE,      /* Enable / disable color image auto-white-balance*/
-            VISUAL_PRESET,                  /* Provide access to several recommend sets of option presets for the depth camera */
-            LASER_POWER,                    /* Power of the F200 / SR300 projector, with 0 meaning projector off*/
-            ACCURACY,                       /* Set the number of patterns projected per frame. The higher the accuracy value the more patterns projected. Increasing the number of patterns help to achieve better accuracy. Note that this control is affecting the Depth FPS */
-            MOTION_RANGE,                   /* Motion vs. Range trade-off, with lower values allowing for better motion sensitivity and higher values allowing for better depth range*/
-            FILTER_OPTION,                  /* Set the filter to apply to each depth frame. Each one of the filter is optimized per the application requirements*/
-            CONFIDENCE_THRESHOLD,           /* The confidence level threshold used by the Depth algorithm pipe to set whether a pixel will get a valid range or will be marked with invalid range*/
-            EMITTER_ENABLED,                /* Laser Emitter enabled */
-            FRAMES_QUEUE_SIZE,              /* Number of frames the user is allowed to keep per stream. Trying to hold-on to more frames will cause frame-drops.*/
-            TOTAL_FRAME_DROPS,              /* Total number of detected frame drops from all streams */
-            AUTO_EXPOSURE_MODE,             /* Auto-Exposure modes: Static, Anti-Flicker and Hybrid */
-            POWER_LINE_FREQUENCY,           /* Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto */
-            ASIC_TEMPERATURE,               /* Current Asic Temperature */
-            ERROR_POLLING_ENABLED,          /* disable error handling */
-            PROJECTOR_TEMPERATURE,          /* Current Projector Temperature */
-            OUTPUT_TRIGGER_ENABLED,         /* Enable / disable trigger to be outputed from the camera to any external device on every depth frame */
-            MOTION_MODULE_TEMPERATURE,      /* Current Motion-Module Temperature */
-            DEPTH_UNITS,                    /* Number of meters represented by a single depth unit */
-            ENABLE_MOTION_CORRECTION,       /* Enable/Disable automatic correction of the motion data */
-            AUTO_EXPOSURE_PRIORITY,         /* Allows sensor to dynamically ajust the frame rate depending on lighting conditions */
-            COLOR_SCHEME,                   /* Color scheme for data visualization */
-            HISTOGRAM_EQUALIZATION_ENABLED, /* Perform histogram equalization post-processing on the depth data */
-            MIN_DISTANCE,                   /* Minimal distance to the target */
-            MAX_DISTANCE,                   /* Maximum distance to the target */
-            TEXTURE_SOURCE,                 /* Texture mapping stream unique ID */
-            FILTER_MAGNITUDE,               /* The 2D-filter effect. The specific interpretation is given within the context of the filter */
-            FILTER_SMOOTH_ALPHA,            /* 2D-filter parameter controls the weight/radius for smoothing.*/
-            FILTER_SMOOTH_DELTA,            /* 2D-filter range/validity threshold*/
-            COUNT,                          /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+            /// <summary>
+            /// Enable / disable color backlight compensation
+            /// </summary>
+            BACKLIGHT_COMPENSATION,
+
+            /// <summary>
+            /// Color image brightness
+            /// </summary>
+            BRIGHTNESS,
+
+            /// <summary>
+            /// Color image contrast
+            /// </summary>
+            CONTRAST,
+
+            /// <summary>
+            /// Controls exposure time of color camera. Setting any value will disable auto exposure
+            /// </summary>
+            EXPOSURE,
+
+            /// <summary>
+            /// Color image gain
+            /// </summary>
+            GAIN,
+
+            /// <summary>
+            /// Color image gamma setting
+            /// </summary>
+            GAMMA,
+
+            /// <summary>
+            /// Color image hue
+            /// </summary>
+            HUE,
+
+            /// <summary>
+            /// Color image saturation setting
+            /// </summary>
+            SATURATION,
+
+            /// <summary>
+            /// Color image sharpness setting
+            /// </summary>
+            SHARPNESS,
+
+            /// <summary>
+            /// Controls white balance of color image. Setting any value will disable auto white balance
+            /// </summary>
+            WHITE_BALANCE,
+
+            /// <summary>
+            /// Enable / disable color image auto-exposure
+            /// </summary>
+            ENABLE_AUTO_EXPOSURE,
+
+            /// <summary>
+            /// Enable / disable color image auto-white-balance
+            /// </summary>
+            ENABLE_AUTO_WHITE_BALANCE,
+
+            /// <summary>
+            /// Provide access to several recommend sets of option presets for the depth camera
+            /// </summary>
+            VISUAL_PRESET,
+
+            /// <summary>
+            /// Power of the F200 / SR300 projector, with 0 meaning projector off
+            /// </summary>
+            LASER_POWER,
+
+            /// <summary>
+            /// Set the number of patterns projected per frame. The higher the accuracy value the more patterns projected. Increasing the number of patterns help to achieve better accuracy. Note that this control is affecting the Depth FPS
+            /// </summary>
+            ACCURACY,
+
+            /// <summary>
+            /// Motion vs. Range trade-off, with lower values allowing for better motion sensitivity and higher values allowing for better depth range
+            /// </summary>
+            MOTION_RANGE,
+
+            /// <summary>
+            /// Set the filter to apply to each depth frame. Each one of the filter is optimized per the application requirements
+            /// </summary>
+            FILTER_OPTION,
+
+            /// <summary>
+            /// The confidence level threshold used by the Depth algorithm pipe to set whether a pixel will get a valid range or will be marked with invalid range
+            /// </summary>
+            CONFIDENCE_THRESHOLD,
+
+            /// <summary>
+            /// Laser Emitter enabled
+            /// </summary>
+            EMITTER_ENABLED,
+
+            /// <summary>
+            /// Number of frames the user is allowed to keep per stream. Trying to hold-on to more frames will cause frame-drops.
+            /// </summary>
+            FRAMES_QUEUE_SIZE,
+
+            /// <summary>
+            /// Total number of detected frame drops from all streams
+            /// </summary>
+            TOTAL_FRAME_DROPS,
+
+            /// <summary>
+            /// Auto-Exposure modes: Static, Anti-Flicker and Hybrid
+            /// </summary>
+            AUTO_EXPOSURE_MODE,
+
+            /// <summary>
+            /// Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto
+            /// </summary>
+            POWER_LINE_FREQUENCY,
+
+            /// <summary>
+            /// Current Asic Temperature
+            /// </summary>
+            ASIC_TEMPERATURE,
+
+            /// <summary>
+            /// disable error handling
+            /// </summary>
+            ERROR_POLLING_ENABLED,
+
+            /// <summary>
+            /// Current Projector Temperature
+            /// </summary>
+            PROJECTOR_TEMPERATURE,
+
+            /// <summary>
+            /// Enable / disable trigger to be outputed from the camera to any external device on every depth frame
+            /// </summary>
+            OUTPUT_TRIGGER_ENABLED,
+
+            /// <summary>
+            /// Current Motion-Module Temperature
+            /// </summary>
+            MOTION_MODULE_TEMPERATURE,
+
+            /// <summary>
+            /// Number of meters represented by a single depth unit
+            /// </summary>
+            DEPTH_UNITS,
+
+            /// <summary>
+            /// Enable/Disable automatic correction of the motion data
+            /// </summary>
+            ENABLE_MOTION_CORRECTION,
+
+            /// <summary>
+            /// Allows sensor to dynamically ajust the frame rate depending on lighting conditions
+            /// </summary>
+            AUTO_EXPOSURE_PRIORITY,
+
+            /// <summary>
+            /// Color scheme for data visualization
+            /// </summary>
+            COLOR_SCHEME,
+
+            /// <summary>
+            /// Perform histogram equalization post-processing on the depth data
+            /// </summary>
+            HISTOGRAM_EQUALIZATION_ENABLED,
+
+            /// <summary>
+            /// Minimal distance to the target
+            /// </summary>
+            MIN_DISTANCE,
+
+            /// <summary>
+            /// Maximum distance to the target
+            /// </summary>
+            MAX_DISTANCE,
+
+            /// <summary>
+            /// Texture mapping stream unique ID
+            /// </summary>
+            TEXTURE_SOURCE,
+
+            /// <summary>
+            /// The 2D-filter effect. The specific interpretation is given within the context of the filter
+            /// </summary>
+            FILTER_MAGNITUDE,
+
+            /// <summary>
+            /// 2D-filter parameter controls the weight/radius for smoothing.
+            /// </summary>
+            FILTER_SMOOTH_ALPHA,
+
+            /// <summary>
+            /// 2D-filter range/validity threshold
+            /// </summary>
+            FILTER_SMOOTH_DELTA,
+
+            /// <summary>
+            /// Number of enumeration values. Not a valid input: intended to be used in for-loops.
+            /// </summary>
+            COUNT
         };
+
+        
 
         public unsafe struct Intrinsics
         {
