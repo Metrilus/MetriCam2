@@ -4,17 +4,23 @@ using System.Text;
 
 namespace MetriCam2.Cameras
 {
-    class RealSense2API
+    public class RealSense2API
     {
         // HINT: update API version to currently used librealsense2
         private const int API_MAJOR_VERSION = 2;
         private const int API_MINOR_VERSION = 8;
         private const int API_PATCH_VERSION = 0;
-        private const int API_BUILD_VERSION = 0;
+        private const int API_BUILD_VERSION = 3;
 
         private const int ApiVersion = API_MAJOR_VERSION * 10000 + API_MINOR_VERSION * 100 + API_PATCH_VERSION;
 
         public static bool PipelineRunning { get; private set; } = false;
+
+        public struct SensorName
+        {
+            public const string COLOR = "RGB Camera";
+            public const string STEREO = "Stereo Module";
+        }
 
         public enum Format
         {
@@ -73,6 +79,50 @@ namespace MetriCam2.Cameras
             FTHETA,                 /* F-Theta fish-eye distortion model */
             BROWN_CONRADY,          /* Unmodified Brown-Conrady distortion model */
             COUNT,                  /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+        };
+
+        public enum Option
+        {
+            BACKLIGHT_COMPENSATION,         /* Enable / disable color backlight compensation*/
+            BRIGHTNESS,                     /* Color image brightness*/
+            CONTRAST,                       /* Color image contrast*/
+            EXPOSURE,                       /* Controls exposure time of color camera. Setting any value will disable auto exposure*/
+            GAIN,                           /* Color image gain*/
+            GAMMA,                          /* Color image gamma setting*/
+            HUE,                            /* Color image hue*/
+            SATURATION,                     /* Color image saturation setting*/
+            SHARPNESS,                      /* Color image sharpness setting*/
+            WHITE_BALANCE,                  /* Controls white balance of color image. Setting any value will disable auto white balance*/
+            ENABLE_AUTO_EXPOSURE,           /* Enable / disable color image auto-exposure*/
+            ENABLE_AUTO_WHITE_BALANCE,      /* Enable / disable color image auto-white-balance*/
+            VISUAL_PRESET,                  /* Provide access to several recommend sets of option presets for the depth camera */
+            LASER_POWER,                    /* Power of the F200 / SR300 projector, with 0 meaning projector off*/
+            ACCURACY,                       /* Set the number of patterns projected per frame. The higher the accuracy value the more patterns projected. Increasing the number of patterns help to achieve better accuracy. Note that this control is affecting the Depth FPS */
+            MOTION_RANGE,                   /* Motion vs. Range trade-off, with lower values allowing for better motion sensitivity and higher values allowing for better depth range*/
+            FILTER_OPTION,                  /* Set the filter to apply to each depth frame. Each one of the filter is optimized per the application requirements*/
+            CONFIDENCE_THRESHOLD,           /* The confidence level threshold used by the Depth algorithm pipe to set whether a pixel will get a valid range or will be marked with invalid range*/
+            EMITTER_ENABLED,                /* Laser Emitter enabled */
+            FRAMES_QUEUE_SIZE,              /* Number of frames the user is allowed to keep per stream. Trying to hold-on to more frames will cause frame-drops.*/
+            TOTAL_FRAME_DROPS,              /* Total number of detected frame drops from all streams */
+            AUTO_EXPOSURE_MODE,             /* Auto-Exposure modes: Static, Anti-Flicker and Hybrid */
+            POWER_LINE_FREQUENCY,           /* Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto */
+            ASIC_TEMPERATURE,               /* Current Asic Temperature */
+            ERROR_POLLING_ENABLED,          /* disable error handling */
+            PROJECTOR_TEMPERATURE,          /* Current Projector Temperature */
+            OUTPUT_TRIGGER_ENABLED,         /* Enable / disable trigger to be outputed from the camera to any external device on every depth frame */
+            MOTION_MODULE_TEMPERATURE,      /* Current Motion-Module Temperature */
+            DEPTH_UNITS,                    /* Number of meters represented by a single depth unit */
+            ENABLE_MOTION_CORRECTION,       /* Enable/Disable automatic correction of the motion data */
+            AUTO_EXPOSURE_PRIORITY,         /* Allows sensor to dynamically ajust the frame rate depending on lighting conditions */
+            COLOR_SCHEME,                   /* Color scheme for data visualization */
+            HISTOGRAM_EQUALIZATION_ENABLED, /* Perform histogram equalization post-processing on the depth data */
+            MIN_DISTANCE,                   /* Minimal distance to the target */
+            MAX_DISTANCE,                   /* Maximum distance to the target */
+            TEXTURE_SOURCE,                 /* Texture mapping stream unique ID */
+            FILTER_MAGNITUDE,               /* The 2D-filter effect. The specific interpretation is given within the context of the filter */
+            FILTER_SMOOTH_ALPHA,            /* 2D-filter parameter controls the weight/radius for smoothing.*/
+            FILTER_SMOOTH_DELTA,            /* 2D-filter range/validity threshold*/
+            COUNT,                          /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
         };
 
         public unsafe struct Intrinsics
@@ -249,6 +299,27 @@ namespace MetriCam2.Cameras
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_get_extrinsics(IntPtr profile_from, IntPtr profile_to, Extrinsics* extrin, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_is_option_read_only(IntPtr sensor, Option option, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_supports_option(IntPtr sensor, Option option, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static float rs2_get_option(IntPtr sensor, Option option, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_set_option(IntPtr sensor, Option option, float value, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_get_option_range(IntPtr sensor, Option option, ref float min, ref float max, ref float step, ref float def, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static char* rs2_get_option_description(IntPtr sensor, Option option, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static char* rs2_get_option_value_description(IntPtr sensor, Option option, float value, IntPtr* error);
         #endregion
 
         public struct RS2Context
@@ -279,6 +350,23 @@ namespace MetriCam2.Cameras
             {
                 Handle = p;
             }
+        }
+
+        public struct RS2Sensor
+        {
+            public IntPtr Handle { get; private set; }
+
+            public RS2Sensor(IntPtr p)
+            {
+                Handle = p;
+            }
+
+            public void Delete()
+            {
+                rs2_delete_sensor(Handle);
+            }
+
+            public bool IsValid() => (IntPtr.Zero != Handle);
         }
 
         public struct RS2Config
@@ -532,10 +620,10 @@ namespace MetriCam2.Cameras
             return extrinsics;
         }
 
-        unsafe public static float GetDepthScale(RS2Pipeline pipe)
+        unsafe private static RS2Sensor GetSensor(RS2Pipeline pipe, string sensorName)
         {
             IntPtr error = IntPtr.Zero;
-            float res = 0.0f;
+            IntPtr sensor = IntPtr.Zero;
 
             RS2Device dev = GetActiveDevice(pipe);
             IntPtr list = rs2_query_sensors(dev.Handle, &error);
@@ -545,29 +633,44 @@ namespace MetriCam2.Cameras
 
             for (int i = 0; i < sensorCount; i++)
             {
-                IntPtr sensor = rs2_create_sensor(list, i, &error);
-                HandleError(error);
-
-                float scale = rs2_get_depth_scale(sensor, &error);
+                sensor = rs2_create_sensor(list, i, &error);
                 HandleError(error);
 
                 char* info = rs2_get_sensor_info(sensor, CameraInfo.NAME, &error);
                 string infoString = Marshal.PtrToStringAnsi((IntPtr)info);
                 HandleError(error);
 
-                rs2_delete_sensor(sensor);
-
-                if (infoString == "Stereo Module")
+                if (infoString == sensorName)
                 {
-                    res = scale;
                     break;
                 }
+
+                rs2_delete_sensor(sensor);
             }
 
             rs2_delete_sensor_list(list);
             DeleteDevice(dev);
 
-            return res;
+            RS2Sensor sensor_obj = new RS2Sensor(sensor);
+            if (!sensor_obj.IsValid())
+            {
+                throw new Exception(string.Format("No sensor with the name {0} detected", sensorName));
+            }
+
+            return sensor_obj;
+        }
+
+        unsafe public static float GetDepthScale(RS2Pipeline pipe)
+        {
+            IntPtr error = IntPtr.Zero;
+            float scale = 0.0f;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName.STEREO);
+            scale = rs2_get_depth_scale(sensor.Handle, &error);
+            HandleError(error);
+
+            sensor.Delete();
+            return scale;
         }
 
         unsafe public static string GetFirmwareVersion(RS2Pipeline pipe)
@@ -596,6 +699,86 @@ namespace MetriCam2.Cameras
 
             return infoString;
         }
+
+        unsafe public static bool IsOptionSupported(RS2Pipeline pipe, string SensorName, Option option)
+        {
+            IntPtr error = IntPtr.Zero;
+            int res = 0;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            res = rs2_supports_option(sensor.Handle, option, &error);
+            HandleError(error);
+
+            sensor.Delete();
+
+            if (res == 1)
+                return true;
+
+            return false;
+        }
+
+        unsafe public static bool IsOptionRealOnly(RS2Pipeline pipe, string SensorName, Option option)
+        {
+            IntPtr error = IntPtr.Zero;
+            int res = 0;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            res = rs2_is_option_read_only(sensor.Handle, option, &error);
+            HandleError(error);
+
+            sensor.Delete();
+
+            if (res == 1)
+                return true;
+
+            return false;
+        }
+
+        unsafe public static float GetOption(RS2Pipeline pipe, string SensorName, Option option)
+        {
+            IntPtr error = IntPtr.Zero;
+            float res = 0.0f;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            res = rs2_get_option(sensor.Handle, option, &error);
+            HandleError(error);
+
+            sensor.Delete();
+            return res;
+        }
+
+        unsafe public static void SetOption(RS2Pipeline pipe, string SensorName, Option option, float value)
+        {
+            IntPtr error = IntPtr.Zero;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            rs2_set_option(sensor.Handle, option, value, &error);
+            HandleError(error);
+
+            sensor.Delete();
+        }
+
+        unsafe public static void QueryOptionInfo(RS2Pipeline pipe, string SensorName, Option option, out float min, out float max, out float step, out float def, out string desc)
+        {
+            IntPtr error = IntPtr.Zero;
+            char* msg = null;
+
+            min = 0;
+            max = 0;
+            step = 0;
+            def = 0;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            rs2_get_option_range(sensor.Handle, option, ref min, ref max, ref step, ref def, &error);
+
+            msg = rs2_get_option_description(sensor.Handle, option, &error);
+            HandleError(error);
+            desc = Marshal.PtrToStringAnsi((IntPtr)msg);
+
+            sensor.Delete();
+        }
+
+
 
         unsafe private static void HandleError(IntPtr e)
         {
