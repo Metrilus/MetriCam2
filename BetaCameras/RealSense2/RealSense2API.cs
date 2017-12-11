@@ -22,63 +22,145 @@ namespace MetriCam2.Cameras
             public const string STEREO = "Stereo Module";
         }
 
+
         public enum Format
         {
-            ANY,             /* When passed to enable stream, librealsense will try to provide best suited format */
-            Z16,             /* 16-bit linear depth values. The depth is meters is equal to depth scale * pixel value. */
-            DISPARITY16,     /* 16-bit linear disparity values. The depth in meters is equal to depth scale / pixel value. */
-            XYZ32F,          /* 32-bit floating point 3D coordinates. */
-            YUYV,            /* Standard YUV pixel format as described in https://en.wikipedia.org/wiki/YUV */
-            RGB8,            /* 8-bit red, green and blue channels */
-            BGR8,            /* 8-bit blue, green, and red channels -- suitable for OpenCV */
-            RGBA8,           /* 8-bit red, green and blue channels + constant alpha channel equal to FF */
-            BGRA8,           /* 8-bit blue, green, and red channels + constant alpha channel equal to FF */
-            Y8,              /* 8-bit per-pixel grayscale image */
-            Y16,             /* < 16-bit per-pixel grayscale image */
-            RAW10,           /* Four 10-bit luminance values encoded into a 5-byte macropixel */
-            RAW16,           /* 16-bit raw image */
-            RAW8,            /* 8-bit raw image */
-            UYVY,            /* Similar to the standard YUYV pixel format, but packed in a different order */
-            MOTION_RAW,      /* Raw data from the motion sensor */
-            MOTION_XYZ32F,   /* Motion data packed as 3 32-bit float values, for X, Y, and Z axis */
-            GPIO_RAW,        /* Raw data from the external sensors hooked to one of the GPIO's */
-            COUNT            /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+            /// <summary> When passed to enable stream, librealsense will try to provide best suited format </summary>
+            ANY,
+
+            /// <summary> 16-bit linear depth values. The depth is meters is equal to depth scale * pixel value. </summary>
+            Z16,
+
+            /// <summary> 16-bit linear disparity values. The depth in meters is equal to depth scale / pixel value. </summary>
+            DISPARITY16,
+
+            /// <summary> 32-bit floating point 3D coordinates. </summary>
+            XYZ32F,
+
+            /// <summary> Standard YUV pixel format as described in https://en.wikipedia.org/wiki/YUV </summary>
+            YUYV,
+
+            /// <summary> 8-bit red, green and blue channels </summary>
+            RGB8,
+
+            /// <summary> 8-bit blue, green, and red channels -- suitable for OpenCV </summary>
+            BGR8,
+
+            /// <summary> 8-bit red, green and blue channels + constant alpha channel equal to FF </summary>
+            RGBA8,
+
+            /// <summary> 8-bit blue, green, and red channels + constant alpha channel equal to FF </summary>
+            BGRA8,
+
+            /// <summary> 8-bit per-pixel grayscale image </summary>
+            Y8,
+
+            /// <summary> 16-bit per-pixel grayscale image </summary>
+            Y16,
+
+            /// <summary> Four 10-bit luminance values encoded into a 5-byte macropixel </summary>
+            RAW10,
+
+            /// <summary> 16-bit raw image </summary>
+            RAW16,
+
+            /// <summary> 8-bit raw image </summary>
+            RAW8,
+
+            /// <summary> Similar to the standard YUYV pixel format, but packed in a different order </summary>
+            UYVY,
+
+            /// <summary> Raw data from the motion sensor </summary>
+            MOTION_RAW,
+
+            /// <summary> Motion data packed as 3 32-bit float values, for X, Y, and Z axis </summary>
+            MOTION_XYZ32F,
+
+            /// <summary> Raw data from the external sensors hooked to one of the GPIO's </summary>
+            GPIO_RAW,
+
+            /// <summary> Number of enumeration values. Not a valid input: intended to be used in for-loops. </summary>
+            COUNT
         }
 
         public enum Stream
         {
             ANY,
-            DEPTH,       /* Native stream of depth data produced by RealSense device */
-            COLOR,       /* Native stream of color data captured by RealSense device */
-            INFRARED,    /* Native stream of infrared data captured by RealSense device */
-            FISHEYE,     /* Native stream of fish-eye (wide) data captured from the dedicate motion camera */
-            GYRO,        /* Native stream of gyroscope motion data produced by RealSense device */
-            ACCEL,       /* Native stream of accelerometer motion data produced by RealSense device */
-            GPIO,        /* Signals from external device connected through GPIO */
+
+            /// <summary> Native stream of depth data produced by RealSense device </summary>
+            DEPTH,
+
+            /// <summary> Native stream of color data captured by RealSense device </summary>
+            COLOR,
+
+            /// <summary> Native stream of infrared data captured by RealSense device </summary>
+            INFRARED,
+
+            /// <summary> Native stream of fish-eye (wide) data captured from the dedicate motion camera </summary>
+            FISHEYE,
+
+            /// <summary> Native stream of gyroscope motion data produced by RealSense device </summary>
+            GYRO,
+
+            /// <summary> Native stream of accelerometer motion data produced by RealSense device </summary>
+            ACCEL,
+
+            /// <summary> Signals from external device connected through GPIO </summary>
+            GPIO,
+
             COUNT
         }
 
         public enum CameraInfo
         {
-            NAME,               /* Friendly name */
-            SERIAL_NUMBER,      /* Device serial number */
-            FIRMWARE_VERSION,   /* Primary firmware version */
-            PHYSICAL_PORT,      /* Unique identifier of the port the device is connected to (platform specific) */
-            DEBUG_OP_CODE,      /* If device supports firmware logging, this is the command to send to get logs from firmware */
-            ADVANCED_MODE,      /* True iff the device is in advanced mode */
-            PRODUCT_ID,         /* Product ID as reported in the USB descriptor */
-            CAMERA_LOCKED,      /* True iff EEPROM is locked */
-            COUNT               /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+            /// <summary> Friendly name </summary>
+            NAME,
+
+            /// <summary> Device serial number </summary>
+            SERIAL_NUMBER,
+
+            /// <summary> Primary firmware version </summary>
+            FIRMWARE_VERSION,
+
+            /// <summary> Unique identifier of the port the device is connected to (platform specific) </summary>
+            PHYSICAL_PORT,
+
+            /// <summary> If device supports firmware logging, this is the command to send to get logs from firmware </summary>
+            DEBUG_OP_CODE,
+
+            /// <summary> True iff the device is in advanced mode </summary>
+            ADVANCED_MODE,
+
+            /// <summary> Product ID as reported in the USB descriptor </summary>
+            PRODUCT_ID,
+
+            /// <summary> True iff EEPROM is locked </summary>
+            CAMERA_LOCKED,
+
+            /// <summary> Number of enumeration values. Not a valid input: intended to be used in for-loops. </summary>
+            COUNT
         }
+        
 
         public enum DistortionModel
         {
-            NONE,                   /* Rectilinear images. No distortion compensation required. */
-            MODIFIED_BROWN_CONRADY, /* Equivalent to Brown-Conrady distortion, except that tangential distortion is applied to radially distorted points */
-            INVERSE_BROWN_CONRADY,  /* Equivalent to Brown-Conrady distortion, except undistorts image instead of distorting it */
-            FTHETA,                 /* F-Theta fish-eye distortion model */
-            BROWN_CONRADY,          /* Unmodified Brown-Conrady distortion model */
-            COUNT,                  /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+            /// <summary> Rectilinear images. No distortion compensation required. </summary>
+            NONE,
+
+            /// <summary> Equivalent to Brown-Conrady distortion, except that tangential distortion is applied to radially distorted points </summary>
+            MODIFIED_BROWN_CONRADY,
+
+            /// <summary> Equivalent to Brown-Conrady distortion, except undistorts image instead of distorting it </summary>
+            INVERSE_BROWN_CONRADY,
+
+            /// <summary> F-Theta fish-eye distortion model </summary>
+            FTHETA,
+
+            /// <summary> Unmodified Brown-Conrady distortion model </summary>
+            BROWN_CONRADY,
+
+            /// <summary> Number of enumeration values. Not a valid input: intended to be used in for-loops. </summary>
+            COUNT
         };
 
         public enum Option
@@ -284,24 +366,41 @@ namespace MetriCam2.Cameras
             COUNT
         };
 
-        
 
         public unsafe struct Intrinsics
         {
-            public int width;              /* Width of the image in pixels */
-            public int height;             /* Height of the image in pixels */
-            public float ppx;              /* Horizontal coordinate of the principal point of the image, as a pixel offset from the left edge */
-            public float ppy;              /* Vertical coordinate of the principal point of the image, as a pixel offset from the top edge */
-            public float fx;               /* Focal length of the image plane, as a multiple of pixel width */
-            public float fy;               /* Focal length of the image plane, as a multiple of pixel height */
-            public DistortionModel model;  /* Distortion model of the image */
-            public fixed float coeffs[5];  /* Distortion coefficients */
+            /// <summary> Width of the image in pixels </summary>
+            public int width;
+
+            /// <summary> Height of the image in pixels </summary>
+            public int height;
+
+            /// <summary> Horizontal coordinate of the principal point of the image, as a pixel offset from the left edge </summary>
+            public float ppx;
+
+            /// <summary> Vertical coordinate of the principal point of the image, as a pixel offset from the top edge </summary>
+            public float ppy;
+
+            /// <summary> Focal length of the image plane, as a multiple of pixel width </summary>
+            public float fx;
+
+            /// <summary> Focal length of the image plane, as a multiple of pixel height </summary>
+            public float fy;
+
+            /// <summary> Distortion model of the image </summary>
+            public DistortionModel model;
+
+            /// <summary> Distortion coefficients </summary>
+            public fixed float coeffs[5];
         };
 
         public unsafe struct Extrinsics
         {
-            public fixed float rotation[9];    /* Column-major 3x3 rotation matrix */
-            public fixed float translation[3]; /* Three-element translation vector, in meters */
+            /// <summary> Column-major 3x3 rotation matrix </summary>
+            public fixed float rotation[9];
+
+            /// <summary> Three-element translation vector, in meters </summary>
+            public fixed float translation[3];
         };
 
         #region DLLImport
