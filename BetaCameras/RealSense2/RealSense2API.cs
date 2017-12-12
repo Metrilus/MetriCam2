@@ -4,93 +4,403 @@ using System.Text;
 
 namespace MetriCam2.Cameras
 {
-    class RealSense2API
+    public class RealSense2API
     {
         // HINT: update API version to currently used librealsense2
         private const int API_MAJOR_VERSION = 2;
         private const int API_MINOR_VERSION = 8;
         private const int API_PATCH_VERSION = 0;
-        private const int API_BUILD_VERSION = 0;
+        private const int API_BUILD_VERSION = 3;
 
         private const int ApiVersion = API_MAJOR_VERSION * 10000 + API_MINOR_VERSION * 100 + API_PATCH_VERSION;
 
         public static bool PipelineRunning { get; private set; } = false;
 
+        public struct SensorName
+        {
+            public const string COLOR = "RGB Camera";
+            public const string STEREO = "Stereo Module";
+        }
+
+
         public enum Format
         {
-            ANY,             /* When passed to enable stream, librealsense will try to provide best suited format */
-            Z16,             /* 16-bit linear depth values. The depth is meters is equal to depth scale * pixel value. */
-            DISPARITY16,     /* 16-bit linear disparity values. The depth in meters is equal to depth scale / pixel value. */
-            XYZ32F,          /* 32-bit floating point 3D coordinates. */
-            YUYV,            /* Standard YUV pixel format as described in https://en.wikipedia.org/wiki/YUV */
-            RGB8,            /* 8-bit red, green and blue channels */
-            BGR8,            /* 8-bit blue, green, and red channels -- suitable for OpenCV */
-            RGBA8,           /* 8-bit red, green and blue channels + constant alpha channel equal to FF */
-            BGRA8,           /* 8-bit blue, green, and red channels + constant alpha channel equal to FF */
-            Y8,              /* 8-bit per-pixel grayscale image */
-            Y16,             /* < 16-bit per-pixel grayscale image */
-            RAW10,           /* Four 10-bit luminance values encoded into a 5-byte macropixel */
-            RAW16,           /* 16-bit raw image */
-            RAW8,            /* 8-bit raw image */
-            UYVY,            /* Similar to the standard YUYV pixel format, but packed in a different order */
-            MOTION_RAW,      /* Raw data from the motion sensor */
-            MOTION_XYZ32F,   /* Motion data packed as 3 32-bit float values, for X, Y, and Z axis */
-            GPIO_RAW,        /* Raw data from the external sensors hooked to one of the GPIO's */
-            COUNT            /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+            /// <summary> When passed to enable stream, librealsense will try to provide best suited format </summary>
+            ANY,
+
+            /// <summary> 16-bit linear depth values. The depth is meters is equal to depth scale * pixel value. </summary>
+            Z16,
+
+            /// <summary> 16-bit linear disparity values. The depth in meters is equal to depth scale / pixel value. </summary>
+            DISPARITY16,
+
+            /// <summary> 32-bit floating point 3D coordinates. </summary>
+            XYZ32F,
+
+            /// <summary> Standard YUV pixel format as described in https://en.wikipedia.org/wiki/YUV </summary>
+            YUYV,
+
+            /// <summary> 8-bit red, green and blue channels </summary>
+            RGB8,
+
+            /// <summary> 8-bit blue, green, and red channels -- suitable for OpenCV </summary>
+            BGR8,
+
+            /// <summary> 8-bit red, green and blue channels + constant alpha channel equal to FF </summary>
+            RGBA8,
+
+            /// <summary> 8-bit blue, green, and red channels + constant alpha channel equal to FF </summary>
+            BGRA8,
+
+            /// <summary> 8-bit per-pixel grayscale image </summary>
+            Y8,
+
+            /// <summary> 16-bit per-pixel grayscale image </summary>
+            Y16,
+
+            /// <summary> Four 10-bit luminance values encoded into a 5-byte macropixel </summary>
+            RAW10,
+
+            /// <summary> 16-bit raw image </summary>
+            RAW16,
+
+            /// <summary> 8-bit raw image </summary>
+            RAW8,
+
+            /// <summary> Similar to the standard YUYV pixel format, but packed in a different order </summary>
+            UYVY,
+
+            /// <summary> Raw data from the motion sensor </summary>
+            MOTION_RAW,
+
+            /// <summary> Motion data packed as 3 32-bit float values, for X, Y, and Z axis </summary>
+            MOTION_XYZ32F,
+
+            /// <summary> Raw data from the external sensors hooked to one of the GPIO's </summary>
+            GPIO_RAW,
+
+            /// <summary> Number of enumeration values. Not a valid input: intended to be used in for-loops. </summary>
+            COUNT
         }
 
         public enum Stream
         {
             ANY,
-            DEPTH,       /* Native stream of depth data produced by RealSense device */
-            COLOR,       /* Native stream of color data captured by RealSense device */
-            INFRARED,    /* Native stream of infrared data captured by RealSense device */
-            FISHEYE,     /* Native stream of fish-eye (wide) data captured from the dedicate motion camera */
-            GYRO,        /* Native stream of gyroscope motion data produced by RealSense device */
-            ACCEL,       /* Native stream of accelerometer motion data produced by RealSense device */
-            GPIO,        /* Signals from external device connected through GPIO */
+
+            /// <summary> Native stream of depth data produced by RealSense device </summary>
+            DEPTH,
+
+            /// <summary> Native stream of color data captured by RealSense device </summary>
+            COLOR,
+
+            /// <summary> Native stream of infrared data captured by RealSense device </summary>
+            INFRARED,
+
+            /// <summary> Native stream of fish-eye (wide) data captured from the dedicate motion camera </summary>
+            FISHEYE,
+
+            /// <summary> Native stream of gyroscope motion data produced by RealSense device </summary>
+            GYRO,
+
+            /// <summary> Native stream of accelerometer motion data produced by RealSense device </summary>
+            ACCEL,
+
+            /// <summary> Signals from external device connected through GPIO </summary>
+            GPIO,
+
             COUNT
         }
 
         public enum CameraInfo
         {
-            NAME,               /* Friendly name */
-            SERIAL_NUMBER,      /* Device serial number */
-            FIRMWARE_VERSION,   /* Primary firmware version */
-            PHYSICAL_PORT,      /* Unique identifier of the port the device is connected to (platform specific) */
-            DEBUG_OP_CODE,      /* If device supports firmware logging, this is the command to send to get logs from firmware */
-            ADVANCED_MODE,      /* True iff the device is in advanced mode */
-            PRODUCT_ID,         /* Product ID as reported in the USB descriptor */
-            CAMERA_LOCKED,      /* True iff EEPROM is locked */
-            COUNT               /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+            /// <summary> Friendly name </summary>
+            NAME,
+
+            /// <summary> Device serial number </summary>
+            SERIAL_NUMBER,
+
+            /// <summary> Primary firmware version </summary>
+            FIRMWARE_VERSION,
+
+            /// <summary> Unique identifier of the port the device is connected to (platform specific) </summary>
+            PHYSICAL_PORT,
+
+            /// <summary> If device supports firmware logging, this is the command to send to get logs from firmware </summary>
+            DEBUG_OP_CODE,
+
+            /// <summary> True iff the device is in advanced mode </summary>
+            ADVANCED_MODE,
+
+            /// <summary> Product ID as reported in the USB descriptor </summary>
+            PRODUCT_ID,
+
+            /// <summary> True iff EEPROM is locked </summary>
+            CAMERA_LOCKED,
+
+            /// <summary> Number of enumeration values. Not a valid input: intended to be used in for-loops. </summary>
+            COUNT
         }
+        
 
         public enum DistortionModel
         {
-            NONE,                   /* Rectilinear images. No distortion compensation required. */
-            MODIFIED_BROWN_CONRADY, /* Equivalent to Brown-Conrady distortion, except that tangential distortion is applied to radially distorted points */
-            INVERSE_BROWN_CONRADY,  /* Equivalent to Brown-Conrady distortion, except undistorts image instead of distorting it */
-            FTHETA,                 /* F-Theta fish-eye distortion model */
-            BROWN_CONRADY,          /* Unmodified Brown-Conrady distortion model */
-            COUNT,                  /* Number of enumeration values. Not a valid input: intended to be used in for-loops. */
+            /// <summary> Rectilinear images. No distortion compensation required. </summary>
+            NONE,
+
+            /// <summary> Equivalent to Brown-Conrady distortion, except that tangential distortion is applied to radially distorted points </summary>
+            MODIFIED_BROWN_CONRADY,
+
+            /// <summary> Equivalent to Brown-Conrady distortion, except undistorts image instead of distorting it </summary>
+            INVERSE_BROWN_CONRADY,
+
+            /// <summary> F-Theta fish-eye distortion model </summary>
+            FTHETA,
+
+            /// <summary> Unmodified Brown-Conrady distortion model </summary>
+            BROWN_CONRADY,
+
+            /// <summary> Number of enumeration values. Not a valid input: intended to be used in for-loops. </summary>
+            COUNT
         };
+
+        public enum Option
+        {
+            /// <summary>
+            /// Enable / disable color backlight compensation
+            /// </summary>
+            BACKLIGHT_COMPENSATION,
+
+            /// <summary>
+            /// Color image brightness
+            /// </summary>
+            BRIGHTNESS,
+
+            /// <summary>
+            /// Color image contrast
+            /// </summary>
+            CONTRAST,
+
+            /// <summary>
+            /// Controls exposure time of color camera. Setting any value will disable auto exposure
+            /// </summary>
+            EXPOSURE,
+
+            /// <summary>
+            /// Color image gain
+            /// </summary>
+            GAIN,
+
+            /// <summary>
+            /// Color image gamma setting
+            /// </summary>
+            GAMMA,
+
+            /// <summary>
+            /// Color image hue
+            /// </summary>
+            HUE,
+
+            /// <summary>
+            /// Color image saturation setting
+            /// </summary>
+            SATURATION,
+
+            /// <summary>
+            /// Color image sharpness setting
+            /// </summary>
+            SHARPNESS,
+
+            /// <summary>
+            /// Controls white balance of color image. Setting any value will disable auto white balance
+            /// </summary>
+            WHITE_BALANCE,
+
+            /// <summary>
+            /// Enable / disable color image auto-exposure
+            /// </summary>
+            ENABLE_AUTO_EXPOSURE,
+
+            /// <summary>
+            /// Enable / disable color image auto-white-balance
+            /// </summary>
+            ENABLE_AUTO_WHITE_BALANCE,
+
+            /// <summary>
+            /// Provide access to several recommend sets of option presets for the depth camera
+            /// </summary>
+            VISUAL_PRESET,
+
+            /// <summary>
+            /// Power of the F200 / SR300 projector, with 0 meaning projector off
+            /// </summary>
+            LASER_POWER,
+
+            /// <summary>
+            /// Set the number of patterns projected per frame. The higher the accuracy value the more patterns projected. Increasing the number of patterns help to achieve better accuracy. Note that this control is affecting the Depth FPS
+            /// </summary>
+            ACCURACY,
+
+            /// <summary>
+            /// Motion vs. Range trade-off, with lower values allowing for better motion sensitivity and higher values allowing for better depth range
+            /// </summary>
+            MOTION_RANGE,
+
+            /// <summary>
+            /// Set the filter to apply to each depth frame. Each one of the filter is optimized per the application requirements
+            /// </summary>
+            FILTER_OPTION,
+
+            /// <summary>
+            /// The confidence level threshold used by the Depth algorithm pipe to set whether a pixel will get a valid range or will be marked with invalid range
+            /// </summary>
+            CONFIDENCE_THRESHOLD,
+
+            /// <summary>
+            /// Laser Emitter enabled
+            /// </summary>
+            EMITTER_ENABLED,
+
+            /// <summary>
+            /// Number of frames the user is allowed to keep per stream. Trying to hold-on to more frames will cause frame-drops.
+            /// </summary>
+            FRAMES_QUEUE_SIZE,
+
+            /// <summary>
+            /// Total number of detected frame drops from all streams
+            /// </summary>
+            TOTAL_FRAME_DROPS,
+
+            /// <summary>
+            /// Auto-Exposure modes: Static, Anti-Flicker and Hybrid
+            /// </summary>
+            AUTO_EXPOSURE_MODE,
+
+            /// <summary>
+            /// Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto
+            /// </summary>
+            POWER_LINE_FREQUENCY,
+
+            /// <summary>
+            /// Current Asic Temperature
+            /// </summary>
+            ASIC_TEMPERATURE,
+
+            /// <summary>
+            /// disable error handling
+            /// </summary>
+            ERROR_POLLING_ENABLED,
+
+            /// <summary>
+            /// Current Projector Temperature
+            /// </summary>
+            PROJECTOR_TEMPERATURE,
+
+            /// <summary>
+            /// Enable / disable trigger to be outputed from the camera to any external device on every depth frame
+            /// </summary>
+            OUTPUT_TRIGGER_ENABLED,
+
+            /// <summary>
+            /// Current Motion-Module Temperature
+            /// </summary>
+            MOTION_MODULE_TEMPERATURE,
+
+            /// <summary>
+            /// Number of meters represented by a single depth unit
+            /// </summary>
+            DEPTH_UNITS,
+
+            /// <summary>
+            /// Enable/Disable automatic correction of the motion data
+            /// </summary>
+            ENABLE_MOTION_CORRECTION,
+
+            /// <summary>
+            /// Allows sensor to dynamically ajust the frame rate depending on lighting conditions
+            /// </summary>
+            AUTO_EXPOSURE_PRIORITY,
+
+            /// <summary>
+            /// Color scheme for data visualization
+            /// </summary>
+            COLOR_SCHEME,
+
+            /// <summary>
+            /// Perform histogram equalization post-processing on the depth data
+            /// </summary>
+            HISTOGRAM_EQUALIZATION_ENABLED,
+
+            /// <summary>
+            /// Minimal distance to the target
+            /// </summary>
+            MIN_DISTANCE,
+
+            /// <summary>
+            /// Maximum distance to the target
+            /// </summary>
+            MAX_DISTANCE,
+
+            /// <summary>
+            /// Texture mapping stream unique ID
+            /// </summary>
+            TEXTURE_SOURCE,
+
+            /// <summary>
+            /// The 2D-filter effect. The specific interpretation is given within the context of the filter
+            /// </summary>
+            FILTER_MAGNITUDE,
+
+            /// <summary>
+            /// 2D-filter parameter controls the weight/radius for smoothing.
+            /// </summary>
+            FILTER_SMOOTH_ALPHA,
+
+            /// <summary>
+            /// 2D-filter range/validity threshold
+            /// </summary>
+            FILTER_SMOOTH_DELTA,
+
+            /// <summary>
+            /// Number of enumeration values. Not a valid input: intended to be used in for-loops.
+            /// </summary>
+            COUNT
+        };
+
 
         public unsafe struct Intrinsics
         {
-            public int width;              /* Width of the image in pixels */
-            public int height;             /* Height of the image in pixels */
-            public float ppx;              /* Horizontal coordinate of the principal point of the image, as a pixel offset from the left edge */
-            public float ppy;              /* Vertical coordinate of the principal point of the image, as a pixel offset from the top edge */
-            public float fx;               /* Focal length of the image plane, as a multiple of pixel width */
-            public float fy;               /* Focal length of the image plane, as a multiple of pixel height */
-            public DistortionModel model;  /* Distortion model of the image */
-            public fixed float coeffs[5];  /* Distortion coefficients */
+            /// <summary> Width of the image in pixels </summary>
+            public int width;
+
+            /// <summary> Height of the image in pixels </summary>
+            public int height;
+
+            /// <summary> Horizontal coordinate of the principal point of the image, as a pixel offset from the left edge </summary>
+            public float ppx;
+
+            /// <summary> Vertical coordinate of the principal point of the image, as a pixel offset from the top edge </summary>
+            public float ppy;
+
+            /// <summary> Focal length of the image plane, as a multiple of pixel width </summary>
+            public float fx;
+
+            /// <summary> Focal length of the image plane, as a multiple of pixel height </summary>
+            public float fy;
+
+            /// <summary> Distortion model of the image </summary>
+            public DistortionModel model;
+
+            /// <summary> Distortion coefficients </summary>
+            public fixed float coeffs[5];
         };
 
         public unsafe struct Extrinsics
         {
-            public fixed float rotation[9];    /* Column-major 3x3 rotation matrix */
-            public fixed float translation[3]; /* Three-element translation vector, in meters */
+            /// <summary> Column-major 3x3 rotation matrix </summary>
+            public fixed float rotation[9];
+
+            /// <summary> Three-element translation vector, in meters </summary>
+            public fixed float translation[3];
         };
 
         #region DLLImport
@@ -249,6 +559,27 @@ namespace MetriCam2.Cameras
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_get_extrinsics(IntPtr profile_from, IntPtr profile_to, Extrinsics* extrin, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_is_option_read_only(IntPtr sensor, Option option, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_supports_option(IntPtr sensor, Option option, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static float rs2_get_option(IntPtr sensor, Option option, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_set_option(IntPtr sensor, Option option, float value, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_get_option_range(IntPtr sensor, Option option, ref float min, ref float max, ref float step, ref float def, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static char* rs2_get_option_description(IntPtr sensor, Option option, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static char* rs2_get_option_value_description(IntPtr sensor, Option option, float value, IntPtr* error);
         #endregion
 
         public struct RS2Context
@@ -279,6 +610,23 @@ namespace MetriCam2.Cameras
             {
                 Handle = p;
             }
+        }
+
+        public struct RS2Sensor
+        {
+            public IntPtr Handle { get; private set; }
+
+            public RS2Sensor(IntPtr p)
+            {
+                Handle = p;
+            }
+
+            public void Delete()
+            {
+                rs2_delete_sensor(Handle);
+            }
+
+            public bool IsValid() => (IntPtr.Zero != Handle);
         }
 
         public struct RS2Config
@@ -532,10 +880,10 @@ namespace MetriCam2.Cameras
             return extrinsics;
         }
 
-        unsafe public static float GetDepthScale(RS2Pipeline pipe)
+        unsafe private static RS2Sensor GetSensor(RS2Pipeline pipe, string sensorName)
         {
             IntPtr error = IntPtr.Zero;
-            float res = 0.0f;
+            IntPtr sensor = IntPtr.Zero;
 
             RS2Device dev = GetActiveDevice(pipe);
             IntPtr list = rs2_query_sensors(dev.Handle, &error);
@@ -545,29 +893,44 @@ namespace MetriCam2.Cameras
 
             for (int i = 0; i < sensorCount; i++)
             {
-                IntPtr sensor = rs2_create_sensor(list, i, &error);
-                HandleError(error);
-
-                float scale = rs2_get_depth_scale(sensor, &error);
+                sensor = rs2_create_sensor(list, i, &error);
                 HandleError(error);
 
                 char* info = rs2_get_sensor_info(sensor, CameraInfo.NAME, &error);
                 string infoString = Marshal.PtrToStringAnsi((IntPtr)info);
                 HandleError(error);
 
-                rs2_delete_sensor(sensor);
-
-                if (infoString == "Stereo Module")
+                if (infoString == sensorName)
                 {
-                    res = scale;
                     break;
                 }
+
+                rs2_delete_sensor(sensor);
             }
 
             rs2_delete_sensor_list(list);
             DeleteDevice(dev);
 
-            return res;
+            RS2Sensor sensor_obj = new RS2Sensor(sensor);
+            if (!sensor_obj.IsValid())
+            {
+                throw new Exception(string.Format("No sensor with the name {0} detected", sensorName));
+            }
+
+            return sensor_obj;
+        }
+
+        unsafe public static float GetDepthScale(RS2Pipeline pipe)
+        {
+            IntPtr error = IntPtr.Zero;
+            float scale = 0.0f;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName.STEREO);
+            scale = rs2_get_depth_scale(sensor.Handle, &error);
+            HandleError(error);
+
+            sensor.Delete();
+            return scale;
         }
 
         unsafe public static string GetFirmwareVersion(RS2Pipeline pipe)
@@ -596,6 +959,86 @@ namespace MetriCam2.Cameras
 
             return infoString;
         }
+
+        unsafe public static bool IsOptionSupported(RS2Pipeline pipe, string SensorName, Option option)
+        {
+            IntPtr error = IntPtr.Zero;
+            int res = 0;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            res = rs2_supports_option(sensor.Handle, option, &error);
+            HandleError(error);
+
+            sensor.Delete();
+
+            if (res == 1)
+                return true;
+
+            return false;
+        }
+
+        unsafe public static bool IsOptionRealOnly(RS2Pipeline pipe, string SensorName, Option option)
+        {
+            IntPtr error = IntPtr.Zero;
+            int res = 0;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            res = rs2_is_option_read_only(sensor.Handle, option, &error);
+            HandleError(error);
+
+            sensor.Delete();
+
+            if (res == 1)
+                return true;
+
+            return false;
+        }
+
+        unsafe public static float GetOption(RS2Pipeline pipe, string SensorName, Option option)
+        {
+            IntPtr error = IntPtr.Zero;
+            float res = 0.0f;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            res = rs2_get_option(sensor.Handle, option, &error);
+            HandleError(error);
+
+            sensor.Delete();
+            return res;
+        }
+
+        unsafe public static void SetOption(RS2Pipeline pipe, string SensorName, Option option, float value)
+        {
+            IntPtr error = IntPtr.Zero;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            rs2_set_option(sensor.Handle, option, value, &error);
+            HandleError(error);
+
+            sensor.Delete();
+        }
+
+        unsafe public static void QueryOptionInfo(RS2Pipeline pipe, string SensorName, Option option, out float min, out float max, out float step, out float def, out string desc)
+        {
+            IntPtr error = IntPtr.Zero;
+            char* msg = null;
+
+            min = 0;
+            max = 0;
+            step = 0;
+            def = 0;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            rs2_get_option_range(sensor.Handle, option, ref min, ref max, ref step, ref def, &error);
+
+            msg = rs2_get_option_description(sensor.Handle, option, &error);
+            HandleError(error);
+            desc = Marshal.PtrToStringAnsi((IntPtr)msg);
+
+            sensor.Delete();
+        }
+
+
 
         unsafe private static void HandleError(IntPtr e)
         {
