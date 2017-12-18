@@ -730,7 +730,7 @@ namespace MetriCam2.Cameras
             }
 
             // Register log message callback
-            if (LogLevel > 0)
+            if (LogLevel >= LogLevelDesc.Min && LogLevel <= LogLevelDesc.Max)
             {
                 // TODO: if continuous logging fails [to be tested], set log file name here, and set callback null
 
@@ -746,8 +746,8 @@ namespace MetriCam2.Cameras
 
                 // @TESTING
                 // this logging code is just for a testing release.
-                int myLogLevel_detail = 7;
-                string myLogFilename = "logDetail.txt";
+                int myLogLevel_detail = LogLevel;
+                string myLogFilename = "MetriCam2.SVS.LogDetail.txt";
                 gigeApi.Gige_Camera_registerForLogMessages(hCamera, myLogLevel_detail, myLogFilename, LogCallback: null, MessageContext: IntPtr.Zero);
             }
 
