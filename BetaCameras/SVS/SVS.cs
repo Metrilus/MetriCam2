@@ -25,12 +25,6 @@ namespace MetriCam2.Cameras
         /// <remarks>Similar to MetriCam2.ChannelNames for standard channel names.</remarks>
         public class CustomChannelNames
         {
-            [Obsolete("Use Red16 instead.")]
-            public const string Red12 = "Red12Bit";
-            [Obsolete("Use Green16 instead.")]
-            public const string Green12 = "Green12Bit";
-            [Obsolete("Use Blue16 instead.")]
-            public const string Blue12 = "Blue12Bit";
             /// <summary>
             /// When acquiring 12 or 16 bit data, this channel provides the raw image data.
             /// </summary>
