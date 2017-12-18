@@ -658,17 +658,17 @@ namespace MetriCam2.Cameras
             container = gigeApi.Gige_CameraContainer_create(GigeApi.SVGigETL_Type.SVGigETL_TypeFilter);
             if (container < 0)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "ContainerCreate failed");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "ContainerCreate failed");
             }
             error = gigeApi.Gige_CameraContainer_discovery(container);
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Camera discovery failed: " + error.ToString());
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Camera discovery failed: " + error.ToString());
             }
             numCameras = gigeApi.Gige_CameraContainer_getNumberOfCameras(container);
             if (numCameras <= 0)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "No cameras found.");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "No cameras found.");
             }
             log.DebugFormat("    found {0} cameras", numCameras);
 
@@ -718,7 +718,7 @@ namespace MetriCam2.Cameras
             // check if connection was successful
             if (IntPtr.Zero == hCamera)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to open connection to camera");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to open connection to camera");
             }
             log.InfoFormat("    connected to camera with serial number {0}", SerialNumber);
 
@@ -726,7 +726,7 @@ namespace MetriCam2.Cameras
             error = CreateStreamingChannel();
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to create stream: " + error.ToString());
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to create stream: " + error.ToString());
             }
 
             // Register log message callback
@@ -741,7 +741,7 @@ namespace MetriCam2.Cameras
                 //error = gigeApi.Gige_Camera_registerForLogMessages(handle, LogLevel, LogFilename: "", LogCallback: logMessageCallbackDelegate, MessageContext: IntPtr.Zero);
                 //if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 //{
-                //    ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
+                //    ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
                 //}
 
                 // @TESTING
@@ -755,7 +755,7 @@ namespace MetriCam2.Cameras
             if (gigeApi.Gige_Camera_getSizeX(hCamera, ref width) != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS ||
                 gigeApi.Gige_Camera_getSizeY(hCamera, ref height) != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get width and/or height of current stream");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get width and/or height of current stream");
             }
             log.DebugFormat("    resolution is {0}x{1}", width, height);
 
@@ -764,7 +764,7 @@ namespace MetriCam2.Cameras
             error = gigeApi.Gige_Camera_getPixelDepth(hCamera, ref pixelDepth);
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel depth: " + error.ToString());
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel depth: " + error.ToString());
             }
             switch (pixelDepth)
             {
@@ -778,7 +778,7 @@ namespace MetriCam2.Cameras
                     bitCount = 16;
                     break;
                 default:
-                    ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Unsupported pixel depth");
+                    ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Unsupported pixel depth");
                     break;
             }
             log.DebugFormat("    pixel depth is {0}", pixelDepth.ToString());
@@ -787,7 +787,7 @@ namespace MetriCam2.Cameras
             error = GetPixelType();
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel type: " + error.ToString());
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel type: " + error.ToString());
             }
             log.DebugFormat("    pixel type is {0}", pixelType.ToString());
 
