@@ -1107,10 +1107,12 @@ namespace MetriCam2
         /// </remarks>
         public long TimeStamp { get; protected set; }
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Provides an icon that represents the camera.
         /// </summary>
         public virtual System.Drawing.Bitmap CameraIcon { get { return Properties.Resources.MetriCam_Icon; } }
+#endif
         #endregion
 
         #region Constructor
