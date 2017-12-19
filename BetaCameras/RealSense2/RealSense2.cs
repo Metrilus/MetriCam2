@@ -4,7 +4,10 @@
 using Metrilus.Util;
 using System;
 using System.Drawing;
+#if NETSTANDARD2_0
+#else
 using System.Drawing.Imaging;
+#endif
 
 
 namespace MetriCam2.Cameras
