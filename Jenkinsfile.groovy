@@ -55,7 +55,7 @@ pipeline {
 			environment {
 				def VERSION = 'latest'
 				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\git\\\\${VERSION}\\\\"
-				def BIN_DIR = "${PUBLISH_DIR}bin\\\\"
+				def BIN_DIR = "${PUBLISH_DIR}lib\\\\"
 				def RELEASE_DIR_X64 = 'bin\\\\x64\\\\Release\\\\'
 				def RELEASE_DIR_ANYCPU = 'bin\\\\Release\\\\'
 			}
