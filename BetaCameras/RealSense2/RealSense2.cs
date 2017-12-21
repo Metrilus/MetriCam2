@@ -142,7 +142,7 @@ namespace MetriCam2.Cameras
             set
             {
                 if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS))
-                    throw new Exception("Option 'BacklightCompensation' is not supported by the color sensor of this camera.");
+                    throw new Exception("Option 'Brightness' is not supported by the color sensor of this camera.");
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS, (float)value);
             }
@@ -164,6 +164,47 @@ namespace MetriCam2.Cameras
 
                 RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
                 res.Description = "Color image brightness";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int Contrast
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST))
+                    throw new Exception("Option 'Contrast' is not supported by the color sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST))
+                    throw new Exception("Option 'Contrast' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST, (float)value);
+            }
+        }
+
+        RangeParamDesc<int> ContrastDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.BRIGHTNESS,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Color image contrast";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
                 return res;
