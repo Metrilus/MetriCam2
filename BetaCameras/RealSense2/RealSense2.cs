@@ -84,12 +84,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-
-        //RealSense2API.IsOptionSupported(_pipeline, sensorName, option)
-        //RealSense2API.GetOption(_pipeline, sensorName, option)
-        //RealSense2API.SetOption(_pipeline, sensorName, option, value)
-        //RealSense2API.QueryOptionInfo(_pipeline, sensorName, option, out min, out max, out step, out def, out desc)
-
         #region RealSense Options
 
         public bool BacklightCompensation
@@ -196,7 +190,7 @@ namespace MetriCam2.Cameras
                 RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.BRIGHTNESS,
+                    RealSense2API.Option.CONTRAST,
                     out float min,
                     out float max,
                     out float step,
@@ -205,6 +199,171 @@ namespace MetriCam2.Cameras
 
                 RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
                 res.Description = "Color image contrast";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int ExposureColor
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE))
+                    throw new Exception("Option 'Exposure' is not supported by the color sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE))
+                    throw new Exception("Option 'Exposure' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE, (float)value);
+            }
+        }
+
+        RangeParamDesc<int> ExposureColorDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.EXPOSURE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Controls exposure time of color camera. Setting any value will disable auto exposure";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public bool AutoExposureColor
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE))
+                    throw new Exception("Option 'AutoExposure' is not supported by the color sensor of this camera.");
+
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE) == 1.0f ? true : false;
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE))
+                    throw new Exception("Option 'AutoExposure' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE, value ? 1.0f : 0.0f);
+            }
+        }
+
+        ParamDesc<bool> AutoExposureColorDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "Enable / disable color image auto-exposure";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int ExposureDepth
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE))
+                    throw new Exception("Option 'Exposure' is not supported by the stereo sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE))
+                    throw new Exception("Option 'Exposure' is not supported by the stereo sensor of this camera.");
+
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.STEREO,
+                    RealSense2API.Option.EXPOSURE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+
+                // step size for depth exposure is 20
+                float adjusted_value = (float)value;
+                int rounding = value - (int)min % (int)step;
+                adjusted_value -= (float)rounding;
+
+                if (rounding > step / 2)
+                {
+                    adjusted_value += step;
+                }
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE, adjusted_value);
+            }
+        }
+
+        RangeParamDesc<int> ExposureDepthDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.STEREO,
+                    RealSense2API.Option.EXPOSURE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Controls exposure time of depth camera. Setting any value will disable auto exposure";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public bool AutoExposureDepth
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE))
+                    throw new Exception("Option 'AutoExposure' is not supported by the stereo sensor of this camera.");
+
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE) == 1.0f ? true : false;
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE))
+                    throw new Exception("Option 'AutoExposure' is not supported by the stereo sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE, value ? 1.0f : 0.0f);
+            }
+        }
+
+        ParamDesc<bool> AutoExposureDepthDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "Enable / disable depth image auto-exposure";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
                 return res;
