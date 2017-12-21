@@ -84,6 +84,53 @@ namespace MetriCam2.Cameras
             }
         }
 
+
+        //RealSense2API.IsOptionSupported(_pipeline, sensorName, option)
+        //RealSense2API.GetOption(_pipeline, sensorName, option)
+        //RealSense2API.SetOption(_pipeline, sensorName, option, value)
+        //RealSense2API.QueryOptionInfo(_pipeline, sensorName, option, out min, out max, out step, out def, out desc)
+
+        #region RealSense Options
+
+        public bool BacklightCompensation
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION))
+                    throw new Exception("Option 'BacklightCompensation' is not supported by the color sensor of this camera.");
+
+                float res = RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION);
+
+                if (res == 1.0f)
+                    return true;
+
+                return false;
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION))
+                    throw new Exception("Option 'BacklightCompensation' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION, value ? 1.0f : 0.0f);
+            }
+        }
+
+        ParamDesc<bool> BacklightCompensationDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Unit = "Boolean";
+                res.Description = "Enable / disable color backlight compensation";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        #endregion
+
         public void Dispose()
         {
             Dispose(true);
