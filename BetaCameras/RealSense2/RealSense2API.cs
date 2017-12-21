@@ -1038,6 +1038,17 @@ namespace MetriCam2.Cameras
             sensor.Delete();
         }
 
+        unsafe public static string OptionValueInfo(RS2Pipeline pipe, string SensorName, Option option, float value)
+        {
+            IntPtr error = IntPtr.Zero;
+            char* msg = null;
+
+            RS2Sensor sensor = GetSensor(pipe, SensorName);
+            msg = rs2_get_option_value_description(sensor.Handle, option, value, &error);
+
+            return Marshal.PtrToStringAnsi((IntPtr)msg);
+        }
+
 
 
         unsafe private static void HandleError(IntPtr e)

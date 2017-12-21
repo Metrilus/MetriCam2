@@ -31,6 +31,14 @@ namespace MetriCam2.Cameras
             AUTO = 2
         }
 
+        public enum PowerLineMode
+        {
+            OFF = 0,
+            FIFTY_HZ = 1,
+            SIXTY_HZ = 2,
+            AUTO = 3
+        }
+
         public Point2i ColorResolution { get; set; } = new Point2i(640, 480);
 
         ParamDesc<Point2i> ColorResolutionDesc
@@ -91,7 +99,36 @@ namespace MetriCam2.Cameras
             }
         }
 
+        
+        public string Firmware
+        {
+            get
+            {
+                return RealSense2API.GetFirmwareVersion(_pipeline);
+            }
+        }
+
+        ParamDesc<Point2i> FirmwareDesc
+        {
+            get
+            {
+                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                res.Description = "Current Firmware version of the connected camera.";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
+
         #region RealSense Options
+
+        // Not implemented options:
+        // - VISUAL_PRESET (functionallity provided by profiles built into metricam)
+        // - ACCURACY
+        // - MOTION_RANGE
+        // - FILTER_OPTION
+        // - CONFIDENCE_THRESHOLD
+        // - TOTAL_FRAME_DROPS
+        // - AUTO_EXPOSURE_MODE
 
         public bool BacklightCompensation
         {
@@ -809,8 +846,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        //"Power of the DS5 projector, 0 meaning projector off, 1 meaning projector on, 2 meaning projector in auto mode"
-
         public EmitterMode LaserMode
         {
             get
@@ -841,6 +876,199 @@ namespace MetriCam2.Cameras
                     WritableWhen = ParamDesc.ConnectionStates.Connected,
                 };
 
+                return res;
+            }
+        }
+
+        public int FrameQueueSizeColor
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE))
+                    throw new Exception("Option 'FrameQueueSize' is not supported by the color sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE))
+                    throw new Exception("Option 'FrameQueueSize' is not supported by the color sensor of this camera.");
+
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.FRAMES_QUEUE_SIZE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE, (float)value);
+            }
+        }
+
+        RangeParamDesc<int> FrameQueueSizeColorDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.FRAMES_QUEUE_SIZE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int FrameQueueSizeDepth
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE))
+                    throw new Exception("Option 'FrameQueueSize' is not supported by the stereo sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE))
+                    throw new Exception("Option 'FrameQueueSize' is not supported by the stereo sensor of this camera.");
+
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.STEREO,
+                    RealSense2API.Option.FRAMES_QUEUE_SIZE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE, (float)value);
+            }
+        }
+
+        RangeParamDesc<int> FrameQueueSizeDepthDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.STEREO,
+                    RealSense2API.Option.FRAMES_QUEUE_SIZE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public PowerLineMode PowerFrequencyMode
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY))
+                    throw new Exception("Option 'PowerFrequencyMode' is not supported by the color sensor of this camera.");
+
+                return (PowerLineMode)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY))
+                    throw new Exception("Option 'PowerFrequencyMode' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY, (float)value);
+            }
+        }
+
+        ParamDesc<PowerLineMode> PowerFrequencyModeDesc
+        {
+            get
+            {
+                ParamDesc<PowerLineMode> res = new ParamDesc<PowerLineMode>()
+                {
+                    Description = "Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+
+                return res;
+            }
+        }
+
+        public float ASICTemp
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ASIC_TEMPERATURE))
+                    throw new Exception("Option 'ASICTemp' is not supported by the stereo sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ASIC_TEMPERATURE);
+            }
+        }
+
+        ParamDesc<float> ASICTempDesc
+        {
+            get
+            {
+                ParamDesc<float> res = new ParamDesc<float>();
+                res.Unit = "Degree Celsius °C";
+                res.Description = "Current Asic Temperature";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public bool EnableErrorPolling
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED))
+                    throw new Exception("Option 'ErrorPolling' is not supported by the stereo sensor of this camera.");
+
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED) == 1.0f ? true : false;
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED))
+                    throw new Exception("Option 'ErrorPolling' is not supported by the stereo sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED, value ? 1.0f : 0.0f);
+            }
+        }
+
+        ParamDesc<bool> EnableErrorPollingDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "Enable / disable polling of camera internal errors";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
                 return res;
             }
         }
@@ -1355,11 +1583,6 @@ namespace MetriCam2.Cameras
 
         #endregion
 
-        public string GetFirmware()
-        {
-            return RealSense2API.GetFirmwareVersion(_pipeline);
-        }
-
         public void LoadConfigPreset(AdvancedMode.Preset preset)
         {
             LoadCustomConfig(AdvancedMode.GetPreset(preset));
@@ -1391,6 +1614,11 @@ namespace MetriCam2.Cameras
         public void QueryOptionInfo(RealSense2API.Option option, string sensorName, out float min, out float max, out float step, out float def, out string desc)
         {
             RealSense2API.QueryOptionInfo(_pipeline, sensorName, option, out min, out max, out step, out def, out desc);
+        }
+
+        public string OptionValueInfo(RealSense2API.Option option, string sensorName, float value)
+        {
+            return RealSense2API.OptionValueInfo(_pipeline, sensorName, option, value);
         }
     }
 }
