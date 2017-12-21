@@ -129,6 +129,7 @@ namespace MetriCam2.Cameras
         // - CONFIDENCE_THRESHOLD
         // - TOTAL_FRAME_DROPS
         // - AUTO_EXPOSURE_MODE
+        // - MOTION_MODULE_TEMPERATURE
 
         public bool BacklightCompensation
         {
@@ -1025,7 +1026,7 @@ namespace MetriCam2.Cameras
                 if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ASIC_TEMPERATURE))
                     throw new Exception("Option 'ASICTemp' is not supported by the stereo sensor of this camera.");
 
-                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ASIC_TEMPERATURE);
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ASIC_TEMPERATURE);
             }
         }
 
@@ -1067,6 +1068,102 @@ namespace MetriCam2.Cameras
             {
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable polling of camera internal errors";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public float ProjectorTemp
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.PROJECTOR_TEMPERATURE))
+                    throw new Exception("Option 'ProjectorTemp' is not supported by the stereo sensor of this camera.");
+
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.PROJECTOR_TEMPERATURE);
+            }
+        }
+
+        ParamDesc<float> ProjectorTempDesc
+        {
+            get
+            {
+                ParamDesc<float> res = new ParamDesc<float>();
+                res.Unit = "Degree Celsius °C";
+                res.Description = "Current Projector Temperature";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public bool OutputTrigger
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED))
+                    throw new Exception("Option 'OutputTrigger' is not supported by the stereo sensor of this camera.");
+
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED) == 1.0f ? true : false;
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED))
+                    throw new Exception("Option 'OutputTrigger' is not supported by the stereo sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, value ? 1.0f : 0.0f);
+            }
+        }
+
+        ParamDesc<bool> OutputTriggerDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "Enable / disable trigger to be outputed from the camera to any external device on every depth frame";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public float DepthUnits
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS))
+                    throw new Exception("Option 'DepthUnits' is not supported by the stereo sensor of this camera.");
+
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS))
+                    throw new Exception("Option 'DepthUnits' is not supported by the stereo sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS, value);
+            }
+        }
+
+        RangeParamDesc<float> DepthUnitsDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.STEREO,
+                    RealSense2API.Option.DEPTH_UNITS,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<float> res = new RangeParamDesc<float>(min, max);
+                res.Description = "Number of meters represented by a single depth unit";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
                 return res;
@@ -1599,6 +1696,11 @@ namespace MetriCam2.Cameras
         public bool IsOptionSupported(RealSense2API.Option option, string sensorName)
         {
             return RealSense2API.IsOptionSupported(_pipeline, sensorName, option);
+        }
+
+        public bool IsOptionRealOnly(RealSense2API.Option option, string sensorName)
+        {
+            return RealSense2API.IsOptionRealOnly(_pipeline, sensorName, option);
         }
 
         public float GetOption(RealSense2API.Option option, string sensorName)
