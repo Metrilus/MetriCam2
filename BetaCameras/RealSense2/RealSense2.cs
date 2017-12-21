@@ -524,6 +524,129 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public int Hue
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE))
+                    throw new Exception("Option 'Hue' is not supported by the color sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE))
+                    throw new Exception("Option 'Hue' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE, (float)value);
+            }
+        }
+
+        RangeParamDesc<int> HueDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.HUE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Color image Hue";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int Saturation
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION))
+                    throw new Exception("Option 'Saturation' is not supported by the color sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION))
+                    throw new Exception("Option 'Saturation' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION, (float)value);
+            }
+        }
+
+        RangeParamDesc<int> SaturationDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.SATURATION,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Color image Saturation";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int Sharpness
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS))
+                    throw new Exception("Option 'Sharpness' is not supported by the color sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS))
+                    throw new Exception("Option 'Sharpness' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS, (float)value);
+            }
+        }
+
+        RangeParamDesc<int> SharpnessDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.SHARPNESS,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Color image Sharpness";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
         #endregion
 
         public void Dispose()
