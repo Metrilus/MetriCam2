@@ -277,6 +277,37 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public bool AutoExposurePriorityColor
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY))
+                    throw new Exception("Option 'AutoExposurePriority' is not supported by the color sensor of this camera.");
+
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY) == 1.0f ? true : false;
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY))
+                    throw new Exception("Option 'AutoExposurePriority' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, value ? 1.0f : 0.0f);
+            }
+        }
+
+        ParamDesc<bool> AutoExposurePriorityColorDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "Limit exposure time when auto-exposure is ON to preserve constant fps rate";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
         public int ExposureDepth
         {
             get
@@ -446,6 +477,47 @@ namespace MetriCam2.Cameras
 
                 RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
                 res.Description = "Depth image gain";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int Gamma
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA))
+                    throw new Exception("Option 'Gamma' is not supported by the color sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA))
+                    throw new Exception("Option 'Gamma' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA, (float)value);
+            }
+        }
+
+        RangeParamDesc<int> GammaDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.GAMMA,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Color image Gamma";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
                 return res;
