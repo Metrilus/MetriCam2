@@ -24,6 +24,13 @@ namespace MetriCam2.Cameras
         private float _depthScale = 0.0f;
         private bool _disposed = false;
 
+        public enum EmitterMode
+        {
+            OFF = 0,
+            ON = 1,
+            AUTO = 2
+        }
+
         public Point2i ColorResolution { get; set; } = new Point2i(640, 480);
 
         ParamDesc<Point2i> ColorResolutionDesc
@@ -643,6 +650,197 @@ namespace MetriCam2.Cameras
                 res.Description = "Color image Sharpness";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int WhiteBalance
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE))
+                    throw new Exception("Option 'WhiteBalance' is not supported by the color sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE))
+                    throw new Exception("Option 'WhiteBalance' is not supported by the color sensor of this camera.");
+
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.WHITE_BALANCE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+
+                // step size for depth white balance is 10
+                float adjusted_value = (float)value;
+                int rounding = value - (int)min % (int)step;
+                adjusted_value -= (float)rounding;
+
+                if (rounding > step / 2)
+                {
+                    adjusted_value += step;
+                }
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE, adjusted_value);
+            }
+        }
+
+        RangeParamDesc<int> WhiteBalanceDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.WHITE_BALANCE,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Controls white balance of color image.Setting any value will disable auto white balance";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public bool AutoWhiteBalance
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE))
+                    throw new Exception("Option 'AutoWhiteBalance' is not supported by the color sensor of this camera.");
+
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE) == 1.0f ? true : false;
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE))
+                    throw new Exception("Option 'AutoWhiteBalance' is not supported by the color sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, value ? 1.0f : 0.0f);
+            }
+        }
+
+        ParamDesc<bool> AutoWhiteBalanceDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "Enable / disable auto-white-balance";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        public int LaserPower
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER))
+                    throw new Exception("Option 'LaserPower' is not supported by the stereo sensor of this camera.");
+
+                return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER))
+                    throw new Exception("Option 'LaserPower' is not supported by the stereo sensor of this camera.");
+
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.STEREO,
+                    RealSense2API.Option.LASER_POWER,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+
+                // step size for depth laser power is 30
+                float adjusted_value = (float)value;
+                int rounding = value - (int)min % (int)step;
+                adjusted_value -= (float)rounding;
+
+                if (rounding > step / 2)
+                {
+                    adjusted_value += step;
+                }
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER, adjusted_value);
+            }
+        }
+
+        RangeParamDesc<int> LaserPowerDesc
+        {
+            get
+            {
+                RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.STEREO,
+                    RealSense2API.Option.LASER_POWER,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                res.Description = "Manual laser power in mw. applicable only when laser power mode is set to Manual";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                return res;
+            }
+        }
+
+        //"Power of the DS5 projector, 0 meaning projector off, 1 meaning projector on, 2 meaning projector in auto mode"
+
+        public EmitterMode LaserMode
+        {
+            get
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EMITTER_ENABLED))
+                    throw new Exception("Option 'LaserMode' is not supported by the stereo sensor of this camera.");
+
+                return (EmitterMode)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EMITTER_ENABLED);
+            }
+
+            set
+            {
+                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EMITTER_ENABLED))
+                    throw new Exception("Option 'LaserMode' is not supported by the stereo sensor of this camera.");
+
+                RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER, (float)value);
+            }
+        }
+
+        ParamDesc<EmitterMode> EmmiterModeDesc
+        {
+            get
+            {
+                ParamDesc<EmitterMode> res = new ParamDesc<EmitterMode>()
+                {
+                    Description = "Power of the DS5 projector",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+
                 return res;
             }
         }
