@@ -121,7 +121,7 @@ namespace MetriCam2.Cameras
 
         #region RealSense Options
 
-        // Not implemented options:
+        // Not implemented options (mostly because not supported by D435):
         // - VISUAL_PRESET (functionallity provided by profiles built into metricam)
         // - ACCURACY
         // - MOTION_RANGE
@@ -130,6 +130,15 @@ namespace MetriCam2.Cameras
         // - TOTAL_FRAME_DROPS
         // - AUTO_EXPOSURE_MODE
         // - MOTION_MODULE_TEMPERATURE
+        // - ENABLE_MOTION_CORRECTION
+        // - COLOR_SCHEME
+        // - HISTOGRAM_EQUALIZATION_ENABLED
+        // - MIN_DISTANCE
+        // - MAX_DISTANCE
+        // - TEXTURE_SOURCE
+        // - FILTER_MAGNITUDE
+        // - FILTER_SMOOTH_ALPHA
+        // - FILTER_SMOOTH_DELTA
 
         public bool BacklightCompensation
         {
