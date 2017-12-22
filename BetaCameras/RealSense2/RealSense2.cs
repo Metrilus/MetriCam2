@@ -140,6 +140,9 @@ namespace MetriCam2.Cameras
         // - FILTER_SMOOTH_ALPHA
         // - FILTER_SMOOTH_DELTA
 
+        /// <summary>
+        /// Enable / disable color backlight compensation
+        /// </summary>
         public bool BacklightCompensation
         {
             get
@@ -177,6 +180,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Color image brightness
+        /// </summary>
         public int Brightness
         {
             get
@@ -218,6 +224,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Color image contrast
+        /// </summary>
         public int Contrast
         {
             get
@@ -259,6 +268,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Controls exposure time of color camera. Setting any value will disable auto exposure
+        /// </summary>
         public int ExposureColor
         {
             get
@@ -300,6 +312,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Enable / disable color image auto-exposure
+        /// </summary>
         public bool AutoExposureColor
         {
             get
@@ -331,6 +346,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Limit exposure time when auto-exposure is ON to preserve constant fps rate
+        /// </summary>
         public bool AutoExposurePriorityColor
         {
             get
@@ -362,6 +380,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Controls exposure time of depth camera. Setting any value will disable auto exposure
+        /// </summary>
         public int ExposureDepth
         {
             get
@@ -424,6 +445,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Enable / disable depth image auto-exposure
+        /// </summary>
         public bool AutoExposureDepth
         {
             get
@@ -455,6 +479,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Color image gain
+        /// </summary>
         public int GainColor
         {
             get
@@ -496,6 +523,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Depth image gain
+        /// </summary>
         public int GainDepth
         {
             get
@@ -537,6 +567,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Color image Gamma
+        /// </summary>
         public int Gamma
         {
             get
@@ -578,6 +611,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Color image Hue
+        /// </summary>
         public int Hue
         {
             get
@@ -619,6 +655,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Color image Saturation
+        /// </summary>
         public int Saturation
         {
             get
@@ -660,6 +699,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Color image Sharpness
+        /// </summary>
         public int Sharpness
         {
             get
@@ -701,6 +743,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Controls white balance of color image.Setting any value will disable auto white balance
+        /// </summary>
         public int WhiteBalance
         {
             get
@@ -763,6 +808,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Enable / disable auto-white-balance
+        /// </summary>
         public bool AutoWhiteBalance
         {
             get
@@ -794,6 +842,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Manual laser power in mw. applicable only when laser power mode is set to Manual
+        /// </summary>
         public int LaserPower
         {
             get
@@ -856,6 +907,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Power of the DS5 projector
+        /// </summary>
         public EmitterMode LaserMode
         {
             get
@@ -890,6 +944,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa
+        /// </summary>
         public int FrameQueueSizeColor
         {
             get
@@ -942,6 +999,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa
+        /// </summary>
         public int FrameQueueSizeDepth
         {
             get
@@ -994,6 +1054,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto
+        /// </summary>
         public PowerLineMode PowerFrequencyMode
         {
             get
@@ -1028,6 +1091,9 @@ namespace MetriCam2.Cameras
             }
         }
 
+        /// <summary>
+        /// Current Asic Temperature
+        /// </summary>
         public float ASICTemp
         {
             get
@@ -1052,6 +1118,10 @@ namespace MetriCam2.Cameras
             }
         }
 
+
+        /// <summary>
+        /// Enable / disable polling of camera internal errors
+        /// </summary>
         public bool EnableErrorPolling
         {
             get
@@ -1083,6 +1153,10 @@ namespace MetriCam2.Cameras
             }
         }
 
+
+        /// <summary>
+        /// Current Projector Temperature in °C
+        /// </summary>
         public float ProjectorTemp
         {
             get
@@ -1107,6 +1181,10 @@ namespace MetriCam2.Cameras
             }
         }
 
+
+        /// <summary>
+        /// Enable / disable trigger to be outputed from the camera to any external device on every depth frame
+        /// </summary>
         public bool OutputTrigger
         {
             get
@@ -1138,6 +1216,10 @@ namespace MetriCam2.Cameras
             }
         }
 
+
+        /// <summary>
+        /// Number of meters represented by a single depth unit
+        /// </summary>
         public float DepthUnits
         {
             get
