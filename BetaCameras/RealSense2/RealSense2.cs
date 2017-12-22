@@ -34,8 +34,8 @@ namespace MetriCam2.Cameras
         public enum PowerLineMode
         {
             OFF = 0,
-            FIFTY_HZ = 1,
-            SIXTY_HZ = 2,
+            FREQ_50HZ = 1,
+            FREQ_60HZ = 2,
             AUTO = 3
         }
 
