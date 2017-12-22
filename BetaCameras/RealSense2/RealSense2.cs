@@ -1783,35 +1783,5 @@ namespace MetriCam2.Cameras
             //RealSense2API.DeleteDevice(dev);
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
-
-        public bool IsOptionSupported(RealSense2API.Option option, string sensorName)
-        {
-            return RealSense2API.IsOptionSupported(_pipeline, sensorName, option);
-        }
-
-        public bool IsOptionRealOnly(RealSense2API.Option option, string sensorName)
-        {
-            return RealSense2API.IsOptionRealOnly(_pipeline, sensorName, option);
-        }
-
-        public float GetOption(RealSense2API.Option option, string sensorName)
-        {
-            return RealSense2API.GetOption(_pipeline, sensorName, option);
-        }
-
-        public void SetOption(RealSense2API.Option option, string sensorName, float value)
-        {
-            RealSense2API.SetOption(_pipeline, sensorName, option, value);
-        }
-
-        public void QueryOptionInfo(RealSense2API.Option option, string sensorName, out float min, out float max, out float step, out float def, out string desc)
-        {
-            RealSense2API.QueryOptionInfo(_pipeline, sensorName, option, out min, out max, out step, out def, out desc);
-        }
-
-        public string OptionValueInfo(RealSense2API.Option option, string sensorName, float value)
-        {
-            return RealSense2API.OptionValueInfo(_pipeline, sensorName, option, value);
-        }
     }
 }

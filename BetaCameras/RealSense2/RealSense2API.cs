@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MetriCam2.Cameras
 {
-    public class RealSense2API
+    internal class RealSense2API
     {
         // HINT: update API version to currently used librealsense2
         private const int API_MAJOR_VERSION = 2;
