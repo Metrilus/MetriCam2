@@ -147,9 +147,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION))
-                    throw new Exception("Option 'BacklightCompensation' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, BacklightCompensationDesc.Name, RealSense2API.SensorName.COLOR);
                 float res = RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION);
 
                 if (res == 1.0f)
@@ -160,9 +158,7 @@ namespace MetriCam2.Cameras
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION))
-                    throw new Exception("Option 'BacklightCompensation' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, BacklightCompensationDesc.Name, RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION, value ? 1.0f : 0.0f);
             }
         }
@@ -187,19 +183,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS))
-                    throw new Exception("Option 'Brightness' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.BRIGHTNESS, BrightnessDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS))
-                    throw new Exception("Option 'Brightness' is not supported by the color sensor of this camera.");
-
-                if(!BrightnessDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Brightness' is outside of the range between {1} and {2}", value, BrightnessDesc.Min, BrightnessDesc.Min));
+                CheckOptionSupported(RealSense2API.Option.BRIGHTNESS, BrightnessDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(BrightnessDesc, value, 0);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS, (float)value);
             }
@@ -234,19 +225,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST))
-                    throw new Exception("Option 'Contrast' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.CONTRAST, ContrastDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST))
-                    throw new Exception("Option 'Contrast' is not supported by the color sensor of this camera.");
-
-                if (!ContrastDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Contrast' is outside of the range between {1} and {2}", value, ContrastDesc.Min, ContrastDesc.Min));
+                CheckOptionSupported(RealSense2API.Option.CONTRAST, ContrastDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(ContrastDesc, value, 0);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST, (float)value);
             }
@@ -281,19 +267,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE))
-                    throw new Exception("Option 'Exposure' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureColorDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE))
-                    throw new Exception("Option 'Exposure' is not supported by the color sensor of this camera.");
-
-                if (!ExposureColorDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Exposure' is outside of the range between {1} and {2}", value, ExposureColorDesc.Min, ExposureColorDesc.Min));
+                CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(ExposureColorDesc, value, 0);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE, (float)value);
             }
@@ -328,17 +309,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE))
-                    throw new Exception("Option 'AutoExposure' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, AutoExposureColorDesc.Name, RealSense2API.SensorName.COLOR);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE) == 1.0f ? true : false;
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE))
-                    throw new Exception("Option 'AutoExposure' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, AutoExposureColorDesc.Name, RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE, value ? 1.0f : 0.0f);
             }
         }
@@ -362,17 +339,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY))
-                    throw new Exception("Option 'AutoExposurePriority' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, AutoExposurePriorityColorDesc.Name, RealSense2API.SensorName.COLOR);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY) == 1.0f ? true : false;
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY))
-                    throw new Exception("Option 'AutoExposurePriority' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, AutoExposurePriorityColorDesc.Name, RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, value ? 1.0f : 0.0f);
             }
         }
@@ -396,16 +369,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE))
-                    throw new Exception("Option 'Exposure' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE))
-                    throw new Exception("Option 'Exposure' is not supported by the stereo sensor of this camera.");
+                CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
 
                 RealSense2API.QueryOptionInfo(
                     _pipeline,
@@ -428,17 +398,8 @@ namespace MetriCam2.Cameras
                     adjusted_value += step;
                 }
 
-                if (!ExposureDepthDesc.IsValid(value))
-                    throw new Exception(
-                        string.Format(
-                            "Value {0} (adjusted to {1} to match stepsize) for 'Exposure' is outside of the range between {2} and {3}", 
-                            value, 
-                            adjusted_value, 
-                            ExposureDepthDesc.Min, 
-                            ExposureDepthDesc.Min
-                        )
-                    );
 
+                CheckRangeValid<int>(ExposureDepthDesc, value, (int)adjusted_value, true);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE, adjusted_value);
             }
         }
@@ -472,17 +433,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE))
-                    throw new Exception("Option 'AutoExposure' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, AutoExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE) == 1.0f ? true : false;
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE))
-                    throw new Exception("Option 'AutoExposure' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, AutoExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE, value ? 1.0f : 0.0f);
             }
         }
@@ -506,20 +463,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAIN))
-                    throw new Exception("Option 'Gain' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.GAIN, GainColorDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAIN);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAIN))
-                    throw new Exception("Option 'Gain' is not supported by the color sensor of this camera.");
-
-                if (!GainColorDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Gain' is outside of the range between {1} and {2}", value, GainColorDesc.Min, GainColorDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.GAIN, GainColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(GainColorDesc, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAIN, (float)value);
             }
         }
@@ -553,20 +504,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.GAIN))
-                    throw new Exception("Option 'Gain' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.GAIN, GainDepthDesc.Name, RealSense2API.SensorName.STEREO);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.GAIN);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAIN))
-                    throw new Exception("Option 'Gain' is not supported by the stereo sensor of this camera.");
-
-                if (!GainDepthDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Gain' is outside of the range between {1} and {2}", value, GainDepthDesc.Min, GainDepthDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.GAIN, GainDepthDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckRangeValid<int>(GainDepthDesc, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.GAIN, (float)value);
             }
         }
@@ -600,20 +545,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA))
-                    throw new Exception("Option 'Gamma' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.GAMMA, GammaDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA))
-                    throw new Exception("Option 'Gamma' is not supported by the color sensor of this camera.");
-
-                if (!GammaDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Gamma' is outside of the range between {1} and {2}", value, GammaDesc.Min, GammaDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.GAMMA, GammaDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(GammaDesc, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA, (float)value);
             }
         }
@@ -647,20 +586,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE))
-                    throw new Exception("Option 'Hue' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.HUE, HueDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE))
-                    throw new Exception("Option 'Hue' is not supported by the color sensor of this camera.");
-
-                if (!HueDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Hue' is outside of the range between {1} and {2}", value, HueDesc.Min, HueDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.HUE, HueDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(HueDesc, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE, (float)value);
             }
         }
@@ -694,20 +627,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION))
-                    throw new Exception("Option 'Saturation' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.SATURATION, SaturationDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION))
-                    throw new Exception("Option 'Saturation' is not supported by the color sensor of this camera.");
-
-                if (!SaturationDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Saturation' is outside of the range between {1} and {2}", value, SaturationDesc.Min, SaturationDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.SATURATION, SaturationDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(SaturationDesc, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION, (float)value);
             }
         }
@@ -741,20 +668,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS))
-                    throw new Exception("Option 'Sharpness' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.SHARPNESS, SharpnessDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS))
-                    throw new Exception("Option 'Sharpness' is not supported by the color sensor of this camera.");
-
-                if (!SharpnessDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'Sharpness' is outside of the range between {1} and {2}", value, SharpnessDesc.Min, SharpnessDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.SHARPNESS, SharpnessDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(SharpnessDesc, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS, (float)value);
             }
         }
@@ -788,16 +709,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE))
-                    throw new Exception("Option 'WhiteBalance' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.WHITE_BALANCE, WhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE))
-                    throw new Exception("Option 'WhiteBalance' is not supported by the color sensor of this camera.");
+                CheckOptionSupported(RealSense2API.Option.WHITE_BALANCE, WhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
 
                 RealSense2API.QueryOptionInfo(
                     _pipeline,
@@ -820,16 +738,7 @@ namespace MetriCam2.Cameras
                     adjusted_value += step;
                 }
 
-                if (!WhiteBalanceDesc.IsValid(value))
-                    throw new Exception(
-                        string.Format(
-                            "Value {0} (adjusted to {1} to match stepsize) for 'WhiteBalance' is outside of the range between {2} and {3}",
-                            value,
-                            adjusted_value,
-                            WhiteBalanceDesc.Min,
-                            WhiteBalanceDesc.Min
-                        )
-                    );
+                CheckRangeValid<int>(WhiteBalanceDesc, value, (int)adjusted_value, true);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE, adjusted_value);
             }
@@ -864,17 +773,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE))
-                    throw new Exception("Option 'AutoWhiteBalance' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, AutoWhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE) == 1.0f ? true : false;
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE))
-                    throw new Exception("Option 'AutoWhiteBalance' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, AutoWhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, value ? 1.0f : 0.0f);
             }
         }
@@ -898,16 +803,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER))
-                    throw new Exception("Option 'LaserPower' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.LASER_POWER, LaserPowerDesc.Name, RealSense2API.SensorName.STEREO);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER))
-                    throw new Exception("Option 'LaserPower' is not supported by the stereo sensor of this camera.");
+                CheckOptionSupported(RealSense2API.Option.LASER_POWER, LaserPowerDesc.Name, RealSense2API.SensorName.STEREO);
 
                 RealSense2API.QueryOptionInfo(
                     _pipeline,
@@ -930,17 +832,7 @@ namespace MetriCam2.Cameras
                     adjusted_value += step;
                 }
 
-                if (!LaserPowerDesc.IsValid(value))
-                    throw new Exception(
-                        string.Format(
-                            "Value {0} (adjusted to {1} to match stepsize) for 'LaserPower' is outside of the range between {2} and {3}",
-                            value,
-                            adjusted_value,
-                            LaserPowerDesc.Min,
-                            LaserPowerDesc.Min
-                        )
-                    );
-
+                CheckRangeValid<int>(LaserPowerDesc, value, (int)adjusted_value, true);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER, adjusted_value);
             }
         }
@@ -974,17 +866,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EMITTER_ENABLED))
-                    throw new Exception("Option 'LaserMode' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.EMITTER_ENABLED, EmmiterModeDesc.Name, RealSense2API.SensorName.STEREO);
                 return (EmitterMode)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EMITTER_ENABLED);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EMITTER_ENABLED))
-                    throw new Exception("Option 'LaserMode' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.EMITTER_ENABLED, EmmiterModeDesc.Name, RealSense2API.SensorName.STEREO);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER, (float)value);
             }
         }
@@ -1011,20 +899,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE))
-                    throw new Exception("Option 'FrameQueueSize' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, FrameQueueSizeColorDesc.Name, RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE))
-                    throw new Exception("Option 'FrameQueueSize' is not supported by the color sensor of this camera.");
-
-                if (!FrameQueueSizeColorDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'FrameQueueSize' is outside of the range between {1} and {2}", value, FrameQueueSizeColorDesc.Min, FrameQueueSizeColorDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, FrameQueueSizeColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckRangeValid<int>(FrameQueueSizeColorDesc, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE, (float)value);
             }
         }
@@ -1058,20 +940,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE))
-                    throw new Exception("Option 'FrameQueueSize' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, FrameQueueSizeDepthDesc.Name, RealSense2API.SensorName.STEREO);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE))
-                    throw new Exception("Option 'FrameQueueSize' is not supported by the stereo sensor of this camera.");
-
-                if (!FrameQueueSizeDepthDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'FrameQueueSize' is outside of the range between {1} and {2}", value, FrameQueueSizeDepthDesc.Min, FrameQueueSizeDepthDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, FrameQueueSizeDepthDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckRangeValid<int>(FrameQueueSizeDepthDesc, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE, (float)value);
             }
         }
@@ -1105,17 +981,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY))
-                    throw new Exception("Option 'PowerFrequencyMode' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.POWER_LINE_FREQUENCY, PowerFrequencyModeDesc.Name, RealSense2API.SensorName.COLOR);
                 return (PowerLineMode)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY))
-                    throw new Exception("Option 'PowerFrequencyMode' is not supported by the color sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.POWER_LINE_FREQUENCY, PowerFrequencyModeDesc.Name, RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY, (float)value);
             }
         }
@@ -1142,9 +1014,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ASIC_TEMPERATURE))
-                    throw new Exception("Option 'ASICTemp' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ASIC_TEMPERATURE, ASICTempDesc.Name, RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ASIC_TEMPERATURE);
             }
         }
@@ -1170,17 +1040,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED))
-                    throw new Exception("Option 'ErrorPolling' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ERROR_POLLING_ENABLED, EnableErrorPollingDesc.Name, RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED) == 1.0f ? true : false;
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED))
-                    throw new Exception("Option 'ErrorPolling' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.ERROR_POLLING_ENABLED, EnableErrorPollingDesc.Name, RealSense2API.SensorName.STEREO);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED, value ? 1.0f : 0.0f);
             }
         }
@@ -1205,9 +1071,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.PROJECTOR_TEMPERATURE))
-                    throw new Exception("Option 'ProjectorTemp' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.PROJECTOR_TEMPERATURE, ProjectorTempDesc.Name, RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.PROJECTOR_TEMPERATURE);
             }
         }
@@ -1233,17 +1097,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED))
-                    throw new Exception("Option 'OutputTrigger' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, OutputTriggerDesc.Name, RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED) == 1.0f ? true : false;
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED))
-                    throw new Exception("Option 'OutputTrigger' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, OutputTriggerDesc.Name, RealSense2API.SensorName.STEREO);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, value ? 1.0f : 0.0f);
             }
         }
@@ -1268,20 +1128,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS))
-                    throw new Exception("Option 'DepthUnits' is not supported by the stereo sensor of this camera.");
-
+                CheckOptionSupported(RealSense2API.Option.DEPTH_UNITS, DepthUnitsDesc.Name, RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS);
             }
 
             set
             {
-                if (!RealSense2API.IsOptionSupported(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS))
-                    throw new Exception("Option 'DepthUnits' is not supported by the stereo sensor of this camera.");
-
-                if (!DepthUnitsDesc.IsValid(value))
-                    throw new Exception(string.Format("Value {0} for 'DepthUnits' is outside of the range between {1} and {2}", value, DepthUnitsDesc.Min, DepthUnitsDesc.Min));
-
+                CheckOptionSupported(RealSense2API.Option.DEPTH_UNITS, DepthUnitsDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckRangeValid<float>(DepthUnitsDesc, value, 0f);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS, value);
             }
         }
@@ -1829,6 +1683,23 @@ namespace MetriCam2.Cameras
             RealSense2API.LoadAdvancedConfig(json, dev);
             //RealSense2API.DeleteDevice(dev);
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
+        }
+
+        private void CheckOptionSupported(RealSense2API.Option option, string optionName, string sensorName)
+        {
+            if (!RealSense2API.IsOptionSupported(_pipeline, sensorName, option))
+            {
+                throw new NotSupportedException(string.Format("Option '{0}' is not supported by the {1} sensor of this camera.", optionName, sensorName));
+            }
+        }
+
+        private void CheckRangeValid<T>(RangeParamDesc<T> desc, T value, T adjustedValue, bool adjusted = false)
+        {
+            if (!desc.IsValid(value))
+                if (adjusted)
+                    throw new Exception(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
+                else
+                    throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) for 'LaserPower' is outside of the range between {2} and {3}", value, adjustedValue, desc.Min, desc.Max));
         }
     }
 }
