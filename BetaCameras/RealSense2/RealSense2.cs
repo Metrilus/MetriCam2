@@ -1141,11 +1141,11 @@ namespace MetriCam2.Cameras
             }
         }
 
-        ParamDesc<PowerLineMode> PowerFrequencyModeDesc
+        ListParamDesc<PowerLineMode> PowerFrequencyModeDesc
         {
             get
             {
-                ParamDesc<PowerLineMode> res = new ParamDesc<PowerLineMode>()
+                ListParamDesc<PowerLineMode> res = new ListParamDesc<PowerLineMode>(typeof(PowerLineMode))
                 {
                     Description = "Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
@@ -1428,7 +1428,7 @@ namespace MetriCam2.Cameras
 
             while (true)
             {
-                RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 500);
+                RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 5000);
 
                 if(!data.IsValid() || data.Handle == IntPtr.Zero)
                 {
