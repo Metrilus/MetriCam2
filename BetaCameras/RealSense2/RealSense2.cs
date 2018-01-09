@@ -420,13 +420,16 @@ namespace MetriCam2.Cameras
 
                 // step size for depth exposure is 20
                 float adjusted_value = (float)value;
-                int rounding = value - (int)min % (int)step;
+                int rounding = (value - (int)min) % (int)step;
                 adjusted_value -= (float)rounding;
 
                 if (rounding > step / 2)
-                {
                     adjusted_value += step;
-                }
+
+                if (adjusted_value > max)
+                    adjusted_value -= step;
+                if (adjusted_value < min)
+                    adjusted_value += step;
 
 
                 CheckRangeValid<int>(ExposureDepthDesc, value, (int)adjusted_value, true);
@@ -830,13 +833,16 @@ namespace MetriCam2.Cameras
 
                 // step size for depth white balance is 10
                 float adjusted_value = (float)value;
-                int rounding = value - (int)min % (int)step;
+                int rounding = (value - (int)min) % (int)step;
                 adjusted_value -= (float)rounding;
 
                 if (rounding > step / 2)
-                {
                     adjusted_value += step;
-                }
+
+                if (adjusted_value > max)
+                    adjusted_value -= step;
+                if (adjusted_value < min)
+                    adjusted_value += step;
 
                 CheckRangeValid<int>(WhiteBalanceDesc, value, (int)adjusted_value, true);
 
@@ -934,13 +940,16 @@ namespace MetriCam2.Cameras
 
                 // step size for depth laser power is 30
                 float adjusted_value = (float)value;
-                int rounding = value - (int)min % (int)step;
+                int rounding = (value - (int)min) % (int)step;
                 adjusted_value -= (float)rounding;
 
                 if (rounding > step / 2)
-                {
                     adjusted_value += step;
-                }
+
+                if (adjusted_value > max)
+                    adjusted_value -= step;
+                if (adjusted_value < min)
+                    adjusted_value += step;
 
                 CheckRangeValid<int>(LaserPowerDesc, value, (int)adjusted_value, true);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER, adjusted_value);
