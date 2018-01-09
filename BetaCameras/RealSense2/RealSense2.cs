@@ -171,7 +171,7 @@ namespace MetriCam2.Cameras
                 res.Unit = "Boolean";
                 res.Description = "Enable / disable color backlight compensation";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -200,20 +200,30 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
-                    _pipeline, 
-                    RealSense2API.SensorName.COLOR, 
-                    RealSense2API.Option.BRIGHTNESS, 
-                    out float min, 
-                    out float max, 
-                    out float step, 
-                    out float def, 
+                RangeParamDesc<int> res;
+
+                if (this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    RealSense2API.SensorName.COLOR,
+                    RealSense2API.Option.BRIGHTNESS,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Color image brightness";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -242,7 +252,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.CONTRAST,
@@ -252,10 +266,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Color image contrast";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -284,7 +304,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.EXPOSURE,
@@ -294,10 +318,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Controls exposure time of color camera. Setting any value will disable auto exposure";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -327,7 +357,7 @@ namespace MetriCam2.Cameras
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable color image auto-exposure";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -357,7 +387,7 @@ namespace MetriCam2.Cameras
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Limit exposure time when auto-exposure is ON to preserve constant fps rate";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -408,7 +438,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.STEREO,
                     RealSense2API.Option.EXPOSURE,
@@ -418,10 +452,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Controls exposure time of depth camera. Setting any value will disable auto exposure";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -451,7 +491,7 @@ namespace MetriCam2.Cameras
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable depth image auto-exposure";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -479,7 +519,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.GAIN,
@@ -489,10 +533,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Color image gain";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -520,7 +570,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.STEREO,
                     RealSense2API.Option.GAIN,
@@ -530,10 +584,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Depth image gain";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -561,7 +621,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.GAMMA,
@@ -571,10 +635,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Color image Gamma";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -602,7 +672,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.HUE,
@@ -612,10 +686,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Color image Hue";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -643,7 +723,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.SATURATION,
@@ -653,10 +737,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Color image Saturation";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -684,7 +774,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.SHARPNESS,
@@ -694,10 +788,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Color image Sharpness";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -748,7 +848,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.WHITE_BALANCE,
@@ -758,10 +862,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Controls white balance of color image.Setting any value will disable auto white balance";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -791,7 +901,7 @@ namespace MetriCam2.Cameras
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable auto-white-balance";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -841,7 +951,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.STEREO,
                     RealSense2API.Option.LASER_POWER,
@@ -851,10 +965,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                   res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+
                 res.Description = "Manual laser power in mw. applicable only when laser power mode is set to Manual";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -915,7 +1035,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.COLOR,
                     RealSense2API.Option.FRAMES_QUEUE_SIZE,
@@ -925,10 +1049,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -956,7 +1086,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<int> res;
+
+                if (this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.STEREO,
                     RealSense2API.Option.FRAMES_QUEUE_SIZE,
@@ -966,10 +1100,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<int> res = new RangeParamDesc<int>((int)min, (int)max);
+                    res = new RangeParamDesc<int>((int)min, (int)max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
+                }
+                
                 res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1027,7 +1167,7 @@ namespace MetriCam2.Cameras
                 res.Unit = "Degree Celsius °C";
                 res.Description = "Current Asic Temperature";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1058,7 +1198,7 @@ namespace MetriCam2.Cameras
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable polling of camera internal errors";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1084,7 +1224,7 @@ namespace MetriCam2.Cameras
                 res.Unit = "Degree Celsius °C";
                 res.Description = "Current Projector Temperature";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1115,7 +1255,7 @@ namespace MetriCam2.Cameras
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable trigger to be outputed from the camera to any external device on every depth frame";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1144,7 +1284,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RealSense2API.QueryOptionInfo(
+                RangeParamDesc<float> res;
+
+                if(this.IsConnected)
+                {
+                    RealSense2API.QueryOptionInfo(
                     _pipeline,
                     RealSense2API.SensorName.STEREO,
                     RealSense2API.Option.DEPTH_UNITS,
@@ -1154,10 +1298,16 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                RangeParamDesc<float> res = new RangeParamDesc<float>(min, max);
+                    res = new RangeParamDesc<float>(min, max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<float>(0, 0);
+                }
+                
                 res.Description = "Number of meters represented by a single depth unit";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1687,10 +1837,11 @@ namespace MetriCam2.Cameras
 
         private void CheckOptionSupported(RealSense2API.Option option, string optionName, string sensorName)
         {
+            if (!this.IsConnected)
+                throw new Exception(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
+
             if (!RealSense2API.IsOptionSupported(_pipeline, sensorName, option))
-            {
                 throw new NotSupportedException(string.Format("Option '{0}' is not supported by the {1} sensor of this camera.", optionName, sensorName));
-            }
         }
 
         private void CheckRangeValid<T>(RangeParamDesc<T> desc, T value, T adjustedValue, bool adjusted = false)
