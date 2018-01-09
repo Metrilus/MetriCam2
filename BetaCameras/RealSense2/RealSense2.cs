@@ -4,6 +4,7 @@
 using Metrilus.Util;
 using System;
 using System.Drawing;
+using System.Collections.Generic;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -39,62 +40,133 @@ namespace MetriCam2.Cameras
             AUTO = 3
         }
 
-        public Point2i ColorResolution { get; set; } = new Point2i(640, 480);
-
-        ParamDesc<Point2i> ColorResolutionDesc
+        private Point2i _colorResolution = new Point2i(640, 480);
+        public Point2i ColorResolution
         {
             get
             {
-                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                return _colorResolution;
+            }
+            
+            set
+            {
+                _colorResolution = value;
+            }
+        }
+
+        ListParamDesc<Point2i> ColorResolutionDesc
+        {
+            get
+            {
+                List<Point2i> resolutions = new List<Point2i>();
+                resolutions.Add(new Point2i(640, 480));
+
+                if (this.IsConnected)
+                {
+                    resolutions = RealSense2API.GetSupportedResolutions(_pipeline, RealSense2API.SensorName.COLOR);
+                }
+
+                List<string> allowedValues = new List<string>();
+                foreach (Point2i resolution in resolutions)
+                {
+                    allowedValues.Add(string.Format("{0}x{1}", resolution.X, resolution.Y));
+                }
+
+                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
                 res.Unit = "Pixel";
                 res.Description = "Resolution of the color sensor.";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
                 return res;
             }
         }
 
-        public uint ColorFPS { get; set; } = 30;
+        private int _colorFPS = 30;
+        public int ColorFPS
+        {
+            get { return _colorFPS; }
+            set
+            {
+                _colorFPS = value;
+            }
+        }
 
-        ParamDesc<Point2i> ColorFPSDesc
+        ListParamDesc<int> ColorFPSDesc
         {
             get
             {
-                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                List<int> framerates = new List<int>();
+                framerates.Add(30);
+
+                if (this.IsConnected)
+                {
+                    framerates = RealSense2API.GetSupportedFrameRates(_pipeline, RealSense2API.SensorName.COLOR);
+                    framerates.Sort();
+                }
+                
+                ListParamDesc<int> res = new ListParamDesc<int>(framerates);
                 res.Unit = "Frames per Second";
                 res.Description = "FPS of the color sensor.";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
                 return res;
             }
         }
 
         public Point2i DepthResolution { get; set; } = new Point2i(640, 480);
 
-        ParamDesc<Point2i> DepthResolutionDesc
+        ListParamDesc<Point2i> DepthResolutionDesc
         {
             get
             {
-                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                List<Point2i> resolutions = new List<Point2i>();
+                resolutions.Add(new Point2i(640, 480));
+
+                if(this.IsConnected)
+                {
+                    resolutions = RealSense2API.GetSupportedResolutions(_pipeline, RealSense2API.SensorName.STEREO);
+                }
+
+                List<string> allowedValues = new List<string>();
+                foreach(Point2i resolution in resolutions)
+                {
+                    allowedValues.Add(string.Format("{0}x{1}", resolution.X, resolution.Y));
+                }
+
+                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
                 res.Unit = "Pixel";
                 res.Description = "Resolution of the depth sensor.";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
                 return res;
             }
         }
 
-        public uint DepthFPS { get; set; } = 30;
+        private int _depthFPS = 30;
+        public int DepthFPS
+        {
+            get { return _depthFPS; }
+            set { _depthFPS = value; }
+        }
 
-        ParamDesc<Point2i> DepthFPSDesc
+        ListParamDesc<int> DepthFPSDesc
         {
             get
             {
-                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
+                List<int> framerates = new List<int>();
+                framerates.Add(30);
+
+                if (this.IsConnected)
+                {
+                    framerates = RealSense2API.GetSupportedFrameRates(_pipeline, RealSense2API.SensorName.STEREO);
+                    framerates.Sort();
+                }
+
+                ListParamDesc<int> res = new ListParamDesc<int>(framerates);
                 res.Unit = "Frames per Second";
                 res.Description = "FPS of the depth sensor.";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
                 return res;
             }
         }
@@ -1337,9 +1409,9 @@ namespace MetriCam2.Cameras
             if (IsConnected)
                 DisconnectImpl();
 
-            RealSense2API.DeleteConfig(_config);
-            RealSense2API.DeletePipeline(_pipeline);
-            RealSense2API.DeleteContext(_context);
+            _config.Delete();
+            _pipeline.Delete();
+            _context.Delete();
             _disposed = true;
         }
 
@@ -1750,8 +1822,8 @@ namespace MetriCam2.Cameras
                 return null;
             }
 
-            int height = DepthResolution.Y;
-            int width = DepthResolution.X;
+            int height = _currentDepthFrame.Height;
+            int width = _currentDepthFrame.Width;
 
             FloatCameraImage depthData = new FloatCameraImage(width, height);
             short* source = (short*)RealSense2API.GetFrameData(_currentDepthFrame);
@@ -1776,8 +1848,8 @@ namespace MetriCam2.Cameras
                 return null;
             }
 
-            int height = DepthResolution.Y;
-            int width = DepthResolution.X;
+            int height = frame.Height;
+            int width = frame.Width;
 
             FloatCameraImage IRData = new FloatCameraImage(width, height);
             byte* source = (byte*)RealSense2API.GetFrameData(frame);
@@ -1802,8 +1874,8 @@ namespace MetriCam2.Cameras
                 return null;
             }
 
-            int height = ColorResolution.Y;
-            int width = ColorResolution.X;
+            int height = _currentColorFrame.Height;
+            int width = _currentColorFrame.Width;
 
             Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
             Rectangle imageRect = new Rectangle(0, 0, width, height);
@@ -1840,7 +1912,6 @@ namespace MetriCam2.Cameras
         {
             RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
             RealSense2API.LoadAdvancedConfig(json, dev);
-            //RealSense2API.DeleteDevice(dev);
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
 

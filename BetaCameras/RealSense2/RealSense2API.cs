@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Collections.Generic;
+using Metrilus.Util;
 
 namespace MetriCam2.Cameras
 {
@@ -580,6 +582,30 @@ namespace MetriCam2.Cameras
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static char* rs2_get_option_value_description(IntPtr sensor, Option option, float value, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static IntPtr rs2_get_stream_profiles(IntPtr sensor, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_get_stream_profiles_count(IntPtr stream_profile_list, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_delete_stream_profiles_list(IntPtr stream_profile_list);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static IntPtr rs2_get_stream_profile(IntPtr stream_profile_list, int index, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_delete_stream_profile(IntPtr stream_profile);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_get_video_stream_resolution(IntPtr stream_profile, ref int width, ref int height, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_get_frame_width(IntPtr frame, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_get_frame_height(IntPtr frame, IntPtr* error);
         #endregion
 
         public struct RS2Context
@@ -590,6 +616,11 @@ namespace MetriCam2.Cameras
             {
                 Handle = p;
             }
+
+            public void Delete()
+            {
+                rs2_delete_context(Handle);
+            }
         }
 
         public struct RS2Pipeline
@@ -599,6 +630,11 @@ namespace MetriCam2.Cameras
             public RS2Pipeline(IntPtr p)
             {
                 Handle = p;
+            }
+
+            public void Delete()
+            {
+                rs2_delete_pipeline(Handle);
             }
         }
 
@@ -637,11 +673,38 @@ namespace MetriCam2.Cameras
             {
                 Handle = p;
             }
+
+            public void Delete()
+            {
+                rs2_delete_config(Handle);
+            }
         }
 
         public struct RS2Frame
         {
             public IntPtr Handle { get; private set; }
+
+            unsafe public int Width
+            {
+                get
+                {
+                    IntPtr error = IntPtr.Zero;
+                    int width = rs2_get_frame_width(Handle, &error);
+                    HandleError(error);
+                    return width;
+                }
+            }
+
+            unsafe public int Height
+            {
+                get
+                {
+                    IntPtr error = IntPtr.Zero;
+                    int height = rs2_get_frame_height(Handle, &error);
+                    HandleError(error);
+                    return height;
+                }
+            }
 
             public RS2Frame(IntPtr p)
             {
@@ -651,6 +714,21 @@ namespace MetriCam2.Cameras
             public bool IsValid() => (null != Handle);
         }
 
+        public struct RS2StreamProfileList
+        {
+            public IntPtr Handle { get; private set; }
+
+            public RS2StreamProfileList(IntPtr p)
+            {
+                Handle = p;
+            }
+
+            public void Delete()
+            {
+                rs2_delete_stream_profiles_list(Handle);
+            }
+        }
+
         public struct RS2StreamProfile
         {
             public IntPtr Handle { get; private set; }
@@ -658,6 +736,11 @@ namespace MetriCam2.Cameras
             public RS2StreamProfile(IntPtr p)
             {
                 Handle = p;
+            }
+
+            public void Delete()
+            {
+                rs2_delete_stream_profile(Handle);
             }
         }
 
@@ -693,21 +776,6 @@ namespace MetriCam2.Cameras
             IntPtr error = IntPtr.Zero;
             rs2_config_disable_all_streams(conf.Handle, &error);
             HandleError(error);
-        }
-
-        unsafe public static void DeleteConfig(RS2Config conf)
-        {
-            rs2_delete_config(conf.Handle);
-        }
-
-        unsafe public static void DeletePipeline(RS2Pipeline pipe)
-        {
-            rs2_delete_pipeline(pipe.Handle);
-        }
-
-        unsafe public static void DeleteContext(RS2Context ctx)
-        {
-            rs2_delete_context(ctx.Handle);
         }
 
         unsafe public static void EnableDevice(RS2Config conf, string serial_number)
@@ -783,6 +851,15 @@ namespace MetriCam2.Cameras
             return new RS2StreamProfile(profilePtr);
         }
 
+        unsafe public static RS2StreamProfile GetStreamProfile(RS2StreamProfileList list, int index)
+        {
+            IntPtr error = IntPtr.Zero;
+            IntPtr profilePtr = rs2_get_stream_profile(list.Handle, index, &error);
+            HandleError(error);
+
+            return new RS2StreamProfile(profilePtr);
+        }
+
         unsafe public static void GetStreamProfileData(RS2StreamProfile profile, out Stream stream, out Format format, out int index, out int uid, out int framerate)
         {
             IntPtr error = IntPtr.Zero;
@@ -794,6 +871,18 @@ namespace MetriCam2.Cameras
 
             rs2_get_stream_profile_data(profile.Handle, ref stream, ref format, ref index, ref uid, ref framerate, &error);
             HandleError(error);
+        }
+
+        unsafe public static Point2i GetStreamProfileResolution(RS2StreamProfile profile)
+        {
+            IntPtr error = IntPtr.Zero;
+
+            int width = 0;
+            int height = 0;
+            rs2_get_video_stream_resolution(profile.Handle, ref width, ref height, &error);
+            HandleError(error);
+
+            return new Point2i(width, height);
         }
 
         unsafe public static void ConfigEnableStream(RS2Config conf, Stream stream, int index, int width, int height, Format format, int framerate)
@@ -1049,6 +1138,67 @@ namespace MetriCam2.Cameras
             return Marshal.PtrToStringAnsi((IntPtr)msg);
         }
 
+        unsafe public static RS2StreamProfileList GetStreamProfileList(RS2Sensor sensor)
+        {
+            IntPtr error = IntPtr.Zero;
+            IntPtr list = rs2_get_stream_profiles(sensor.Handle, &error);
+            HandleError(error);
+
+            return new RS2StreamProfileList(list);
+        }
+
+        unsafe public static int GetStreamProfileListCount(RS2StreamProfileList list)
+        {
+            IntPtr error = IntPtr.Zero;
+            int count = rs2_get_stream_profiles_count(list.Handle, &error);
+            HandleError(error);
+
+            return count;
+        }
+
+        unsafe public static List<Point2i> GetSupportedResolutions(RS2Pipeline pipe, string sensorName)
+        {
+            IntPtr error = IntPtr.Zero;
+            List<Point2i> res = new List<Point2i>();
+            RS2Sensor sensor = GetSensor(pipe, sensorName);
+            RS2StreamProfileList list = GetStreamProfileList(sensor);
+            int count = GetStreamProfileListCount(list);
+
+            for(int i = 0; i < count; i++)
+            {
+                RS2StreamProfile profile = GetStreamProfile(list, i);
+                Point2i resolution = GetStreamProfileResolution(profile);
+                if(!res.Contains(resolution))
+                    res.Add(resolution);
+            }
+
+            list.Delete();
+            sensor.Delete();
+
+            return res;
+        }
+
+        unsafe public static List<int> GetSupportedFrameRates(RS2Pipeline pipe, string sensorName)
+        {
+            IntPtr error = IntPtr.Zero;
+            List<int> res = new List<int>();
+            RS2Sensor sensor = GetSensor(pipe, sensorName);
+            RS2StreamProfileList list = GetStreamProfileList(sensor);
+            int count = GetStreamProfileListCount(list);
+
+            for (int i = 0; i < count; i++)
+            {
+                RS2StreamProfile profile = GetStreamProfile(list, i);
+                GetStreamProfileData(profile, out Stream stream, out Format format, out int index, out int uid, out int framerate);
+                if (!res.Contains(framerate))
+                    res.Add(framerate);
+            }
+
+            list.Delete();
+            sensor.Delete();
+
+            return res;
+        }
 
 
         unsafe private static void HandleError(IntPtr e)
