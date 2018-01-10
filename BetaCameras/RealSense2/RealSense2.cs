@@ -24,6 +24,7 @@ namespace MetriCam2.Cameras
         private RealSense2API.RS2Frame _currentRightFrame = new RealSense2API.RS2Frame();
         private float _depthScale = 0.0f;
         private bool _disposed = false;
+        private bool _updatingPipeline = false;
 
         public enum EmitterMode
         {
@@ -43,14 +44,19 @@ namespace MetriCam2.Cameras
         private Point2i _colorResolution = new Point2i(640, 480);
         public Point2i ColorResolution
         {
-            get
-            {
-                return _colorResolution;
-            }
-            
+            get { return _colorResolution; }
             set
             {
-                _colorResolution = value;
+                if(value != _colorResolution)
+                {
+                    _updatingPipeline = true;
+                    StopPipeline();
+                    DeactivateChannelImpl(ChannelNames.Color);
+                    _colorResolution = value;
+                    ActivateChannelImpl(ChannelNames.Color);
+                    StartPipeline();
+                    _updatingPipeline = false;
+                }
             }
         }
 
@@ -87,7 +93,16 @@ namespace MetriCam2.Cameras
             get { return _colorFPS; }
             set
             {
-                _colorFPS = value;
+                if (value != _colorFPS)
+                {
+                    _updatingPipeline = true;
+                    StopPipeline();
+                    DeactivateChannelImpl(ChannelNames.Color);
+                    _colorFPS = value;
+                    ActivateChannelImpl(ChannelNames.Color);
+                    StartPipeline();
+                    _updatingPipeline = false;
+                }
             }
         }
 
@@ -113,7 +128,42 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public Point2i DepthResolution { get; set; } = new Point2i(640, 480);
+        private Point2i _depthResolution = new Point2i(640, 480);
+        public Point2i DepthResolution
+        {
+            get { return _depthResolution; }
+            set
+            {
+                if (value != _depthResolution)
+                {
+                    _updatingPipeline = true;
+                    StopPipeline();
+
+                    if(IsChannelActive(ChannelNames.ZImage))
+                        DeactivateChannelImpl(ChannelNames.ZImage);
+
+                    if (IsChannelActive(ChannelNames.Left))
+                        DeactivateChannelImpl(ChannelNames.Left);
+
+                    if (IsChannelActive(ChannelNames.Right))
+                        DeactivateChannelImpl(ChannelNames.Right);
+
+                    _depthResolution = value;
+
+                    if (IsChannelActive(ChannelNames.ZImage))
+                        ActivateChannelImpl(ChannelNames.ZImage);
+
+                    if (IsChannelActive(ChannelNames.Left))
+                        ActivateChannelImpl(ChannelNames.Left);
+
+                    if (IsChannelActive(ChannelNames.Right))
+                        ActivateChannelImpl(ChannelNames.Right);
+                    
+                    StartPipeline();
+                    _updatingPipeline = false;
+                }
+            }
+        }
 
         ListParamDesc<Point2i> DepthResolutionDesc
         {
@@ -146,7 +196,37 @@ namespace MetriCam2.Cameras
         public int DepthFPS
         {
             get { return _depthFPS; }
-            set { _depthFPS = value; }
+            set
+            {
+                if (value != _depthFPS)
+                {
+                    _updatingPipeline = true;
+                    StopPipeline();
+
+                    if (IsChannelActive(ChannelNames.ZImage))
+                        DeactivateChannelImpl(ChannelNames.ZImage);
+
+                    if (IsChannelActive(ChannelNames.Left))
+                        DeactivateChannelImpl(ChannelNames.Left);
+
+                    if (IsChannelActive(ChannelNames.Right))
+                        DeactivateChannelImpl(ChannelNames.Right);
+
+                    _depthFPS = value;
+
+                    if (IsChannelActive(ChannelNames.ZImage))
+                        ActivateChannelImpl(ChannelNames.ZImage);
+
+                    if (IsChannelActive(ChannelNames.Left))
+                        ActivateChannelImpl(ChannelNames.Left);
+
+                    if (IsChannelActive(ChannelNames.Right))
+                        ActivateChannelImpl(ChannelNames.Right);
+
+                    StartPipeline();
+                    _updatingPipeline = false;
+                }
+            }
         }
 
         ListParamDesc<int> DepthFPSDesc
@@ -1459,7 +1539,7 @@ namespace MetriCam2.Cameras
                 ActivateChannel(ChannelNames.ZImage);
             }
 
-            RealSense2API.PipelineStart(_pipeline, _config);
+            StartPipeline();
 
             RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
 
@@ -1471,19 +1551,46 @@ namespace MetriCam2.Cameras
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
 
-        public void RestartPipeline()
+        private void StopPipeline()
         {
-            RealSense2API.PipelineStop(_pipeline);
+            if (RealSense2API.PipelineRunning)
+                RealSense2API.PipelineStop(_pipeline);
+            else
+            {
+                string msg = "RealSense2: Can't stop the pipeline since it is not running";
+                log.Error(msg);
+                throw new Exception(msg);
+            }
+                
+        }
+
+        private void StartPipeline()
+        {
+            if (RealSense2API.PipelineRunning)
+                RealSense2API.PipelineStop(_pipeline);
+
             RealSense2API.PipelineStart(_pipeline, _config);
         }
 
         protected override void DisconnectImpl()
         {
-            RealSense2API.PipelineStop(_pipeline);            
+            StopPipeline();
         }
 
         protected override void UpdateImpl()
         {
+            while(_updatingPipeline)
+            {
+                // wait for pipeline to restart with new settings
+            }
+
+            if (!RealSense2API.PipelineRunning)
+            {
+                string msg = "RealSense2: Can't update camera since pipeline is not running";
+                log.Error(msg);
+                throw new Exception(msg);
+            }
+
             RealSense2API.ReleaseFrame(_currentColorFrame);
             RealSense2API.ReleaseFrame(_currentDepthFrame);
             RealSense2API.ReleaseFrame(_currentLeftFrame);
@@ -1603,12 +1710,6 @@ namespace MetriCam2.Cameras
 
         protected override void ActivateChannelImpl(String channelName)
         {
-            if(IsChannelActive(channelName))
-            {
-                log.Debug(string.Format("Channel {0} is already active", channelName));
-                return;
-            }
-
             RealSense2API.Stream stream = RealSense2API.Stream.ANY;
             RealSense2API.Format format = RealSense2API.Format.ANY;
             int res_x = 640;
@@ -1623,7 +1724,7 @@ namespace MetriCam2.Cameras
 
                 res_x = ColorResolution.X;
                 res_y = ColorResolution.Y;
-                fps = (int)ColorFPS;
+                fps = ColorFPS;
                 index = -1;
             }
             else if (channelName == ChannelNames.ZImage)
@@ -1640,7 +1741,7 @@ namespace MetriCam2.Cameras
 
                 res_x = DepthResolution.X;
                 res_y = DepthResolution.Y;
-                fps = (int)DepthFPS;
+                fps = DepthFPS;
                 index = -1;
             }
             else if (channelName == ChannelNames.Left)
@@ -1674,7 +1775,7 @@ namespace MetriCam2.Cameras
 
                 res_x = DepthResolution.X;
                 res_y = DepthResolution.Y;
-                fps = (int)DepthFPS;
+                fps = DepthFPS;
                 index = 2;
             }
             else
@@ -1686,13 +1787,21 @@ namespace MetriCam2.Cameras
 
             bool running = RealSense2API.PipelineRunning;
 
-            if(running)
-                RealSense2API.PipelineStop(_pipeline);
+            if (running)
+            {
+                _updatingPipeline = true;
+                StopPipeline();
+            }
+                
 
             RealSense2API.ConfigEnableStream(_config, stream, index, res_x, res_y, format, fps);
 
+
             if(running)
-                RealSense2API.PipelineStart(_pipeline, _config);
+            {
+                StartPipeline();
+                _updatingPipeline = false;
+            }
         }
 
         protected override void DeactivateChannelImpl(String channelName)
@@ -1722,14 +1831,21 @@ namespace MetriCam2.Cameras
             _currentRightFrame = new RealSense2API.RS2Frame();
 
             bool running = RealSense2API.PipelineRunning;
+            
 
-            if(running)
-                RealSense2API.PipelineStop(_pipeline);
+            if (running)
+            {
+                _updatingPipeline = true;
+                StopPipeline();
+            } 
 
             RealSense2API.ConfigDisableStream(_config, stream);
 
             if (running)
-                RealSense2API.PipelineStart(_pipeline, _config);
+            {
+                StartPipeline();
+                _updatingPipeline = false;
+            }
         }
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
