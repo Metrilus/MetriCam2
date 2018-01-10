@@ -606,6 +606,9 @@ namespace MetriCam2.Cameras
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static int rs2_get_frame_height(IntPtr frame, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_config_can_resolve(IntPtr config, IntPtr pipe, IntPtr* error);
         #endregion
 
         public struct RS2Context
@@ -769,6 +772,15 @@ namespace MetriCam2.Cameras
             HandleError(error);
 
             return new RS2Config(conf);
+        }
+
+        unsafe public static bool CheckConfig(RS2Pipeline pipe, RS2Config conf)
+        {
+            IntPtr error = IntPtr.Zero;
+            int res = rs2_config_can_resolve(conf.Handle, pipe.Handle, &error);
+            HandleError(error);
+
+            return res == 1;
         }
 
         unsafe public static void DisableAllStreams(RS2Config conf)

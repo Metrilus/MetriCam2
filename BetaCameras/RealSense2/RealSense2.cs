@@ -1566,6 +1566,13 @@ namespace MetriCam2.Cameras
 
         private void StartPipeline()
         {
+            if(!RealSense2API.CheckConfig(_pipeline, _config))
+            {
+                string msg = "RealSense2: No camera that supports the current configuration detected";
+                log.Error(msg);
+                throw new Exception(msg);
+            }
+
             if (RealSense2API.PipelineRunning)
                 RealSense2API.PipelineStop(_pipeline);
 
