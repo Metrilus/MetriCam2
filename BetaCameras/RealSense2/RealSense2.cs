@@ -1591,104 +1591,111 @@ namespace MetriCam2.Cameras
                 // wait for pipeline to restart with new settings
             }
 
-            if (!RealSense2API.PipelineRunning)
+            try
             {
-                string msg = "RealSense2: Can't update camera since pipeline is not running";
-                log.Error(msg);
-                throw new Exception(msg);
-            }
-
-            RealSense2API.ReleaseFrame(_currentColorFrame);
-            RealSense2API.ReleaseFrame(_currentDepthFrame);
-            RealSense2API.ReleaseFrame(_currentLeftFrame);
-            RealSense2API.ReleaseFrame(_currentRightFrame);
-
-            bool getColor = IsChannelActive(ChannelNames.Color);
-            bool getDepth = IsChannelActive(ChannelNames.ZImage);
-            bool getLeft = IsChannelActive(ChannelNames.Left);
-            bool getRight = IsChannelActive(ChannelNames.Right);
-            bool haveColor = false;
-            bool haveDepth = false;
-            bool haveLeft = false;
-            bool haveRight = false;
-
-            while (true)
-            {
-                RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 5000);
-
-                if(!data.IsValid() || data.Handle == IntPtr.Zero)
+                if (!RealSense2API.PipelineRunning)
                 {
-                    RealSense2API.ReleaseFrame(data);
-                    continue;
+                    string msg = "RealSense2: Can't update camera since pipeline is not running";
+                    log.Error(msg);
+                    throw new Exception(msg);
                 }
 
-                int frameCount = RealSense2API.FrameEmbeddedCount(data);
-                log.Debug(string.Format("RealSense2: Got {0} Frames", frameCount));
+                RealSense2API.ReleaseFrame(_currentColorFrame);
+                RealSense2API.ReleaseFrame(_currentDepthFrame);
+                RealSense2API.ReleaseFrame(_currentLeftFrame);
+                RealSense2API.ReleaseFrame(_currentRightFrame);
 
+                bool getColor = IsChannelActive(ChannelNames.Color);
+                bool getDepth = IsChannelActive(ChannelNames.ZImage);
+                bool getLeft = IsChannelActive(ChannelNames.Left);
+                bool getRight = IsChannelActive(ChannelNames.Right);
+                bool haveColor = false;
+                bool haveDepth = false;
+                bool haveLeft = false;
+                bool haveRight = false;
 
-                // extract all frames
-                for (int j = 0; j < frameCount; j++)
+                while (true)
                 {
-                    RealSense2API.RS2Frame frame = RealSense2API.FrameExtract(data, j);
-                    RealSense2API.FrameAddRef(frame);
+                    RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 5000);
 
-                    // what kind of frame did we get?
-                    RealSense2API.RS2StreamProfile profile = RealSense2API.GetStreamProfile(frame);
-                    RealSense2API.GetStreamProfileData(profile, out RealSense2API.Stream stream, out RealSense2API.Format format, out int index, out int uid, out int framerate);
-
-                    log.Debug(string.Format("RealSense2: Analyzing frame {0}", j + 1));
-                    log.Debug(string.Format("RealSense2: stream {0}", stream.ToString()));
-                    log.Debug(string.Format("RealSense2: format {0}", format.ToString()));
-
-
-                    switch (stream)
+                    if (!data.IsValid() || data.Handle == IntPtr.Zero)
                     {
-                        case RealSense2API.Stream.COLOR:
-                            if (getColor)
-                            {
-                                RealSense2API.ReleaseFrame(_currentColorFrame);
-                                _currentColorFrame = frame;
-                                haveColor = true;
-                            }
-                            break;
-                        case RealSense2API.Stream.DEPTH:
-                            if (getDepth)
-                            {
-                                RealSense2API.ReleaseFrame(_currentDepthFrame);
-                                _currentDepthFrame = frame;
-                                haveDepth = true;
-                            }
-                            break;
-                        case RealSense2API.Stream.INFRARED:
-                            if(index == 1)
-                            {
-                                if (getLeft)
-                                {
-                                    RealSense2API.ReleaseFrame(_currentLeftFrame);
-                                    _currentLeftFrame = frame;
-                                    haveLeft = true;
-                                }
-                            }
-                            else if(index == 2)
-                            {
-                                if (getRight)
-                                {
-                                    RealSense2API.ReleaseFrame(_currentRightFrame);
-                                    _currentRightFrame = frame;
-                                    haveRight = true;
-                                }
-                            }
-                            break;
+                        RealSense2API.ReleaseFrame(data);
+                        continue;
                     }
+
+                    int frameCount = RealSense2API.FrameEmbeddedCount(data);
+                    log.Debug(string.Format("RealSense2: Got {0} Frames", frameCount));
+
+
+                    // extract all frames
+                    for (int j = 0; j < frameCount; j++)
+                    {
+                        RealSense2API.RS2Frame frame = RealSense2API.FrameExtract(data, j);
+                        RealSense2API.FrameAddRef(frame);
+
+                        // what kind of frame did we get?
+                        RealSense2API.RS2StreamProfile profile = RealSense2API.GetStreamProfile(frame);
+                        RealSense2API.GetStreamProfileData(profile, out RealSense2API.Stream stream, out RealSense2API.Format format, out int index, out int uid, out int framerate);
+
+                        log.Debug(string.Format("RealSense2: Analyzing frame {0}", j + 1));
+                        log.Debug(string.Format("RealSense2: stream {0}", stream.ToString()));
+                        log.Debug(string.Format("RealSense2: format {0}", format.ToString()));
+
+
+                        switch (stream)
+                        {
+                            case RealSense2API.Stream.COLOR:
+                                if (getColor)
+                                {
+                                    RealSense2API.ReleaseFrame(_currentColorFrame);
+                                    _currentColorFrame = frame;
+                                    haveColor = true;
+                                }
+                                break;
+                            case RealSense2API.Stream.DEPTH:
+                                if (getDepth)
+                                {
+                                    RealSense2API.ReleaseFrame(_currentDepthFrame);
+                                    _currentDepthFrame = frame;
+                                    haveDepth = true;
+                                }
+                                break;
+                            case RealSense2API.Stream.INFRARED:
+                                if (index == 1)
+                                {
+                                    if (getLeft)
+                                    {
+                                        RealSense2API.ReleaseFrame(_currentLeftFrame);
+                                        _currentLeftFrame = frame;
+                                        haveLeft = true;
+                                    }
+                                }
+                                else if (index == 2)
+                                {
+                                    if (getRight)
+                                    {
+                                        RealSense2API.ReleaseFrame(_currentRightFrame);
+                                        _currentRightFrame = frame;
+                                        haveRight = true;
+                                    }
+                                }
+                                break;
+                        }
+                    }
+
+                    RealSense2API.ReleaseFrame(data);
+
+                    if (((getColor && haveColor) || !getColor)
+                    && ((getDepth && haveDepth) || !getDepth)
+                    && ((getLeft && haveLeft) || !getLeft)
+                    && ((getRight && haveRight) || !getRight))
+                        break;
                 }
-
-                RealSense2API.ReleaseFrame(data);
-
-                if (((getColor && haveColor) || !getColor)
-                && ((getDepth && haveDepth) || !getDepth)
-                && ((getLeft && haveLeft) || !getLeft)
-                && ((getRight && haveRight) || !getRight))
-                    break;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
 
