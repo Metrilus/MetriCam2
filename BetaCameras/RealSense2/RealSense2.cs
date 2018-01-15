@@ -1843,41 +1843,8 @@ namespace MetriCam2.Cameras
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
-            string sensorName;
-            Point2i refResolution;
-
-            switch (channelName)
-            {
-                case ChannelNames.Color:
-                    sensorName = RealSense2API.SensorName.COLOR;
-                    refResolution = ColorResolution;
-                    break;
-                case ChannelNames.ZImage:
-                case ChannelNames.Left:
-                case ChannelNames.Right:
-                default:
-                    sensorName = RealSense2API.SensorName.STEREO;
-                    refResolution = DepthResolution;
-                    break;
-            }
-            
-            RealSense2API.RS2StreamProfile profile = new RealSense2API.RS2StreamProfile(IntPtr.Zero);
-            RealSense2API.RS2Sensor sensor = RealSense2API.GetSensor(_pipeline, sensorName);
-            RealSense2API.RS2StreamProfileList list = RealSense2API.GetStreamProfileList(sensor);
-            int count = RealSense2API.GetStreamProfileListCount(list);
-
-            for (int i = 0; i < count; i++)
-            {
-                RealSense2API.RS2StreamProfile p = RealSense2API.GetStreamProfile(list, i);
-                Point2i resolution = RealSense2API.GetStreamProfileResolution(p);
-                if (resolution == refResolution)
-                {
-                    profile = p;
-                    break;
-                }
-            }
-
-            if(!profile.IsValid())
+            RealSense2API.RS2StreamProfile profile = GetProfileFromSensor(channelName);
+            if (!profile.IsValid())
             {
                 // try to get profile from captured frame
                 profile = GetProfileFromCapturedFrames(channelName);
@@ -1904,6 +1871,45 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3],
                 intrinsics.coeffs[4]);
+        }
+
+        private RealSense2API.RS2StreamProfile GetProfileFromSensor(string channelName)
+        {
+            string sensorName;
+            Point2i refResolution;
+
+            switch (channelName)
+            {
+                case ChannelNames.Color:
+                    sensorName = RealSense2API.SensorName.COLOR;
+                    refResolution = ColorResolution;
+                    break;
+                case ChannelNames.ZImage:
+                case ChannelNames.Left:
+                case ChannelNames.Right:
+                default:
+                    sensorName = RealSense2API.SensorName.STEREO;
+                    refResolution = DepthResolution;
+                    break;
+            }
+
+            RealSense2API.RS2StreamProfile profile = new RealSense2API.RS2StreamProfile(IntPtr.Zero);
+            RealSense2API.RS2Sensor sensor = RealSense2API.GetSensor(_pipeline, sensorName);
+            RealSense2API.RS2StreamProfileList list = RealSense2API.GetStreamProfileList(sensor);
+            int count = RealSense2API.GetStreamProfileListCount(list);
+
+            for (int i = 0; i < count; i++)
+            {
+                RealSense2API.RS2StreamProfile p = RealSense2API.GetStreamProfile(list, i);
+                Point2i resolution = RealSense2API.GetStreamProfileResolution(p);
+                if (resolution == refResolution)
+                {
+                    profile = p;
+                    break;
+                }
+            }
+
+            return profile;
         }
 
         private RealSense2API.RS2StreamProfile GetProfileFromCapturedFrames(string channelName)
@@ -1946,8 +1952,13 @@ namespace MetriCam2.Cameras
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
-            RealSense2API.RS2StreamProfile from = GetProfileFromCapturedFrames(channelFromName);
-            RealSense2API.RS2StreamProfile to = GetProfileFromCapturedFrames(channelToName);
+            RealSense2API.RS2StreamProfile from = GetProfileFromSensor(channelFromName);
+            RealSense2API.RS2StreamProfile to = GetProfileFromSensor(channelToName);
+            if (!from.IsValid())
+                from = GetProfileFromCapturedFrames(channelFromName);
+            if (!to.IsValid())
+                to = GetProfileFromCapturedFrames(channelToName);
+
 
             RealSense2API.Extrinsics extrinsics = RealSense2API.GetExtrinsics(from, to);
 
