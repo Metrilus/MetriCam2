@@ -759,6 +759,8 @@ namespace MetriCam2.Cameras
             {
                 rs2_delete_stream_profile(Handle);
             }
+
+            public bool IsValid() => (null != Handle);
         }
 
         unsafe public static RS2Context CreateContext()
@@ -1169,7 +1171,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        unsafe private static RS2Sensor GetSensor(RS2Pipeline pipe, string sensorName)
+        unsafe public static RS2Sensor GetSensor(RS2Pipeline pipe, string sensorName)
         {
             try
             {
