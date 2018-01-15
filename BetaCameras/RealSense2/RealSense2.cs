@@ -1743,13 +1743,6 @@ namespace MetriCam2.Cameras
             }
             else if (channelName == ChannelNames.ZImage)
             {
-                if (IsChannelActive(ChannelNames.Left) || IsChannelActive(ChannelNames.Right))
-                {
-                    string msg = string.Format("RealSense2: can't have {0}/{1} and {2} active at the same time", ChannelNames.Left, ChannelNames.Right, ChannelNames.ZImage);
-                    log.Error(msg);
-                    throw new Exception(msg);
-                }
-
                 stream = RealSense2API.Stream.DEPTH;
                 format = RealSense2API.Format.Z16;
 
@@ -1760,13 +1753,6 @@ namespace MetriCam2.Cameras
             }
             else if (channelName == ChannelNames.Left)
             {
-                if(IsChannelActive(ChannelNames.ZImage))
-                {
-                    string msg = string.Format("RealSense2: can't have {0} and {1} active at the same time", ChannelNames.Left, ChannelNames.ZImage);
-                    log.Error(msg);
-                    throw new Exception(msg);
-                }
-
                 stream = RealSense2API.Stream.INFRARED;
                 format = RealSense2API.Format.Y8;
 
@@ -1777,13 +1763,6 @@ namespace MetriCam2.Cameras
             }
             else if (channelName == ChannelNames.Right)
             {
-                if (IsChannelActive(ChannelNames.ZImage))
-                {
-                    string msg = string.Format("RealSense2: can't have {0} and {1} active at the same time", ChannelNames.Right, ChannelNames.ZImage);
-                    log.Error(msg);
-                    throw new Exception(msg);
-                }
-
                 stream = RealSense2API.Stream.INFRARED;
                 format = RealSense2API.Format.Y8;
 
