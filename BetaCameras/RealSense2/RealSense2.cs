@@ -5,6 +5,8 @@ using Metrilus.Util;
 using System;
 using System.Drawing;
 using System.Collections.Generic;
+using MetriCam2.Attributes;
+using System.ComponentModel.DataAnnotations;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -81,8 +83,8 @@ namespace MetriCam2.Cameras
                 ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
                 res.Unit = "Pixel";
                 res.Description = "Resolution of the color sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
+                res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
                 return res;
             }
         }
@@ -122,8 +124,8 @@ namespace MetriCam2.Cameras
                 ListParamDesc<int> res = new ListParamDesc<int>(framerates);
                 res.Unit = "Frames per Second";
                 res.Description = "FPS of the color sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
+                res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
                 return res;
             }
         }
@@ -186,13 +188,34 @@ namespace MetriCam2.Cameras
                 ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
                 res.Unit = "Pixel";
                 res.Description = "Resolution of the depth sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
+                res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
                 return res;
             }
         }
 
         private int _depthFPS = 30;
+        private List<int> _allowedDepthFPS
+        {
+            get
+            {
+                List<int> framerates = new List<int>();
+                framerates.Add(30);
+
+                if (this.IsConnected)
+                {
+                    framerates = RealSense2API.GetSupportedFrameRates(_pipeline, RealSense2API.SensorName.STEREO);
+                    framerates.Sort();
+                }
+
+                return framerates;
+            }
+        }
+
+        //[IntList(_allowedDepthFPS)]
+        //[Description("FPS (Depth Sensor)", "Currently set frames per second the stereo sensor operates with",
+        //    Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected,
+        //    Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected)]
         public int DepthFPS
         {
             get { return _depthFPS; }
@@ -245,29 +268,22 @@ namespace MetriCam2.Cameras
                 ListParamDesc<int> res = new ListParamDesc<int>(framerates);
                 res.Unit = "Frames per Second";
                 res.Description = "FPS of the depth sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
+                res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
                 return res;
             }
         }
 
-        
+
+        [Description("Firmware", "Version string of the firmware currently operating on the camera", Camera.ConnectionStates.Connected)]
         public string Firmware
         {
             get
             {
-                return RealSense2API.GetFirmwareVersion(_pipeline);
-            }
-        }
+                if (!this.IsConnected)
+                    throw new Exception("Can't read firmware version unless the camera is connected");
 
-        ParamDesc<Point2i> FirmwareDesc
-        {
-            get
-            {
-                ParamDesc<Point2i> res = new ParamDesc<Point2i>();
-                res.Description = "Current Firmware version of the connected camera.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                return res;
+                return RealSense2API.GetFirmwareVersion(_pipeline);
             }
         }
 
@@ -295,11 +311,12 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Enable / disable color backlight compensation
         /// </summary>
+        [Description("Backlight Compensation", "Enable / disable color backlight compensation", Camera.ConnectionStates.Connected)]
         public bool BacklightCompensation
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, BacklightCompensationDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, "Backlight Compensation", RealSense2API.SensorName.COLOR);
                 float res = RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION);
 
                 if (res == 1.0f)
@@ -310,49 +327,38 @@ namespace MetriCam2.Cameras
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, BacklightCompensationDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, "Backlight Compensation", RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION, value ? 1.0f : 0.0f);
-            }
-        }
-
-        ParamDesc<bool> BacklightCompensationDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Unit = "Boolean";
-                res.Description = "Enable / disable color backlight compensation";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
-                return res;
             }
         }
 
         /// <summary>
         /// Color image brightness
         /// </summary>
+        [Range(BrightnessRange.X, BrightnessRange.Y)]
+        [Description("Brightness (Color Sensor)", "Color image brightness", Camera.ConnectionStates.Connected)]
         public int Brightness
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.BRIGHTNESS, BrightnessDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.BRIGHTNESS, "Brightness", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.BRIGHTNESS, BrightnessDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(BrightnessDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.BRIGHTNESS, "Brightness", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(BrightnessRange.X, BrightnessRange.Y, value, 0);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS, (float)value);
             }
         }
 
-        RangeParamDesc<int> BrightnessDesc
+        Point2i BrightnessRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Point2i range = new Point2i(0, 0);
 
                 if (this.IsConnected)
                 {
@@ -366,17 +372,10 @@ namespace MetriCam2.Cameras
                     out float def,
                     out string desc);
 
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    range = new Point2i((int)min, (int)max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Color image brightness";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
-                return res;
+
+                return range;
             }
         }
 
@@ -426,8 +425,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Color image contrast";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -478,8 +477,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Controls exposure time of color camera. Setting any value will disable auto exposure";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -508,8 +507,8 @@ namespace MetriCam2.Cameras
             {
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable color image auto-exposure";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -538,8 +537,8 @@ namespace MetriCam2.Cameras
             {
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Limit exposure time when auto-exposure is ON to preserve constant fps rate";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -615,8 +614,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Controls exposure time of depth camera. Setting any value will disable auto exposure";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -645,8 +644,8 @@ namespace MetriCam2.Cameras
             {
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable depth image auto-exposure";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -696,8 +695,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Color image gain";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -747,8 +746,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Depth image gain";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -798,8 +797,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Color image Gamma";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -849,8 +848,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Color image Hue";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -900,8 +899,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Color image Saturation";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -951,8 +950,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Color image Sharpness";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1028,8 +1027,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Controls white balance of color image.Setting any value will disable auto white balance";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1058,8 +1057,8 @@ namespace MetriCam2.Cameras
             {
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable auto-white-balance";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1134,8 +1133,8 @@ namespace MetriCam2.Cameras
                 }
 
                 res.Description = "Manual laser power in mw. applicable only when laser power mode is set to Manual";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1165,8 +1164,8 @@ namespace MetriCam2.Cameras
                 ParamDesc<EmitterMode> res = new ParamDesc<EmitterMode>()
                 {
                     Description = "Power of the DS5 projector",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                    ReadableWhen = Camera.ConnectionStates.Connected,
+                    WritableWhen = Camera.ConnectionStates.Connected,
                 };
 
                 return res;
@@ -1218,8 +1217,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1269,8 +1268,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1300,8 +1299,8 @@ namespace MetriCam2.Cameras
                 ListParamDesc<PowerLineMode> res = new ListParamDesc<PowerLineMode>(typeof(PowerLineMode))
                 {
                     Description = "Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                    ReadableWhen = Camera.ConnectionStates.Connected,
+                    WritableWhen = Camera.ConnectionStates.Connected,
                 };
 
                 return res;
@@ -1327,8 +1326,8 @@ namespace MetriCam2.Cameras
                 ParamDesc<float> res = new ParamDesc<float>();
                 res.Unit = "Degree Celsius °C";
                 res.Description = "Current Asic Temperature";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1358,8 +1357,8 @@ namespace MetriCam2.Cameras
             {
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable polling of camera internal errors";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1384,8 +1383,8 @@ namespace MetriCam2.Cameras
                 ParamDesc<float> res = new ParamDesc<float>();
                 res.Unit = "Degree Celsius °C";
                 res.Description = "Current Projector Temperature";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1415,8 +1414,8 @@ namespace MetriCam2.Cameras
             {
                 ParamDesc<bool> res = new ParamDesc<bool>();
                 res.Description = "Enable / disable trigger to be outputed from the camera to any external device on every depth frame";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1467,8 +1466,8 @@ namespace MetriCam2.Cameras
                 }
                 
                 res.Description = "Number of meters represented by a single depth unit";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = Camera.ConnectionStates.Connected;
+                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -2090,6 +2089,18 @@ namespace MetriCam2.Cameras
                     throw new Exception(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
                 else
                     throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) for 'LaserPower' is outside of the range between {2} and {3}", value, adjustedValue, desc.Min, desc.Max));
+        }
+
+        private void ValidateRange<T>(T min, T max, T value, T adjustedValue, bool adjusted = false) where T : IComparable
+        {
+            if(value.CompareTo(min) < 0
+            || value.CompareTo(max) > 0)
+            {
+                if (adjusted)
+                    throw new Exception(string.Format("Value {0} is outside of the range between {1} and {2}", value, min, max));
+                else
+                    throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) is outside of the range between {2} and {3}", value, adjustedValue, min, max));
+            }
         }
     }
 }

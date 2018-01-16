@@ -2,6 +2,8 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace MetriCam2.Attributes
 {
@@ -61,4 +63,82 @@ namespace MetriCam2.Attributes
         /// <param name="refs"></param>
         public NativeDependencies(params string[] refs) { }
     };
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class DescriptionAttribute : Attribute
+    {
+        private string _name;
+        private string _desc;
+        private Camera.ConnectionStates _readable;
+        private Camera.ConnectionStates _writable;
+
+        private void Init(string propertyName, string propertyDescription)
+        {
+            _name = propertyName;
+            _desc = propertyDescription;
+        }
+
+        public DescriptionAttribute(string propertyName, string propertyDescription)
+        {
+            Init(propertyName, propertyDescription);
+        }
+
+        public DescriptionAttribute(string propertyName, string propertyDescription, Camera.ConnectionStates readableWhen)
+        {
+            Init(propertyName, propertyDescription);
+            _readable = readableWhen;
+        }
+
+        public DescriptionAttribute(string propertyName, string propertyDescription, Camera.ConnectionStates readableWhen, Camera.ConnectionStates writableWhen)
+        {
+            Init(propertyName, propertyDescription);
+            _readable = readableWhen;
+            _writable = writableWhen;
+        }
+
+        public string Name { get => _name; }
+        public string Description { get => _desc; }
+        public Camera.ConnectionStates ReadableWhen { get => _readable; }
+        public Camera.ConnectionStates WritableWhen { get => _writable; }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    sealed public class FloatListAttribute : ValidationAttribute
+    {
+        private List<float> _allowedValues;
+
+        public FloatListAttribute(List<float> allowedValues)
+        {
+            _allowedValues = allowedValues;
+        }
+
+        public override bool IsValid(object value)
+        {
+            if (value is float)
+            {
+                return _allowedValues.Contains((float)value);
+            }
+            return false;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    sealed public class IntListAttribute : ValidationAttribute
+    {
+        private List<int> _allowedValues;
+
+        public IntListAttribute(List<int> allowedValues)
+        {
+            _allowedValues = allowedValues;
+        }
+
+        public override bool IsValid(object value)
+        {
+            if (value is float)
+            {
+                return _allowedValues.Contains((int)value);
+            }
+            return false;
+        }
+    }
 }

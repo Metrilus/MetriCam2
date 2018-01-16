@@ -47,6 +47,7 @@
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
@@ -76,12 +77,14 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>MetriCamLocale.resx</DependentUpon>
     </Compile>
+    <Compile Include="ParameterDescriptors.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="TypeConversion.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MetriCamLocale.resx">
