@@ -731,11 +731,11 @@ namespace MetriCam2.Cameras
             public bool IsValid() => (null != Handle);
         }
 
-        public struct RS2StreamProfileList
+        public struct RS2StreamProfilesList
         {
             public IntPtr Handle { get; private set; }
 
-            public RS2StreamProfileList(IntPtr p)
+            public RS2StreamProfilesList(IntPtr p)
             {
                 Handle = p;
             }
@@ -819,7 +819,7 @@ namespace MetriCam2.Cameras
                 int res = rs2_config_can_resolve(conf.Handle, pipe.Handle, &error);
                 HandleError(error);
 
-                return res == 1;
+                return (1 == res);
             }
             catch (Exception)
             {
@@ -969,7 +969,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        unsafe public static RS2StreamProfile GetStreamProfile(RS2StreamProfileList list, int index)
+        unsafe public static RS2StreamProfile GetStreamProfile(RS2StreamProfilesList list, int index)
         {
             try
             {
@@ -1285,10 +1285,7 @@ namespace MetriCam2.Cameras
 
                 sensor.Delete();
 
-                if (res == 1)
-                    return true;
-
-                return false;
+                return (1 == res);
             }
             catch (Exception)
             {
@@ -1309,10 +1306,7 @@ namespace MetriCam2.Cameras
 
                 sensor.Delete();
 
-                if (res == 1)
-                    return true;
-
-                return false;
+                return (1 == res);
             }
             catch (Exception)
             {
@@ -1404,7 +1398,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        unsafe public static RS2StreamProfileList GetStreamProfileList(RS2Sensor sensor)
+        unsafe public static RS2StreamProfilesList GetStreamProfileList(RS2Sensor sensor)
         {
             try
             {
@@ -1412,7 +1406,7 @@ namespace MetriCam2.Cameras
                 IntPtr list = rs2_get_stream_profiles(sensor.Handle, &error);
                 HandleError(error);
 
-                return new RS2StreamProfileList(list);
+                return new RS2StreamProfilesList(list);
             }
             catch (Exception)
             {
@@ -1420,7 +1414,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        unsafe public static int GetStreamProfileListCount(RS2StreamProfileList list)
+        unsafe public static int GetStreamProfileListCount(RS2StreamProfilesList list)
         {
             try
             {
@@ -1440,7 +1434,7 @@ namespace MetriCam2.Cameras
         {
             List<Point2i> res = new List<Point2i>();
             RS2Sensor sensor = GetSensor(pipe, sensorName);
-            RS2StreamProfileList list = GetStreamProfileList(sensor);
+            RS2StreamProfilesList list = GetStreamProfileList(sensor);
             int count = GetStreamProfileListCount(list);
 
             for(int i = 0; i < count; i++)
@@ -1461,7 +1455,7 @@ namespace MetriCam2.Cameras
         {
             List<int> res = new List<int>();
             RS2Sensor sensor = GetSensor(pipe, sensorName);
-            RS2StreamProfileList list = GetStreamProfileList(sensor);
+            RS2StreamProfilesList list = GetStreamProfileList(sensor);
             int count = GetStreamProfileListCount(list);
 
             for (int i = 0; i < count; i++)

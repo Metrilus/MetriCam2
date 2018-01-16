@@ -92,12 +92,18 @@ namespace MetriCam2.Controls
             get { return cam; }
             set
             {
-                cam = value;
-
                 if (null == value)
                 {
                     return;
                 }
+
+                if (null != cam)
+                {
+                    cam.OnConnected -= InitConfigurationParameters;
+                    cam.OnDisconnected -= InitConfigurationParameters;
+                }
+
+                cam = value;
 
                 // Update icon
                 //   use cam.CameraIcon
@@ -106,8 +112,8 @@ namespace MetriCam2.Controls
                 // Update child controls.
                 InitConfigurationParameters(cam);
 
-                cam.OnConnected += (camera) => { InitConfigurationParameters(camera); };
-                cam.OnDisconnected += (camera) => { InitConfigurationParameters(camera); };
+                cam.OnConnected += InitConfigurationParameters;
+                cam.OnDisconnected += InitConfigurationParameters;
             }
         }
 
@@ -242,10 +248,8 @@ namespace MetriCam2.Controls
                         scrollbarValue.ValueChanged += (sender, e) =>
                         {
                             string parameterValue = scrollbarValue.Value.ToString(CultureInfo.InvariantCulture);
-                            string parameterName = scrollbarValue.Name.Replace(VALUE_SUFFIX, string.Empty);
-                            Dictionary<string, object> keyValues = new Dictionary<string, object>();
-                            keyValues.Add(parameterName, parameterValue);
-                            Camera.SetParameters(keyValues);
+                            string parameterName = paramDesc.Name;
+                            Camera.SetParameter(paramDesc.Name, parameterValue);
                         };
                     }
                     else if (paramDesc is MetriCam2.Camera.RangeParamDesc<float>)
@@ -262,10 +266,8 @@ namespace MetriCam2.Controls
                         upDownValue.ValueChanged += (sender, e) =>
                         {
                             string parameterValue = upDownValue.Value.ToString(CultureInfo.InvariantCulture);
-                            string parameterName = upDownValue.Name.Replace(VALUE_SUFFIX, string.Empty);
-                            Dictionary<string, object> keyValues = new Dictionary<string, object>();
-                            keyValues.Add(parameterName, parameterValue);
-                            Camera.SetParameters(keyValues);
+                            string parameterName = paramDesc.Name;
+                            Camera.SetParameter(paramDesc.Name, parameterValue);
                         };
                     }
                     else
@@ -304,19 +306,15 @@ namespace MetriCam2.Controls
 
                             if (paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>)
                             {
-                                string selectedText = comboBoxValue.SelectedItem as string;
-                                string[] stringValue = selectedText.Split('x');
-                                parameterValue = new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
+                                parameterValue = StringToPoint2i(comboBoxValue.SelectedItem as string);
                             }
                             else
                             {
                                 parameterValue = int.Parse(comboBoxValue.SelectedItem as string);
                             }
 
-                            string parameterName = comboBoxValue.Name.Replace(VALUE_SUFFIX, string.Empty);
-                            Dictionary<string, object> keyValues = new Dictionary<string, object>();
-                            keyValues.Add(parameterName, parameterValue);
-                            Camera.SetParameters(keyValues);
+                            string parameterName = paramDesc.Name;
+                            Camera.SetParameter(paramDesc.Name, parameterValue);
                         };
                     }
 
@@ -528,8 +526,7 @@ namespace MetriCam2.Controls
 
                         if (paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>)
                         {
-                            string[] stringValue = item.Split('x');
-                            tmpVal = new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
+                            tmpVal = StringToPoint2i(item);
                         }
                         else
                         {
@@ -647,5 +644,11 @@ namespace MetriCam2.Controls
             return textBoxValue;
         }
         #endregion
+
+        private Point2i StringToPoint2i(string s)
+        {
+            string[] stringValue = s.Split('x');
+            return new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
+        }
     }
 }
