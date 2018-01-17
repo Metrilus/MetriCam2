@@ -704,10 +704,24 @@ namespace MetriCam2
                     }
                     else
                     {
-                        T castedItem = (T)Convert.ChangeType(item, this.Type, CultureInfo.InvariantCulture);
-                        if (castedItem.Equals(castedValue))
+                        
+                        
+                        if(this.Type == typeof(Point2i))
                         {
-                            return true;
+                            string[] stringValue = item.Split('x');
+                            Point2i point = new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
+                            if(point.Equals(castedValue))
+                            {
+                                return true;
+                            }
+                        }
+                        else
+                        {
+                            T castedItem = (T)Convert.ChangeType(item, this.Type, CultureInfo.InvariantCulture);
+                            if (castedItem.Equals(castedValue))
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -2156,6 +2170,10 @@ namespace MetriCam2
             else if (valueType == typeof(double))
             {
                 valueAsString = ((double)value).ToString("R", CultureInfo.InvariantCulture);
+            }
+            else if (valueType == typeof(Point2i))
+            {
+                valueAsString = string.Format("{0}x{1}", ((Point2i)value).X, ((Point2i)value).Y);
             }
             else
             {

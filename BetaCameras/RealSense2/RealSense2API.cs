@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Collections.Generic;
+using Metrilus.Util;
 
 namespace MetriCam2.Cameras
 {
-    public class RealSense2API
+    internal class RealSense2API
     {
         // HINT: update API version to currently used librealsense2
         private const int API_MAJOR_VERSION = 2;
@@ -580,6 +582,33 @@ namespace MetriCam2.Cameras
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static char* rs2_get_option_value_description(IntPtr sensor, Option option, float value, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static IntPtr rs2_get_stream_profiles(IntPtr sensor, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_get_stream_profiles_count(IntPtr stream_profile_list, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_delete_stream_profiles_list(IntPtr stream_profile_list);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static IntPtr rs2_get_stream_profile(IntPtr stream_profile_list, int index, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_delete_stream_profile(IntPtr stream_profile);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static void rs2_get_video_stream_resolution(IntPtr stream_profile, ref int width, ref int height, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_get_frame_width(IntPtr frame, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_get_frame_height(IntPtr frame, IntPtr* error);
+
+        [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static int rs2_config_can_resolve(IntPtr config, IntPtr pipe, IntPtr* error);
         #endregion
 
         public struct RS2Context
@@ -590,6 +619,11 @@ namespace MetriCam2.Cameras
             {
                 Handle = p;
             }
+
+            public void Delete()
+            {
+                rs2_delete_context(Handle);
+            }
         }
 
         public struct RS2Pipeline
@@ -599,6 +633,11 @@ namespace MetriCam2.Cameras
             public RS2Pipeline(IntPtr p)
             {
                 Handle = p;
+            }
+
+            public void Delete()
+            {
+                rs2_delete_pipeline(Handle);
             }
         }
 
@@ -637,11 +676,52 @@ namespace MetriCam2.Cameras
             {
                 Handle = p;
             }
+
+            public void Delete()
+            {
+                rs2_delete_config(Handle);
+            }
         }
 
         public struct RS2Frame
         {
             public IntPtr Handle { get; private set; }
+
+            unsafe public int Width
+            {
+                get
+                {
+                    try
+                    {
+                        IntPtr error = IntPtr.Zero;
+                        int width = rs2_get_frame_width(Handle, &error);
+                        HandleError(error);
+                        return width;
+                    }
+                    catch (Exception)
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            unsafe public int Height
+            {
+                get
+                {
+                    try
+                    {
+                        IntPtr error = IntPtr.Zero;
+                        int height = rs2_get_frame_height(Handle, &error);
+                        HandleError(error);
+                        return height;
+                    }
+                    catch (Exception)
+                    {
+                        throw;
+                    }
+                }
+            }
 
             public RS2Frame(IntPtr p)
             {
@@ -649,6 +729,21 @@ namespace MetriCam2.Cameras
             }
 
             public bool IsValid() => (null != Handle);
+        }
+
+        public struct RS2StreamProfilesList
+        {
+            public IntPtr Handle { get; private set; }
+
+            public RS2StreamProfilesList(IntPtr p)
+            {
+                Handle = p;
+            }
+
+            public void Delete()
+            {
+                rs2_delete_stream_profiles_list(Handle);
+            }
         }
 
         public struct RS2StreamProfile
@@ -659,80 +754,137 @@ namespace MetriCam2.Cameras
             {
                 Handle = p;
             }
+
+            public void Delete()
+            {
+                rs2_delete_stream_profile(Handle);
+            }
+
+            public bool IsValid() => (null != Handle);
         }
 
         unsafe public static RS2Context CreateContext()
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr ctx = rs2_create_context(ApiVersion, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr ctx = rs2_create_context(ApiVersion, &error);
+                HandleError(error);
 
-            return new RS2Context(ctx);
+                return new RS2Context(ctx);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static RS2Pipeline CreatePipeline(RS2Context ctx)
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr pipe = rs2_create_pipeline(ctx.Handle, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr pipe = rs2_create_pipeline(ctx.Handle, &error);
+                HandleError(error);
 
-            return new RS2Pipeline(pipe);
+                return new RS2Pipeline(pipe);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static RS2Config CreateConfig()
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr conf = rs2_create_config(&error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr conf = rs2_create_config(&error);
+                HandleError(error);
 
-            return new RS2Config(conf);
+                return new RS2Config(conf);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        unsafe public static bool CheckConfig(RS2Pipeline pipe, RS2Config conf)
+        {
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                int res = rs2_config_can_resolve(conf.Handle, pipe.Handle, &error);
+                HandleError(error);
+
+                return (1 == res);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void DisableAllStreams(RS2Config conf)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_config_disable_all_streams(conf.Handle, &error);
-            HandleError(error);
-        }
-
-        unsafe public static void DeleteConfig(RS2Config conf)
-        {
-            rs2_delete_config(conf.Handle);
-        }
-
-        unsafe public static void DeletePipeline(RS2Pipeline pipe)
-        {
-            rs2_delete_pipeline(pipe.Handle);
-        }
-
-        unsafe public static void DeleteContext(RS2Context ctx)
-        {
-            rs2_delete_context(ctx.Handle);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_config_disable_all_streams(conf.Handle, &error);
+                HandleError(error);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void EnableDevice(RS2Config conf, string serial_number)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_config_enable_device(conf.Handle, serial_number, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_config_enable_device(conf.Handle, serial_number, &error);
+                HandleError(error);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void PipelineStart(RS2Pipeline pipe, RS2Config conf)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_pipeline_start_with_config(pipe.Handle, conf.Handle, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_pipeline_start_with_config(pipe.Handle, conf.Handle, &error);
+                HandleError(error);
 
-            PipelineRunning = true;
+                PipelineRunning = true;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void PipelineStop(RS2Pipeline pipe)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_pipeline_stop(pipe.Handle, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_pipeline_stop(pipe.Handle, &error);
+                HandleError(error);
 
-            PipelineRunning = false;
+                PipelineRunning = false;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void ReleaseFrame(RS2Frame frame)
@@ -742,93 +894,197 @@ namespace MetriCam2.Cameras
 
         unsafe public static RS2Frame PipelineWaitForFrames(RS2Pipeline pipe, uint timeout)
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr frameset = rs2_pipeline_wait_for_frames(pipe.Handle, timeout, &error);
-            HandleError(error);
-
-            return new RS2Frame(frameset);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr frameset = rs2_pipeline_wait_for_frames(pipe.Handle, timeout, &error);
+                HandleError(error);
+                return new RS2Frame(frameset);
+            }
+            catch(Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void FrameAddRef(RS2Frame frame)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_frame_add_ref(frame.Handle, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_frame_add_ref(frame.Handle, &error);
+                HandleError(error);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static int FrameEmbeddedCount(RS2Frame frame)
         {
-            IntPtr error = IntPtr.Zero;
-            int count = rs2_embedded_frames_count(frame.Handle, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                int count = rs2_embedded_frames_count(frame.Handle, &error);
+                HandleError(error);
 
-            return count;
+                return count;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static RS2Frame FrameExtract(RS2Frame frame, int index)
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr extractedFramePtr = rs2_extract_frame(frame.Handle, index, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr extractedFramePtr = rs2_extract_frame(frame.Handle, index, &error);
+                HandleError(error);
 
-            return new RS2Frame(extractedFramePtr);
+                return new RS2Frame(extractedFramePtr);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static RS2StreamProfile GetStreamProfile(RS2Frame frame)
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr profilePtr = rs2_get_frame_stream_profile(frame.Handle, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr profilePtr = rs2_get_frame_stream_profile(frame.Handle, &error);
+                HandleError(error);
 
-            return new RS2StreamProfile(profilePtr);
+                return new RS2StreamProfile(profilePtr);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        unsafe public static RS2StreamProfile GetStreamProfile(RS2StreamProfilesList list, int index)
+        {
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr profilePtr = rs2_get_stream_profile(list.Handle, index, &error);
+                HandleError(error);
+
+                return new RS2StreamProfile(profilePtr);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void GetStreamProfileData(RS2StreamProfile profile, out Stream stream, out Format format, out int index, out int uid, out int framerate)
         {
-            IntPtr error = IntPtr.Zero;
-            stream = Stream.ANY;
-            format = Format.ANY;
-            index = 0;
-            uid = 0;
-            framerate = 0;
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                stream = Stream.ANY;
+                format = Format.ANY;
+                index = 0;
+                uid = 0;
+                framerate = 0;
 
-            rs2_get_stream_profile_data(profile.Handle, ref stream, ref format, ref index, ref uid, ref framerate, &error);
-            HandleError(error);
+                rs2_get_stream_profile_data(profile.Handle, ref stream, ref format, ref index, ref uid, ref framerate, &error);
+                HandleError(error);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        unsafe public static Point2i GetStreamProfileResolution(RS2StreamProfile profile)
+        {
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+
+                int width = 0;
+                int height = 0;
+                rs2_get_video_stream_resolution(profile.Handle, ref width, ref height, &error);
+                HandleError(error);
+
+                return new Point2i(width, height);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void ConfigEnableStream(RS2Config conf, Stream stream, int index, int width, int height, Format format, int framerate)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_config_enable_stream(conf.Handle, stream, index, width, height, format, framerate, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_config_enable_stream(conf.Handle, stream, index, width, height, format, framerate, &error);
+                HandleError(error);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void ConfigDisableStream(RS2Config conf, Stream stream)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_config_disable_stream(conf.Handle, stream, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_config_disable_stream(conf.Handle, stream, &error);
+                HandleError(error);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static IntPtr GetFrameData(RS2Frame frame)
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr data = rs2_get_frame_data(frame.Handle, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr data = rs2_get_frame_data(frame.Handle, &error);
+                HandleError(error);
 
-            return data;
+                return data;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static RS2Device GetActiveDevice(RS2Pipeline pipe)
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr profile = rs2_pipeline_get_active_profile(pipe.Handle, &error);
-            HandleError(error);
-            IntPtr device = rs2_pipeline_profile_get_device(profile, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr profile = rs2_pipeline_get_active_profile(pipe.Handle, &error);
+                HandleError(error);
+                IntPtr device = rs2_pipeline_profile_get_device(profile, &error);
+                HandleError(error);
 
-            rs2_delete_pipeline_profile(profile);
-            return new RS2Device(device);
+                rs2_delete_pipeline_profile(profile);
+                return new RS2Device(device);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void DeleteDevice(RS2Device device)
@@ -838,206 +1094,383 @@ namespace MetriCam2.Cameras
 
         unsafe public static bool AdvancedModeEnabled(RS2Device device)
         {
-            IntPtr error = IntPtr.Zero;
-            int enabled = 0;
-            rs2_is_enabled(device.Handle, ref enabled, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                int enabled = 0;
+                rs2_is_enabled(device.Handle, ref enabled, &error);
+                HandleError(error);
 
-            return enabled != 0;
+                return enabled != 0;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void EnabledAdvancedMode(RS2Device device, bool enable)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_toggle_advanced_mode(device.Handle, enable ? 1 : 0, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_toggle_advanced_mode(device.Handle, enable ? 1 : 0, &error);
+                HandleError(error);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void LoadAdvancedConfig(string config, RS2Device device)
         {
-            IntPtr error = IntPtr.Zero;
-            rs2_load_json(device.Handle, config, (uint)config.ToCharArray().Length, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                rs2_load_json(device.Handle, config, (uint)config.ToCharArray().Length, &error);
+                HandleError(error);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static Intrinsics GetIntrinsics(RS2StreamProfile profile)
         {
-            IntPtr error = IntPtr.Zero;
-            Intrinsics intrinsics = new Intrinsics();
-            rs2_get_video_stream_intrinsics(profile.Handle, &intrinsics, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                Intrinsics intrinsics = new Intrinsics();
+                rs2_get_video_stream_intrinsics(profile.Handle, &intrinsics, &error);
+                HandleError(error);
 
-            return intrinsics;
+                return intrinsics;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static Extrinsics GetExtrinsics(RS2StreamProfile from, RS2StreamProfile to)
         {
-            IntPtr error = IntPtr.Zero;
-            Extrinsics extrinsics = new Extrinsics();
-            rs2_get_extrinsics(from.Handle, to.Handle, &extrinsics, &error);
-            HandleError(error);
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                Extrinsics extrinsics = new Extrinsics();
+                rs2_get_extrinsics(from.Handle, to.Handle, &extrinsics, &error);
+                HandleError(error);
 
-            return extrinsics;
+                return extrinsics;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        unsafe private static RS2Sensor GetSensor(RS2Pipeline pipe, string sensorName)
+        unsafe public static RS2Sensor GetSensor(RS2Pipeline pipe, string sensorName)
         {
-            IntPtr error = IntPtr.Zero;
-            IntPtr sensor = IntPtr.Zero;
-
-            RS2Device dev = GetActiveDevice(pipe);
-            IntPtr list = rs2_query_sensors(dev.Handle, &error);
-            HandleError(error);
-            int sensorCount = rs2_get_sensors_count(list, &error);
-            HandleError(error);
-
-            for (int i = 0; i < sensorCount; i++)
+            try
             {
-                sensor = rs2_create_sensor(list, i, &error);
+                IntPtr error = IntPtr.Zero;
+                IntPtr sensor = IntPtr.Zero;
+
+                RS2Device dev = GetActiveDevice(pipe);
+                IntPtr list = rs2_query_sensors(dev.Handle, &error);
+                HandleError(error);
+                int sensorCount = rs2_get_sensors_count(list, &error);
                 HandleError(error);
 
-                char* info = rs2_get_sensor_info(sensor, CameraInfo.NAME, &error);
-                string infoString = Marshal.PtrToStringAnsi((IntPtr)info);
-                HandleError(error);
-
-                if (infoString == sensorName)
+                for (int i = 0; i < sensorCount; i++)
                 {
-                    break;
+                    sensor = rs2_create_sensor(list, i, &error);
+                    HandleError(error);
+
+                    char* info = rs2_get_sensor_info(sensor, CameraInfo.NAME, &error);
+                    string infoString = Marshal.PtrToStringAnsi((IntPtr)info);
+                    HandleError(error);
+
+                    if (infoString == sensorName)
+                    {
+                        break;
+                    }
+
+                    rs2_delete_sensor(sensor);
                 }
 
-                rs2_delete_sensor(sensor);
+                rs2_delete_sensor_list(list);
+                DeleteDevice(dev);
+
+                RS2Sensor sensor_obj = new RS2Sensor(sensor);
+                if (!sensor_obj.IsValid())
+                {
+                    throw new Exception(string.Format("No sensor with the name {0} detected", sensorName));
+                }
+
+                return sensor_obj;
             }
-
-            rs2_delete_sensor_list(list);
-            DeleteDevice(dev);
-
-            RS2Sensor sensor_obj = new RS2Sensor(sensor);
-            if (!sensor_obj.IsValid())
+            catch (Exception)
             {
-                throw new Exception(string.Format("No sensor with the name {0} detected", sensorName));
+                throw;
             }
-
-            return sensor_obj;
         }
 
         unsafe public static float GetDepthScale(RS2Pipeline pipe)
         {
-            IntPtr error = IntPtr.Zero;
-            float scale = 0.0f;
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                float scale = 0.0f;
 
-            RS2Sensor sensor = GetSensor(pipe, SensorName.STEREO);
-            scale = rs2_get_depth_scale(sensor.Handle, &error);
-            HandleError(error);
+                RS2Sensor sensor = GetSensor(pipe, SensorName.STEREO);
+                scale = rs2_get_depth_scale(sensor.Handle, &error);
+                HandleError(error);
 
-            sensor.Delete();
-            return scale;
+                sensor.Delete();
+                return scale;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static string GetFirmwareVersion(RS2Pipeline pipe)
         {
-            IntPtr error = IntPtr.Zero;
+            try
+            {
+                IntPtr error = IntPtr.Zero;
 
-            RS2Device dev = GetActiveDevice(pipe);
-            IntPtr list = rs2_query_sensors(dev.Handle, &error);
-            HandleError(error);
-            int sensorCount = rs2_get_sensors_count(list, &error);
-            HandleError(error);
+                RS2Device dev = GetActiveDevice(pipe);
+                IntPtr list = rs2_query_sensors(dev.Handle, &error);
+                HandleError(error);
+                int sensorCount = rs2_get_sensors_count(list, &error);
+                HandleError(error);
 
-            if (sensorCount == 0)
-                throw new InvalidOperationException("No sensor detected to get firmware version from");
+                if (sensorCount == 0)
+                    throw new InvalidOperationException("No sensor detected to get firmware version from");
 
 
-            IntPtr sensor = rs2_create_sensor(list, 0, &error);
-            HandleError(error);
+                IntPtr sensor = rs2_create_sensor(list, 0, &error);
+                HandleError(error);
 
-            char* info = rs2_get_sensor_info(sensor, CameraInfo.FIRMWARE_VERSION, &error);
-            string infoString = Marshal.PtrToStringAnsi((IntPtr)info);
-            HandleError(error);
+                char* info = rs2_get_sensor_info(sensor, CameraInfo.FIRMWARE_VERSION, &error);
+                string infoString = Marshal.PtrToStringAnsi((IntPtr)info);
+                HandleError(error);
 
-            rs2_delete_sensor_list(list);
-            DeleteDevice(dev);
+                rs2_delete_sensor_list(list);
+                DeleteDevice(dev);
 
-            return infoString;
+                return infoString;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static bool IsOptionSupported(RS2Pipeline pipe, string SensorName, Option option)
         {
-            IntPtr error = IntPtr.Zero;
-            int res = 0;
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                int res = 0;
 
-            RS2Sensor sensor = GetSensor(pipe, SensorName);
-            res = rs2_supports_option(sensor.Handle, option, &error);
-            HandleError(error);
+                RS2Sensor sensor = GetSensor(pipe, SensorName);
+                res = rs2_supports_option(sensor.Handle, option, &error);
+                HandleError(error);
 
-            sensor.Delete();
+                sensor.Delete();
 
-            if (res == 1)
-                return true;
-
-            return false;
+                return (1 == res);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static bool IsOptionRealOnly(RS2Pipeline pipe, string SensorName, Option option)
         {
-            IntPtr error = IntPtr.Zero;
-            int res = 0;
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                int res = 0;
 
-            RS2Sensor sensor = GetSensor(pipe, SensorName);
-            res = rs2_is_option_read_only(sensor.Handle, option, &error);
-            HandleError(error);
+                RS2Sensor sensor = GetSensor(pipe, SensorName);
+                res = rs2_is_option_read_only(sensor.Handle, option, &error);
+                HandleError(error);
 
-            sensor.Delete();
+                sensor.Delete();
 
-            if (res == 1)
-                return true;
-
-            return false;
+                return (1 == res);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static float GetOption(RS2Pipeline pipe, string SensorName, Option option)
         {
-            IntPtr error = IntPtr.Zero;
-            float res = 0.0f;
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                float res = 0.0f;
 
-            RS2Sensor sensor = GetSensor(pipe, SensorName);
-            res = rs2_get_option(sensor.Handle, option, &error);
-            HandleError(error);
+                RS2Sensor sensor = GetSensor(pipe, SensorName);
+                res = rs2_get_option(sensor.Handle, option, &error);
+                HandleError(error);
 
-            sensor.Delete();
-            return res;
+                sensor.Delete();
+                return res;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void SetOption(RS2Pipeline pipe, string SensorName, Option option, float value)
         {
-            IntPtr error = IntPtr.Zero;
+            try
+            {
+                IntPtr error = IntPtr.Zero;
 
-            RS2Sensor sensor = GetSensor(pipe, SensorName);
-            rs2_set_option(sensor.Handle, option, value, &error);
-            HandleError(error);
+                RS2Sensor sensor = GetSensor(pipe, SensorName);
+                rs2_set_option(sensor.Handle, option, value, &error);
+                HandleError(error);
 
-            sensor.Delete();
+                sensor.Delete();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         unsafe public static void QueryOptionInfo(RS2Pipeline pipe, string SensorName, Option option, out float min, out float max, out float step, out float def, out string desc)
         {
-            IntPtr error = IntPtr.Zero;
-            char* msg = null;
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                char* msg = null;
 
-            min = 0;
-            max = 0;
-            step = 0;
-            def = 0;
+                min = 0;
+                max = 0;
+                step = 0;
+                def = 0;
 
-            RS2Sensor sensor = GetSensor(pipe, SensorName);
-            rs2_get_option_range(sensor.Handle, option, ref min, ref max, ref step, ref def, &error);
+                RS2Sensor sensor = GetSensor(pipe, SensorName);
+                rs2_get_option_range(sensor.Handle, option, ref min, ref max, ref step, ref def, &error);
 
-            msg = rs2_get_option_description(sensor.Handle, option, &error);
-            HandleError(error);
-            desc = Marshal.PtrToStringAnsi((IntPtr)msg);
+                msg = rs2_get_option_description(sensor.Handle, option, &error);
+                HandleError(error);
+                desc = Marshal.PtrToStringAnsi((IntPtr)msg);
 
-            sensor.Delete();
+                sensor.Delete();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
+        unsafe public static string OptionValueInfo(RS2Pipeline pipe, string SensorName, Option option, float value)
+        {
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                char* msg = null;
+
+                RS2Sensor sensor = GetSensor(pipe, SensorName);
+                msg = rs2_get_option_value_description(sensor.Handle, option, value, &error);
+                HandleError(error);
+
+                return Marshal.PtrToStringAnsi((IntPtr)msg);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        unsafe public static RS2StreamProfilesList GetStreamProfileList(RS2Sensor sensor)
+        {
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                IntPtr list = rs2_get_stream_profiles(sensor.Handle, &error);
+                HandleError(error);
+
+                return new RS2StreamProfilesList(list);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        unsafe public static int GetStreamProfileListCount(RS2StreamProfilesList list)
+        {
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                int count = rs2_get_stream_profiles_count(list.Handle, &error);
+                HandleError(error);
+
+                return count;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        unsafe public static List<Point2i> GetSupportedResolutions(RS2Pipeline pipe, string sensorName)
+        {
+            List<Point2i> res = new List<Point2i>();
+            RS2Sensor sensor = GetSensor(pipe, sensorName);
+            RS2StreamProfilesList list = GetStreamProfileList(sensor);
+            int count = GetStreamProfileListCount(list);
+
+            for(int i = 0; i < count; i++)
+            {
+                RS2StreamProfile profile = GetStreamProfile(list, i);
+                Point2i resolution = GetStreamProfileResolution(profile);
+                if(!res.Contains(resolution))
+                    res.Add(resolution);
+            }
+
+            list.Delete();
+            sensor.Delete();
+
+            return res;
+        }
+
+        unsafe public static List<int> GetSupportedFrameRates(RS2Pipeline pipe, string sensorName)
+        {
+            List<int> res = new List<int>();
+            RS2Sensor sensor = GetSensor(pipe, sensorName);
+            RS2StreamProfilesList list = GetStreamProfileList(sensor);
+            int count = GetStreamProfileListCount(list);
+
+            for (int i = 0; i < count; i++)
+            {
+                RS2StreamProfile profile = GetStreamProfile(list, i);
+                GetStreamProfileData(profile, out Stream stream, out Format format, out int index, out int uid, out int framerate);
+                if (!res.Contains(framerate))
+                    res.Add(framerate);
+            }
+
+            list.Delete();
+            sensor.Delete();
+
+            return res;
+        }
 
 
         unsafe private static void HandleError(IntPtr e)
@@ -1058,7 +1491,7 @@ namespace MetriCam2.Cameras
 
             rs2_free_error(e);
 
-            throw new Exception($"Failed function: {functionName}\nErrormessage: {errorMsg}\nArguments: {arguments}");
+            throw new Exception($"Failed function: {functionName} Errormessage: {errorMsg} Arguments: {arguments}");
         }
     }
 }
