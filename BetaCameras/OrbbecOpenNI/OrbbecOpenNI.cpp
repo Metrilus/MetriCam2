@@ -515,8 +515,6 @@ Metrilus::Util::CameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcChannelImpl(S
 	{
 		return CalcPoint3fImage();
 	}
-
-	log->LeaveMethod();
 	return nullptr;
 }
 
