@@ -1,4 +1,4 @@
-﻿// Copyright (c) Metrilus GmbH
+// Copyright (c) Metrilus GmbH
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using Metrilus.Util;
@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using MetriCam2.Attributes;
 using System.ComponentModel.DataAnnotations;
+using System.Threading;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -49,16 +50,18 @@ namespace MetriCam2.Cameras
             get { return _colorResolution; }
             set
             {
-                if(value != _colorResolution)
-                {
-                    _updatingPipeline = true;
-                    StopPipeline();
-                    DeactivateChannelImpl(ChannelNames.Color);
-                    _colorResolution = value;
-                    ActivateChannelImpl(ChannelNames.Color);
-                    StartPipeline();
-                    _updatingPipeline = false;
-                }
+                if (value == _colorResolution)
+                    return;
+
+                ThrowIfBusy("color resolution");
+
+                _updatingPipeline = true;
+                StopPipeline();
+                DeactivateChannelImpl(ChannelNames.Color);
+                _colorResolution = value;
+                ActivateChannelImpl(ChannelNames.Color);
+                StartPipeline();
+                _updatingPipeline = false;
             }
         }
 
@@ -81,7 +84,7 @@ namespace MetriCam2.Cameras
                 }
 
                 ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
-                res.Unit = "Pixel";
+                res.Unit = "px";
                 res.Description = "Resolution of the color sensor.";
                 res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
                 res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
@@ -95,16 +98,18 @@ namespace MetriCam2.Cameras
             get { return _colorFPS; }
             set
             {
-                if (value != _colorFPS)
-                {
-                    _updatingPipeline = true;
-                    StopPipeline();
-                    DeactivateChannelImpl(ChannelNames.Color);
-                    _colorFPS = value;
-                    ActivateChannelImpl(ChannelNames.Color);
-                    StartPipeline();
-                    _updatingPipeline = false;
-                }
+                if (value == _colorFPS)
+                    return;
+
+                ThrowIfBusy("color fps");
+
+                _updatingPipeline = true;
+                StopPipeline();
+                DeactivateChannelImpl(ChannelNames.Color);
+                _colorFPS = value;
+                ActivateChannelImpl(ChannelNames.Color);
+                StartPipeline();
+                _updatingPipeline = false;
             }
         }
 
@@ -122,10 +127,10 @@ namespace MetriCam2.Cameras
                 }
                 
                 ListParamDesc<int> res = new ListParamDesc<int>(framerates);
-                res.Unit = "Frames per Second";
-                res.Description = "FPS of the color sensor.";
-                res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
-                res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
+                res.Unit = "fps";
+                res.Description = "Frames per Second of the color sensor.";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
                 return res;
             }
         }
@@ -136,34 +141,36 @@ namespace MetriCam2.Cameras
             get { return _depthResolution; }
             set
             {
-                if (value != _depthResolution)
-                {
-                    _updatingPipeline = true;
-                    StopPipeline();
+                if (value == _depthResolution)
+                    return;
 
-                    if(IsChannelActive(ChannelNames.ZImage))
-                        DeactivateChannelImpl(ChannelNames.ZImage);
+                ThrowIfBusy("depth resolution");
 
-                    if (IsChannelActive(ChannelNames.Left))
-                        DeactivateChannelImpl(ChannelNames.Left);
+                _updatingPipeline = true;
+                StopPipeline();
 
-                    if (IsChannelActive(ChannelNames.Right))
-                        DeactivateChannelImpl(ChannelNames.Right);
+                if (IsChannelActive(ChannelNames.ZImage))
+                    DeactivateChannelImpl(ChannelNames.ZImage);
 
-                    _depthResolution = value;
+                if (IsChannelActive(ChannelNames.Left))
+                    DeactivateChannelImpl(ChannelNames.Left);
 
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        ActivateChannelImpl(ChannelNames.ZImage);
+                if (IsChannelActive(ChannelNames.Right))
+                    DeactivateChannelImpl(ChannelNames.Right);
 
-                    if (IsChannelActive(ChannelNames.Left))
-                        ActivateChannelImpl(ChannelNames.Left);
+                _depthResolution = value;
 
-                    if (IsChannelActive(ChannelNames.Right))
-                        ActivateChannelImpl(ChannelNames.Right);
-                    
-                    StartPipeline();
-                    _updatingPipeline = false;
-                }
+                if (IsChannelActive(ChannelNames.ZImage))
+                    ActivateChannelImpl(ChannelNames.ZImage);
+
+                if (IsChannelActive(ChannelNames.Left))
+                    ActivateChannelImpl(ChannelNames.Left);
+
+                if (IsChannelActive(ChannelNames.Right))
+                    ActivateChannelImpl(ChannelNames.Right);
+
+                StartPipeline();
+                _updatingPipeline = false;
             }
         }
 
@@ -186,7 +193,7 @@ namespace MetriCam2.Cameras
                 }
 
                 ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
-                res.Unit = "Pixel";
+                res.Unit = "px";
                 res.Description = "Resolution of the depth sensor.";
                 res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
                 res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
@@ -221,34 +228,36 @@ namespace MetriCam2.Cameras
             get { return _depthFPS; }
             set
             {
-                if (value != _depthFPS)
-                {
-                    _updatingPipeline = true;
-                    StopPipeline();
+                if (value == _depthFPS)
+                    return;
 
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        DeactivateChannelImpl(ChannelNames.ZImage);
+                ThrowIfBusy("depth fps");
 
-                    if (IsChannelActive(ChannelNames.Left))
-                        DeactivateChannelImpl(ChannelNames.Left);
+                _updatingPipeline = true;
+                StopPipeline();
 
-                    if (IsChannelActive(ChannelNames.Right))
-                        DeactivateChannelImpl(ChannelNames.Right);
+                if (IsChannelActive(ChannelNames.ZImage))
+                    DeactivateChannelImpl(ChannelNames.ZImage);
 
-                    _depthFPS = value;
+                if (IsChannelActive(ChannelNames.Left))
+                    DeactivateChannelImpl(ChannelNames.Left);
 
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        ActivateChannelImpl(ChannelNames.ZImage);
+                if (IsChannelActive(ChannelNames.Right))
+                    DeactivateChannelImpl(ChannelNames.Right);
 
-                    if (IsChannelActive(ChannelNames.Left))
-                        ActivateChannelImpl(ChannelNames.Left);
+                _depthFPS = value;
 
-                    if (IsChannelActive(ChannelNames.Right))
-                        ActivateChannelImpl(ChannelNames.Right);
+                if (IsChannelActive(ChannelNames.ZImage))
+                    ActivateChannelImpl(ChannelNames.ZImage);
 
-                    StartPipeline();
-                    _updatingPipeline = false;
-                }
+                if (IsChannelActive(ChannelNames.Left))
+                    ActivateChannelImpl(ChannelNames.Left);
+
+                if (IsChannelActive(ChannelNames.Right))
+                    ActivateChannelImpl(ChannelNames.Right);
+
+                StartPipeline();
+                _updatingPipeline = false;
             }
         }
 
@@ -266,10 +275,10 @@ namespace MetriCam2.Cameras
                 }
 
                 ListParamDesc<int> res = new ListParamDesc<int>(framerates);
-                res.Unit = "Frames per Second";
-                res.Description = "FPS of the depth sensor.";
-                res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
-                res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
+                res.Unit = "fps";
+                res.Description = "Frames per Second of the depth sensor.";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
                 return res;
             }
         }
@@ -316,13 +325,8 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, "Backlight Compensation", RealSense2API.SensorName.COLOR);
-                float res = RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION);
-
-                if (res == 1.0f)
-                    return true;
-
-                return false;
+                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, BacklightCompensationDesc.Name, RealSense2API.SensorName.COLOR);
+                return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION) == 1.0f ? true : false;
             }
 
             set
@@ -362,17 +366,12 @@ namespace MetriCam2.Cameras
 
                 if (this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.BRIGHTNESS,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    range = new Point2i((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.BRIGHTNESS, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                }
+                else
+                {
+                    res = new RangeParamDesc<int>(0, 0);
                 }
 
                 return range;
@@ -407,17 +406,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.CONTRAST,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.CONTRAST, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -459,17 +449,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.EXPOSURE,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.EXPOSURE, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -557,32 +538,10 @@ namespace MetriCam2.Cameras
             set
             {
                 CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
-
-                RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.STEREO,
-                    RealSense2API.Option.EXPOSURE,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
+                var option = QueryOption(RealSense2API.Option.EXPOSURE, RealSense2API.SensorName.STEREO);
 
                 // step size for depth exposure is 20
-                float adjusted_value = (float)value;
-                int rounding = (value - (int)min) % (int)step;
-                adjusted_value -= (float)rounding;
-
-                if (rounding > step / 2)
-                    adjusted_value += step;
-
-                if (adjusted_value > max)
-                    adjusted_value -= step;
-                if (adjusted_value < min)
-                    adjusted_value += step;
-
-
+                float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
                 CheckRangeValid<int>(ExposureDepthDesc, value, (int)adjusted_value, true);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE, adjusted_value);
             }
@@ -596,17 +555,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.STEREO,
-                    RealSense2API.Option.EXPOSURE,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.EXPOSURE, RealSense2API.SensorName.STEREO);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -677,17 +627,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.GAIN,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.GAIN, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -728,17 +669,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.STEREO,
-                    RealSense2API.Option.GAIN,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.GAIN, RealSense2API.SensorName.STEREO);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -779,17 +711,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.GAMMA,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.GAMMA, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -830,17 +753,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.HUE,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.HUE, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -881,17 +795,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.SATURATION,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.SATURATION, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -932,17 +837,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.SHARPNESS,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.SHARPNESS, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -970,31 +866,11 @@ namespace MetriCam2.Cameras
             set
             {
                 CheckOptionSupported(RealSense2API.Option.WHITE_BALANCE, WhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
-
-                RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.WHITE_BALANCE,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
+                var option = QueryOption(RealSense2API.Option.WHITE_BALANCE, RealSense2API.SensorName.COLOR);
 
 
                 // step size for depth white balance is 10
-                float adjusted_value = (float)value;
-                int rounding = (value - (int)min) % (int)step;
-                adjusted_value -= (float)rounding;
-
-                if (rounding > step / 2)
-                    adjusted_value += step;
-
-                if (adjusted_value > max)
-                    adjusted_value -= step;
-                if (adjusted_value < min)
-                    adjusted_value += step;
-
+                float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
                 CheckRangeValid<int>(WhiteBalanceDesc, value, (int)adjusted_value, true);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE, adjusted_value);
@@ -1009,17 +885,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.WHITE_BALANCE,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.WHITE_BALANCE, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -1077,31 +944,10 @@ namespace MetriCam2.Cameras
             set
             {
                 CheckOptionSupported(RealSense2API.Option.LASER_POWER, LaserPowerDesc.Name, RealSense2API.SensorName.STEREO);
-
-                RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.STEREO,
-                    RealSense2API.Option.LASER_POWER,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
+                var option = QueryOption(RealSense2API.Option.LASER_POWER, RealSense2API.SensorName.STEREO);
 
                 // step size for depth laser power is 30
-                float adjusted_value = (float)value;
-                int rounding = (value - (int)min) % (int)step;
-                adjusted_value -= (float)rounding;
-
-                if (rounding > step / 2)
-                    adjusted_value += step;
-
-                if (adjusted_value > max)
-                    adjusted_value -= step;
-                if (adjusted_value < min)
-                    adjusted_value += step;
-
+                float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
                 CheckRangeValid<int>(LaserPowerDesc, value, (int)adjusted_value, true);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER, adjusted_value);
             }
@@ -1115,17 +961,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.STEREO,
-                    RealSense2API.Option.LASER_POWER,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                   res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.LASER_POWER, RealSense2API.SensorName.STEREO);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -1199,17 +1036,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.COLOR,
-                    RealSense2API.Option.FRAMES_QUEUE_SIZE,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.FRAMES_QUEUE_SIZE, RealSense2API.SensorName.COLOR);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -1250,17 +1078,8 @@ namespace MetriCam2.Cameras
 
                 if (this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.STEREO,
-                    RealSense2API.Option.FRAMES_QUEUE_SIZE,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<int>((int)min, (int)max);
+                    var option = QueryOption(RealSense2API.Option.FRAMES_QUEUE_SIZE, RealSense2API.SensorName.STEREO);
+                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
                 {
@@ -1324,10 +1143,10 @@ namespace MetriCam2.Cameras
             get
             {
                 ParamDesc<float> res = new ParamDesc<float>();
-                res.Unit = "Degree Celsius °C";
-                res.Description = "Current Asic Temperature";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
+                res.Unit = "°C";
+                res.Description = "Asic Temperature";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1381,10 +1200,10 @@ namespace MetriCam2.Cameras
             get
             {
                 ParamDesc<float> res = new ParamDesc<float>();
-                res.Unit = "Degree Celsius °C";
-                res.Description = "Current Projector Temperature";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
+                res.Unit = "°C";
+                res.Description = "Projector Temperature";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1448,17 +1267,8 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    RealSense2API.QueryOptionInfo(
-                    _pipeline,
-                    RealSense2API.SensorName.STEREO,
-                    RealSense2API.Option.DEPTH_UNITS,
-                    out float min,
-                    out float max,
-                    out float step,
-                    out float def,
-                    out string desc);
-
-                    res = new RangeParamDesc<float>(min, max);
+                    var option = QueryOption(RealSense2API.Option.DEPTH_UNITS, RealSense2API.SensorName.STEREO);
+                    res = new RangeParamDesc<float>(option.min, option.max);
                 }
                 else
                 {
@@ -1558,7 +1368,7 @@ namespace MetriCam2.Cameras
             {
                 string msg = "RealSense2: Can't stop the pipeline since it is not running";
                 log.Error(msg);
-                throw new Exception(msg);
+                throw new InvalidOperationException(msg);
             }
                 
         }
@@ -1569,7 +1379,7 @@ namespace MetriCam2.Cameras
             {
                 string msg = "RealSense2: No camera that supports the current configuration detected";
                 log.Error(msg);
-                throw new Exception(msg);
+                throw new InvalidOperationException(msg);
             }
 
             if (RealSense2API.PipelineRunning)
@@ -1588,113 +1398,107 @@ namespace MetriCam2.Cameras
             while(_updatingPipeline)
             {
                 // wait for pipeline to restart with new settings
+                Thread.Sleep(50);
             }
 
-            try
+            if (!RealSense2API.PipelineRunning)
             {
-                if (!RealSense2API.PipelineRunning)
+                string msg = "RealSense2: Can't update camera since pipeline is not running";
+                log.Error(msg);
+                throw new InvalidOperationException(msg);
+            }
+
+            RealSense2API.ReleaseFrame(_currentColorFrame);
+            RealSense2API.ReleaseFrame(_currentDepthFrame);
+            RealSense2API.ReleaseFrame(_currentLeftFrame);
+            RealSense2API.ReleaseFrame(_currentRightFrame);
+
+            bool getColor = IsChannelActive(ChannelNames.Color);
+            bool getDepth = IsChannelActive(ChannelNames.ZImage);
+            bool getLeft = IsChannelActive(ChannelNames.Left);
+            bool getRight = IsChannelActive(ChannelNames.Right);
+            bool haveColor = false;
+            bool haveDepth = false;
+            bool haveLeft = false;
+            bool haveRight = false;
+
+            while (true)
+            {
+                RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 5000);
+
+                if (!data.IsValid() || data.Handle == IntPtr.Zero)
                 {
-                    string msg = "RealSense2: Can't update camera since pipeline is not running";
-                    log.Error(msg);
-                    throw new Exception(msg);
-                }
-
-                RealSense2API.ReleaseFrame(_currentColorFrame);
-                RealSense2API.ReleaseFrame(_currentDepthFrame);
-                RealSense2API.ReleaseFrame(_currentLeftFrame);
-                RealSense2API.ReleaseFrame(_currentRightFrame);
-
-                bool getColor = IsChannelActive(ChannelNames.Color);
-                bool getDepth = IsChannelActive(ChannelNames.ZImage);
-                bool getLeft = IsChannelActive(ChannelNames.Left);
-                bool getRight = IsChannelActive(ChannelNames.Right);
-                bool haveColor = false;
-                bool haveDepth = false;
-                bool haveLeft = false;
-                bool haveRight = false;
-
-                while (true)
-                {
-                    RealSense2API.RS2Frame data = RealSense2API.PipelineWaitForFrames(_pipeline, 5000);
-
-                    if (!data.IsValid() || data.Handle == IntPtr.Zero)
-                    {
-                        RealSense2API.ReleaseFrame(data);
-                        continue;
-                    }
-
-                    int frameCount = RealSense2API.FrameEmbeddedCount(data);
-                    log.Debug(string.Format("RealSense2: Got {0} Frames", frameCount));
-
-
-                    // extract all frames
-                    for (int j = 0; j < frameCount; j++)
-                    {
-                        RealSense2API.RS2Frame frame = RealSense2API.FrameExtract(data, j);
-                        RealSense2API.FrameAddRef(frame);
-
-                        // what kind of frame did we get?
-                        RealSense2API.RS2StreamProfile profile = RealSense2API.GetStreamProfile(frame);
-                        RealSense2API.GetStreamProfileData(profile, out RealSense2API.Stream stream, out RealSense2API.Format format, out int index, out int uid, out int framerate);
-
-                        log.Debug(string.Format("RealSense2: Analyzing frame {0}", j + 1));
-                        log.Debug(string.Format("RealSense2: stream {0}", stream.ToString()));
-                        log.Debug(string.Format("RealSense2: format {0}", format.ToString()));
-
-
-                        switch (stream)
-                        {
-                            case RealSense2API.Stream.COLOR:
-                                if (getColor)
-                                {
-                                    RealSense2API.ReleaseFrame(_currentColorFrame);
-                                    _currentColorFrame = frame;
-                                    haveColor = true;
-                                }
-                                break;
-                            case RealSense2API.Stream.DEPTH:
-                                if (getDepth)
-                                {
-                                    RealSense2API.ReleaseFrame(_currentDepthFrame);
-                                    _currentDepthFrame = frame;
-                                    haveDepth = true;
-                                }
-                                break;
-                            case RealSense2API.Stream.INFRARED:
-                                if (index == 1)
-                                {
-                                    if (getLeft)
-                                    {
-                                        RealSense2API.ReleaseFrame(_currentLeftFrame);
-                                        _currentLeftFrame = frame;
-                                        haveLeft = true;
-                                    }
-                                }
-                                else if (index == 2)
-                                {
-                                    if (getRight)
-                                    {
-                                        RealSense2API.ReleaseFrame(_currentRightFrame);
-                                        _currentRightFrame = frame;
-                                        haveRight = true;
-                                    }
-                                }
-                                break;
-                        }
-                    }
-
                     RealSense2API.ReleaseFrame(data);
-
-                    if (((getColor && haveColor) || !getColor)
-                    && ((getDepth && haveDepth) || !getDepth)
-                    && ((getLeft && haveLeft) || !getLeft)
-                    && ((getRight && haveRight) || !getRight))
-                        break;
+                    continue;
                 }
-            }
-            catch (Exception)
-            {
-                throw;
+
+                int frameCount = RealSense2API.FrameEmbeddedCount(data);
+                log.Debug(string.Format("RealSense2: Got {0} Frames", frameCount));
+
+
+                // extract all frames
+                for (int j = 0; j < frameCount; j++)
+                {
+                    RealSense2API.RS2Frame frame = RealSense2API.FrameExtract(data, j);
+                    RealSense2API.FrameAddRef(frame);
+
+                    // what kind of frame did we get?
+                    RealSense2API.RS2StreamProfile profile = RealSense2API.GetStreamProfile(frame);
+                    RealSense2API.GetStreamProfileData(profile, out RealSense2API.Stream stream, out RealSense2API.Format format, out int index, out int uid, out int framerate);
+
+                    log.Debug(string.Format("RealSense2: Analyzing frame {0}", j + 1));
+                    log.Debug(string.Format("RealSense2: stream {0}", stream.ToString()));
+                    log.Debug(string.Format("RealSense2: format {0}", format.ToString()));
+
+
+                    switch (stream)
+                    {
+                        case RealSense2API.Stream.COLOR:
+                            if (getColor)
+                            {
+                                RealSense2API.ReleaseFrame(_currentColorFrame);
+                                _currentColorFrame = frame;
+                                haveColor = true;
+                            }
+                            break;
+                        case RealSense2API.Stream.DEPTH:
+                            if (getDepth)
+                            {
+                                RealSense2API.ReleaseFrame(_currentDepthFrame);
+                                _currentDepthFrame = frame;
+                                haveDepth = true;
+                            }
+                            break;
+                        case RealSense2API.Stream.INFRARED:
+                            if (index == 1)
+                            {
+                                if (getLeft)
+                                {
+                                    RealSense2API.ReleaseFrame(_currentLeftFrame);
+                                    _currentLeftFrame = frame;
+                                    haveLeft = true;
+                                }
+                            }
+                            else if (index == 2)
+                            {
+                                if (getRight)
+                                {
+                                    RealSense2API.ReleaseFrame(_currentRightFrame);
+                                    _currentRightFrame = frame;
+                                    haveRight = true;
+                                }
+                            }
+                            break;
+                    }
+                }
+
+                RealSense2API.ReleaseFrame(data);
+
+                if (((getColor && haveColor) || !getColor)
+                && ((getDepth && haveDepth) || !getDepth)
+                && ((getLeft && haveLeft) || !getLeft)
+                && ((getRight && haveRight) || !getRight))
+                    break;
             }
         }
 
@@ -1892,9 +1696,8 @@ namespace MetriCam2.Cameras
                     break;
             }
 
-            RealSense2API.RS2StreamProfile profile = new RealSense2API.RS2StreamProfile(IntPtr.Zero);
             RealSense2API.RS2Sensor sensor = RealSense2API.GetSensor(_pipeline, sensorName);
-            RealSense2API.RS2StreamProfileList list = RealSense2API.GetStreamProfileList(sensor);
+            RealSense2API.RS2StreamProfilesList list = RealSense2API.GetStreamProfileList(sensor);
             int count = RealSense2API.GetStreamProfileListCount(list);
 
             for (int i = 0; i < count; i++)
@@ -1903,12 +1706,11 @@ namespace MetriCam2.Cameras
                 Point2i resolution = RealSense2API.GetStreamProfileResolution(p);
                 if (resolution == refResolution)
                 {
-                    profile = p;
-                    break;
+                    return p;
                 }
             }
 
-            return profile;
+            return new RealSense2API.RS2StreamProfile(IntPtr.Zero);
         }
 
         private RealSense2API.RS2StreamProfile GetProfileFromCapturedFrames(string channelName)
@@ -1936,7 +1738,7 @@ namespace MetriCam2.Cameras
                 default:
                     string msg = string.Format("RealSense2: stream profile for channel {0} not available", channelName);
                     log.Error(msg);
-                    throw new Exception(msg);
+                    throw new ArgumentException(msg, nameof(channelName));
             }
 
             if (!frame.IsValid())
@@ -2076,7 +1878,7 @@ namespace MetriCam2.Cameras
         private void CheckOptionSupported(RealSense2API.Option option, string optionName, string sensorName)
         {
             if (!this.IsConnected)
-                throw new Exception(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
+                throw new InvalidOperationException(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
 
             if (!RealSense2API.IsOptionSupported(_pipeline, sensorName, option))
                 throw new NotSupportedException(string.Format("Option '{0}' is not supported by the {1} sensor of this camera.", optionName, sensorName));
@@ -2086,9 +1888,47 @@ namespace MetriCam2.Cameras
         {
             if (!desc.IsValid(value))
                 if (adjusted)
-                    throw new Exception(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
+                    throw new ArgumentOutOfRangeException(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
                 else
-                    throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) for 'LaserPower' is outside of the range between {2} and {3}", value, adjustedValue, desc.Min, desc.Max));
+                    throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
+        }
+
+        private void ThrowIfBusy(string propertyName)
+        {
+            if (_updatingPipeline)
+                throw new InvalidOperationException(string.Format("Can't set {0}. The pipeline is still in the process of updating a parameter.", propertyName));
+        }
+
+        private (float min, float max, float step, float def) QueryOption(RealSense2API.Option option, string sensorName)
+        {
+            RealSense2API.QueryOptionInfo(
+                    _pipeline,
+                    sensorName,
+                    option,
+                    out float min,
+                    out float max,
+                    out float step,
+                    out float def,
+                    out string desc);
+
+            return (min, max, step, def);
+        }
+
+        private float AdjustValue(float min, float max, float value, float step)
+        {
+            float adjusted_value = value;
+            float rounding = (value - min) % step;
+            adjusted_value -= rounding;
+
+            if (rounding > step / 2)
+                adjusted_value += step;
+
+            if (adjusted_value > max)
+                adjusted_value -= step;
+            if (adjusted_value < min)
+                adjusted_value += step;
+
+            return adjusted_value;
         }
 
         private void ValidateRange<T>(T min, T max, T value, T adjustedValue, bool adjusted = false) where T : IComparable
