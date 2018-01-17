@@ -306,7 +306,7 @@ namespace MetriCam2.Controls
 
                             if (paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>)
                             {
-                                parameterValue = StringToPoint2i(comboBoxValue.SelectedItem as string);
+                                parameterValue = ResolutionToPoint2i(comboBoxValue.SelectedItem as string);
                             }
                             else
                             {
@@ -526,7 +526,7 @@ namespace MetriCam2.Controls
 
                         if (paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>)
                         {
-                            tmpVal = StringToPoint2i(item);
+                            tmpVal = ResolutionToPoint2i(item);
                         }
                         else
                         {
@@ -645,7 +645,7 @@ namespace MetriCam2.Controls
         }
         #endregion
 
-        private Point2i StringToPoint2i(string s)
+        public static Point2i ResolutionToPoint2i(string s)
         {
             string[] stringValue = s.Split('x');
             return new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));

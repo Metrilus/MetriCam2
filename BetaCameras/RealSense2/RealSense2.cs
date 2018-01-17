@@ -51,6 +51,8 @@ namespace MetriCam2.Cameras
                 if (value == _colorResolution)
                     return;
 
+                ThrowIfBusy("color resolution");
+
                 _updatingPipeline = true;
                 StopPipeline();
                 DeactivateChannelImpl(ChannelNames.Color);
@@ -97,6 +99,8 @@ namespace MetriCam2.Cameras
                 if (value == _colorFPS)
                     return;
 
+                ThrowIfBusy("color fps");
+
                 _updatingPipeline = true;
                 StopPipeline();
                 DeactivateChannelImpl(ChannelNames.Color);
@@ -137,6 +141,8 @@ namespace MetriCam2.Cameras
             {
                 if (value == _depthResolution)
                     return;
+
+                ThrowIfBusy("depth resolution");
 
                 _updatingPipeline = true;
                 StopPipeline();
@@ -201,6 +207,8 @@ namespace MetriCam2.Cameras
             {
                 if (value == _depthFPS)
                     return;
+
+                ThrowIfBusy("depth fps");
 
                 _updatingPipeline = true;
                 StopPipeline();
@@ -1879,6 +1887,12 @@ namespace MetriCam2.Cameras
                     throw new Exception(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
                 else
                     throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
+        }
+
+        private void ThrowIfBusy(string propertyName)
+        {
+            if (_updatingPipeline)
+                throw new InvalidOperationException(string.Format("Can't set {0}. The pipeline is still in the process of updating a parameter.", propertyName));
         }
 
         private (float min, float max, float step, float def) QueryOption(RealSense2API.Option option, string sensorName)
