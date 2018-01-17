@@ -1491,7 +1491,7 @@ namespace MetriCam2.Cameras
 
             rs2_free_error(e);
 
-            throw new Exception($"Failed function: {functionName}\nErrormessage: {errorMsg}\nArguments: {arguments}");
+            throw new Exception($"Failed function: {functionName} Errormessage: {errorMsg} Arguments: {arguments}");
         }
     }
 }

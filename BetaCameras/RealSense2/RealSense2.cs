@@ -1364,7 +1364,7 @@ namespace MetriCam2.Cameras
             {
                 string msg = "RealSense2: Can't stop the pipeline since it is not running";
                 log.Error(msg);
-                throw new Exception(msg);
+                throw new InvalidOperationException(msg);
             }
                 
         }
@@ -1375,7 +1375,7 @@ namespace MetriCam2.Cameras
             {
                 string msg = "RealSense2: No camera that supports the current configuration detected";
                 log.Error(msg);
-                throw new Exception(msg);
+                throw new InvalidOperationException(msg);
             }
 
             if (RealSense2API.PipelineRunning)
@@ -1401,7 +1401,7 @@ namespace MetriCam2.Cameras
             {
                 string msg = "RealSense2: Can't update camera since pipeline is not running";
                 log.Error(msg);
-                throw new Exception(msg);
+                throw new InvalidOperationException(msg);
             }
 
             RealSense2API.ReleaseFrame(_currentColorFrame);
@@ -1734,7 +1734,7 @@ namespace MetriCam2.Cameras
                 default:
                     string msg = string.Format("RealSense2: stream profile for channel {0} not available", channelName);
                     log.Error(msg);
-                    throw new Exception(msg);
+                    throw new ArgumentException(msg, channelName);
             }
 
             if (!frame.IsValid())
@@ -1874,7 +1874,7 @@ namespace MetriCam2.Cameras
         private void CheckOptionSupported(RealSense2API.Option option, string optionName, string sensorName)
         {
             if (!this.IsConnected)
-                throw new Exception(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
+                throw new InvalidOperationException(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
 
             if (!RealSense2API.IsOptionSupported(_pipeline, sensorName, option))
                 throw new NotSupportedException(string.Format("Option '{0}' is not supported by the {1} sensor of this camera.", optionName, sensorName));
@@ -1884,9 +1884,9 @@ namespace MetriCam2.Cameras
         {
             if (!desc.IsValid(value))
                 if (adjusted)
-                    throw new Exception(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
+                    throw new ArgumentOutOfRangeException(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
                 else
-                    throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
+                    throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
         }
 
         private void ThrowIfBusy(string propertyName)
