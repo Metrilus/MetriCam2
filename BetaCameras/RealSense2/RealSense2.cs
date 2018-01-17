@@ -1734,7 +1734,7 @@ namespace MetriCam2.Cameras
                 default:
                     string msg = string.Format("RealSense2: stream profile for channel {0} not available", channelName);
                     log.Error(msg);
-                    throw new ArgumentException(msg, channelName);
+                    throw new ArgumentException(msg, nameof(channelName));
             }
 
             if (!frame.IsValid())
