@@ -5,6 +5,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="obj_netFramework\**" />
+    <Compile Remove="Resources\**" />
+    <EmbeddedResource Remove="obj_netFramework\**" />
+    <EmbeddedResource Remove="Resources\**" />
+    <None Remove="obj_netFramework\**" />
+    <None Remove="Resources\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.cs" />
     <Compile Remove="Properties\Resources.Designer.cs" />
   </ItemGroup>
@@ -14,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Resources\MetriCam-Icon.png" />
+    <None Remove="packages.config" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,12 +32,11 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="Resources\" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Metrilus.Util.NetStandard">
-      <HintPath>..\..\Util\bin\ReleaseUnix\netstandard2.0\Metrilus.Util.NetStandard.dll</HintPath>
+      <HintPath>..\libraries\Metrilus.Util.NetStandard.dll</HintPath>
     </Reference>
   </ItemGroup>
 
