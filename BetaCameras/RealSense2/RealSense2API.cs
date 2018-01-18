@@ -856,7 +856,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        unsafe public static void PipelineStart(RS2Pipeline pipe, RS2Config conf)
+        unsafe public static void PipelineStart(ref RS2Pipeline pipe, RS2Config conf)
         {
             try
             {
@@ -872,7 +872,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        unsafe public static void PipelineStop(RS2Pipeline pipe)
+        unsafe public static void PipelineStop(ref RS2Pipeline pipe)
         {
             try
             {
