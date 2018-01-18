@@ -1358,7 +1358,7 @@ namespace MetriCam2.Cameras
 
         private void StopPipeline()
         {
-            if (RealSense2API.PipelineRunning)
+            if (_pipeline.Running)
                 RealSense2API.PipelineStop(_pipeline);
             else
             {
@@ -1378,7 +1378,7 @@ namespace MetriCam2.Cameras
                 throw new InvalidOperationException(msg);
             }
 
-            if (RealSense2API.PipelineRunning)
+            if (_pipeline.Running)
                 RealSense2API.PipelineStop(_pipeline);
 
             RealSense2API.PipelineStart(_pipeline, _config);
@@ -1397,7 +1397,7 @@ namespace MetriCam2.Cameras
                 Thread.Sleep(50);
             }
 
-            if (!RealSense2API.PipelineRunning)
+            if (!_pipeline.Running)
             {
                 string msg = "RealSense2: Can't update camera since pipeline is not running";
                 log.Error(msg);
@@ -1577,7 +1577,7 @@ namespace MetriCam2.Cameras
                 throw new InvalidOperationException(msg);
             }
 
-            bool running = RealSense2API.PipelineRunning;
+            bool running = _pipeline.Running;
 
             if (running)
             {
@@ -1622,7 +1622,7 @@ namespace MetriCam2.Cameras
             _currentLeftFrame = new RealSense2API.RS2Frame();
             _currentRightFrame = new RealSense2API.RS2Frame();
 
-            bool running = RealSense2API.PipelineRunning;
+            bool running = _pipeline.Running;
             
 
             if (running)

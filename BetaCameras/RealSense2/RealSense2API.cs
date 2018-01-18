@@ -16,8 +16,6 @@ namespace MetriCam2.Cameras
 
         private const int ApiVersion = API_MAJOR_VERSION * 10000 + API_MINOR_VERSION * 100 + API_PATCH_VERSION;
 
-        public static bool PipelineRunning { get; private set; } = false;
-
         public struct SensorName
         {
             public const string COLOR = "RGB Camera";
@@ -630,8 +628,11 @@ namespace MetriCam2.Cameras
         {
             public IntPtr Handle { get; private set; }
 
+            public bool Running { get; set; }
+
             public RS2Pipeline(IntPtr p)
             {
+                Running = false;
                 Handle = p;
             }
 
@@ -863,7 +864,7 @@ namespace MetriCam2.Cameras
                 rs2_pipeline_start_with_config(pipe.Handle, conf.Handle, &error);
                 HandleError(error);
 
-                PipelineRunning = true;
+                pipe.Running = true;
             }
             catch (Exception)
             {
@@ -879,7 +880,7 @@ namespace MetriCam2.Cameras
                 rs2_pipeline_stop(pipe.Handle, &error);
                 HandleError(error);
 
-                PipelineRunning = false;
+                pipe.Running = false;
             }
             catch (Exception)
             {
