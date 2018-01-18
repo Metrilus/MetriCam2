@@ -129,8 +129,8 @@ namespace MetriCam2.Cameras
                 ListParamDesc<int> res = new ListParamDesc<int>(framerates);
                 res.Unit = "fps";
                 res.Description = "Frames per Second of the color sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.ReadableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected;
+                res.WritableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected;
                 return res;
             }
         }
@@ -277,8 +277,8 @@ namespace MetriCam2.Cameras
                 ListParamDesc<int> res = new ListParamDesc<int>(framerates);
                 res.Unit = "fps";
                 res.Description = "Frames per Second of the depth sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.ReadableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected;
+                res.WritableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected;
                 return res;
             }
         }
@@ -325,7 +325,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, BacklightCompensationDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.BACKLIGHT_COMPENSATION, "Backlight Compensation", RealSense2API.SensorName.COLOR);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION) == 1.0f ? true : false;
             }
 
@@ -367,11 +367,11 @@ namespace MetriCam2.Cameras
                 if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.BRIGHTNESS, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    range = new Point2i((int)option.min, (int)option.max);
                 }
                 else
                 {
-                    res = new RangeParamDesc<int>(0, 0);
+                    range = new Point2i(0, 0);
                 }
 
                 return range;
@@ -1145,8 +1145,8 @@ namespace MetriCam2.Cameras
                 ParamDesc<float> res = new ParamDesc<float>();
                 res.Unit = "°C";
                 res.Description = "Asic Temperature";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = ConnectionStates.Connected;
+                res.WritableWhen = ConnectionStates.Connected;
                 return res;
             }
         }
@@ -1202,8 +1202,8 @@ namespace MetriCam2.Cameras
                 ParamDesc<float> res = new ParamDesc<float>();
                 res.Unit = "°C";
                 res.Description = "Projector Temperature";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                res.ReadableWhen = ConnectionStates.Connected;
+                res.WritableWhen = ConnectionStates.Connected;
                 return res;
             }
         }
