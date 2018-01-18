@@ -218,4 +218,15 @@ namespace MetriCam2.Attributes
             StringRepresentationFunc = toStringFunc;
         }
     }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class SimpleTypeAttribute : Attribute
+    {
+        public Type PropertyType { get; private set; }
+
+        public SimpleTypeAttribute(Type t)
+        {
+            PropertyType = t;
+        }
+    }
 }

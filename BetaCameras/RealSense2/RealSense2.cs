@@ -28,6 +28,7 @@ namespace MetriCam2.Cameras
         private bool _disposed = false;
         private bool _updatingPipeline = false;
 
+        #region enums
         public enum EmitterMode
         {
             OFF = 0,
@@ -42,7 +43,32 @@ namespace MetriCam2.Cameras
             FREQ_60HZ = 2,
             AUTO = 3
         }
+        #endregion
 
+        #region RealSense2 Camera Properties
+
+        #region Not implemented Properties
+        // Not implemented options (mostly because not supported by D435):
+        // - VISUAL_PRESET (functionallity provided by profiles built into metricam)
+        // - ACCURACY
+        // - MOTION_RANGE
+        // - FILTER_OPTION
+        // - CONFIDENCE_THRESHOLD
+        // - TOTAL_FRAME_DROPS
+        // - AUTO_EXPOSURE_MODE
+        // - MOTION_MODULE_TEMPERATURE
+        // - ENABLE_MOTION_CORRECTION
+        // - COLOR_SCHEME
+        // - HISTOGRAM_EQUALIZATION_ENABLED
+        // - MIN_DISTANCE
+        // - MAX_DISTANCE
+        // - TEXTURE_SOURCE
+        // - FILTER_MAGNITUDE
+        // - FILTER_SMOOTH_ALPHA
+        // - FILTER_SMOOTH_DELTA
+        #endregion
+
+        #region Color Resolution
         private Point2i _colorResolution = new Point2i(640, 480);
         public List<Point2i> ColorResolutionList
         {
@@ -82,7 +108,9 @@ namespace MetriCam2.Cameras
                 _updatingPipeline = false;
             }
         }
+        #endregion
 
+        #region Color FPS
         private int _colorFPS = 30;
         public List<int> ColorFPSList
         {
@@ -125,7 +153,9 @@ namespace MetriCam2.Cameras
                 _updatingPipeline = false;
             }
         }
+        #endregion
 
+        #region Depth Resolution
         private Point2i _depthResolution = new Point2i(640, 480);
         public List<Point2i> DepthResolutionList
         {
@@ -141,6 +171,11 @@ namespace MetriCam2.Cameras
             }
         }
 
+        [Unit("px")]
+        [Description("Resolution (Depth Sensor)", "Resolution of the depth images in pixel",
+            ConnectionStates.Connected | ConnectionStates.Disconnected,
+            ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [AllowedValueList("DepthResolutionList", typeof(Point2i), "Point2iToResolution")]
         public Point2i DepthResolution
         {
             get { return _depthResolution; }
@@ -178,36 +213,11 @@ namespace MetriCam2.Cameras
                 _updatingPipeline = false;
             }
         }
+        #endregion
 
-        ListParamDesc<Point2i> DepthResolutionDesc
-        {
-            get
-            {
-                List<Point2i> resolutions = new List<Point2i>();
-                resolutions.Add(new Point2i(640, 480));
-
-                if(this.IsConnected)
-                {
-                    resolutions = RealSense2API.GetSupportedResolutions(_pipeline, RealSense2API.SensorName.STEREO);
-                }
-
-                List<string> allowedValues = new List<string>();
-                foreach(Point2i resolution in resolutions)
-                {
-                    allowedValues.Add(string.Format("{0}x{1}", resolution.X, resolution.Y));
-                }
-
-                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
-                res.Unit = "px";
-                res.Description = "Resolution of the depth sensor.";
-                res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
-                res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
-                return res;
-            }
-        }
-
+        #region Depth FPS
         private int _depthFPS = 30;
-        private List<int> _allowedDepthFPS
+        public List<int> DepthFPSList
         {
             get
             {
@@ -224,10 +234,11 @@ namespace MetriCam2.Cameras
             }
         }
 
-        //[IntList(_allowedDepthFPS)]
-        //[Description("FPS (Depth Sensor)", "Currently set frames per second the stereo sensor operates with",
-        //    Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected,
-        //    Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected)]
+        [Unit("fps")]
+        [Description("FPS (Depth Sensor)", "Currently set frames per second the stereo sensor operates with",
+            Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected,
+            Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected)]
+        [AllowedValueList("DepthFPSList", typeof(int))]
         public int DepthFPS
         {
             get { return _depthFPS; }
@@ -265,30 +276,9 @@ namespace MetriCam2.Cameras
                 _updatingPipeline = false;
             }
         }
+        #endregion
 
-        ListParamDesc<int> DepthFPSDesc
-        {
-            get
-            {
-                List<int> framerates = new List<int>();
-                framerates.Add(30);
-
-                if (this.IsConnected)
-                {
-                    framerates = RealSense2API.GetSupportedFrameRates(_pipeline, RealSense2API.SensorName.STEREO);
-                    framerates.Sort();
-                }
-
-                ListParamDesc<int> res = new ListParamDesc<int>(framerates);
-                res.Unit = "fps";
-                res.Description = "Frames per Second of the depth sensor.";
-                res.ReadableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected;
-                res.WritableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected;
-                return res;
-            }
-        }
-
-
+        #region Firmware Version
         [Description("Firmware", "Version string of the firmware currently operating on the camera", Camera.ConnectionStates.Connected)]
         public string Firmware
         {
@@ -300,31 +290,13 @@ namespace MetriCam2.Cameras
                 return RealSense2API.GetFirmwareVersion(_pipeline);
             }
         }
+        #endregion
 
-        #region RealSense Options
-
-        // Not implemented options (mostly because not supported by D435):
-        // - VISUAL_PRESET (functionallity provided by profiles built into metricam)
-        // - ACCURACY
-        // - MOTION_RANGE
-        // - FILTER_OPTION
-        // - CONFIDENCE_THRESHOLD
-        // - TOTAL_FRAME_DROPS
-        // - AUTO_EXPOSURE_MODE
-        // - MOTION_MODULE_TEMPERATURE
-        // - ENABLE_MOTION_CORRECTION
-        // - COLOR_SCHEME
-        // - HISTOGRAM_EQUALIZATION_ENABLED
-        // - MIN_DISTANCE
-        // - MAX_DISTANCE
-        // - TEXTURE_SOURCE
-        // - FILTER_MAGNITUDE
-        // - FILTER_SMOOTH_ALPHA
-        // - FILTER_SMOOTH_DELTA
-
+        #region Backlight Compensation
         /// <summary>
         /// Enable / disable color backlight compensation
         /// </summary>
+        [SimpleType(typeof(bool))]
         [Description("Backlight Compensation", "Enable / disable color backlight compensation", Camera.ConnectionStates.Connected)]
         public bool BacklightCompensation
         {
@@ -340,7 +312,9 @@ namespace MetriCam2.Cameras
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BACKLIGHT_COMPENSATION, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
+        #region Brightness
         /// <summary>
         /// Color image brightness
         /// </summary>
@@ -363,7 +337,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-
         public int BrightnessMin { get => BrightnessRange.Minimum; }
         public int BrightnessMax { get => BrightnessRange.Maximum; }
         public Range<int> BrightnessRange
@@ -381,7 +354,9 @@ namespace MetriCam2.Cameras
                 return range;
             }
         }
+        #endregion
 
+        #region Contrast
         /// <summary>
         /// Color image contrast
         /// </summary>
@@ -421,870 +396,774 @@ namespace MetriCam2.Cameras
                 return range;
             }
         }
+        #endregion
 
+        #region Exposure (Color)
         /// <summary>
         /// Controls exposure time of color camera. Setting any value will disable auto exposure
         /// </summary>
+        [Description("Exposure (Color Sensor)",
+            "Controls exposure time of color camera. Setting any value will disable auto exposure",
+            ConnectionStates.Connected,
+            ConnectionStates.Connected)]
+        [Range("ExposureColorMin", "ExposureColorMax", typeof(int))]
         public int ExposureColor
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.EXPOSURE, "ExposureColor", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureColorDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(ExposureColorDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.EXPOSURE, "ExposureColor", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(ExposureColorRange, value, 0);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.EXPOSURE, (float)value);
             }
         }
 
-        RangeParamDesc<int> ExposureColorDesc
+        public int ExposureColorMin { get => ExposureColorRange.Minimum; }
+        public int ExposureColorMax { get => ExposureColorRange.Maximum; }
+        Range<int> ExposureColorRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.EXPOSURE, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Controls exposure time of color camera. Setting any value will disable auto exposure";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Auto Exposure (Color)
         /// <summary>
         /// Enable / disable color image auto-exposure
         /// </summary>
+        [Description("Auto Exposure (Color Sensor)", "Enable / disable color image auto-exposure", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [SimpleType(typeof(bool))]
         public bool AutoExposureColor
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, AutoExposureColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, "AutoExposureColor", RealSense2API.SensorName.COLOR);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE) == 1.0f ? true : false;
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, AutoExposureColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, "AutoExposureColor", RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_EXPOSURE, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> AutoExposureColorDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable color image auto-exposure";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
-                return res;
-            }
-        }
-
+        #region Auto Exposure Priority (Color)
         /// <summary>
         /// Limit exposure time when auto-exposure is ON to preserve constant fps rate
         /// </summary>
+        [Description("Auto Exposure Priority (Color Sensor)",
+            "Limit exposure time when auto-exposure is ON to preserve constant fps rate",
+            ConnectionStates.Connected,
+            ConnectionStates.Connected)]
+        [SimpleType(typeof(bool))]
         public bool AutoExposurePriorityColor
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, AutoExposurePriorityColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, "AutoExposurePriorityColor", RealSense2API.SensorName.COLOR);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY) == 1.0f ? true : false;
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, AutoExposurePriorityColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, "AutoExposurePriorityColor", RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.AUTO_EXPOSURE_PRIORITY, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> AutoExposurePriorityColorDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Limit exposure time when auto-exposure is ON to preserve constant fps rate";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
-                return res;
-            }
-        }
-
+        #region Exposure (Depth)
         /// <summary>
         /// Controls exposure time of depth camera. Setting any value will disable auto exposure
         /// </summary>
+        [Description("Exposure (Depth Sensor)",
+            "Controls exposure time of depth camera. Setting any value will disable auto exposure",
+            ConnectionStates.Connected,
+            ConnectionStates.Connected)]
+        [Range("ExposureDepthMin", "ExposureDepthMax", typeof(int))]
         public int ExposureDepth
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.EXPOSURE, "ExposureDepth", RealSense2API.SensorName.STEREO);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.EXPOSURE, ExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.EXPOSURE, "ExposureDepth", RealSense2API.SensorName.STEREO);
                 var option = QueryOption(RealSense2API.Option.EXPOSURE, RealSense2API.SensorName.STEREO);
 
                 // step size for depth exposure is 20
                 float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
-                CheckRangeValid<int>(ExposureDepthDesc, value, (int)adjusted_value, true);
+                ValidateRange<int>(ExposureDepthRange, value, (int)adjusted_value, true);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EXPOSURE, adjusted_value);
             }
         }
 
-        RangeParamDesc<int> ExposureDepthDesc
+        public int ExposureDepthMin { get => ExposureColorRange.Minimum; }
+        public int ExposureDepthMax { get => ExposureColorRange.Maximum; }
+        public Range<int> ExposureDepthRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.EXPOSURE, RealSense2API.SensorName.STEREO);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Controls exposure time of depth camera. Setting any value will disable auto exposure";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Auto Exposure (Depth)
         /// <summary>
         /// Enable / disable depth image auto-exposure
         /// </summary>
+        [Description("Auto Exposure (Depth Sensor)", "Enable / disable depth image auto-exposure", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [SimpleType(typeof(bool))]
         public bool AutoExposureDepth
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, AutoExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, "AutoExposureDepth", RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE) == 1.0f ? true : false;
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, AutoExposureDepthDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_EXPOSURE, "AutoExposureDepth", RealSense2API.SensorName.STEREO);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ENABLE_AUTO_EXPOSURE, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> AutoExposureDepthDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable depth image auto-exposure";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
-                return res;
-            }
-        }
-
+        #region Gain (Color)
         /// <summary>
         /// Color image gain
         /// </summary>
+        [Description("Gain (Color Sensor)", "Color image gain", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("GainColorMin", "GainColorMax", typeof(int))]
         public int GainColor
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.GAIN, GainColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.GAIN, "GainColor", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAIN);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.GAIN, GainColorDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(GainColorDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.GAIN, "GainColor", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(GainColorRange, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAIN, (float)value);
             }
         }
 
-        RangeParamDesc<int> GainColorDesc
+        public int GainColorMin { get => GainColorRange.Minimum; }
+        public int GainColorMax { get => GainColorRange.Maximum; }
+        public Range<int> GainColorRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.GAIN, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Color image gain";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Gain (Depth)
         /// <summary>
         /// Depth image gain
         /// </summary>
+        [Description("Gain (Depth Sensor)", "Depth image gain", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("GainDepthMin", "GainDepthMax", typeof(int))]
         public int GainDepth
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.GAIN, GainDepthDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.GAIN, "GainDepth", RealSense2API.SensorName.STEREO);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.GAIN);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.GAIN, GainDepthDesc.Name, RealSense2API.SensorName.STEREO);
-                CheckRangeValid<int>(GainDepthDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.GAIN, "GainDepth", RealSense2API.SensorName.STEREO);
+                ValidateRange<int>(GainDepthRange, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.GAIN, (float)value);
             }
         }
 
-        RangeParamDesc<int> GainDepthDesc
+        public int GainDepthMin { get => GainDepthRange.Minimum; }
+        public int GainDepthMax { get => GainDepthRange.Maximum; }
+        Range<int> GainDepthRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.GAIN, RealSense2API.SensorName.STEREO);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Depth image gain";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Gamma
         /// <summary>
         /// Color image Gamma
         /// </summary>
+        [Description("Gamma", "Color image gamma", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("GammaMin", "GammaMax", typeof(int))]
         public int Gamma
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.GAMMA, GammaDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.GAMMA, "Gamma", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.GAMMA, GammaDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(GammaDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.GAMMA, "Gamma", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(GammaRange, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.GAMMA, (float)value);
             }
         }
 
-        RangeParamDesc<int> GammaDesc
+        public int GammaMin { get => GammaRange.Minimum; }
+        public int GammaMax { get => GammaRange.Minimum; }
+        public Range<int> GammaRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.GAMMA, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Color image Gamma";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Hue
         /// <summary>
         /// Color image Hue
         /// </summary>
+        [Description("Hue", "Color image hue", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("HueMin", "HueMax", typeof(int))]
         public int Hue
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.HUE, HueDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.HUE, "Hue", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.HUE, HueDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(HueDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.HUE, "Hue", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(HueRange, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.HUE, (float)value);
             }
         }
 
-        RangeParamDesc<int> HueDesc
+        public int HueMin { get => HueRange.Minimum; }
+        public int HueMax { get => HueRange.Maximum; }
+        public Range<int> HueRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.HUE, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Color image Hue";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Saturation
         /// <summary>
         /// Color image Saturation
         /// </summary>
+        [Description("Saturation", "Color image Saturation", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("SaturationMin", "SaturationMax", typeof(int))]
         public int Saturation
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.SATURATION, SaturationDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.SATURATION, "Saturation", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.SATURATION, SaturationDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(SaturationDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.SATURATION, "Saturation", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(SaturationRange, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SATURATION, (float)value);
             }
         }
 
-        RangeParamDesc<int> SaturationDesc
+        public int SaturationMin { get => SaturationRange.Minimum; }
+        public int SaturationMax { get => SaturationRange.Maximum; }
+        public Range<int> SaturationRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.SATURATION, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Color image Saturation";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Sharpness
         /// <summary>
         /// Color image Sharpness
         /// </summary>
+        [Description("Sharpness", "Color image Sharpness", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("SharpnessMin", "SharpnessMax", typeof(int))]
         public int Sharpness
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.SHARPNESS, SharpnessDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.SHARPNESS, "Sharpness", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.SHARPNESS, SharpnessDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(SharpnessDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.SHARPNESS, "Sharpness", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(SharpnessRange, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.SHARPNESS, (float)value);
             }
         }
 
-        RangeParamDesc<int> SharpnessDesc
+        public int SharpnessMin { get => SharpnessRange.Minimum; }
+        public int SharpnessMax { get => SharpnessRange.Maximum; }
+        public Range<int> SharpnessRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.SHARPNESS, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Color image Sharpness";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region White Balance
         /// <summary>
-        /// Controls white balance of color image.Setting any value will disable auto white balance
+        /// Controls white balance of color image. Setting any value will disable auto white balance
         /// </summary>
+        [Description("White Balance",
+            "Controls white balance of color image. Setting any value will disable auto white balance.",
+            ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("WhiteBalanceMin", "WhiteBalanceMax", typeof(int))]
         public int WhiteBalance
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.WHITE_BALANCE, WhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.WHITE_BALANCE, "WhiteBalance", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.WHITE_BALANCE, WhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.WHITE_BALANCE, "WhiteBalance", RealSense2API.SensorName.COLOR);
                 var option = QueryOption(RealSense2API.Option.WHITE_BALANCE, RealSense2API.SensorName.COLOR);
-
 
                 // step size for depth white balance is 10
                 float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
-                CheckRangeValid<int>(WhiteBalanceDesc, value, (int)adjusted_value, true);
+                ValidateRange<int>(WhiteBalanceRange, value, (int)adjusted_value, true);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.WHITE_BALANCE, adjusted_value);
             }
         }
 
-        RangeParamDesc<int> WhiteBalanceDesc
+        public int WhiteBalanceMin { get => WhiteBalanceRange.Minimum; }
+        public int WhiteBalanceMax { get => WhiteBalanceRange.Maximum; }
+        public Range<int> WhiteBalanceRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.WHITE_BALANCE, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Controls white balance of color image.Setting any value will disable auto white balance";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Auto White Balance
         /// <summary>
         /// Enable / disable auto-white-balance
         /// </summary>
+        [Description("Auto White Balance", "Enable / disable auto-white-balance", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [SimpleType(typeof(bool))]
         public bool AutoWhiteBalance
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, AutoWhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, "AutoWhiteBalance", RealSense2API.SensorName.COLOR);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE) == 1.0f ? true : false;
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, AutoWhiteBalanceDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, "AutoWhiteBalance", RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.ENABLE_AUTO_WHITE_BALANCE, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> AutoWhiteBalanceDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable auto-white-balance";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
-                return res;
-            }
-        }
-
+        #region Laser Power
         /// <summary>
         /// Manual laser power in mw. applicable only when laser power mode is set to Manual
         /// </summary>
+        [Description("Laser Power", 
+            "Manual laser power in mw. applicable only when laser power mode is set to Manual",
+            ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Unit("mW")]
+        [Range("LaserPowerMin", "LaserPowerMax", typeof(int))]
         public int LaserPower
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.LASER_POWER, LaserPowerDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.LASER_POWER, "LaserPower", RealSense2API.SensorName.STEREO);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.LASER_POWER, LaserPowerDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.LASER_POWER, "LaserPower", RealSense2API.SensorName.STEREO);
                 var option = QueryOption(RealSense2API.Option.LASER_POWER, RealSense2API.SensorName.STEREO);
 
                 // step size for depth laser power is 30
                 float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
-                CheckRangeValid<int>(LaserPowerDesc, value, (int)adjusted_value, true);
+                ValidateRange<int>(LaserPowerRange, value, (int)adjusted_value, true);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER, adjusted_value);
             }
         }
 
-        RangeParamDesc<int> LaserPowerDesc
+        public int LaserPowerMin { get => LaserPowerRange.Minimum; }
+        public int LaserPowerMax { get => LaserPowerRange.Maximum; }
+        public Range<int> LaserPowerRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.LASER_POWER, RealSense2API.SensorName.STEREO);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Manual laser power in mw. applicable only when laser power mode is set to Manual";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Laser Emitter Mode
         /// <summary>
         /// Power of the DS5 projector
         /// </summary>
+        [Description("Laser Mode", "Power of the DS5 projector", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [AllowedValueList(typeof(EmitterMode))]
         public EmitterMode LaserMode
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.EMITTER_ENABLED, EmmiterModeDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.EMITTER_ENABLED, "EmmiterMode", RealSense2API.SensorName.STEREO);
                 return (EmitterMode)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.EMITTER_ENABLED);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.EMITTER_ENABLED, EmmiterModeDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.EMITTER_ENABLED, "EmmiterMode", RealSense2API.SensorName.STEREO);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.LASER_POWER, (float)value);
             }
         }
+        #endregion
 
-        ParamDesc<EmitterMode> EmmiterModeDesc
-        {
-            get
-            {
-                ParamDesc<EmitterMode> res = new ParamDesc<EmitterMode>()
-                {
-                    Description = "Power of the DS5 projector",
-                    ReadableWhen = Camera.ConnectionStates.Connected,
-                    WritableWhen = Camera.ConnectionStates.Connected,
-                };
-
-                return res;
-            }
-        }
-
+        #region Frame Queue Size (Color)
         /// <summary>
         /// Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa
         /// </summary>
+        [Description("Frame Queue Size (Color Sensor)",
+            "Max number of frames you can hold at a given time.Increasing this number will reduce frame drops but increase latency, and vice versa",
+            ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("FrameQueueSizeColorMin", "FrameQueueSizeColorMax", typeof(int))]
         public int FrameQueueSizeColor
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, FrameQueueSizeColorDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, "FrameQueueSizeColor", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, FrameQueueSizeColorDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(FrameQueueSizeColorDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, "FrameQueueSizeColor", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(FrameQueueSizeColorRange, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.FRAMES_QUEUE_SIZE, (float)value);
             }
         }
 
-        RangeParamDesc<int> FrameQueueSizeColorDesc
+        public int FrameQueueSizeColorMin { get => FrameQueueSizeColorRange.Minimum; }
+        public int FrameQueueSizeColorMax { get => FrameQueueSizeColorRange.Maximum; }
+        public Range<int> FrameQueueSizeColorRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.FRAMES_QUEUE_SIZE, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Frame Queue Size (Depth)
         /// <summary>
         /// Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa
         /// </summary>
+        [Description("Frame Queue Size (DepthSensor)",
+            "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa",
+             ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Range("FrameQueueSizeDepthMin", "FrameQueueSizeDepthMax", typeof(int))]
         public int FrameQueueSizeDepth
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, FrameQueueSizeDepthDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, "FrameQueueSizeDepth", RealSense2API.SensorName.STEREO);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, FrameQueueSizeDepthDesc.Name, RealSense2API.SensorName.STEREO);
-                CheckRangeValid<int>(FrameQueueSizeDepthDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.FRAMES_QUEUE_SIZE, "FrameQueueSizeDepth", RealSense2API.SensorName.STEREO);
+                ValidateRange<int>(FrameQueueSizeDepthRange, value, 0);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.FRAMES_QUEUE_SIZE, (float)value);
             }
         }
 
-        RangeParamDesc<int> FrameQueueSizeDepthDesc
+        public int FrameQueueSizeDepthMin { get => FrameQueueSizeDepthRange.Minimum; }
+        public int FrameQueueSizeDepthMax { get => FrameQueueSizeDepthRange.Maximum; }
+        public Range<int> FrameQueueSizeDepthRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.FRAMES_QUEUE_SIZE, RealSense2API.SensorName.STEREO);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Power Frequency Mode
         /// <summary>
         /// Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto
         /// </summary>
+        [Description("Power Frequency Mode", "Power Line Frequency control for anti-flickering", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [AllowedValueList(typeof(PowerLineMode))]
         public PowerLineMode PowerFrequencyMode
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.POWER_LINE_FREQUENCY, PowerFrequencyModeDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.POWER_LINE_FREQUENCY, "PowerFrequencyMode", RealSense2API.SensorName.COLOR);
                 return (PowerLineMode)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.POWER_LINE_FREQUENCY, PowerFrequencyModeDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.POWER_LINE_FREQUENCY, "PowerFrequencyMode", RealSense2API.SensorName.COLOR);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.POWER_LINE_FREQUENCY, (float)value);
             }
         }
+        #endregion
 
-        ListParamDesc<PowerLineMode> PowerFrequencyModeDesc
-        {
-            get
-            {
-                ListParamDesc<PowerLineMode> res = new ListParamDesc<PowerLineMode>(typeof(PowerLineMode))
-                {
-                    Description = "Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto",
-                    ReadableWhen = Camera.ConnectionStates.Connected,
-                    WritableWhen = Camera.ConnectionStates.Connected,
-                };
-
-                return res;
-            }
-        }
-
+        #region ASIC Temperature
         /// <summary>
         /// Current Asic Temperature
         /// </summary>
+        [Description("Asic Temperature", "Current Asic Temperature", ConnectionStates.Connected)]
+        [Unit("°C")]
+        [SimpleType(typeof(int))]
         public float ASICTemp
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.ASIC_TEMPERATURE, ASICTempDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.ASIC_TEMPERATURE, "ASICTemp", RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ASIC_TEMPERATURE);
             }
         }
+        #endregion
 
-        ParamDesc<float> ASICTempDesc
-        {
-            get
-            {
-                ParamDesc<float> res = new ParamDesc<float>();
-                res.Unit = "°C";
-                res.Description = "Asic Temperature";
-                res.ReadableWhen = ConnectionStates.Connected;
-                res.WritableWhen = ConnectionStates.Connected;
-                return res;
-            }
-        }
-
-
+        #region Error Polling
         /// <summary>
         /// Enable / disable polling of camera internal errors
         /// </summary>
+        [Description("Error Polling", "Enable / disable polling of camera internal errors", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [SimpleType(typeof(bool))]
         public bool EnableErrorPolling
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.ERROR_POLLING_ENABLED, EnableErrorPollingDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.ERROR_POLLING_ENABLED, "EnableErrorPolling", RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED) == 1.0f ? true : false;
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.ERROR_POLLING_ENABLED, EnableErrorPollingDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.ERROR_POLLING_ENABLED, "EnableErrorPolling", RealSense2API.SensorName.STEREO);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.ERROR_POLLING_ENABLED, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> EnableErrorPollingDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable polling of camera internal errors";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
-                return res;
-            }
-        }
-
-
+        #region Projector Temperature
         /// <summary>
         /// Current Projector Temperature in °C
         /// </summary>
+        [Description("Projector Temperature", "Current Projector Temperature in °C", ConnectionStates.Connected)]
+        [Unit("°C")]
+        [SimpleType(typeof(int))]
         public float ProjectorTemp
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.PROJECTOR_TEMPERATURE, ProjectorTempDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.PROJECTOR_TEMPERATURE, "ProjectorTemp", RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.PROJECTOR_TEMPERATURE);
             }
         }
+        #endregion
 
-        ParamDesc<float> ProjectorTempDesc
-        {
-            get
-            {
-                ParamDesc<float> res = new ParamDesc<float>();
-                res.Unit = "°C";
-                res.Description = "Projector Temperature";
-                res.ReadableWhen = ConnectionStates.Connected;
-                res.WritableWhen = ConnectionStates.Connected;
-                return res;
-            }
-        }
-
-
+        #region Output Trigger
         /// <summary>
         /// Enable / disable trigger to be outputed from the camera to any external device on every depth frame
         /// </summary>
+        [Description("Output Trigger", "Enable / disable trigger to be outputed from the camera to any external device on every depth frame", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [SimpleType(typeof(bool))]
         public bool OutputTrigger
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, OutputTriggerDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, "OutputTrigger", RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED) == 1.0f ? true : false;
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, OutputTriggerDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, "OutputTrigger", RealSense2API.SensorName.STEREO);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.OUTPUT_TRIGGER_ENABLED, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> OutputTriggerDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable trigger to be outputed from the camera to any external device on every depth frame";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
-                return res;
-            }
-        }
-
-
+        #region Depth Units
         /// <summary>
         /// Number of meters represented by a single depth unit
         /// </summary>
+        [Description("Depth Units", "Number of meters represented by a single depth unit", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Unit("m")]
+        [Range("DepthUnitsMin", "DepthUnitsMax", typeof(float))]
         public float DepthUnits
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.DEPTH_UNITS, DepthUnitsDesc.Name, RealSense2API.SensorName.STEREO);
+                CheckOptionSupported(RealSense2API.Option.DEPTH_UNITS, "DepthUnits", RealSense2API.SensorName.STEREO);
                 return RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.DEPTH_UNITS, DepthUnitsDesc.Name, RealSense2API.SensorName.STEREO);
-                CheckRangeValid<float>(DepthUnitsDesc, value, 0f);
+                CheckOptionSupported(RealSense2API.Option.DEPTH_UNITS, "DepthUnits", RealSense2API.SensorName.STEREO);
+                ValidateRange<float>(DepthUnitsRange, value, 0f);
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.STEREO, RealSense2API.Option.DEPTH_UNITS, value);
             }
         }
 
-        RangeParamDesc<float> DepthUnitsDesc
+        public float DepthUnitsMin { get => DepthUnitsRange.Minimum; }
+        public float DepthUnitsMax { get => DepthUnitsRange.Maximum; }
+        public Range<float> DepthUnitsRange
         {
             get
             {
-                RangeParamDesc<float> res;
+                Range<float> res = new Range<float>(0, 0);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.DEPTH_UNITS, RealSense2API.SensorName.STEREO);
-                    res = new RangeParamDesc<float>(option.min, option.max);
+                    res = new Range<float>(option.min, option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<float>(0, 0);
-                }
-                
-                res.Description = "Number of meters represented by a single depth unit";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
         #endregion
 
+        #region IDisposable implementation
         public void Dispose()
         {
             Dispose(true);
@@ -1304,6 +1183,7 @@ namespace MetriCam2.Cameras
             _context.Delete();
             _disposed = true;
         }
+        #endregion
 
         #region Constructor
         public RealSense2()
@@ -1864,6 +1744,7 @@ namespace MetriCam2.Cameras
 
         #endregion
 
+        #region Custom public methods
         public void LoadConfigPreset(AdvancedMode.Preset preset)
         {
             LoadCustomConfig(AdvancedMode.GetPreset(preset));
@@ -1875,7 +1756,9 @@ namespace MetriCam2.Cameras
             RealSense2API.LoadAdvancedConfig(json, dev);
             _depthScale = RealSense2API.GetDepthScale(_pipeline);
         }
+        #endregion
 
+        #region private helper methods
         private void CheckOptionSupported(RealSense2API.Option option, string optionName, string sensorName)
         {
             if (!this.IsConnected)
@@ -1948,5 +1831,6 @@ namespace MetriCam2.Cameras
         {
             return TypeConversion.Point2iToResolution(p);
         }
+        #endregion
     }
 }
