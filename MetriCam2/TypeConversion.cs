@@ -41,5 +41,10 @@ namespace MetriCam2
             string[] stringValue = s.Split('x');
             return new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
         }
+
+        public static string Point2iToResolution(Point2i p)
+        {
+            return string.Format("{0}x{1}", p.X, p.Y);
+        }
     }
 }

@@ -101,6 +101,17 @@ namespace MetriCam2.Attributes
         public Camera.ConnectionStates WritableWhen { get => _writable; }
     }
 
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class UnitAttribute : Attribute
+    {
+        public string Unit { get; private set; }
+
+        public UnitAttribute(string unit)
+        {
+            Unit = unit;
+        }
+    }
+
     public class Range<T> where T : IComparable, IConvertible
     {
         public T Minimum;
@@ -116,13 +127,18 @@ namespace MetriCam2.Attributes
         }
     }
 
+    public class ConstrainAttribute : Attribute
+    {
+        public Type DataType { get; protected set; }
+        public bool DataIsPropertyName { get; protected set; } = false;
+        public string StringRepresentationFunc { get; protected set; } = null;
+    }
+
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public class RangeAttribute : Attribute
+    public class RangeAttribute : ConstrainAttribute
     {
         public object Minimum { get; private set; }
         public object Maximum { get; private set; }
-
-        public Type DataType { get; private set; }
 
         public RangeAttribute(float min, float max)
         {
@@ -145,11 +161,61 @@ namespace MetriCam2.Attributes
             DataType = typeof(int);
         }
 
-        public RangeAttribute(string min, string max)
+        public RangeAttribute(string min, string max, Type type)
         {
             Minimum = min;
             Maximum = max;
+            DataType = type;
+            DataIsPropertyName = true;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class AllowedValueListAttribute : ConstrainAttribute
+    {
+        public object AllowedValues { get; private set; }
+
+        public AllowedValueListAttribute(List<float> allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = allowedValues;
+            DataType = typeof(float);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(List<double> allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = allowedValues;
+            DataType = typeof(double);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(List<int> allowedValues)
+        {
+            AllowedValues = allowedValues;
+            DataType = typeof(int);
+        }
+
+        public AllowedValueListAttribute(List<string> allowedValues)
+        {
+            AllowedValues = allowedValues;
             DataType = typeof(string);
+        }
+
+        public AllowedValueListAttribute(Type enumType)
+        {
+            if (!enumType.IsEnum)
+                throw new ArgumentException("Type does not represent an enum!");
+
+            AllowedValues = new List<string>(Enum.GetNames(enumType));
+            DataType = enumType;
+        }
+
+        public AllowedValueListAttribute(string propertyName, Type type, string toStringFunc = null)
+        {
+            AllowedValues = propertyName;
+            DataType = type;
+            DataIsPropertyName = true;
+            StringRepresentationFunc = toStringFunc;
         }
     }
 }

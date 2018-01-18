@@ -44,6 +44,25 @@ namespace MetriCam2.Cameras
         }
 
         private Point2i _colorResolution = new Point2i(640, 480);
+        public List<Point2i> ColorResolutionList
+        {
+            get
+            {
+                List<Point2i> resolutions = new List<Point2i>();
+                resolutions.Add(new Point2i(640, 480));
+
+                if (this.IsConnected)
+                    resolutions = RealSense2API.GetSupportedResolutions(_pipeline, RealSense2API.SensorName.COLOR);
+
+                return resolutions;
+            }
+        }
+
+        [Unit("px")]
+        [Description("Resolution (Color Sensor)", "Resolution of the color images in pixel",
+            ConnectionStates.Connected | ConnectionStates.Disconnected,
+            ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [AllowedValueList("ColorResolutionList", typeof(Point2i), "Point2iToResolution")]
         public Point2i ColorResolution
         {
             get { return _colorResolution; }
@@ -64,34 +83,29 @@ namespace MetriCam2.Cameras
             }
         }
 
-        ListParamDesc<Point2i> ColorResolutionDesc
+        private int _colorFPS = 30;
+        public List<int> ColorFPSList
         {
             get
             {
-                List<Point2i> resolutions = new List<Point2i>();
-                resolutions.Add(new Point2i(640, 480));
+                List<int> framerates = new List<int>();
+                framerates.Add(30);
 
                 if (this.IsConnected)
                 {
-                    resolutions = RealSense2API.GetSupportedResolutions(_pipeline, RealSense2API.SensorName.COLOR);
+                    framerates = RealSense2API.GetSupportedFrameRates(_pipeline, RealSense2API.SensorName.COLOR);
+                    framerates.Sort();
                 }
 
-                List<string> allowedValues = new List<string>();
-                foreach (Point2i resolution in resolutions)
-                {
-                    allowedValues.Add(string.Format("{0}x{1}", resolution.X, resolution.Y));
-                }
-
-                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
-                res.Unit = "px";
-                res.Description = "Resolution of the color sensor.";
-                res.ReadableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
-                res.WritableWhen = Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected;
-                return res;
+                return framerates;
             }
         }
 
-        private int _colorFPS = 30;
+        [Unit("fps")]
+        [Description("FPS (Color Sensor)", "Frames per second of the color sensor",
+            ConnectionStates.Connected | ConnectionStates.Disconnected,
+            ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [AllowedValueList("ColorFPSList", typeof(int))]
         public int ColorFPS
         {
             get { return _colorFPS; }
@@ -112,29 +126,21 @@ namespace MetriCam2.Cameras
             }
         }
 
-        ListParamDesc<int> ColorFPSDesc
+        private Point2i _depthResolution = new Point2i(640, 480);
+        public List<Point2i> DepthResolutionList
         {
             get
             {
-                List<int> framerates = new List<int>();
-                framerates.Add(30);
+                List<Point2i> resolutions = new List<Point2i>();
+                resolutions.Add(new Point2i(640, 480));
 
                 if (this.IsConnected)
-                {
-                    framerates = RealSense2API.GetSupportedFrameRates(_pipeline, RealSense2API.SensorName.COLOR);
-                    framerates.Sort();
-                }
-                
-                ListParamDesc<int> res = new ListParamDesc<int>(framerates);
-                res.Unit = "fps";
-                res.Description = "Frames per Second of the color sensor.";
-                res.ReadableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected;
-                res.WritableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected;
-                return res;
+                    resolutions = RealSense2API.GetSupportedResolutions(_pipeline, RealSense2API.SensorName.STEREO);
+
+                return resolutions;
             }
         }
 
-        private Point2i _depthResolution = new Point2i(640, 480);
         public Point2i DepthResolution
         {
             get { return _depthResolution; }
@@ -338,7 +344,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image brightness
         /// </summary>
-        [Range("BrightnessMin", "BrightnessMax")]
+        [Range("BrightnessMin", "BrightnessMax", typeof(int))]
         [Description("Brightness (Color Sensor)", "Color image brightness", Camera.ConnectionStates.Connected)]
         public int Brightness
         {
@@ -351,7 +357,7 @@ namespace MetriCam2.Cameras
             set
             {
                 CheckOptionSupported(RealSense2API.Option.BRIGHTNESS, "Brightness", RealSense2API.SensorName.COLOR);
-                ValidateRange<int>(BrightnessRange.Minimum, BrightnessRange.Maximum, value, 0);
+                ValidateRange<int>(BrightnessRange, value, 0);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS, (float)value);
             }
@@ -379,45 +385,40 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image contrast
         /// </summary>
-        [Range("", "")]
-        [Description("Brightness (Color Sensor)", "Color image brightness", Camera.ConnectionStates.Connected)]
+        [Range("ContrastMin", "ContrastMax", typeof(int))]
+        [Description("Contrast (Color Sensor)", "Color image contrast", Camera.ConnectionStates.Connected)]
         public int Contrast
         {
             get
             {
-                CheckOptionSupported(RealSense2API.Option.CONTRAST, ContrastDesc.Name, RealSense2API.SensorName.COLOR);
+                CheckOptionSupported(RealSense2API.Option.CONTRAST, "Contrast", RealSense2API.SensorName.COLOR);
                 return (int)RealSense2API.GetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST);
             }
 
             set
             {
-                CheckOptionSupported(RealSense2API.Option.CONTRAST, ContrastDesc.Name, RealSense2API.SensorName.COLOR);
-                CheckRangeValid<int>(ContrastDesc, value, 0);
+                CheckOptionSupported(RealSense2API.Option.CONTRAST, "Contrast", RealSense2API.SensorName.COLOR);
+                ValidateRange<int>(ContrastRange, value, 0);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.CONTRAST, (float)value);
             }
         }
 
-        RangeParamDesc<int> ContrastDesc
+        public int ContrastMin { get => BrightnessRange.Minimum; }
+        public int ContrastMax { get => BrightnessRange.Maximum; }
+        public Range<int> ContrastRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> range = new Range<int>(0, 1);
 
-                if(this.IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.CONTRAST, RealSense2API.SensorName.COLOR);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    range = new Range<int>((int)option.min, (int)option.max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-                
-                res.Description = "Color image contrast";
-                res.ReadableWhen = Camera.ConnectionStates.Connected;
-                res.WritableWhen = Camera.ConnectionStates.Connected;
-                return res;
+
+                return range;
             }
         }
 
@@ -1931,16 +1932,21 @@ namespace MetriCam2.Cameras
             return adjusted_value;
         }
 
-        private void ValidateRange<T>(T min, T max, T value, T adjustedValue, bool adjusted = false) where T : IComparable
+        private void ValidateRange<T>(Range<T> range, T value, T adjustedValue, bool adjusted = false) where T : IComparable, IConvertible
         {
-            if(value.CompareTo(min) < 0
-            || value.CompareTo(max) > 0)
+            if(value.CompareTo(range.Minimum) < 0
+            || value.CompareTo(range.Maximum) > 0)
             {
                 if (adjusted)
-                    throw new Exception(string.Format("Value {0} is outside of the range between {1} and {2}", value, min, max));
+                    throw new Exception(string.Format("Value {0} is outside of the range between {1} and {2}", value, range.Minimum, range.Maximum));
                 else
-                    throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) is outside of the range between {2} and {3}", value, adjustedValue, min, max));
+                    throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) is outside of the range between {2} and {3}", value, adjustedValue, range.Minimum, range.Maximum));
             }
+        }
+
+        public static string Point2iToResolution(Point2i p)
+        {
+            return TypeConversion.Point2iToResolution(p);
         }
     }
 }
