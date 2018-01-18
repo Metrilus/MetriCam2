@@ -609,7 +609,7 @@ namespace MetriCam2.Cameras
         private unsafe extern static int rs2_config_can_resolve(IntPtr config, IntPtr pipe, IntPtr* error);
         #endregion
 
-        public struct RS2Context
+        public class RS2Context
         {
             public IntPtr Handle { get; private set; }
 
@@ -624,7 +624,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2Pipeline
+        public class RS2Pipeline
         {
             public IntPtr Handle { get; private set; }
 
@@ -642,7 +642,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2Device
+        public class RS2Device
         {
             public IntPtr Handle { get; private set; }
 
@@ -652,7 +652,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2Sensor
+        public class RS2Sensor
         {
             public IntPtr Handle { get; private set; }
 
@@ -669,7 +669,7 @@ namespace MetriCam2.Cameras
             public bool IsValid() => (IntPtr.Zero != Handle);
         }
 
-        public struct RS2Config
+        public class RS2Config
         {
             public IntPtr Handle { get; private set; }
 
@@ -684,7 +684,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2Frame
+        public class RS2Frame
         {
             public IntPtr Handle { get; private set; }
 
@@ -732,7 +732,7 @@ namespace MetriCam2.Cameras
             public bool IsValid() => (null != Handle);
         }
 
-        public struct RS2StreamProfilesList
+        public class RS2StreamProfilesList
         {
             public IntPtr Handle { get; private set; }
 
@@ -747,7 +747,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2StreamProfile
+        public class RS2StreamProfile
         {
             public IntPtr Handle { get; private set; }
 
