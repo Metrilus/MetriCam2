@@ -16,8 +16,6 @@ namespace MetriCam2.Cameras
 
         private const int ApiVersion = API_MAJOR_VERSION * 10000 + API_MINOR_VERSION * 100 + API_PATCH_VERSION;
 
-        public static bool PipelineRunning { get; private set; } = false;
-
         public struct SensorName
         {
             public const string COLOR = "RGB Camera";
@@ -611,7 +609,7 @@ namespace MetriCam2.Cameras
         private unsafe extern static int rs2_config_can_resolve(IntPtr config, IntPtr pipe, IntPtr* error);
         #endregion
 
-        public struct RS2Context
+        public class RS2Context
         {
             public IntPtr Handle { get; private set; }
 
@@ -626,12 +624,15 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2Pipeline
+        public class RS2Pipeline
         {
             public IntPtr Handle { get; private set; }
 
+            public bool Running { get; set; }
+
             public RS2Pipeline(IntPtr p)
             {
+                Running = false;
                 Handle = p;
             }
 
@@ -641,7 +642,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2Device
+        public class RS2Device
         {
             public IntPtr Handle { get; private set; }
 
@@ -651,7 +652,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2Sensor
+        public class RS2Sensor
         {
             public IntPtr Handle { get; private set; }
 
@@ -668,7 +669,7 @@ namespace MetriCam2.Cameras
             public bool IsValid() => (IntPtr.Zero != Handle);
         }
 
-        public struct RS2Config
+        public class RS2Config
         {
             public IntPtr Handle { get; private set; }
 
@@ -683,7 +684,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2Frame
+        public class RS2Frame
         {
             public IntPtr Handle { get; private set; }
 
@@ -731,7 +732,7 @@ namespace MetriCam2.Cameras
             public bool IsValid() => (null != Handle);
         }
 
-        public struct RS2StreamProfilesList
+        public class RS2StreamProfilesList
         {
             public IntPtr Handle { get; private set; }
 
@@ -746,7 +747,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public struct RS2StreamProfile
+        public class RS2StreamProfile
         {
             public IntPtr Handle { get; private set; }
 
@@ -863,7 +864,7 @@ namespace MetriCam2.Cameras
                 rs2_pipeline_start_with_config(pipe.Handle, conf.Handle, &error);
                 HandleError(error);
 
-                PipelineRunning = true;
+                pipe.Running = true;
             }
             catch (Exception)
             {
@@ -879,7 +880,7 @@ namespace MetriCam2.Cameras
                 rs2_pipeline_stop(pipe.Handle, &error);
                 HandleError(error);
 
-                PipelineRunning = false;
+                pipe.Running = false;
             }
             catch (Exception)
             {
