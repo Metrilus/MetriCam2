@@ -19,10 +19,10 @@ namespace MetriCam2.Cameras
         private RealSense2API.RS2Context _context;
         private RealSense2API.RS2Pipeline _pipeline;
         private RealSense2API.RS2Config _config;
-        private RealSense2API.RS2Frame _currentColorFrame = new RealSense2API.RS2Frame();
-        private RealSense2API.RS2Frame _currentDepthFrame = new RealSense2API.RS2Frame();
-        private RealSense2API.RS2Frame _currentLeftFrame = new RealSense2API.RS2Frame();
-        private RealSense2API.RS2Frame _currentRightFrame = new RealSense2API.RS2Frame();
+        private RealSense2API.RS2Frame _currentColorFrame = new RealSense2API.RS2Frame(IntPtr.Zero);
+        private RealSense2API.RS2Frame _currentDepthFrame = new RealSense2API.RS2Frame(IntPtr.Zero);
+        private RealSense2API.RS2Frame _currentLeftFrame = new RealSense2API.RS2Frame(IntPtr.Zero);
+        private RealSense2API.RS2Frame _currentRightFrame = new RealSense2API.RS2Frame(IntPtr.Zero);
         private float _depthScale = 0.0f;
         private bool _disposed = false;
         private bool _updatingPipeline = false;
@@ -1359,7 +1359,7 @@ namespace MetriCam2.Cameras
         private void StopPipeline()
         {
             if (_pipeline.Running)
-                RealSense2API.PipelineStop(ref _pipeline);
+                RealSense2API.PipelineStop(_pipeline);
             else
             {
                 string msg = "RealSense2: Can't stop the pipeline since it is not running";
@@ -1379,9 +1379,9 @@ namespace MetriCam2.Cameras
             }
 
             if (_pipeline.Running)
-                RealSense2API.PipelineStop(ref _pipeline);
+                RealSense2API.PipelineStop(_pipeline);
 
-            RealSense2API.PipelineStart(ref _pipeline, _config);
+            RealSense2API.PipelineStart(_pipeline, _config);
         }
 
         protected override void DisconnectImpl()
@@ -1617,10 +1617,10 @@ namespace MetriCam2.Cameras
                 stream = RealSense2API.Stream.INFRARED;
             }
 
-            _currentColorFrame = new RealSense2API.RS2Frame();
-            _currentDepthFrame = new RealSense2API.RS2Frame();
-            _currentLeftFrame = new RealSense2API.RS2Frame();
-            _currentRightFrame = new RealSense2API.RS2Frame();
+            _currentColorFrame = new RealSense2API.RS2Frame(IntPtr.Zero);
+            _currentDepthFrame = new RealSense2API.RS2Frame(IntPtr.Zero);
+            _currentLeftFrame = new RealSense2API.RS2Frame(IntPtr.Zero);
+            _currentRightFrame = new RealSense2API.RS2Frame(IntPtr.Zero);
 
             bool running = _pipeline.Running;
             
