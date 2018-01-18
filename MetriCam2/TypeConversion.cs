@@ -7,7 +7,7 @@ using Metrilus.Util;
 
 namespace MetriCam2
 {
-    class TypeConversion
+    public class TypeConversion
     {
         public static string GetAsGoodString(object value)
         {
@@ -34,6 +34,12 @@ namespace MetriCam2
                 valueAsString = value.ToString();
             }
             return valueAsString;
+        }
+
+        public static Point2i ResolutionToPoint2i(string s)
+        {
+            string[] stringValue = s.Split('x');
+            return new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
         }
     }
 }

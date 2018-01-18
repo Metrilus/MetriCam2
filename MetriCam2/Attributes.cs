@@ -2,7 +2,6 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 
 namespace MetriCam2.Attributes
@@ -102,43 +101,55 @@ namespace MetriCam2.Attributes
         public Camera.ConnectionStates WritableWhen { get => _writable; }
     }
 
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    sealed public class FloatListAttribute : ValidationAttribute
+    public class Range<T> where T : IComparable, IConvertible
     {
-        private List<float> _allowedValues;
+        public T Minimum;
+        public T Maximum;
 
-        public FloatListAttribute(List<float> allowedValues)
+        public Range(T min, T max)
         {
-            _allowedValues = allowedValues;
-        }
+            if (min.CompareTo(min) >= 0)
+                throw new ArgumentException("The Maximum needs to exceed the Minimum to be a valid Range");
 
-        public override bool IsValid(object value)
-        {
-            if (value is float)
-            {
-                return _allowedValues.Contains((float)value);
-            }
-            return false;
+            Minimum = min;
+            Maximum = max;
         }
     }
 
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    sealed public class IntListAttribute : ValidationAttribute
+    public class RangeAttribute : Attribute
     {
-        private List<int> _allowedValues;
+        public object Minimum { get; private set; }
+        public object Maximum { get; private set; }
 
-        public IntListAttribute(List<int> allowedValues)
+        public Type DataType { get; private set; }
+
+        public RangeAttribute(float min, float max)
         {
-            _allowedValues = allowedValues;
+            Minimum = min;
+            Maximum = max;
+            DataType = typeof(float);
         }
 
-        public override bool IsValid(object value)
+        public RangeAttribute(double min, double max)
         {
-            if (value is float)
-            {
-                return _allowedValues.Contains((int)value);
-            }
-            return false;
+            Minimum = min;
+            Maximum = max;
+            DataType = typeof(double);
+        }
+
+        public RangeAttribute(int min, int max)
+        {
+            Minimum = min;
+            Maximum = max;
+            DataType = typeof(int);
+        }
+
+        public RangeAttribute(string min, string max)
+        {
+            Minimum = min;
+            Maximum = max;
+            DataType = typeof(string);
         }
     }
 }

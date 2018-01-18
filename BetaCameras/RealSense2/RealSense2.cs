@@ -6,7 +6,6 @@ using System;
 using System.Drawing;
 using System.Collections.Generic;
 using MetriCam2.Attributes;
-using System.ComponentModel.DataAnnotations;
 using System.Threading;
 #if NETSTANDARD2_0
 #else
@@ -339,7 +338,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image brightness
         /// </summary>
-        [Range(BrightnessRange.X, BrightnessRange.Y)]
+        [Range("BrightnessMin", "BrightnessMax")]
         [Description("Brightness (Color Sensor)", "Color image brightness", Camera.ConnectionStates.Connected)]
         public int Brightness
         {
@@ -352,26 +351,25 @@ namespace MetriCam2.Cameras
             set
             {
                 CheckOptionSupported(RealSense2API.Option.BRIGHTNESS, "Brightness", RealSense2API.SensorName.COLOR);
-                ValidateRange<int>(BrightnessRange.X, BrightnessRange.Y, value, 0);
+                ValidateRange<int>(BrightnessRange.Minimum, BrightnessRange.Maximum, value, 0);
 
                 RealSense2API.SetOption(_pipeline, RealSense2API.SensorName.COLOR, RealSense2API.Option.BRIGHTNESS, (float)value);
             }
         }
 
-        Point2i BrightnessRange
+
+        public int BrightnessMin { get => BrightnessRange.Minimum; }
+        public int BrightnessMax { get => BrightnessRange.Maximum; }
+        public Range<int> BrightnessRange
         {
             get
             {
-                Point2i range = new Point2i(0, 0);
+                Range<int> range = new Range<int>(0, 1);
 
                 if (this.IsConnected)
                 {
                     var option = QueryOption(RealSense2API.Option.BRIGHTNESS, RealSense2API.SensorName.COLOR);
-                    range = new Point2i((int)option.min, (int)option.max);
-                }
-                else
-                {
-                    range = new Point2i(0, 0);
+                    range = new Range<int>((int)option.min, (int)option.max);
                 }
 
                 return range;
@@ -381,6 +379,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image contrast
         /// </summary>
+        [Range("", "")]
+        [Description("Brightness (Color Sensor)", "Color image brightness", Camera.ConnectionStates.Connected)]
         public int Contrast
         {
             get
