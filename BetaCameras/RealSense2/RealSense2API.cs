@@ -10,9 +10,9 @@ namespace MetriCam2.Cameras
     {
         // HINT: update API version to currently used librealsense2
         private const int API_MAJOR_VERSION = 2;
-        private const int API_MINOR_VERSION = 9;
+        private const int API_MINOR_VERSION = 8;
         private const int API_PATCH_VERSION = 0;
-        private const int API_BUILD_VERSION = 0;
+        private const int API_BUILD_VERSION = 3;
 
         private const int ApiVersion = API_MAJOR_VERSION * 10000 + API_MINOR_VERSION * 100 + API_PATCH_VERSION;
 
