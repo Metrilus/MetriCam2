@@ -407,46 +407,35 @@ namespace MetriCam2.Cameras
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_create_context(int api_version, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_create_pipeline(IntPtr ctx, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_create_config(IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_config_disable_all_streams(IntPtr config, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_delete_config(IntPtr config);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_delete_pipeline(IntPtr pipe);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_delete_context(IntPtr context);
 
-
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_config_enable_device(IntPtr config, [MarshalAs(UnmanagedType.LPStr)] string serial, IntPtr* error);
-
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static char* rs2_get_failed_function(IntPtr error);
 
-
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static char* rs2_get_failed_args(IntPtr error);
 
-
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static char* rs2_get_error_message(IntPtr error);
-
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_free_error(IntPtr error);
@@ -454,66 +443,50 @@ namespace MetriCam2.Cameras
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_pipeline_start_with_config(IntPtr pipe, IntPtr config, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_pipeline_stop(IntPtr pipe, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_release_frame(IntPtr frame);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_pipeline_wait_for_frames(IntPtr pipe, uint timeout_ms, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static int rs2_embedded_frames_count(IntPtr composite, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_extract_frame(IntPtr composite, int index, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_frame_add_ref(IntPtr frame, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_get_frame_stream_profile(IntPtr frame, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_get_stream_profile_data(IntPtr profile, ref Stream stream, ref Format format, ref int index, ref int unique_id, ref int framerate, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_config_enable_stream(IntPtr config, Stream stream, int index, int width, int height, Format format, int framerate, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_config_disable_stream(IntPtr config, Stream stream, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_get_frame_data(IntPtr frame, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_pipeline_get_active_profile(IntPtr pipe, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_pipeline_profile_get_device(IntPtr profile, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_query_sensors(IntPtr device, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static int rs2_get_sensors_count(IntPtr sensor_list, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static IntPtr rs2_create_sensor(IntPtr sensor_list, int index, IntPtr* error);
@@ -521,18 +494,14 @@ namespace MetriCam2.Cameras
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static float rs2_get_depth_scale(IntPtr sensor, IntPtr* error);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static char* rs2_get_sensor_info(IntPtr sensor, CameraInfo info, IntPtr* error);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_delete_sensor(IntPtr sensor);
 
-
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_delete_sensor_list(IntPtr info_list);
-
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_delete_device(IntPtr device);
@@ -540,22 +509,17 @@ namespace MetriCam2.Cameras
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_delete_pipeline_profile(IntPtr profile);
 
-
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_load_json(IntPtr dev, [MarshalAs(UnmanagedType.LPStr)] string json_content, uint content_size, IntPtr* error);
-
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_is_enabled(IntPtr dev, ref int enabled, IntPtr* error);
 
-
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_toggle_advanced_mode(IntPtr dev, int enable, IntPtr* error);
 
-
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_get_video_stream_intrinsics(IntPtr profile_from, Intrinsics* intrinsics, IntPtr* error);
-
 
         [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static void rs2_get_extrinsics(IntPtr profile_from, IntPtr profile_to, Extrinsics* extrin, IntPtr* error);
@@ -607,6 +571,9 @@ namespace MetriCam2.Cameras
 
         [DllImport("realsense2", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private unsafe extern static int rs2_config_can_resolve(IntPtr config, IntPtr pipe, IntPtr* error);
+
+        [DllImport("realsense2", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        private unsafe extern static char* rs2_get_device_info(IntPtr device, CameraInfo info, IntPtr* error);
         #endregion
 
         public class RS2Context
@@ -1471,6 +1438,24 @@ namespace MetriCam2.Cameras
             sensor.Delete();
 
             return res;
+        }
+
+        unsafe public static string GetDeviceInfo(RS2Pipeline pipe, CameraInfo info)
+        {
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+
+                RS2Device dev = GetActiveDevice(pipe);
+                char* res = rs2_get_device_info(dev.Handle, info, &error);
+                HandleError(error);
+
+                return Marshal.PtrToStringAnsi((IntPtr)res);
+            }
+            catch(Exception)
+            {
+                throw;
+            }
         }
 
 
