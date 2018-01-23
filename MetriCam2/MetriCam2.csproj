@@ -98,7 +98,11 @@
       <Link>.licenseheader</Link>
     </None>
     <None Include="packages.config" />
-    <None Include="Resources\MetriCam-Icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\DefaultIcon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

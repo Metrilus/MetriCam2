@@ -162,6 +162,8 @@ namespace MetriCam2.Cameras
                 return res;
             }
         }
+
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.IfmIcon; }
         #endregion
 
         #region Private Fields
@@ -639,7 +641,7 @@ namespace MetriCam2.Cameras
                     }
                     else
                     {
-                        throw new WebException(String.Format("Could not establish TCP connection to {0]:{1}.", server, port.ToString()));
+                        throw new WebException(String.Format("Could not establish TCP connection to {0}:{1}.", server, port.ToString()));
                     }
                 }
             }

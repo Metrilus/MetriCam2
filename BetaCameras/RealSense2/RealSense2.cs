@@ -283,7 +283,7 @@ namespace MetriCam2.Cameras
         }
 
 #if !NETSTANDARD2_0
-        public override System.Drawing.Bitmap CameraIcon { get => Properties.Resources.app.ToBitmap(); }
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.app; }
 #endif
 
         #region RealSense Options

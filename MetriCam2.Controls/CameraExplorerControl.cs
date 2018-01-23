@@ -67,8 +67,6 @@ namespace MetriCam2.Controls
 
         #region Private Fields
         private static CameraManagement cameraManagement;
-        private static readonly int IMAGE_SIZE_SMALL = 32;
-        private static readonly int IMAGE_SIZE_LARGE = 64;
         private static MetriLog log = new MetriLog();
         private bool showAddButton = true;
         #endregion
@@ -117,13 +115,10 @@ namespace MetriCam2.Controls
                 listViewItem.Name = cam.GetType().ToString();
                 listViewItem.Cam = cam;
 
-                Bitmap bmp = ScaleBitmap(cam.CameraIcon, IMAGE_SIZE_LARGE);
-                imageListLarge.Images.Add(cam.GetType().ToString(), (Bitmap)bmp.Clone());
-                imageListSmall.Images.Add(cam.GetType().ToString(), ScaleBitmap(cam.CameraIcon, IMAGE_SIZE_SMALL));
+                imageListSmall.Images.Add(cam.GetType().ToString(), cam.CameraIcon);
 
-                OverlayBitmap(bmp, Properties.Resources.greenDot);
-                imageListLarge.Images.Add(cam.GetType().ToString() + "_C", bmp);
-                imageListSmall.Images.Add(cam.GetType().ToString() + "_C", ScaleBitmap(bmp, IMAGE_SIZE_SMALL));
+                // FIXME: indicate that the camera is connected
+                imageListLarge.Images.Add(cam.GetType().ToString() + "_C", cam.CameraIcon);
 
                 this.listViewAvailable.Items.Add(listViewItem);
             }
@@ -203,9 +198,6 @@ namespace MetriCam2.Controls
         private void cam_OnConnected(Camera sender)
         {
             listViewSelected.BeginUpdate();
-            Bitmap bmp = ScaleBitmap(sender.CameraIcon, IMAGE_SIZE_LARGE);
-            // Overlay icon with green dot, that indicates its connection status.
-            OverlayBitmap(bmp, Properties.Resources.greenDot);
             foreach (ListViewItem lvi in listViewSelected.Items)
             {
                 CameraListViewItem clvi = (CameraListViewItem)lvi;
@@ -266,16 +258,6 @@ namespace MetriCam2.Controls
             graphics.DrawImage(image, new Rectangle(((int)targetSidelength - scaleWidth) / 2, ((int)targetSidelength - scaleHeight) / 2, scaleWidth, scaleHeight));
 
             return result;
-        }
-
-        private void OverlayBitmap(Bitmap background, Bitmap overlay)
-        {
-            Brush brush = new SolidBrush(Color.Black);
-            Graphics graphics = Graphics.FromImage(background);
-            graphics.InterpolationMode = InterpolationMode.High;
-            graphics.CompositingQuality = CompositingQuality.HighQuality;
-            graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            graphics.DrawImage(overlay, new Rectangle(0, background.Height - overlay.Height, overlay.Width, overlay.Height));
         }
 
         private void buttonChangeView_Click(object sender, EventArgs e)

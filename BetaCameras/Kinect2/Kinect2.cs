@@ -147,6 +147,7 @@ namespace MetriCam2.Cameras
 
         #region MetriCam2 Camera Interface
         #region MetriCam2 Camera Interface Properties
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.KinectIcon.ico; }
         #endregion
 
         #region MetriCam2 Camera Interface Methods
