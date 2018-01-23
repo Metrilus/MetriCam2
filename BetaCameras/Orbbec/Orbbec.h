@@ -64,6 +64,15 @@ namespace MetriCam2 {
 				}
 			}
 
+			property System::Drawing::Icon^ CameraIcon
+			{
+				System::Drawing::Icon^ get() override
+				{
+					System::ComponentModel::ComponentResourceManager^ resources = gcnew System::ComponentModel::ComponentResourceManager();
+					return cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.OrbbecIcon"));
+				}
+			}
+
 		protected:
 			/// <summary>
 			/// Resets list of available channels (<see cref="Channels"/>) to union of all cameras supported by the implementing class.

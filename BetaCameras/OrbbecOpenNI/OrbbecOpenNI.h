@@ -120,6 +120,15 @@ namespace MetriCam2
 			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 			virtual Metrilus::Util::RigidBodyTransformation^ GetExtrinsics(String^ channelFromName, String^ channelToName) override;
 
+			property System::Drawing::Icon^ CameraIcon
+			{
+				System::Drawing::Icon^ get() override
+				{
+					System::ComponentModel::ComponentResourceManager^ resources = gcnew System::ComponentModel::ComponentResourceManager();
+					return cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.OrbbecIcon"));
+				}
+			}
+
 		protected:
 			/// <summary>
 			/// Resets list of available channels (<see cref="Channels"/>) to union of all cameras supported by the implementing class.
