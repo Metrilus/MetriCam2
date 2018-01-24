@@ -61,6 +61,8 @@ namespace MetriCam2.Cameras
                 return irProfiles;
             }
         }
+
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.RealSenseIcon; }
         #endregion
 
         #region Constructor
