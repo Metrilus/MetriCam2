@@ -285,18 +285,6 @@ namespace MetriCam2.Cameras
 #if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.app; }
 #endif
-        public override string Vendor { get => "Intel"; }
-
-        public override string Model
-        {
-            get
-            {
-                if (this.IsConnected)
-                    return RealSense2API.GetDeviceInfo(_pipeline, RealSense2API.CameraInfo.NAME);
-
-                return "RealSense2";
-            }
-        }
 
         #region RealSense Options
 
