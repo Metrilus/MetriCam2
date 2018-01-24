@@ -285,6 +285,7 @@ namespace MetriCam2.Cameras
 #if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.app; }
 #endif
+        public override string Vendor { get => "Intel"; }
 
         #region RealSense Options
 
