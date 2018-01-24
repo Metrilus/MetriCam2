@@ -114,6 +114,7 @@
       <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;Z:\external-libraries\Orbbec\OpenNI2\2.3.0\x64\Lib</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>
       </TreatLinkerWarningAsErrors>
+      <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

@@ -72,8 +72,7 @@
       </IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
-      <EmbedManagedResourceFile>
-      </EmbedManagedResourceFile>
+      <EmbedManagedResourceFile>TexasInstrumentsIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

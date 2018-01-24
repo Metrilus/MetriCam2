@@ -69,8 +69,9 @@ namespace MetriCam2 {
 			{
 				System::Drawing::Icon^ get() override
 				{
-					System::ComponentModel::ComponentResourceManager^ resources = gcnew System::ComponentModel::ComponentResourceManager();
-					return cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.OrbbecIcon"));
+					System::Reflection::Assembly^ assembly = System::Reflection::Assembly::GetExecutingAssembly();
+					System::IO::Stream^ iconStream = assembly->GetManifestResourceStream("OrbbecIcon.ico");
+					return gcnew System::Drawing::Icon(iconStream);
 				}
 			}
 #endif
