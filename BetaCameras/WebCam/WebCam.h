@@ -134,6 +134,15 @@ namespace Cameras
 			}
 		}
 
+		property System::Drawing::Icon^ CameraIcon
+		{
+			System::Drawing::Icon^ get() override
+			{
+				System::ComponentModel::ComponentResourceManager^ resources = gcnew System::ComponentModel::ComponentResourceManager();
+				return cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.WebcamIcon"));
+			}
+		}
+
 		static array<String^, 1>^ ScanForCameras()
 		{
 			log->EnterMethod();
