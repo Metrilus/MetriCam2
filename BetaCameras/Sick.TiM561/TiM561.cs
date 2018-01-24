@@ -37,7 +37,9 @@ namespace MetriCam2.Cameras
         private UInt16[] _radii;
         private float[,] _directions;
 
+#if !NETSTANDARD2_0
         public override Icon CameraIcon => Properties.Resources.SickTiMIcon;
+#endif
 
         public TiM561(IPEndPoint remoteEndPoint)
             : base(_modelName)

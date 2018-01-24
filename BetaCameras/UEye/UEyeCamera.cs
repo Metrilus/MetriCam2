@@ -50,7 +50,10 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Public Properties
+
+#if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.IDSIcon; }
+#endif
 
         private ParamDesc<TriggerModeInternal> TriggerModeDesc
         {

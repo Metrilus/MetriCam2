@@ -134,6 +134,7 @@ namespace Cameras
 			}
 		}
 
+#if !NETSTANDARD2_0
 		property System::Drawing::Icon^ CameraIcon
 		{
 			System::Drawing::Icon^ get() override
@@ -142,6 +143,7 @@ namespace Cameras
 				return cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.WebcamIcon"));
 			}
 		}
+#endif
 
 		static array<String^, 1>^ ScanForCameras()
 		{

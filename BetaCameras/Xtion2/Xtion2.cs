@@ -22,7 +22,10 @@ namespace MetriCam2.Cameras
 
         public override string Vendor { get => "Asus"; }
         public override string Model { get => "Xtion2"; }
+
+#if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.XtionIcon; }
+#endif
 
 
         public void Dispose()

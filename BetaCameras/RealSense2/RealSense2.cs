@@ -287,6 +287,17 @@ namespace MetriCam2.Cameras
 #endif
         public override string Vendor { get => "Intel"; }
 
+        public override string Model
+        {
+            get
+            {
+                if (this.IsConnected)
+                    return RealSense2API.GetDeviceInfo(_pipeline, RealSense2API.CameraInfo.NAME);
+
+                return "RealSense2";
+            }
+        }
+
         #region RealSense Options
 
         // Not implemented options (mostly because not supported by D435):

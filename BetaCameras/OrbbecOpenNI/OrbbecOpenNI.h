@@ -120,6 +120,7 @@ namespace MetriCam2
 			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 			virtual Metrilus::Util::RigidBodyTransformation^ GetExtrinsics(String^ channelFromName, String^ channelToName) override;
 
+#if !NETSTANDARD2_0
 			property System::Drawing::Icon^ CameraIcon
 			{
 				System::Drawing::Icon^ get() override
@@ -128,6 +129,7 @@ namespace MetriCam2
 					return cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.OrbbecIcon"));
 				}
 			}
+#endif
 
 		protected:
 			/// <summary>

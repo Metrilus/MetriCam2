@@ -27,7 +27,10 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Public Properties
+
+#if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => V3S.Properties.Resources.SickIcon; }
+#endif
 
         private ParamDesc<string> IPAddressDesc
         {

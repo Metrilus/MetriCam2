@@ -64,6 +64,7 @@ namespace MetriCam2 {
 				}
 			}
 
+#if !NETSTANDARD2_0
 			property System::Drawing::Icon^ CameraIcon
 			{
 				System::Drawing::Icon^ get() override
@@ -72,6 +73,7 @@ namespace MetriCam2 {
 					return cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.OrbbecIcon"));
 				}
 			}
+#endif
 
 		protected:
 			/// <summary>
