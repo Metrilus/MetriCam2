@@ -1340,7 +1340,9 @@ namespace MetriCam2.Cameras
 
         protected override void ConnectImpl()
         {
-            if (!string.IsNullOrWhiteSpace(SerialNumber))
+            bool haveSerial = !string.IsNullOrWhiteSpace(SerialNumber);
+
+            if (haveSerial)
             {
                 RealSense2API.EnableDevice(_config, SerialNumber);
             }
@@ -1353,6 +1355,11 @@ namespace MetriCam2.Cameras
 
             StartPipeline();
 
+            if(!haveSerial)
+            {
+                this.SerialNumber = RealSense2API.GetDeviceInfo(_pipeline, RealSense2API.CameraInfo.SERIAL_NUMBER);
+            }
+            
             RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
 
             if (!RealSense2API.AdvancedModeEnabled(dev))
