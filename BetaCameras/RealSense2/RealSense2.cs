@@ -282,6 +282,16 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public override string Vendor { get => "Intel"; }
+
+        private string _model = "RealSense2";
+        public override string Model
+        {
+            get => _model;
+        }
+
+        public override string Name { get => Model; }
+
 #if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.RealSense2Icon; }
 #endif
@@ -1358,7 +1368,10 @@ namespace MetriCam2.Cameras
             {
                 this.SerialNumber = RealSense2API.GetDeviceInfo(_pipeline, RealSense2API.CameraInfo.SERIAL_NUMBER);
             }
-            
+
+            _model = RealSense2API.GetDeviceInfo(_pipeline, RealSense2API.CameraInfo.NAME);
+
+
             RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
 
             if (!RealSense2API.AdvancedModeEnabled(dev))
