@@ -239,27 +239,6 @@ namespace MetriCam2.Controls
             listViewSelected.EndUpdate();
         }
 
-        private Bitmap ScaleBitmap(Bitmap image, int targetSidelength)
-        {
-            Brush brush = new SolidBrush(Color.Transparent);
-
-            float scale = Math.Min((float)targetSidelength / image.Width, (float)targetSidelength / image.Height);
-
-            Bitmap result = new Bitmap((int)targetSidelength, (int)targetSidelength, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            Graphics graphics = Graphics.FromImage(result);
-            graphics.InterpolationMode = InterpolationMode.High;
-            graphics.CompositingQuality = CompositingQuality.HighQuality;
-            graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-            int scaleWidth = (int)(image.Width * scale);
-            int scaleHeight = (int)(image.Height * scale);
-
-            graphics.FillRectangle(brush, new RectangleF(0, 0, targetSidelength, targetSidelength));
-            graphics.DrawImage(image, new Rectangle(((int)targetSidelength - scaleWidth) / 2, ((int)targetSidelength - scaleHeight) / 2, scaleWidth, scaleHeight));
-
-            return result;
-        }
-
         private void buttonChangeView_Click(object sender, EventArgs e)
         {
             switch (View)
