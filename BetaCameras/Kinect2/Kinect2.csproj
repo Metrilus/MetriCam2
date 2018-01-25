@@ -74,14 +74,12 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="KinectIcon.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\.licenseheader">
       <Link>.licenseheader</Link>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="KinectIcon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
