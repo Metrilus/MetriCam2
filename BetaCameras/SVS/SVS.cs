@@ -106,6 +106,11 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Public Properties
+
+#if !NETSTANDARD2_0
+        public override Icon CameraIcon => Properties.Resources.SVSIcon;
+#endif
+
         private ListParamDesc<string> AcquisitionModeDesc
         {
             get

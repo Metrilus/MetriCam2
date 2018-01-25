@@ -121,7 +121,7 @@
   <data name="changeView" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\changeView.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="greenDot" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\greenDot.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="ConnectedOverlay" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ConnectedOverlay.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

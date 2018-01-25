@@ -117,13 +117,11 @@ namespace MetriCam2.Controls
                 listViewItem.Name = cam.GetType().ToString();
                 listViewItem.Cam = cam;
 
-                Bitmap bmp = ScaleBitmap(cam.CameraIcon, IMAGE_SIZE_LARGE);
-                imageListLarge.Images.Add(cam.GetType().ToString(), (Bitmap)bmp.Clone());
-                imageListSmall.Images.Add(cam.GetType().ToString(), ScaleBitmap(cam.CameraIcon, IMAGE_SIZE_SMALL));
+                imageListSmall.Images.Add(cam.GetType().ToString(), new Icon(cam.CameraIcon, IMAGE_SIZE_SMALL, IMAGE_SIZE_SMALL));
+                imageListLarge.Images.Add(cam.GetType().ToString(), new Icon(cam.CameraIcon, IMAGE_SIZE_LARGE, IMAGE_SIZE_LARGE));
 
-                OverlayBitmap(bmp, Properties.Resources.greenDot);
-                imageListLarge.Images.Add(cam.GetType().ToString() + "_C", bmp);
-                imageListSmall.Images.Add(cam.GetType().ToString() + "_C", ScaleBitmap(bmp, IMAGE_SIZE_SMALL));
+                imageListSmall.Images.Add(cam.GetType().ToString() + "_C", AddIconOverlay(cam.CameraIcon, Properties.Resources.ConnectedOverlay, IMAGE_SIZE_SMALL));
+                imageListLarge.Images.Add(cam.GetType().ToString() + "_C", AddIconOverlay(cam.CameraIcon, Properties.Resources.ConnectedOverlay, IMAGE_SIZE_LARGE));
 
                 this.listViewAvailable.Items.Add(listViewItem);
             }
@@ -132,6 +130,18 @@ namespace MetriCam2.Controls
         #endregion
 
         #region Private Methods
+        public Icon AddIconOverlay(Icon originalIcon, Icon overlay, int iconSize)
+        {
+            Image a = new Icon(originalIcon, iconSize, iconSize).ToBitmap();
+            Image b = new Icon(overlay, iconSize, iconSize).ToBitmap();
+            Bitmap bitmap = new Bitmap(iconSize, iconSize);
+            Graphics canvas = Graphics.FromImage(bitmap);
+            canvas.DrawImage(a, new Point(0, 0));
+            canvas.DrawImage(b, new Point(0, 0));
+            canvas.Save();
+            return Icon.FromHandle(bitmap.GetHicon());
+        }
+
         private void SelectCameras()
         {
             listViewSelected.BeginUpdate();
@@ -203,9 +213,6 @@ namespace MetriCam2.Controls
         private void cam_OnConnected(Camera sender)
         {
             listViewSelected.BeginUpdate();
-            Bitmap bmp = ScaleBitmap(sender.CameraIcon, IMAGE_SIZE_LARGE);
-            // Overlay icon with green dot, that indicates its connection status.
-            OverlayBitmap(bmp, Properties.Resources.greenDot);
             foreach (ListViewItem lvi in listViewSelected.Items)
             {
                 CameraListViewItem clvi = (CameraListViewItem)lvi;
@@ -245,37 +252,6 @@ namespace MetriCam2.Controls
                 }
             }
             listViewSelected.EndUpdate();
-        }
-
-        private Bitmap ScaleBitmap(Bitmap image, int targetSidelength)
-        {
-            Brush brush = new SolidBrush(Color.Transparent);
-
-            float scale = Math.Min((float)targetSidelength / image.Width, (float)targetSidelength / image.Height);
-
-            Bitmap result = new Bitmap((int)targetSidelength, (int)targetSidelength, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            Graphics graphics = Graphics.FromImage(result);
-            graphics.InterpolationMode = InterpolationMode.High;
-            graphics.CompositingQuality = CompositingQuality.HighQuality;
-            graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-            int scaleWidth = (int)(image.Width * scale);
-            int scaleHeight = (int)(image.Height * scale);
-
-            graphics.FillRectangle(brush, new RectangleF(0, 0, targetSidelength, targetSidelength));
-            graphics.DrawImage(image, new Rectangle(((int)targetSidelength - scaleWidth) / 2, ((int)targetSidelength - scaleHeight) / 2, scaleWidth, scaleHeight));
-
-            return result;
-        }
-
-        private void OverlayBitmap(Bitmap background, Bitmap overlay)
-        {
-            Brush brush = new SolidBrush(Color.Black);
-            Graphics graphics = Graphics.FromImage(background);
-            graphics.InterpolationMode = InterpolationMode.High;
-            graphics.CompositingQuality = CompositingQuality.HighQuality;
-            graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            graphics.DrawImage(overlay, new Rectangle(0, background.Height - overlay.Height, overlay.Width, overlay.Height));
         }
 
         private void buttonChangeView_Click(object sender, EventArgs e)

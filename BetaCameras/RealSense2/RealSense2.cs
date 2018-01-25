@@ -7,6 +7,8 @@ using System.Drawing;
 using System.Collections.Generic;
 using MetriCam2.Attributes;
 using System.Threading;
+using System.IO;
+using System.Reflection;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -46,6 +48,22 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region RealSense2 Camera Properties
+
+        #region Device Information
+        public override string Vendor { get => "Intel"; }
+
+        private string _model = "RealSense2";
+        public override string Model
+        {
+            get => _model;
+        }
+
+        public override string Name { get => Model; }
+
+#if !NETSTANDARD2_0
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.RealSense2Icon; }
+#endif
+        #endregion
 
         #region Not implemented Properties
         // Not implemented options (mostly because not supported by D435):
@@ -1218,7 +1236,9 @@ namespace MetriCam2.Cameras
 
         protected override void ConnectImpl()
         {
-            if (!string.IsNullOrWhiteSpace(SerialNumber))
+            bool haveSerial = !string.IsNullOrWhiteSpace(SerialNumber);
+
+            if (haveSerial)
             {
                 RealSense2API.EnableDevice(_config, SerialNumber);
             }
@@ -1230,6 +1250,14 @@ namespace MetriCam2.Cameras
             }
 
             StartPipeline();
+
+            if(!haveSerial)
+            {
+                this.SerialNumber = RealSense2API.GetDeviceInfo(_pipeline, RealSense2API.CameraInfo.SERIAL_NUMBER);
+            }
+
+            _model = RealSense2API.GetDeviceInfo(_pipeline, RealSense2API.CameraInfo.NAME);
+
 
             RealSense2API.RS2Device dev = RealSense2API.GetActiveDevice(_pipeline);
 

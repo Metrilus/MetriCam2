@@ -218,7 +218,7 @@ namespace MetriCam2
         /// <summary>
         /// Provides an icon that represents the camera.
         /// </summary>
-        public virtual System.Drawing.Bitmap CameraIcon { get { return Properties.Resources.MetriCam_Icon; } }
+        public virtual System.Drawing.Icon CameraIcon { get { return Properties.Resources.DefaultIcon; } }
 #endif
         #endregion
 
