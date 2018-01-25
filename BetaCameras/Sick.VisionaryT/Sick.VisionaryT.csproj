@@ -8,8 +8,8 @@
     <ProjectGuid>{DE18D143-C624-4941-B8A1-0F91262D3350}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>V3S</RootNamespace>
-    <AssemblyName>MetriCam2.Cameras.V3S</AssemblyName>
+    <RootNamespace>MetriCam2.Cameras</RootNamespace>
+    <AssemblyName>MetriCam2.Cameras.Sick.VisionaryT</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

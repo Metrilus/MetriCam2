@@ -1,5 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -21,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{6AB1
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinimalSample", "Samples\MinimalSample\MinimalSample.csproj", "{488A05E9-0E28-4B47-B4EB-FD5FFEAB9BDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sick", "BetaCameras\Sick\Sick.csproj", "{DE18D143-C624-4941-B8A1-0F91262D3350}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sick.VisionaryT", "BetaCameras\Sick.VisionaryT\Sick.VisionaryT.csproj", "{DE18D143-C624-4941-B8A1-0F91262D3350}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{0777C39D-936C-49FB-89A5-FA7582C7630D}"
 	ProjectSection(SolutionItems) = preProject
