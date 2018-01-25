@@ -118,10 +118,10 @@ namespace MetriCam2.Controls
                 listViewItem.Cam = cam;
 
                 imageListSmall.Images.Add(cam.GetType().ToString(), new Icon(cam.CameraIcon, IMAGE_SIZE_SMALL, IMAGE_SIZE_SMALL));
-                imageListSmall.Images.Add(cam.GetType().ToString(), new Icon(cam.CameraIcon, IMAGE_SIZE_LARGE, IMAGE_SIZE_LARGE));
+                imageListLarge.Images.Add(cam.GetType().ToString(), new Icon(cam.CameraIcon, IMAGE_SIZE_LARGE, IMAGE_SIZE_LARGE));
 
                 // FIXME: indicate that the camera is connected
-                imageListLarge.Images.Add(cam.GetType().ToString() + "_C", new Icon(cam.CameraIcon, IMAGE_SIZE_SMALL, IMAGE_SIZE_SMALL));
+                imageListSmall.Images.Add(cam.GetType().ToString() + "_C", new Icon(cam.CameraIcon, IMAGE_SIZE_SMALL, IMAGE_SIZE_SMALL));
                 imageListLarge.Images.Add(cam.GetType().ToString() + "_C", new Icon(cam.CameraIcon, IMAGE_SIZE_LARGE, IMAGE_SIZE_LARGE));
 
                 this.listViewAvailable.Items.Add(listViewItem);
