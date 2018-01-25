@@ -63,7 +63,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OrbbecOpenNI", "BetaCameras
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealSense", "BetaCameras\RealSense\RealSense.csproj", "{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIVoxel", "BetaCameras\TIVoxel-VS2013\TIVoxel.vcxproj", "{ECF2A55A-67D9-48B7-936C-873FC6C07364}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIVoxel", "BetaCameras\TIVoxel\TIVoxel.vcxproj", "{ECF2A55A-67D9-48B7-936C-873FC6C07364}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealSense2", "BetaCameras\RealSense2\RealSense2.csproj", "{3032E9B1-F572-4ECB-906A-F7A2B45EF125}"
 EndProject
