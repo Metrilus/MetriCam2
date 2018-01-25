@@ -6,6 +6,8 @@ using System;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Threading;
+using System.IO;
+using System.Reflection;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -279,6 +281,10 @@ namespace MetriCam2.Cameras
                 return res;
             }
         }
+
+#if !NETSTANDARD2_0
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.RealSense2Icon; }
+#endif
 
         #region RealSense Options
 

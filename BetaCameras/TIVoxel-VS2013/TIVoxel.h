@@ -59,6 +59,19 @@ namespace Cameras
 		{
 			inline int get() { return m_height; }
 		}
+
+#if !NETSTANDARD2_0
+		property System::Drawing::Icon^ CameraIcon
+		{
+			System::Drawing::Icon^ get() override
+			{
+				System::Reflection::Assembly^ assembly = System::Reflection::Assembly::GetExecutingAssembly();
+				System::IO::Stream^ iconStream = assembly->GetManifestResourceStream("TexasInstrumentsIcon.ico");
+				return gcnew System::Drawing::Icon(iconStream);
+			}
+		}
+#endif
+
 		/// <summary>
 		/// Gets the unambiguous range for one or two modulation frequencies.
 		/// Range = C / 2 * f_{mod}

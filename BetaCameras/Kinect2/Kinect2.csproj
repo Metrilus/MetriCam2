@@ -74,6 +74,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="KinectIcon.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\.licenseheader">

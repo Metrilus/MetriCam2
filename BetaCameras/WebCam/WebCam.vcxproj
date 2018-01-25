@@ -118,6 +118,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>strmiids.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EmbedManagedResourceFile>WebcamIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -181,6 +182,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="app.ico" />
+    <Image Include="WebcamIcon.ico">
+      <DeploymentContent>false</DeploymentContent>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
@@ -189,6 +193,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\.licenseheader" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resource.resx" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

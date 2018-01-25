@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Net;
 using System.Threading;
 using MetriCam2.Exceptions;
@@ -35,6 +36,10 @@ namespace MetriCam2.Cameras
         private int _angularStepWidth;
         private UInt16[] _radii;
         private float[,] _directions;
+
+#if !NETSTANDARD2_0
+        public override Icon CameraIcon => Properties.Resources.SickTiMIcon;
+#endif
 
         public TiM561(IPEndPoint remoteEndPoint)
             : base(_modelName)
