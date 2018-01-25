@@ -63,9 +63,9 @@ namespace MetriCam2.Cameras.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        internal static System.Drawing.Icon app {
+        internal static System.Drawing.Icon RealSense2Icon {
             get {
-                object obj = ResourceManager.GetObject("app", resourceCulture);
+                object obj = ResourceManager.GetObject("RealSense2Icon", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
