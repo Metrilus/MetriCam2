@@ -106,7 +106,7 @@ namespace MetriCam2.Cameras
         [Description("Resolution (Color Sensor)", "Resolution of the color images in pixel",
             ConnectionStates.Connected | ConnectionStates.Disconnected,
             ConnectionStates.Connected | ConnectionStates.Disconnected)]
-        [AllowedValueList("ColorResolutionList", typeof(Point2i), "Point2iToResolution")]
+        [AllowedValueList(nameof(ColorResolutionList), typeof(Point2i), "Point2iToResolution")]
         public Point2i ColorResolution
         {
             get { return _colorResolution; }
@@ -151,7 +151,7 @@ namespace MetriCam2.Cameras
         [Description("FPS (Color Sensor)", "Frames per second of the color sensor",
             ConnectionStates.Connected | ConnectionStates.Disconnected,
             ConnectionStates.Connected | ConnectionStates.Disconnected)]
-        [AllowedValueList("ColorFPSList", typeof(int))]
+        [AllowedValueList(nameof(ColorFPSList), typeof(int))]
         public int ColorFPS
         {
             get { return _colorFPS; }
@@ -193,7 +193,7 @@ namespace MetriCam2.Cameras
         [Description("Resolution (Depth Sensor)", "Resolution of the depth images in pixel",
             ConnectionStates.Connected | ConnectionStates.Disconnected,
             ConnectionStates.Connected | ConnectionStates.Disconnected)]
-        [AllowedValueList("DepthResolutionList", typeof(Point2i), "Point2iToResolution")]
+        [AllowedValueList(nameof(DepthResolutionList), typeof(Point2i), "Point2iToResolution")]
         public Point2i DepthResolution
         {
             get { return _depthResolution; }
@@ -256,7 +256,7 @@ namespace MetriCam2.Cameras
         [Description("FPS (Depth Sensor)", "Currently set frames per second the stereo sensor operates with",
             Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected,
             Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected)]
-        [AllowedValueList("DepthFPSList", typeof(int))]
+        [AllowedValueList(nameof(DepthFPSList), typeof(int))]
         public int DepthFPS
         {
             get { return _depthFPS; }
@@ -336,7 +336,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image brightness
         /// </summary>
-        [Range("BrightnessMin", "BrightnessMax", typeof(int))]
+        [Range(nameof(BrightnessRange), typeof(int))]
         [Description("Brightness (Color Sensor)", "Color image brightness", Camera.ConnectionStates.Connected)]
         public int Brightness
         {
@@ -355,8 +355,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int BrightnessMin { get => BrightnessRange.Minimum; }
-        public int BrightnessMax { get => BrightnessRange.Maximum; }
         public Range<int> BrightnessRange
         {
             get
@@ -378,7 +376,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image contrast
         /// </summary>
-        [Range("ContrastMin", "ContrastMax", typeof(int))]
+        [Range(nameof(ContrastRange), typeof(int))]
         [Description("Contrast (Color Sensor)", "Color image contrast", Camera.ConnectionStates.Connected)]
         public int Contrast
         {
@@ -397,8 +395,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int ContrastMin { get => BrightnessRange.Minimum; }
-        public int ContrastMax { get => BrightnessRange.Maximum; }
         public Range<int> ContrastRange
         {
             get
@@ -424,7 +420,7 @@ namespace MetriCam2.Cameras
             "Controls exposure time of color camera. Setting any value will disable auto exposure",
             ConnectionStates.Connected,
             ConnectionStates.Connected)]
-        [Range("ExposureColorMin", "ExposureColorMax", typeof(int))]
+        [Range(nameof(ExposureColorRange), typeof(int))]
         public int ExposureColor
         {
             get
@@ -442,8 +438,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int ExposureColorMin { get => ExposureColorRange.Minimum; }
-        public int ExposureColorMax { get => ExposureColorRange.Maximum; }
         Range<int> ExposureColorRange
         {
             get
@@ -515,7 +509,7 @@ namespace MetriCam2.Cameras
             "Controls exposure time of depth camera. Setting any value will disable auto exposure",
             ConnectionStates.Connected,
             ConnectionStates.Connected)]
-        [Range("ExposureDepthMin", "ExposureDepthMax", typeof(int))]
+        [Range(nameof(ExposureDepthRange), typeof(int))]
         public int ExposureDepth
         {
             get
@@ -536,8 +530,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int ExposureDepthMin { get => ExposureColorRange.Minimum; }
-        public int ExposureDepthMax { get => ExposureColorRange.Maximum; }
         public Range<int> ExposureDepthRange
         {
             get
@@ -581,7 +573,7 @@ namespace MetriCam2.Cameras
         /// Color image gain
         /// </summary>
         [Description("Gain (Color Sensor)", "Color image gain", ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("GainColorMin", "GainColorMax", typeof(int))]
+        [Range(nameof(GainColorRange), typeof(int))]
         public int GainColor
         {
             get
@@ -598,8 +590,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int GainColorMin { get => GainColorRange.Minimum; }
-        public int GainColorMax { get => GainColorRange.Maximum; }
         public Range<int> GainColorRange
         {
             get
@@ -621,7 +611,7 @@ namespace MetriCam2.Cameras
         /// Depth image gain
         /// </summary>
         [Description("Gain (Depth Sensor)", "Depth image gain", ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("GainDepthMin", "GainDepthMax", typeof(int))]
+        [Range(nameof(GainDepthRange), typeof(int))]
         public int GainDepth
         {
             get
@@ -638,8 +628,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int GainDepthMin { get => GainDepthRange.Minimum; }
-        public int GainDepthMax { get => GainDepthRange.Maximum; }
         Range<int> GainDepthRange
         {
             get
@@ -661,7 +649,7 @@ namespace MetriCam2.Cameras
         /// Color image Gamma
         /// </summary>
         [Description("Gamma", "Color image gamma", ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("GammaMin", "GammaMax", typeof(int))]
+        [Range(nameof(GammaRange), typeof(int))]
         public int Gamma
         {
             get
@@ -678,8 +666,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int GammaMin { get => GammaRange.Minimum; }
-        public int GammaMax { get => GammaRange.Minimum; }
         public Range<int> GammaRange
         {
             get
@@ -701,7 +687,7 @@ namespace MetriCam2.Cameras
         /// Color image Hue
         /// </summary>
         [Description("Hue", "Color image hue", ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("HueMin", "HueMax", typeof(int))]
+        [Range(nameof(HueRange), typeof(int))]
         public int Hue
         {
             get
@@ -718,8 +704,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int HueMin { get => HueRange.Minimum; }
-        public int HueMax { get => HueRange.Maximum; }
         public Range<int> HueRange
         {
             get
@@ -741,7 +725,7 @@ namespace MetriCam2.Cameras
         /// Color image Saturation
         /// </summary>
         [Description("Saturation", "Color image Saturation", ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("SaturationMin", "SaturationMax", typeof(int))]
+        [Range(nameof(SaturationRange), typeof(int))]
         public int Saturation
         {
             get
@@ -758,8 +742,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int SaturationMin { get => SaturationRange.Minimum; }
-        public int SaturationMax { get => SaturationRange.Maximum; }
         public Range<int> SaturationRange
         {
             get
@@ -781,7 +763,7 @@ namespace MetriCam2.Cameras
         /// Color image Sharpness
         /// </summary>
         [Description("Sharpness", "Color image Sharpness", ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("SharpnessMin", "SharpnessMax", typeof(int))]
+        [Range(nameof(SharpnessRange), typeof(int))]
         public int Sharpness
         {
             get
@@ -798,8 +780,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int SharpnessMin { get => SharpnessRange.Minimum; }
-        public int SharpnessMax { get => SharpnessRange.Maximum; }
         public Range<int> SharpnessRange
         {
             get
@@ -823,7 +803,7 @@ namespace MetriCam2.Cameras
         [Description("White Balance",
             "Controls white balance of color image. Setting any value will disable auto white balance.",
             ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("WhiteBalanceMin", "WhiteBalanceMax", typeof(int))]
+        [Range(nameof(WhiteBalanceRange), typeof(int))]
         public int WhiteBalance
         {
             get
@@ -845,8 +825,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int WhiteBalanceMin { get => WhiteBalanceRange.Minimum; }
-        public int WhiteBalanceMax { get => WhiteBalanceRange.Maximum; }
         public Range<int> WhiteBalanceRange
         {
             get
@@ -893,7 +871,7 @@ namespace MetriCam2.Cameras
             "Manual laser power in mw. applicable only when laser power mode is set to Manual",
             ConnectionStates.Connected, ConnectionStates.Connected)]
         [Unit("mW")]
-        [Range("LaserPowerMin", "LaserPowerMax", typeof(int))]
+        [Range(nameof(LaserPowerRange), typeof(int))]
         public int LaserPower
         {
             get
@@ -914,8 +892,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int LaserPowerMin { get => LaserPowerRange.Minimum; }
-        public int LaserPowerMax { get => LaserPowerRange.Maximum; }
         public Range<int> LaserPowerRange
         {
             get
@@ -961,7 +937,7 @@ namespace MetriCam2.Cameras
         [Description("Frame Queue Size (Color Sensor)",
             "Max number of frames you can hold at a given time.Increasing this number will reduce frame drops but increase latency, and vice versa",
             ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("FrameQueueSizeColorMin", "FrameQueueSizeColorMax", typeof(int))]
+        [Range(nameof(FrameQueueSizeColorRange), typeof(int))]
         public int FrameQueueSizeColor
         {
             get
@@ -978,8 +954,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int FrameQueueSizeColorMin { get => FrameQueueSizeColorRange.Minimum; }
-        public int FrameQueueSizeColorMax { get => FrameQueueSizeColorRange.Maximum; }
         public Range<int> FrameQueueSizeColorRange
         {
             get
@@ -1003,7 +977,7 @@ namespace MetriCam2.Cameras
         [Description("Frame Queue Size (DepthSensor)",
             "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa",
              ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Range("FrameQueueSizeDepthMin", "FrameQueueSizeDepthMax", typeof(int))]
+        [Range(nameof(FrameQueueSizeDepthRange), typeof(int))]
         public int FrameQueueSizeDepth
         {
             get
@@ -1020,8 +994,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public int FrameQueueSizeDepthMin { get => FrameQueueSizeDepthRange.Minimum; }
-        public int FrameQueueSizeDepthMax { get => FrameQueueSizeDepthRange.Maximum; }
         public Range<int> FrameQueueSizeDepthRange
         {
             get
@@ -1144,7 +1116,7 @@ namespace MetriCam2.Cameras
         /// </summary>
         [Description("Depth Units", "Number of meters represented by a single depth unit", ConnectionStates.Connected, ConnectionStates.Connected)]
         [Unit("m")]
-        [Range("DepthUnitsMin", "DepthUnitsMax", typeof(float))]
+        [Range(nameof(DepthUnitsRange), typeof(float))]
         public float DepthUnits
         {
             get
@@ -1161,8 +1133,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        public float DepthUnitsMin { get => DepthUnitsRange.Minimum; }
-        public float DepthUnitsMax { get => DepthUnitsRange.Maximum; }
         public Range<float> DepthUnitsRange
         {
             get

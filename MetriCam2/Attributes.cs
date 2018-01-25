@@ -137,34 +137,47 @@ namespace MetriCam2.Attributes
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class RangeAttribute : ConstrainAttribute
     {
-        public object Minimum { get; private set; }
-        public object Maximum { get; private set; }
+        public object Range { get; private set; }
 
         public RangeAttribute(float min, float max)
         {
-            Minimum = min;
-            Maximum = max;
+            Range = new Range<float>(min, max);
+            DataType = typeof(float);
+        }
+
+        public RangeAttribute(Range<float> range)
+        {
+            Range = range;
             DataType = typeof(float);
         }
 
         public RangeAttribute(double min, double max)
         {
-            Minimum = min;
-            Maximum = max;
+            Range = new Range<double>(min, max);
+            DataType = typeof(double);
+        }
+
+        public RangeAttribute(Range<double> range)
+        {
+            Range = range;
             DataType = typeof(double);
         }
 
         public RangeAttribute(int min, int max)
         {
-            Minimum = min;
-            Maximum = max;
+            Range = new Range<int>(min, max);
             DataType = typeof(int);
         }
 
-        public RangeAttribute(string min, string max, Type type)
+        public RangeAttribute(Range<int> range)
         {
-            Minimum = min;
-            Maximum = max;
+            Range = range;
+            DataType = typeof(int);
+        }
+
+        public RangeAttribute(string range, Type type)
+        {
+            Range = range;
             DataType = type;
             DataIsPropertyName = true;
         }
