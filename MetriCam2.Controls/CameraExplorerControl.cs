@@ -120,9 +120,8 @@ namespace MetriCam2.Controls
                 imageListSmall.Images.Add(cam.GetType().ToString(), new Icon(cam.CameraIcon, IMAGE_SIZE_SMALL, IMAGE_SIZE_SMALL));
                 imageListLarge.Images.Add(cam.GetType().ToString(), new Icon(cam.CameraIcon, IMAGE_SIZE_LARGE, IMAGE_SIZE_LARGE));
 
-                // FIXME: indicate that the camera is connected
-                imageListSmall.Images.Add(cam.GetType().ToString() + "_C", new Icon(cam.CameraIcon, IMAGE_SIZE_SMALL, IMAGE_SIZE_SMALL));
-                imageListLarge.Images.Add(cam.GetType().ToString() + "_C", new Icon(cam.CameraIcon, IMAGE_SIZE_LARGE, IMAGE_SIZE_LARGE));
+                imageListSmall.Images.Add(cam.GetType().ToString() + "_C", AddIconOverlay(cam.CameraIcon, Properties.Resources.ConnectedOverlay, IMAGE_SIZE_SMALL));
+                imageListLarge.Images.Add(cam.GetType().ToString() + "_C", AddIconOverlay(cam.CameraIcon, Properties.Resources.ConnectedOverlay, IMAGE_SIZE_LARGE));
 
                 this.listViewAvailable.Items.Add(listViewItem);
             }
@@ -131,6 +130,18 @@ namespace MetriCam2.Controls
         #endregion
 
         #region Private Methods
+        public Icon AddIconOverlay(Icon originalIcon, Icon overlay, int iconSize)
+        {
+            Image a = new Icon(originalIcon, iconSize, iconSize).ToBitmap();
+            Image b = new Icon(overlay, iconSize, iconSize).ToBitmap();
+            Bitmap bitmap = new Bitmap(iconSize, iconSize);
+            Graphics canvas = Graphics.FromImage(bitmap);
+            canvas.DrawImage(a, new Point(0, 0));
+            canvas.DrawImage(b, new Point(0, 0));
+            canvas.Save();
+            return Icon.FromHandle(bitmap.GetHicon());
+        }
+
         private void SelectCameras()
         {
             listViewSelected.BeginUpdate();
