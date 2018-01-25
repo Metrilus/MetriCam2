@@ -183,7 +183,7 @@
   <ItemGroup>
     <Image Include="app.ico" />
     <Image Include="WebcamIcon.ico">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </Image>
   </ItemGroup>
   <ItemGroup>

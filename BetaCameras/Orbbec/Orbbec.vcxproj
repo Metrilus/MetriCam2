@@ -110,7 +110,7 @@
   <ItemGroup>
     <Image Include="app.ico" />
     <Image Include="OrbbecIcon.ico">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </Image>
   </ItemGroup>
   <ItemGroup>
