@@ -64,6 +64,7 @@
     <Compile Include="CameraManagement.cs" />
     <Compile Include="ChannelNames.cs" />
     <Compile Include="ChannelRegistry.cs" />
+    <Compile Include="Enums.cs" />
     <Compile Include="Exceptions\ConnectionFailedException.cs" />
     <Compile Include="Exceptions\ExceptionBuilder.cs" />
     <Compile Include="Camera.cs" />
@@ -71,6 +72,7 @@
     <Compile Include="Exceptions\MetriCam2Exception.cs" />
     <Compile Include="Exceptions\NativeDependencyMissingException.cs" />
     <Compile Include="Exceptions\ParameterNotSupportedException.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Localization.cs" />
     <Compile Include="MetriCamLocale.Designer.cs">
       <AutoGen>True</AutoGen>

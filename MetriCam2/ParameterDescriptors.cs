@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Globalization;
+using MetriCam2.Enums;
+using MetriCam2.Attributes;
 
 namespace MetriCam2
 {
@@ -64,10 +66,10 @@ namespace MetriCam2
         public bool IsWritable { get; internal set; }
         /// <summary>Defines when the parameter is readable.</summary>
         /// <remarks>Will be set only in the camera wrapper implementation.</remarks>
-        public Camera.ConnectionStates ReadableWhen { internal get; set; }
+        public ConnectionStates ReadableWhen { internal get; set; }
         /// <summary>Defines when the parameter is writable.</summary>
         /// <remarks>Will be set only in the camera wrapper implementation.</remarks>
-        public Camera.ConnectionStates WritableWhen { internal get; set; }
+        public ConnectionStates WritableWhen { internal get; set; }
         /* Dependency resolution */
         // public Setting dependsOn / overrides
         // public Setting setAfter
@@ -77,13 +79,13 @@ namespace MetriCam2
         /// <summary>
         /// Default constructor. Does nothing.
         /// </summary>
-        public ParamDesc() { }
+        protected ParamDesc() { }
 
         /// <summary>
         /// Copy constructor. Copies all properties from <paramref name="other"/>.
         /// </summary>
         /// <param name="other">The <see cref="ParamDesc"/> object to be copied.</param>
-        public ParamDesc(ParamDesc other)
+        protected ParamDesc(ParamDesc other)
         {
             this.Type = other.Type;
             this.Name = other.Name;
@@ -98,6 +100,114 @@ namespace MetriCam2
             this.IsWritable = other.IsWritable;
             this.ReadableWhen = other.ReadableWhen;
             this.WritableWhen = other.WritableWhen;
+        }
+
+        public static ParamDesc Create(
+            Type type, 
+            string name, 
+            string description, 
+            string unit,
+            object value,
+            ConnectionStates readableWhen,
+            ConnectionStates writabelWhen)
+        {
+            ParamDesc desc;
+
+            if (type == typeof(int))
+                desc = new ParamDesc<int>();
+            else if (type == typeof(float))
+                desc = new ParamDesc<float>();
+            else if (type == typeof(double))
+                desc = new ParamDesc<double>();
+            else if (type == typeof(bool))
+                desc = new ParamDesc<bool>();
+            else
+                throw new ArgumentException(string.Format("Type {0} not supported", type.ToString()));
+
+            desc.init(type, name, description, unit, value, readableWhen, writabelWhen);
+            return desc;
+        }
+
+        public static ParamDesc CreateRange(
+            Type type,
+            object range,
+            string name,
+            string description,
+            string unit,
+            object value,
+            ConnectionStates readableWhen,
+            ConnectionStates writabelWhen)
+        {
+            ParamDesc desc;
+
+            if (type == typeof(int))
+            {
+                Range<int> intRange = (Range<int>)range;
+                desc = new RangeParamDesc<int>(intRange.Minimum, intRange.Maximum);
+            }
+            else if (type == typeof(float))
+            {
+                Range<float> floatRange = (Range<float>)range;
+                desc = new RangeParamDesc<float>(floatRange.Minimum, floatRange.Maximum);
+            }
+            else if (type == typeof(double))
+            {
+                Range<double> doubleRange = (Range<double>)range;
+                desc = new RangeParamDesc<double>(doubleRange.Minimum, doubleRange.Maximum);
+            }
+            else
+                throw new ArgumentException(string.Format("Type {0} not supported", type.ToString()));
+
+            desc.init(type, name, description, unit, value, readableWhen, writabelWhen);
+            return desc;
+        }
+
+        public static ParamDesc CreateList(
+            Type type,
+            object list,
+            string name,
+            string description,
+            string unit,
+            object value,
+            ConnectionStates readableWhen,
+            ConnectionStates writabelWhen)
+        {
+            ParamDesc desc;
+
+            if (type == typeof(int))
+                desc = new ListParamDesc<int>((List<int>)list);
+            else if (type == typeof(float))
+                desc = new ListParamDesc<float>((List<float>)list);
+            else if (type == typeof(double))
+            {
+                List<float> floatList = ((List<double>)list).Select<double, float>(i => (float)i).ToList();
+                desc = new ListParamDesc<double>(floatList);
+            }
+            else if (type.IsEnum)
+                desc = new ListParamDesc<string>(type);
+            else
+                throw new ArgumentException(string.Format("Type {0} not supported", type.ToString()));
+
+            desc.init(type, name, description, unit, value, readableWhen, writabelWhen);
+            return desc;
+        }
+
+        private void init(
+            Type type,
+            string name,
+            string description,
+            string unit,
+            object value,
+            ConnectionStates readableWhen,
+            ConnectionStates writabelWhen)
+        {
+            this.Type = type;
+            this.Name = name;
+            this.Value = value;
+            this.Description = description;
+            this.ReadableWhen = readableWhen;
+            this.WritableWhen = writabelWhen;
+            this.Unit = unit;
         }
         #endregion
 

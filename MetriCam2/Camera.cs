@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using MetriCam2.Attributes;
 using MetriCam2.Enums;
 
 namespace MetriCam2
@@ -911,43 +912,56 @@ namespace MetriCam2
 
             string msgNotSupported = String.Format("{0} does not support parameter {1}.", Name, name);
             PropertyInfo pi = this.GetType().GetProperty(name);
+            Type propertyType = pi.PropertyType;
+            object propertyValue = pi.GetValue(this, null);
+
             if (null == pi)
             {
                 log.DebugFormat("    {0} (property not found)", msgNotSupported);
                 throw new ParameterNotSupportedException(msgNotSupported);
             }
 
-            ParamDesc desc = GetParameterDescriptor(pi);
-            if (null == desc)
+            ParamDesc desc = null;
+
+            Attribute[] attributes = Attribute.GetCustomAttributes(pi);
+            if (attributes.IsNullOrEmpty())
+                return desc;
+
+            Attributes.DescriptionAttribute description = GetAttribute(attributes, typeof(Attributes.DescriptionAttribute)) as Attributes.DescriptionAttribute;
+            if (null == description)
+                return desc;
+
+            AccessStateAttribute accessState = GetAttribute(attributes, typeof(AccessStateAttribute)) as AccessStateAttribute;
+            UnitAttribute unit = GetAttribute(attributes, typeof(UnitAttribute)) as UnitAttribute;
+
+            if (null != GetAttribute(attributes, typeof(RangeAttribute)))
             {
-                // Test if name is a property of the base Camera class
-                PropertyInfo piBase = typeof(Camera).GetProperty(name);
-                if (null != piBase)
-                {
-                    // this is no error, so do not throw an exception
-                    return null;
-                }
-
-                // Test if name is a valid Auto* parameter
-                ParamDesc baseDesc;
-                if (!IsAutoParameter(name, out baseDesc))
-                {
-                    log.DebugFormat("    {0} (ParameterDescriptor not found)", msgNotSupported);
-                    throw new ParameterNotSupportedException(msgNotSupported);
-                }
-                // Seems to be a valid Auto* parameter
-                desc = new ParamDesc<bool>(baseDesc); // create a new ParamDesc to get rid of range or list types.
-                desc.Name = name;
-                desc.Description = "Auto mode for " + baseDesc.Name + " parameter.";
-                desc.SupportsAutoMode = false;
-                desc.Unit = null;
-                if (desc.IsReadable)
-                {
-                    desc.Value = GetPropertyValue(name);
-                }
+                RangeAttribute range = GetAttribute(attributes, typeof(RangeAttribute)) as RangeAttribute;
+                desc = ParamDesc.CreateRange(
+                    propertyType,
+                    range.Range,
+                    description.Name,
+                    description.Description,
+                    GetUnit(unit),
+                    propertyValue,
+                    IsReadable(accessState),
+                    IsWritable(accessState));
             }
+            else if(null != GetAttribute(attributes, typeof(AllowedValueListAttribute)))
+            {
 
-            log.DebugFormat("    Found descriptor: {0}", desc.ToString());
+            }
+            else
+            {
+                desc = ParamDesc.Create(
+                    propertyType, 
+                    description.Name, 
+                    description.Description,
+                    GetUnit(unit),
+                    propertyValue,
+                    IsReadable(accessState),
+                    IsWritable(accessState));
+            }
 
             return desc;
         }
@@ -1253,83 +1267,6 @@ namespace MetriCam2
             }
             baseDesc = GetParameter(ParamDesc.GetBaseParameterName(name));
             return baseDesc.SupportsAutoMode;
-        }
-
-        /// <summary>
-        /// Find the descriptor for a parameter.
-        /// </summary>
-        /// <param name="parameter">The parameter's PropertyInfo object.</param>
-        /// <returns>The parameter descriptor, if it exists. Null otherwise.</returns>
-        /// <exception cref="ArgumentException">Thrown if a parameter descriptor is publicly visible.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if an exception has been thrown in the parameter descriptor's Getter. See InnerException for details.</exception>
-        private ParamDesc GetParameterDescriptor(PropertyInfo parameter)
-        {
-            if (null == parameter)
-            {
-                return null;
-            }
-
-            PropertyInfo piDesc = this.GetType().GetProperty(parameter.Name + ParamDesc.DescriptorSuffix, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            if (null == piDesc)
-            {
-                // Check if a public parameter descriptor exists
-                PropertyInfo piDescPub = this.GetType().GetProperty(parameter.Name + ParamDesc.DescriptorSuffix, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
-                if (null != piDescPub)
-                {
-                    // Public parameter descriptor exists -> hint to the developer.
-                    string errMsg = string.Format("Camera '{0}': The parameter descriptor for '{1}' is publicly visible." + Environment.NewLine
-                        + "This is discouraged because it clutters IntelliSense. Please make it private.",
-                        this.Name, parameter.Name);
-                    log.Error(errMsg);
-                    throw new ArgumentException(errMsg);
-                }
-
-                // No public parameter descriptor.
-                // Fail silently
-                return null;
-            }
-
-            ParamDesc desc = null;
-            try
-            {
-                desc = (ParamDesc)piDesc.GetValue(this, new object[] { });
-            }
-            catch (TargetInvocationException e)
-            {
-                string errMsg = string.Format("Invalid behaviour of camera '{0}': parameter descriptors must not throw exceptions in their Getter.\n\n"
-                    + "{1} threw an {2} exception: \"{3}\"",
-                    this.Name, parameter.Name + ParamDesc.DescriptorSuffix, e.InnerException.GetType(), e.InnerException.Message);
-                log.Fatal(errMsg);
-                throw new InvalidOperationException(errMsg, e.InnerException);
-            }
-            if (null == desc)
-            {
-                return null;
-            }
-            desc.Name = parameter.Name;
-            desc.Type = parameter.PropertyType;
-            // Accessibility
-            desc.IsReadable = (desc.ReadableWhen & (IsConnected ? ConnectionStates.Connected : ConnectionStates.Disconnected)) > 0;
-            desc.IsWritable = (desc.WritableWhen & (IsConnected ? ConnectionStates.Connected : ConnectionStates.Disconnected)) > 0;
-            //desc.IsReadable = IsConnected ? desc.IsReadableConnected : desc.IsReadableDisconnected;
-            //desc.IsWritable = IsConnected ? desc.IsWritableConnected : desc.IsWritableDisconnected;
-            if (null == parameter.GetGetMethod())
-            {
-                desc.IsReadable = false;
-            }
-            if (null == parameter.GetSetMethod())
-            {
-                desc.IsWritable = false;
-            }
-            if (desc.IsReadable)
-            {
-                desc.Value = parameter.GetValue(this, new object[] { });
-            }
-            // Find corresponding Auto* property
-            PropertyInfo piAuto = this.GetType().GetProperty(ParamDesc.GetAutoParameterName(parameter.Name));
-            desc.SupportsAutoMode = null != piAuto;
-
-            return desc;
         }
 
         private void SetAutoParameter(string name, bool value)
@@ -1895,6 +1832,34 @@ namespace MetriCam2
                 }
             }
             return entryAssembly;
+        }
+
+        private static Attribute GetAttribute(Attribute[] attributes, Type AttributeType)
+        {
+            foreach (Attribute a in attributes)
+            {
+                if (a.GetType() == AttributeType)
+                {
+                    return a;
+                }
+            }
+
+            return null;
+        }
+
+        private static ConnectionStates IsReadable(AccessStateAttribute access)
+        {
+            return access != null ? access.ReadableWhen : Enums.ConnectionStates.None;
+        }
+
+        private static ConnectionStates IsWritable(AccessStateAttribute access)
+        {
+            return access != null ? access.ReadableWhen : Enums.ConnectionStates.None;
+        }
+
+        private static string GetUnit(UnitAttribute unit)
+        {
+            return unit != null ? unit.Unit : "";
         }
         #endregion
     }

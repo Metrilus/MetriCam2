@@ -11,6 +11,7 @@ namespace MetriCam2.Enums
     [Flags]
     public enum ConnectionStates
     {
+        None = 0,
         /// <summary>Camera is connected.</summary>
         Connected = 0x01,
         /// <summary>Camera is disconnected.</summary>
