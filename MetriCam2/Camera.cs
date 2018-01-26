@@ -936,10 +936,18 @@ namespace MetriCam2
 
             if (null != GetAttribute(attributes, typeof(RangeAttribute)))
             {
-                RangeAttribute range = GetAttribute(attributes, typeof(RangeAttribute)) as RangeAttribute;
+                RangeAttribute rangeAttr = GetAttribute(attributes, typeof(RangeAttribute)) as RangeAttribute;
+
+                object range = rangeAttr.Range;
+                if(rangeAttr.DataIsPropertyName)
+                {
+                    PropertyInfo rangeProperty = this.GetType().GetProperty((string)rangeAttr.Range);
+                    range = (object)rangeProperty.GetValue(this, null);
+                }
+
                 desc = ParamDesc.CreateRange(
                     propertyType,
-                    range.Range,
+                    rangeAttr.Range,
                     description.Name,
                     description.Description,
                     GetUnit(unit),
@@ -949,7 +957,24 @@ namespace MetriCam2
             }
             else if(null != GetAttribute(attributes, typeof(AllowedValueListAttribute)))
             {
+                AllowedValueListAttribute listAttr = GetAttribute(attributes, typeof(AllowedValueListAttribute)) as AllowedValueListAttribute;
 
+                object list = listAttr.AllowedValues;
+                if(listAttr.DataIsPropertyName)
+                {
+                    PropertyInfo listProperty = this.GetType().GetProperty((string)listAttr.AllowedValues);
+                    list = (object)listProperty.GetValue(this, null);
+                }
+
+                desc = ParamDesc.CreateList(
+                    propertyType,
+                    list,
+                    description.Name,
+                    description.Description,
+                    GetUnit(unit),
+                    propertyValue,
+                    IsReadable(accessState),
+                    IsWritable(accessState));
             }
             else
             {
