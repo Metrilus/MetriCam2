@@ -7,8 +7,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using MetriCam2.Attributes;
 using System.Threading;
-using System.IO;
-using System.Reflection;
+using MetriCam2.Enums;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -102,11 +101,11 @@ namespace MetriCam2.Cameras
             }
         }
 
-        [Unit("px")]
-        [Description("Resolution (Color Sensor)", "Resolution of the color images in pixel",
-            ConnectionStates.Connected | ConnectionStates.Disconnected,
-            ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Unit(Unit.Pixel)]
+        [Description("Resolution (Color Sensor)", "Resolution of the color images in pixel")]
         [AllowedValueList(nameof(ColorResolutionList), typeof(Point2i), "Point2iToResolution")]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public Point2i ColorResolution
         {
             get { return _colorResolution; }
@@ -147,11 +146,11 @@ namespace MetriCam2.Cameras
             }
         }
 
-        [Unit("fps")]
-        [Description("FPS (Color Sensor)", "Frames per second of the color sensor",
-            ConnectionStates.Connected | ConnectionStates.Disconnected,
-            ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Unit(Unit.FPS)]
+        [Description("FPS (Color Sensor)", "Frames per second of the color sensor")]
         [AllowedValueList(nameof(ColorFPSList), typeof(int))]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public int ColorFPS
         {
             get { return _colorFPS; }
@@ -189,11 +188,11 @@ namespace MetriCam2.Cameras
             }
         }
 
-        [Unit("px")]
-        [Description("Resolution (Depth Sensor)", "Resolution of the depth images in pixel",
-            ConnectionStates.Connected | ConnectionStates.Disconnected,
-            ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Unit(Unit.Pixel)]
+        [Description("Resolution (Depth Sensor)", "Resolution of the depth images in pixel")]
         [AllowedValueList(nameof(DepthResolutionList), typeof(Point2i), "Point2iToResolution")]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+                    writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public Point2i DepthResolution
         {
             get { return _depthResolution; }
@@ -252,10 +251,10 @@ namespace MetriCam2.Cameras
             }
         }
 
-        [Unit("fps")]
-        [Description("FPS (Depth Sensor)", "Currently set frames per second the stereo sensor operates with",
-            Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected,
-            Camera.ConnectionStates.Connected | Camera.ConnectionStates.Disconnected)]
+        [Unit(Unit.FPS)]
+        [Description("FPS (Depth Sensor)", "Currently set frames per second the stereo sensor operates with")]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+                    writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         [AllowedValueList(nameof(DepthFPSList), typeof(int))]
         public int DepthFPS
         {
@@ -297,7 +296,8 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Firmware Version
-        [Description("Firmware", "Version string of the firmware currently operating on the camera", Camera.ConnectionStates.Connected)]
+        [Description("Firmware", "Version string of the firmware currently operating on the camera")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public string Firmware
         {
             get
@@ -315,7 +315,8 @@ namespace MetriCam2.Cameras
         /// Enable / disable color backlight compensation
         /// </summary>
         [SimpleType(typeof(bool))]
-        [Description("Backlight Compensation", "Enable / disable color backlight compensation", Camera.ConnectionStates.Connected)]
+        [Description("Backlight Compensation", "Enable / disable color backlight compensation")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public bool BacklightCompensation
         {
             get
@@ -337,7 +338,8 @@ namespace MetriCam2.Cameras
         /// Color image brightness
         /// </summary>
         [Range(nameof(BrightnessRange), typeof(int))]
-        [Description("Brightness (Color Sensor)", "Color image brightness", Camera.ConnectionStates.Connected)]
+        [Description("Brightness (Color Sensor)", "Color image brightness")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public int Brightness
         {
             get
@@ -377,7 +379,8 @@ namespace MetriCam2.Cameras
         /// Color image contrast
         /// </summary>
         [Range(nameof(ContrastRange), typeof(int))]
-        [Description("Contrast (Color Sensor)", "Color image contrast", Camera.ConnectionStates.Connected)]
+        [Description("Contrast (Color Sensor)", "Color image contrast")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public int Contrast
         {
             get
@@ -416,10 +419,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Controls exposure time of color camera. Setting any value will disable auto exposure
         /// </summary>
-        [Description("Exposure (Color Sensor)",
-            "Controls exposure time of color camera. Setting any value will disable auto exposure",
-            ConnectionStates.Connected,
-            ConnectionStates.Connected)]
+        [Description("Exposure (Color Sensor)", "Controls exposure time of color camera. Setting any value will disable auto exposure")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(ExposureColorRange), typeof(int))]
         public int ExposureColor
         {
@@ -458,7 +459,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Enable / disable color image auto-exposure
         /// </summary>
-        [Description("Auto Exposure (Color Sensor)", "Enable / disable color image auto-exposure", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Auto Exposure (Color Sensor)", "Enable / disable color image auto-exposure")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [SimpleType(typeof(bool))]
         public bool AutoExposureColor
         {
@@ -480,10 +482,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Limit exposure time when auto-exposure is ON to preserve constant fps rate
         /// </summary>
-        [Description("Auto Exposure Priority (Color Sensor)",
-            "Limit exposure time when auto-exposure is ON to preserve constant fps rate",
-            ConnectionStates.Connected,
-            ConnectionStates.Connected)]
+        [Description("Auto Exposure Priority (Color Sensor)", "Limit exposure time when auto-exposure is ON to preserve constant fps rate")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [SimpleType(typeof(bool))]
         public bool AutoExposurePriorityColor
         {
@@ -505,10 +505,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Controls exposure time of depth camera. Setting any value will disable auto exposure
         /// </summary>
-        [Description("Exposure (Depth Sensor)",
-            "Controls exposure time of depth camera. Setting any value will disable auto exposure",
-            ConnectionStates.Connected,
-            ConnectionStates.Connected)]
+        [Description("Exposure (Depth Sensor)", "Controls exposure time of depth camera. Setting any value will disable auto exposure")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(ExposureDepthRange), typeof(int))]
         public int ExposureDepth
         {
@@ -550,7 +548,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Enable / disable depth image auto-exposure
         /// </summary>
-        [Description("Auto Exposure (Depth Sensor)", "Enable / disable depth image auto-exposure", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Auto Exposure (Depth Sensor)", "Enable / disable depth image auto-exposure")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [SimpleType(typeof(bool))]
         public bool AutoExposureDepth
         {
@@ -572,7 +571,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image gain
         /// </summary>
-        [Description("Gain (Color Sensor)", "Color image gain", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Gain (Color Sensor)", "Color image gain")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(GainColorRange), typeof(int))]
         public int GainColor
         {
@@ -610,7 +610,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Depth image gain
         /// </summary>
-        [Description("Gain (Depth Sensor)", "Depth image gain", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Gain (Depth Sensor)", "Depth image gain")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(GainDepthRange), typeof(int))]
         public int GainDepth
         {
@@ -648,7 +649,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image Gamma
         /// </summary>
-        [Description("Gamma", "Color image gamma", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Gamma", "Color image gamma")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(GammaRange), typeof(int))]
         public int Gamma
         {
@@ -686,7 +688,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image Hue
         /// </summary>
-        [Description("Hue", "Color image hue", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Hue", "Color image hue")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(HueRange), typeof(int))]
         public int Hue
         {
@@ -724,7 +727,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image Saturation
         /// </summary>
-        [Description("Saturation", "Color image Saturation", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Saturation", "Color image Saturation")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(SaturationRange), typeof(int))]
         public int Saturation
         {
@@ -762,7 +766,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Color image Sharpness
         /// </summary>
-        [Description("Sharpness", "Color image Sharpness", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Sharpness", "Color image Sharpness")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(SharpnessRange), typeof(int))]
         public int Sharpness
         {
@@ -800,9 +805,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Controls white balance of color image. Setting any value will disable auto white balance
         /// </summary>
-        [Description("White Balance",
-            "Controls white balance of color image. Setting any value will disable auto white balance.",
-            ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("White Balance", "Controls white balance of color image. Setting any value will disable auto white balance.")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(WhiteBalanceRange), typeof(int))]
         public int WhiteBalance
         {
@@ -845,7 +849,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Enable / disable auto-white-balance
         /// </summary>
-        [Description("Auto White Balance", "Enable / disable auto-white-balance", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Auto White Balance", "Enable / disable auto-white-balance")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [SimpleType(typeof(bool))]
         public bool AutoWhiteBalance
         {
@@ -867,9 +872,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Manual laser power in mw. applicable only when laser power mode is set to Manual
         /// </summary>
-        [Description("Laser Power", 
-            "Manual laser power in mw. applicable only when laser power mode is set to Manual",
-            ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Laser Power", "Manual laser power in mw. applicable only when laser power mode is set to Manual")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Unit("mW")]
         [Range(nameof(LaserPowerRange), typeof(int))]
         public int LaserPower
@@ -912,7 +916,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Power of the DS5 projector
         /// </summary>
-        [Description("Laser Mode", "Power of the DS5 projector", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Laser Mode", "Power of the DS5 projector")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [AllowedValueList(typeof(EmitterMode))]
         public EmitterMode LaserMode
         {
@@ -935,8 +940,8 @@ namespace MetriCam2.Cameras
         /// Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa
         /// </summary>
         [Description("Frame Queue Size (Color Sensor)",
-            "Max number of frames you can hold at a given time.Increasing this number will reduce frame drops but increase latency, and vice versa",
-            ConnectionStates.Connected, ConnectionStates.Connected)]
+            "Max number of frames you can hold at a given time.Increasing this number will reduce frame drops but increase latency, and vice versa")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(FrameQueueSizeColorRange), typeof(int))]
         public int FrameQueueSizeColor
         {
@@ -975,8 +980,8 @@ namespace MetriCam2.Cameras
         /// Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa
         /// </summary>
         [Description("Frame Queue Size (DepthSensor)",
-            "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa",
-             ConnectionStates.Connected, ConnectionStates.Connected)]
+            "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(FrameQueueSizeDepthRange), typeof(int))]
         public int FrameQueueSizeDepth
         {
@@ -1014,7 +1019,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto
         /// </summary>
-        [Description("Power Frequency Mode", "Power Line Frequency control for anti-flickering", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Power Frequency Mode", "Power Line Frequency control for anti-flickering")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [AllowedValueList(typeof(PowerLineMode))]
         public PowerLineMode PowerFrequencyMode
         {
@@ -1036,8 +1042,9 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Current Asic Temperature
         /// </summary>
-        [Description("Asic Temperature", "Current Asic Temperature", ConnectionStates.Connected)]
-        [Unit("°C")]
+        [Description("Asic Temperature", "Current Asic Temperature")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
+        [Unit(Unit.DegreeCelsius)]
         [SimpleType(typeof(int))]
         public float ASICTemp
         {
@@ -1053,7 +1060,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Enable / disable polling of camera internal errors
         /// </summary>
-        [Description("Error Polling", "Enable / disable polling of camera internal errors", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Error Polling", "Enable / disable polling of camera internal errors")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [SimpleType(typeof(bool))]
         public bool EnableErrorPolling
         {
@@ -1075,8 +1083,9 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Current Projector Temperature in °C
         /// </summary>
-        [Description("Projector Temperature", "Current Projector Temperature in °C", ConnectionStates.Connected)]
-        [Unit("°C")]
+        [Description("Projector Temperature", "Current Projector Temperature in °C")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
+        [Unit(Unit.DegreeCelsius)]
         [SimpleType(typeof(int))]
         public float ProjectorTemp
         {
@@ -1092,7 +1101,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Enable / disable trigger to be outputed from the camera to any external device on every depth frame
         /// </summary>
-        [Description("Output Trigger", "Enable / disable trigger to be outputed from the camera to any external device on every depth frame", ConnectionStates.Connected, ConnectionStates.Connected)]
+        [Description("Output Trigger", "Enable / disable trigger to be outputed from the camera to any external device on every depth frame")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [SimpleType(typeof(bool))]
         public bool OutputTrigger
         {
@@ -1114,8 +1124,9 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Number of meters represented by a single depth unit
         /// </summary>
-        [Description("Depth Units", "Number of meters represented by a single depth unit", ConnectionStates.Connected, ConnectionStates.Connected)]
-        [Unit("m")]
+        [Description("Depth Units", "Number of meters represented by a single depth unit")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Unit(Unit.Meter)]
         [Range(nameof(DepthUnitsRange), typeof(float))]
         public float DepthUnits
         {

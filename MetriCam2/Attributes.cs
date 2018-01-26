@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using MetriCam2.Enums;
 
 namespace MetriCam2.Attributes
 {
@@ -68,8 +69,6 @@ namespace MetriCam2.Attributes
     {
         private string _name;
         private string _desc;
-        private Camera.ConnectionStates _readable;
-        private Camera.ConnectionStates _writable;
 
         private void Init(string propertyName, string propertyDescription)
         {
@@ -77,28 +76,39 @@ namespace MetriCam2.Attributes
             _desc = propertyDescription;
         }
 
+        public DescriptionAttribute(string propertyName)
+        {
+            Init(propertyName, "No description");
+        }
+
         public DescriptionAttribute(string propertyName, string propertyDescription)
         {
             Init(propertyName, propertyDescription);
         }
 
-        public DescriptionAttribute(string propertyName, string propertyDescription, Camera.ConnectionStates readableWhen)
-        {
-            Init(propertyName, propertyDescription);
-            _readable = readableWhen;
-        }
-
-        public DescriptionAttribute(string propertyName, string propertyDescription, Camera.ConnectionStates readableWhen, Camera.ConnectionStates writableWhen)
-        {
-            Init(propertyName, propertyDescription);
-            _readable = readableWhen;
-            _writable = writableWhen;
-        }
-
         public string Name { get => _name; }
         public string Description { get => _desc; }
-        public Camera.ConnectionStates ReadableWhen { get => _readable; }
-        public Camera.ConnectionStates WritableWhen { get => _writable; }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class AccessStateAttribute : Attribute
+    {
+        private ConnectionStates _readable;
+        private ConnectionStates _writable;
+
+        public ConnectionStates ReadableWhen { get => _readable; }
+        public ConnectionStates WritableWhen { get => _writable; }
+
+        public AccessStateAttribute(ConnectionStates readableWhen)
+        {
+            _readable = readableWhen;
+        }
+
+        public AccessStateAttribute(ConnectionStates readableWhen, ConnectionStates writeableWhen)
+        {
+            _readable = readableWhen;
+            _writable = writeableWhen;
+        }
     }
 
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
@@ -109,6 +119,40 @@ namespace MetriCam2.Attributes
         public UnitAttribute(string unit)
         {
             Unit = unit;
+        }
+
+        public UnitAttribute(Unit unit)
+        {
+            switch(unit)
+            {
+                case Enums.Unit.Millimeter:
+                    Unit = "mm";
+                    return;
+
+                case Enums.Unit.Centimeter:
+                    Unit = "cm";
+                    return;
+
+                case Enums.Unit.Meter:
+                    Unit = "m";
+                    return;
+
+                case Enums.Unit.Kilometer:
+                    Unit = "km";
+                    return;
+
+                case Enums.Unit.Pixel:
+                    Unit = "px";
+                    return;
+
+                case Enums.Unit.FPS:
+                    Unit = "fps";
+                    return;
+
+                case Enums.Unit.DegreeCelsius:
+                    Unit = "°C";
+                    return;
+            }
         }
     }
 

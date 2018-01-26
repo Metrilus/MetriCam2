@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using MetriCam2.Enums;
 
 namespace MetriCam2
 {
@@ -34,20 +35,6 @@ namespace MetriCam2
         /// Speed of light in air
         /// </summary>
         public const float SpeedOfLight = 299705518.0f;
-        #endregion
-
-        #region enums
-        /// <summary>
-        /// Possible connection states for a camera.
-        /// </summary>
-        [Flags]
-        public enum ConnectionStates
-        {
-            /// <summary>Camera is connected.</summary>
-            Connected = 0x01,
-            /// <summary>Camera is disconnected.</summary>
-            Disconnected = 0x02,
-        };
         #endregion
 
         #region Types
