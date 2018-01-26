@@ -173,7 +173,6 @@ namespace MetriCam2.Attributes
 
     public class ConstrainAttribute : Attribute
     {
-        public Type DataType { get; protected set; }
         public bool DataIsPropertyName { get; protected set; } = false;
         public string StringRepresentationFunc { get; protected set; } = null;
     }
@@ -186,43 +185,36 @@ namespace MetriCam2.Attributes
         public RangeAttribute(float min, float max)
         {
             Range = new Range<float>(min, max);
-            DataType = typeof(float);
         }
 
         public RangeAttribute(Range<float> range)
         {
             Range = range;
-            DataType = typeof(float);
         }
 
         public RangeAttribute(double min, double max)
         {
             Range = new Range<double>(min, max);
-            DataType = typeof(double);
         }
 
         public RangeAttribute(Range<double> range)
         {
             Range = range;
-            DataType = typeof(double);
         }
 
         public RangeAttribute(int min, int max)
         {
             Range = new Range<int>(min, max);
-            DataType = typeof(int);
         }
 
         public RangeAttribute(Range<int> range)
         {
             Range = range;
-            DataType = typeof(int);
         }
 
-        public RangeAttribute(string range, Type type)
+        public RangeAttribute(string range)
         {
             Range = range;
-            DataType = type;
             DataIsPropertyName = true;
         }
     }
@@ -235,27 +227,23 @@ namespace MetriCam2.Attributes
         public AllowedValueListAttribute(List<float> allowedValues, string toStringFunc = null)
         {
             AllowedValues = allowedValues;
-            DataType = typeof(float);
             StringRepresentationFunc = toStringFunc;
         }
 
         public AllowedValueListAttribute(List<double> allowedValues, string toStringFunc = null)
         {
             AllowedValues = allowedValues;
-            DataType = typeof(double);
             StringRepresentationFunc = toStringFunc;
         }
 
         public AllowedValueListAttribute(List<int> allowedValues)
         {
             AllowedValues = allowedValues;
-            DataType = typeof(int);
         }
 
         public AllowedValueListAttribute(List<string> allowedValues)
         {
             AllowedValues = allowedValues;
-            DataType = typeof(string);
         }
 
         public AllowedValueListAttribute(Type enumType)
@@ -264,26 +252,13 @@ namespace MetriCam2.Attributes
                 throw new ArgumentException("Type does not represent an enum!");
 
             AllowedValues = new List<string>(Enum.GetNames(enumType));
-            DataType = enumType;
         }
 
-        public AllowedValueListAttribute(string propertyName, Type type, string toStringFunc = null)
+        public AllowedValueListAttribute(string propertyName, string toStringFunc = null)
         {
             AllowedValues = propertyName;
-            DataType = type;
             DataIsPropertyName = true;
             StringRepresentationFunc = toStringFunc;
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public class SimpleTypeAttribute : Attribute
-    {
-        public Type PropertyType { get; private set; }
-
-        public SimpleTypeAttribute(Type t)
-        {
-            PropertyType = t;
         }
     }
 }
