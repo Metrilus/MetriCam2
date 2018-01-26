@@ -103,7 +103,7 @@ namespace MetriCam2.Cameras
 
         [Unit(Unit.Pixel)]
         [Description("Resolution (Color Sensor)", "Resolution of the color images in pixel")]
-        [AllowedValueList(nameof(ColorResolutionList), typeof(Point2i), "Point2iToResolution")]
+        [AllowedValueList(nameof(ColorResolutionList), typeof(Point2i), nameof(TypeConversion.Point2iToResolution))]
         [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
             writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public Point2i ColorResolution
@@ -190,7 +190,7 @@ namespace MetriCam2.Cameras
 
         [Unit(Unit.Pixel)]
         [Description("Resolution (Depth Sensor)", "Resolution of the depth images in pixel")]
-        [AllowedValueList(nameof(DepthResolutionList), typeof(Point2i), "Point2iToResolution")]
+        [AllowedValueList(nameof(DepthResolutionList), typeof(Point2i), nameof(TypeConversion.Point2iToResolution))]
         [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
                     writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public Point2i DepthResolution
@@ -1834,11 +1834,6 @@ namespace MetriCam2.Cameras
                 else
                     throw new Exception(string.Format("Value {0} (adjusted to {1} to match stepsize) is outside of the range between {2} and {3}", value, adjustedValue, range.Minimum, range.Maximum));
             }
-        }
-
-        public static string Point2iToResolution(Point2i p)
-        {
-            return TypeConversion.Point2iToResolution(p);
         }
         #endregion
     }
