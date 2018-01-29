@@ -26,6 +26,9 @@ namespace MetriCam2.Enums
         Kilometer,
         Pixel,
         FPS,
-        DegreeCelsius
+        DegreeCelsius,
+        Seconds,
+        Milliseconds,
+        Microseconds
     }
 }

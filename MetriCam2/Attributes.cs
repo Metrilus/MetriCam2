@@ -152,6 +152,18 @@ namespace MetriCam2.Attributes
                 case Enums.Unit.DegreeCelsius:
                     Unit = "°C";
                     return;
+
+                case Enums.Unit.Seconds:
+                    Unit = "s";
+                    return;
+
+                case Enums.Unit.Milliseconds:
+                    Unit = "ms";
+                    return;
+
+                case Enums.Unit.Microseconds:
+                    Unit = "μs";
+                    return;
             }
         }
     }

@@ -6,8 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+using MetriCam2.Enums;
 
 namespace MetriCam2.Cameras
 {
@@ -339,17 +338,17 @@ namespace MetriCam2.Cameras
             colorProfiles = new ListParamDesc<string>(colorStrings)
             {
                 Description = "Color Profiles",
-                ReadableWhen = ParamDesc.ConnectionStates.Disconnected,
+                ReadableWhen = ConnectionStates.Disconnected,
             };
             depthProfiles = new ListParamDesc<string>(depthStrings)
             {
                 Description = "Depth Profiles",
-                ReadableWhen = ParamDesc.ConnectionStates.Disconnected,
+                ReadableWhen = ConnectionStates.Disconnected,
             };
             irProfiles = new ListParamDesc<string>(irStrings)
             {
                 Description = "IR Profiles",
-                ReadableWhen = ParamDesc.ConnectionStates.Disconnected,
+                ReadableWhen = ConnectionStates.Disconnected,
             };
         }
 
