@@ -224,6 +224,66 @@ namespace MetriCam2.Attributes
             Range = range;
         }
 
+        public RangeAttribute(byte min, byte max)
+        {
+            Range = new Range<byte>(min, max);
+        }
+
+        public RangeAttribute(Range<byte> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(short min, short max)
+        {
+            Range = new Range<short>(min, max);
+        }
+
+        public RangeAttribute(Range<short> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(long min, long max)
+        {
+            Range = new Range<long>(min, max);
+        }
+
+        public RangeAttribute(Range<long> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(uint min, uint max)
+        {
+            Range = new Range<uint>(min, max);
+        }
+
+        public RangeAttribute(Range<uint> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(ulong min, ulong max)
+        {
+            Range = new Range<ulong>(min, max);
+        }
+
+        public RangeAttribute(Range<ulong> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(ushort min, ushort max)
+        {
+            Range = new Range<ushort>(min, max);
+        }
+
+        public RangeAttribute(Range<ushort> range)
+        {
+            Range = range;
+        }
+
         public RangeAttribute(string range)
         {
             Range = range;
@@ -258,9 +318,34 @@ namespace MetriCam2.Attributes
             AllowedValues = new List<string>(allowedValues);
         }
 
-        public AllowedValueListAttribute(object allowedValues)
+        public AllowedValueListAttribute(byte[] allowedValues)
         {
-            AllowedValues = allowedValues;
+            AllowedValues = new List<byte>(allowedValues);
+        }
+
+        public AllowedValueListAttribute(short[] allowedValues)
+        {
+            AllowedValues = new List<short>(allowedValues);
+        }
+
+        public AllowedValueListAttribute(long[] allowedValues)
+        {
+            AllowedValues = new List<long>(allowedValues);
+        }
+
+        public AllowedValueListAttribute(uint[] allowedValues)
+        {
+            AllowedValues = new List<uint>(allowedValues);
+        }
+
+        public AllowedValueListAttribute(ulong[] allowedValues)
+        {
+            AllowedValues = new List<ulong>(allowedValues);
+        }
+
+        public AllowedValueListAttribute(ushort[] allowedValues)
+        {
+            AllowedValues = new List<ushort>(allowedValues);
         }
 
         public AllowedValueListAttribute(Type enumType)
@@ -269,6 +354,11 @@ namespace MetriCam2.Attributes
                 throw new ArgumentException("Type does not represent an enum!");
 
             AllowedValues = new List<string>(Enum.GetNames(enumType));
+        }
+
+        public AllowedValueListAttribute(object allowedValues)
+        {
+            AllowedValues = allowedValues;
         }
 
         public AllowedValueListAttribute(string propertyName, string toStringFunc = null)

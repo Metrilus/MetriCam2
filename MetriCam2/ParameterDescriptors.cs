@@ -120,10 +120,24 @@ namespace MetriCam2
                 desc = new ParamDesc<float>();
             else if (type == typeof(double))
                 desc = new ParamDesc<double>();
+            else if (type == typeof(byte))
+                desc = new ParamDesc<byte>();
+            else if (type == typeof(short))
+                desc = new ParamDesc<short>();
+            else if (type == typeof(long))
+                desc = new ParamDesc<long>();
+            else if (type == typeof(uint))
+                desc = new ParamDesc<uint>();
+            else if (type == typeof(ulong))
+                desc = new ParamDesc<ulong>();
+            else if (type == typeof(ushort))
+                desc = new ParamDesc<ushort>();
             else if (type == typeof(bool))
                 desc = new ParamDesc<bool>();
             else if (type == typeof(string))
                 desc = new ParamDesc<string>();
+            else if (type == typeof(Point3f))
+                desc = new ParamDesc<Point3f>();
             else
                 throw new ArgumentException(string.Format("Type {0} not supported", type.ToString()));
 
@@ -144,25 +158,34 @@ namespace MetriCam2
             ParamDesc desc;
 
             if (type == typeof(int))
-            {
-                Range<int> intRange = (Range<int>)range;
-                desc = new RangeParamDesc<int>(intRange.Minimum, intRange.Maximum);
-            }
+                desc = createRange<int>(range);
             else if (type == typeof(float))
-            {
-                Range<float> floatRange = (Range<float>)range;
-                desc = new RangeParamDesc<float>(floatRange.Minimum, floatRange.Maximum);
-            }
+                desc = createRange<float>(range);
             else if (type == typeof(double))
-            {
-                Range<double> doubleRange = (Range<double>)range;
-                desc = new RangeParamDesc<double>(doubleRange.Minimum, doubleRange.Maximum);
-            }
+                desc = createRange<double>(range);
+            else if (type == typeof(byte))
+                desc = createRange<byte>(range);
+            else if (type == typeof(short))
+                desc = createRange<short>(range);
+            else if (type == typeof(long))
+                desc = createRange<long>(range);
+            else if (type == typeof(uint))
+                desc = createRange<uint>(range);
+            else if (type == typeof(ulong))
+                desc = createRange<ulong>(range);
+            else if (type == typeof(ushort))
+                desc = createRange<ushort>(range);
             else
                 throw new ArgumentException(string.Format("Type {0} not supported", type.ToString()));
 
             desc.init(type, name, description, unit, value, readableWhen, writabelWhen);
             return desc;
+        }
+
+        private static RangeParamDesc<T> createRange<T>(object range) where T : IComparable, IConvertible
+        {
+            Range<T> typeRange = (Range<T>)range;
+            return new RangeParamDesc<T>(typeRange.Minimum, typeRange.Maximum);
         }
 
         public static ParamDesc CreateList(

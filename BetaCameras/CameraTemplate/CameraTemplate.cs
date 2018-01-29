@@ -171,28 +171,28 @@ namespace MetriCam2.Cameras
         public double DoubleParam { get; set; }
 
         [Description("ByteRangeParam")]
-        [Range(10, 100)]
+        [Range((byte)10, (byte)100)]
         [AccessState(
             readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
             writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public byte ByteRangeParam { get; set; }
 
         [Description("ShortRangeParam")]
-        [Range(10, 100)]
+        [Range((short)10, (short)100)]
         [AccessState(
             readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
             writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public short ShortRangeParam { get; set; }
 
         [Description("IntRangeParam")]
-        [Range(10, 100)]
+        [Range((int)10, (int)100)]
         [AccessState(
             readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
             writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public int IntRangeParam { get; set; }
 
         [Description("LongRangeParam")]
-        [Range(10, 100)]
+        [Range((long)10, (long)100)]
         [AccessState(
             readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
             writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
