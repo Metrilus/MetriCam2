@@ -25,9 +25,6 @@ namespace MetriCam2.Cameras
         private List<int> devicesUIDs = new List<int>();
         private Dictionary<string, PXCMCapture.Device.StreamProfile> profiles = new Dictionary<string, PXCMCapture.Device.StreamProfile>();
         private PXCMCapture.Sample sample;
-        private ListParamDesc<string> colorProfiles;
-        private ListParamDesc<string> depthProfiles;
-        private ListParamDesc<string> irProfiles;
         private string currentColorProfile;
         private string currentDepthProfile;
         private string currentIRProfile;
@@ -37,30 +34,6 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Public Properties
-        private ParamDesc<string> ColorProfileDesc
-        {
-            get
-            {
-                return colorProfiles;
-            }
-        }
-
-        private ParamDesc<string> DepthProfileDesc
-        {
-            get
-            {
-                return depthProfiles;
-            }
-        }
-
-        private ParamDesc<string> IRProfileDesc
-        {
-            get
-            {
-                return irProfiles;
-            }
-        }
-
 #if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.RealSenseIcon; }
 #endif
@@ -335,21 +308,6 @@ namespace MetriCam2.Cameras
                 }
                 capture.Dispose();
             }
-            colorProfiles = new ListParamDesc<string>(colorStrings)
-            {
-                Description = "Color Profiles",
-                ReadableWhen = ConnectionStates.Disconnected,
-            };
-            depthProfiles = new ListParamDesc<string>(depthStrings)
-            {
-                Description = "Depth Profiles",
-                ReadableWhen = ConnectionStates.Disconnected,
-            };
-            irProfiles = new ListParamDesc<string>(irStrings)
-            {
-                Description = "IR Profiles",
-                ReadableWhen = ConnectionStates.Disconnected,
-            };
         }
 
         private string ProfileToString(PXCMCapture.Device.StreamProfile pinfo)
