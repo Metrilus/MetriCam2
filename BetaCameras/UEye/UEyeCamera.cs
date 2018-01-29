@@ -7,6 +7,8 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using MetriCam2.Enums;
+using MetriCam2.Attributes;
 
 namespace MetriCam2.Cameras
 {
@@ -55,85 +57,48 @@ namespace MetriCam2.Cameras
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.IDSIcon; }
 #endif
 
-        private ParamDesc<TriggerModeInternal> TriggerModeDesc
-        {
-            get
-            {
-                return new ListParamDesc<TriggerModeInternal>(typeof(TriggerModeInternal))
-                {
-                    Description = "Trigger mode.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>
         /// The currently selected trigger mode.
         /// </summary>
+        [Description("Trigger Mode")]
+        [AllowedValueList(typeof(TriggerModeInternal))]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public TriggerModeInternal TriggerMode
         {
             get { return triggerMode; }
             set { triggerMode = value; }
         }
 
-        private ParamDesc<uint> WidthDesc
-        {
-            get
-            {
-                return new ParamDesc<uint>()
-                {
-                    Description = "Image width.",
-                    Unit = "px",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Number of columns in the output image.
         /// </summary>
+        [Description("Width", "Image width")]
+        [Unit(Unit.Pixel)]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public uint Width { get { return (uint)imageWidth; } }
 
-        private ParamDesc<uint> HeightDesc
-        {
-            get
-            {
-                return new ParamDesc<uint>()
-                {
-                    Description = "Image height.",
-                    Unit = "px",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Number of lines in the output image.
         /// </summary>
+        [Description("Height", "Image Height")]
+        [Unit(Unit.Pixel)]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public uint Height { get { return (uint)imageHeight; } }
-        /// <summary>
-        ///  A photo of a uEye camera.
-        /// </summary>
-        //public Bitmap CameraIcon { get { return global::MetriUEyeRes.Properties.Resources.ueye; } }
 
         /// <summary>
         /// Flag indicating monochrome cameras.
         /// </summary>
+        [Description("Monochrome", "Flag indicating monochrome cameras")]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public bool IsMonochrome { get; private set; }
 
-        private ParamDesc<bool> AutoExposureDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "Automatic exposure time.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Enable/disable auto exposure.
         /// </summary>
+        [Description("Auto Exposure", "Automatic exposure time")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool AutoExposure
         {
             get { return autoExposure; }
@@ -151,21 +116,11 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> AutoGainDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "Automatic gain control.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Enable/disable auto gain.
         /// </summary>
+        [Description("Auto Gain", "Automatic gain control")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool AutoGain
         {
             get { return autoGain; }
@@ -182,21 +137,12 @@ namespace MetriCam2.Cameras
                 autoGain = value;
             }
         }
-        private ParamDesc<bool> AutoWhiteBalanceDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "Automatic white balance.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
+
         /// <summary>
         /// Enable/disable auto white balance.
         /// </summary>
+        [Description("Auto White Balance")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool AutoWhiteBalance
         {
             get { return autoWhiteBalance; }
@@ -214,25 +160,14 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<float> ExposureDesc
-        {
-            get
-            {
-                double min = 0, max = 0, intervall = 0;
-                m_uEye.GetExposureRange(ref min, ref max, ref intervall);
-                return new RangeParamDesc<float>((float)min, (float)max)
-                {
-                    Description = "Exposure time.",
-                    Unit = "ms",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Exposure time in [ms].
         /// </summary>
         /// <remarks>Has no effect if set while not connected.</remarks>
+        [Description("Exposure", "Exposure time")]
+        [Unit(Unit.Milliseconds)]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(ExposureRange))]
         public float Exposure
         {
             get
@@ -258,24 +193,25 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private RangeParamDesc<int> GainDesc
+        public Range<float> ExposureRange
         {
             get
             {
-                return new RangeParamDesc<int>(0, 100)
-                {
-                    Description = "Gain factor.",
-                    Unit = "%",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
+                double min = 0, max = 0, intervall = 0;
+                m_uEye.GetExposureRange(ref min, ref max, ref intervall);
+                return new Range<float>((float)min, (float)max);
             }
         }
+
         /// <summary>
         /// Gain in [%].
         /// </summary>
         /// <remarks>Only master gain can be changed, not the individual color channels.</remarks>
         /// <remarks>Has no effect if set while not connected.</remarks>
+        [Description("Gain", "Gain factor")]
+        [Unit("%")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(0, 100)]
         public int Gain
         {
             get
@@ -292,23 +228,12 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> GammaDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>
-                {
-                    Description = "Enable gamma correction.",
-                    Unit = "",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Gamma.
         /// </summary>
         /// <remarks>Has no effect if set while not connected.</remarks>
+        [Description("Gamma", "Enable gamma correction")]
+        [AccessState(ConnectionStates.Connected, ConnectionStates.Connected)]
         public bool Gamma
         {
             get
@@ -324,24 +249,14 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<float> FramerateDesc
-        {
-            get
-            {
-                return new ParamDesc<float>()
-                {
-                    Description = "Framerate in [1/s].",
-                    Unit = "1/s",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Frame rate in [fps].
         /// </summary>
         /// <remarks>After changing the frame rate you have to set the exposure time again.</remarks>
         /// <remarks>Has no effect if set while not connected.</remarks>
+        [Description("Framerate")]
+        [Unit(Unit.FPS)]
+        [AccessState(ConnectionStates.Connected, ConnectionStates.Connected)]
         public float Framerate
         {
             get
@@ -359,19 +274,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<int> PixelClockDesc
-        {
-            get
-            {
-                return new ParamDesc<int>()
-                {
-                    Description = "Pixel clock in [MHz].",
-                    Unit = "MHz",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Pixel clock in [MHz].
         /// </summary>
@@ -379,6 +281,9 @@ namespace MetriCam2.Cameras
         /// Setting the pixel clock may alter the frame rate and exposure time. Make sure to set those parameters after setting the pixel clock.
         /// Has no effect if set while not connected.
         /// </remarks>
+        [Description("Pixel Clock")]
+        [Unit("MHz")]
+        [AccessState(ConnectionStates.Connected, ConnectionStates.Connected)]
         public int PixelClock
         {
             set

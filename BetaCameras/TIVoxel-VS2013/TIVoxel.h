@@ -14,6 +14,8 @@ using namespace System;
 using namespace System::Threading;
 using namespace System::Collections::Generic;
 using namespace MetriCam2;
+using namespace MetriCam2::Enums;
+using namespace MetriCam2::Attributes;
 using namespace Metrilus::Util;
 using namespace System::Collections::Generic;
 using msclr::interop::marshal_as;
@@ -169,11 +171,30 @@ namespace Cameras
 			inline bool get() { return m_enableDealiasing; }
 			inline void set(bool val) { SetEnableDealiasing(val); }
 		}
+
+		property List<int>^ HdrScaleList
+		{
+			inline List<int>^ get()
+			{
+				List<int>^ allowedValues = gcnew List<int>();
+				allowedValues->Add(0);
+				allowedValues->Add(1);
+				allowedValues->Add(2);
+				allowedValues->Add(3);
+				allowedValues->Add(4);
+				return allowedValues;
+			}
+		}
+
+		[Description("HDR Scale")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[AllowedValueList(safe_cast<String^>("HdrScaleList"))]
 		property int HdrScale
 		{
 			inline int get() { return m_hdrScale; }
 			inline void set(int val) { SetHdrScale(val); }
 		}
+		
 
 		property bool HDRFilter
 		{
@@ -475,7 +496,7 @@ namespace Cameras
 				ParamDesc<int> ^res = gcnew ParamDesc<int>();
 				res->Description = "Width of images";
 				res->Unit = "pixels";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -487,7 +508,7 @@ namespace Cameras
 				ParamDesc<int> ^res = gcnew ParamDesc<int>();
 				res->Description = "Height of images";
 				res->Unit = "pixels";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -499,7 +520,7 @@ namespace Cameras
 				ParamDesc<int> ^res = gcnew ParamDesc<int>();
 				res->Description = "Sensor Temperature";
 				res->Unit = "C";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -511,7 +532,7 @@ namespace Cameras
 				ParamDesc<int> ^res = gcnew ParamDesc<int>();
 				res->Description = "Illumination Temperature";
 				res->Unit = "C";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -522,8 +543,8 @@ namespace Cameras
 			{
 				ParamDesc<int> ^res = ParamDesc::BuildRangeParamDesc(-2048, 2047);
 				res->Description = "Phase offset for base freq.";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
+				res->WritableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -534,8 +555,8 @@ namespace Cameras
 			{
 				ParamDesc<int> ^res = ParamDesc::BuildRangeParamDesc(-2048, 2047);
 				res->Description = "Phase offset for dealising freq.";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
+				res->WritableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -546,8 +567,8 @@ namespace Cameras
 			{
 				ParamDesc<uint> ^res = ParamDesc::BuildRangeParamDesc(0u, 4095u);
 				res->Description = "Amplitude Threshold";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
+				res->WritableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -559,8 +580,8 @@ namespace Cameras
 				ParamDesc<uint> ^res = ParamDesc::BuildRangeParamDesc((uint)0, (uint)100);
 				res->Unit = "%";
 				res->Description = "Illumination Power";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+				res->ReadableWhen = ConnectionStates::Connected | ConnectionStates::Disconnected;
+				res->WritableWhen = ConnectionStates::Connected | ConnectionStates::Disconnected;
 				return res;
 			}
 		}
@@ -572,8 +593,8 @@ namespace Cameras
 				ParamDesc<uint> ^res = ParamDesc::BuildRangeParamDesc(0u, 20u); // 20 translates to 31% in voxel viewer, which is the upper limit for laser safety.
 				res->Unit = "percent";
 				res->Description = "Integration Duty Cycle";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+				res->ReadableWhen = ConnectionStates::Connected | ConnectionStates::Disconnected;
+				res->WritableWhen = ConnectionStates::Connected | ConnectionStates::Disconnected;
 				return res;
 			}
 		}
@@ -597,8 +618,8 @@ namespace Cameras
 				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
 				res->Unit = "Hz";
 				res->Description = "Base Modulation Frequency";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+				res->ReadableWhen = ConnectionStates::Connected | ConnectionStates::Disconnected;
+				res->WritableWhen = ConnectionStates::Connected | ConnectionStates::Disconnected;
 				return res;
 			}
 		}
@@ -622,8 +643,8 @@ namespace Cameras
 				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
 				res->Unit = "Hz";
 				res->Description = "Dealiasing Modulation Frequency";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+				res->ReadableWhen = ConnectionStates::Connected | ConnectionStates::Disconnected;
+				res->WritableWhen = ConnectionStates::Connected | ConnectionStates::Disconnected;
 				return res;
 			}
 		}
@@ -641,8 +662,8 @@ namespace Cameras
 				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
 				res->Unit = "";
 				res->Description = "HDR Scale";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
+				res->WritableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -653,8 +674,8 @@ namespace Cameras
 				ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
 				res->Unit = "";
 				res->Description = "HDR Filter";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
+				res->WritableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -669,8 +690,8 @@ namespace Cameras
 				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
 				res->Unit = "";
 				res->Description = "Quads";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
+				res->WritableWhen = ConnectionStates::Connected;
 				return res;
 			}
 		}
@@ -686,8 +707,8 @@ namespace Cameras
 				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
 				res->Unit = "frames";
 				res->Description = "Sub Frames";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+				res->ReadableWhen = ConnectionStates::Connected;
+				res->WritableWhen = ConnectionStates::Connected;
 				return res;
 		   }
 		}
@@ -705,8 +726,8 @@ namespace Cameras
 				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
 				res->Unit = "";
 				res->Description = "Calibration Profiles";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Disconnected;
+				res->ReadableWhen = ConnectionStates::Connected;
+				res->WritableWhen = ConnectionStates::Disconnected;
 				return res;
 			}
 		}
