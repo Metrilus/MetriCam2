@@ -947,7 +947,7 @@ namespace MetriCam2
 
                 desc = ParamDesc.CreateRange(
                     propertyType,
-                    rangeAttr.Range,
+                    range,
                     description.Name,
                     description.Description,
                     GetUnit(unit),
@@ -987,6 +987,9 @@ namespace MetriCam2
                     IsReadable(accessState),
                     IsWritable(accessState));
             }
+
+            desc.IsReadable = (desc.ReadableWhen & (IsConnected ? ConnectionStates.Connected : ConnectionStates.Disconnected)) > 0;
+            desc.IsWritable = (desc.WritableWhen & (IsConnected ? ConnectionStates.Connected : ConnectionStates.Disconnected)) > 0;
 
             return desc;
         }
@@ -1036,7 +1039,7 @@ namespace MetriCam2
             foreach (var prop in properties)
             {
                 ParamDesc desc = null;
-                //ParamDesc desc = GetParameterDescriptor(prop);
+                
                 try
                 {
                     desc = GetParameter(prop.Name);
@@ -1879,7 +1882,7 @@ namespace MetriCam2
 
         private static ConnectionStates IsWritable(AccessStateAttribute access)
         {
-            return access != null ? access.ReadableWhen : Enums.ConnectionStates.None;
+            return access != null ? access.WritableWhen : Enums.ConnectionStates.None;
         }
 
         private static string GetUnit(UnitAttribute unit)

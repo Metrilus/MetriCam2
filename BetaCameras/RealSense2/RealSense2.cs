@@ -340,7 +340,7 @@ namespace MetriCam2.Cameras
         /// </summary>
         [Range(nameof(BrightnessRange))]
         [Description("Brightness (Color Sensor)", "Color image brightness")]
-        [AccessState(readableWhen: ConnectionStates.Connected)]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public int Brightness
         {
             get
@@ -381,7 +381,7 @@ namespace MetriCam2.Cameras
         /// </summary>
         [Range(nameof(ContrastRange))]
         [Description("Contrast (Color Sensor)", "Color image contrast")]
-        [AccessState(readableWhen: ConnectionStates.Connected)]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public int Contrast
         {
             get
@@ -440,7 +440,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        Range<int> ExposureColorRange
+        public Range<int> ExposureColorRange
         {
             get
             {
@@ -627,7 +627,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        Range<int> GainDepthRange
+        public Range<int> GainDepthRange
         {
             get
             {

@@ -163,7 +163,7 @@ namespace MetriCam2.Attributes
 
         public Range(T min, T max)
         {
-            if (min.CompareTo(min) >= 0)
+            if (min.CompareTo(min) > 0)
                 throw new ArgumentException("The Maximum needs to exceed the Minimum to be a valid Range");
 
             Minimum = min;

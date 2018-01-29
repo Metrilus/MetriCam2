@@ -6,6 +6,7 @@ using System.IO;
 using System.Globalization;
 using MetriCam2.Enums;
 using MetriCam2.Attributes;
+using Metrilus.Util;
 
 namespace MetriCam2
 {
@@ -121,6 +122,8 @@ namespace MetriCam2
                 desc = new ParamDesc<double>();
             else if (type == typeof(bool))
                 desc = new ParamDesc<bool>();
+            else if (type == typeof(string))
+                desc = new ParamDesc<string>();
             else
                 throw new ArgumentException(string.Format("Type {0} not supported", type.ToString()));
 
@@ -185,6 +188,11 @@ namespace MetriCam2
             }
             else if (type.IsEnum)
                 desc = new ListParamDesc<string>(type);
+            else if (type == typeof(Point2i))
+            {
+                List<string> stringList = ((List<Point2i>)list).Select<Point2i, string>(p => TypeConversion.Point2iToResolution(p)).ToList();
+                desc = new ListParamDesc<Point2i>(stringList);
+            }
             else
                 throw new ArgumentException(string.Format("Type {0} not supported", type.ToString()));
 
