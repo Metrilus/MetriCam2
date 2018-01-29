@@ -236,24 +236,29 @@ namespace MetriCam2.Attributes
     {
         public object AllowedValues { get; private set; }
 
-        public AllowedValueListAttribute(List<float> allowedValues, string toStringFunc = null)
+        public AllowedValueListAttribute(float[] allowedValues, string toStringFunc = null)
         {
-            AllowedValues = allowedValues;
+            AllowedValues = new List<float>(allowedValues);
             StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(List<double> allowedValues, string toStringFunc = null)
+        public AllowedValueListAttribute(double[] allowedValues, string toStringFunc = null)
         {
-            AllowedValues = allowedValues;
+            AllowedValues = new List<double>(allowedValues);
             StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(List<int> allowedValues)
+        public AllowedValueListAttribute(int[] allowedValues)
         {
-            AllowedValues = allowedValues;
+            AllowedValues = new List<int>(allowedValues);
         }
 
-        public AllowedValueListAttribute(List<string> allowedValues)
+        public AllowedValueListAttribute(string[] allowedValues)
+        {
+            AllowedValues = new List<string>(allowedValues);
+        }
+
+        public AllowedValueListAttribute(object allowedValues)
         {
             AllowedValues = allowedValues;
         }

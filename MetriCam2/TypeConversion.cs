@@ -46,5 +46,10 @@ namespace MetriCam2
         {
             return string.Format("{0}x{1}", p.X, p.Y);
         }
+
+        public static string SingleDecimal(float number)
+        {
+            return string.Format("{0:0.0}", number);
+        }
     }
 }
