@@ -10,6 +10,8 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using MetriCam2.Enums;
+using MetriCam2.Attributes;
 
 namespace MetriCam2.Cameras
 {
@@ -111,23 +113,12 @@ namespace MetriCam2.Cameras
         public override Icon CameraIcon => Properties.Resources.SVSIcon;
 #endif
 
-        private ListParamDesc<string> AcquisitionModeDesc
-        {
-            get
-            {
-                log.Debug("Get AcquisitionModeDesc");
-
-                return new ListParamDesc<string>(typeof(GigeApi.ACQUISITION_MODE))
-                {
-                    Description = "Acquisition mode",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Set the AcquisitionMode
         /// </summary>
+        [Description("Acquisition Mode")]
+        [AllowedValueList(typeof(GigeApi.ACQUISITION_MODE))]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public GigeApi.ACQUISITION_MODE AcquisitionMode
         {
             get
@@ -201,20 +192,6 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private RangeParamDesc<int> LogLevelDesc
-        {
-            get
-            {
-                log.Debug("Get LogLevelDesc");
-
-                return new RangeParamDesc<int>(0, 7)
-                {
-                    Description = "Log level",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>
         /// Set the log level of the camera SDK.
         /// </summary>
@@ -231,9 +208,14 @@ namespace MetriCam2.Cameras
         /// 6 - DEBUG for receiving multiple parameters for image callbacks
         /// 7 - DETAIL for receiving multiple signals for each image callback
         /// </remarks>
+        [Description("Log Level")]
+        [Range(0, 7)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Disconnected)]
         public int LogLevel { get; set; }
 
-        private RangeParamDesc<float> ExposureDesc
+        public Range<float> ExposureRange
         {
             get
             {
@@ -261,19 +243,17 @@ namespace MetriCam2.Cameras
                     }
                 }
 
-                return new RangeParamDesc<float>(min, max)
-                {
-                    Description = "Exposure time",
-                    Unit = "ms",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
+                return new Range<float>(min, max);
             }
         }
         /// <summary>
         /// Exposure time in [ms].
         /// </summary>
         /// <remarks>Has no effect if set while not connected.</remarks>
+        [Description("Exposure", "Exposure time")]
+        [Unit(Unit.Milliseconds)]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(ExposureRange))]
         public float Exposure
         {
             get
@@ -304,7 +284,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private RangeParamDesc<float> FrameRateDesc
+        private Range<float> FrameRateRange
         {
             get
             {
@@ -327,19 +307,17 @@ namespace MetriCam2.Cameras
                     }
                 }
 
-                return new RangeParamDesc<float>(min, max)
-                {
-                    Description = "Frame rate",
-                    Unit = "Hz",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
+                return new Range<float>(min, max);
             }
         }
         /// <summary>
         /// FrameRate in Hz.
         /// </summary>
         /// <remarks>Has no effect if set while not connected.</remarks>
+        [Description("Frame Rate")]
+        [Unit("Hz")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(FrameRateRange))]
         public float FrameRate
         {
             get
@@ -364,7 +342,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private RangeParamDesc<float> GainDesc
+        private Range<float> GainRange
         {
             get
             {
@@ -387,13 +365,7 @@ namespace MetriCam2.Cameras
                     }
                 }
 
-                return new RangeParamDesc<float>(min, max)
-                {
-                    Description = "Gain factor",
-                    Unit = "%",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
+                return new Range<float>(min, max);
             }
         }
         /// <summary>
@@ -401,6 +373,10 @@ namespace MetriCam2.Cameras
         /// </summary>
         /// <remarks>Only master gain can be changed, not the individual color channels.</remarks>
         /// <remarks>Has no effect if set while not connected.</remarks>
+        [Description("Gain", "Gain factor")]
+        [Unit("%")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(GainRange))]
         public float Gain
         {
             get
@@ -425,25 +401,13 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<Point3f> WhiteBalanceDesc
-        {
-            get
-            {
-                log.Debug("Get WhiteBalanceDesc");
-
-                return new ParamDesc<Point3f>()
-                {
-                    Description = "White balance",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// White balance for the three color channels.
         /// </summary>
         /// <remarks>The X, Y, Z components of this property correspond to the Red, Green, Blue channel, respectively.</remarks>
         /// <remarks>Has no effect if set while not connected.</remarks>
+        [Description("White Balance")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public Point3f WhiteBalance
         {
             get
@@ -468,24 +432,12 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> EnableGrayScaleDesc
-        {
-            get
-            {
-                log.Debug("Get EnableGrayScaleDesc");
-
-                return new ParamDesc<bool>()
-                {
-                    Description = "Enable raw gray scale mode with 16 bpp",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
         /// <summary>
         /// Decides whether to provide gray scale bitmaps with 16 bits per pixel.
         /// </summary>
         /// <remarks>The current implementation requires that you disconnect and connect the camera after changing this parameter.</remarks>
+        [Description("Gray Scale", "Enable raw gray scale mode with 16 bpp")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool EnableGrayScale
         {
             get
