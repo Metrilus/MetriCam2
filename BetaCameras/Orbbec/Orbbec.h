@@ -12,6 +12,8 @@
 
 using namespace MetriCam2;
 using namespace MetriCam2::Exceptions;
+using namespace MetriCam2::Enums;
+using namespace MetriCam2::Attributes;
 using namespace Metrilus::Util;
 using namespace System;
 
@@ -36,6 +38,10 @@ namespace MetriCam2 {
 
 			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 
+			[Description("Depth QVGA", "Depth QVGA mode")]
+			[AccessState(
+				ConnectionStates::Connected | ConnectionStates::Disconnected,
+				ConnectionStates::Connected)]
 			property bool DepthQVGA
 			{
 				bool get(void)
@@ -48,19 +54,6 @@ namespace MetriCam2 {
 					{
 						depthQvga = value;
 					}
-				}
-			}
-
-			property ParamDesc<bool>^ DepthQVGADesc
-			{
-				inline ParamDesc<bool> ^get()
-				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-					res->Unit = "";
-					res->Description = "Depth QVGA mode";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Disconnected;
-					return res;
 				}
 			}
 
