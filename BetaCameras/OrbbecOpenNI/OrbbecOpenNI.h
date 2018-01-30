@@ -14,12 +14,13 @@
 #define IR_Gain_MAX 96
 
 using namespace System;
-using namespace System::ComponentModel;
 using namespace System::Threading;
 using namespace System::Runtime::InteropServices;
 using namespace System::Drawing;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
+using namespace MetriCam2::Enums;
+using namespace MetriCam2::Attributes;
 
 namespace MetriCam2 
 {
@@ -52,6 +53,9 @@ namespace MetriCam2
 			property int ProductID;
 			property int VendorID;
 
+
+			[Description("Emitter Enabled")]
+			[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
 			property bool EmitterEnabled
 			{
 				bool get(void)
@@ -67,6 +71,8 @@ namespace MetriCam2
 				}
 			}
 
+			[Description("IR Flooder Enabled")]
+			[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
 			property bool IRFlooderEnabled
 			{
 				bool get(void)
@@ -82,6 +88,9 @@ namespace MetriCam2
 				}
 			}
 
+			[Description("IR Gain")]
+			[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+			[Range((int)IR_Gain_MIN, (int)IR_Gain_MAX)]
 			property int IRGain
 			{
 				int get(void)
@@ -99,6 +108,9 @@ namespace MetriCam2
 			}
 
 			// Implementation in experimental interface seems to be buggy, changing the value destroys the distance image
+			// Disabled while the IRExposure getter is not implemented
+			//[Description("IR Exposure")]
+			//[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
 			property unsigned int IRExposure
 			{
 				unsigned int get(void)
@@ -178,59 +190,6 @@ namespace MetriCam2
 			virtual void DeactivateChannelImpl(String^ channelName) override;
 			
 		private:
-			property ParamDesc<bool>^ EmitterEnabledDesc
-			{
-				inline ParamDesc<bool> ^get()
-				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-					res->Unit = "";
-					res->Description = "Emitter is enabled";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
-				}
-			}
-
-			property ParamDesc<bool>^ IRFlooderEnabledDesc
-			{
-				inline ParamDesc<bool> ^get()
-				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-					res->Unit = "";
-					res->Description = "IR flooder is enabled";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
-				}
-			}
-
-			// Disabled while the IRExposure getter is not implemented
-			//property ParamDesc<unsigned int>^ IRExposureDesc
-			//{
-			//	inline ParamDesc<unsigned int> ^get()
-			//	{
-			//		ParamDesc<unsigned int> ^res = gcnew ParamDesc<unsigned int>();
-			//		res->Unit = "";
-			//		res->Description = "IR exposure";
-			//		res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-			//		res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-			//		return res;
-			//	}
-			//}
-
-			property ParamDesc<int>^ IRGainDesc
-			{
-				inline ParamDesc<int> ^get()
-				{
-					ParamDesc<int> ^res = ParamDesc::BuildRangeParamDesc(IR_Gain_MIN, IR_Gain_MAX);
-					res->Unit = "";
-					res->Description = "IR gain";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
-				}
-			}
-
 			FloatCameraImage^ CalcZImage();
 			ColorCameraImage^ CalcColor();
 			Point3fCameraImage^ CalcPoint3fImage();
