@@ -374,7 +374,7 @@ namespace MetriCam2.Cameras
         /// <remarks>Only master gain can be changed, not the individual color channels.</remarks>
         /// <remarks>Has no effect if set while not connected.</remarks>
         [Description("Gain", "Gain factor")]
-        [Unit("%")]
+        [Unit(Unit.Percent)]
         [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         [Range(nameof(GainRange))]
         public float Gain

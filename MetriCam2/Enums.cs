@@ -29,6 +29,7 @@ namespace MetriCam2.Enums
         DegreeCelsius,
         Seconds,
         Milliseconds,
-        Microseconds
+        Microseconds,
+        Percent
     }
 }

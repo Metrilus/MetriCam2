@@ -164,6 +164,10 @@ namespace MetriCam2.Attributes
                 case Enums.Unit.Microseconds:
                     Unit = "μs";
                     return;
+
+                case Enums.Unit.Percent:
+                    Unit = "%";
+                    return;
             }
         }
     }
@@ -308,58 +312,68 @@ namespace MetriCam2.Attributes
             StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(int[] allowedValues)
+        public AllowedValueListAttribute(int[] allowedValues, string toStringFunc = null)
         {
             AllowedValues = new List<int>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(string[] allowedValues)
+        public AllowedValueListAttribute(string[] allowedValues, string toStringFunc = null)
         {
             AllowedValues = new List<string>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(byte[] allowedValues)
+        public AllowedValueListAttribute(byte[] allowedValues, string toStringFunc = null)
         {
             AllowedValues = new List<byte>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(short[] allowedValues)
+        public AllowedValueListAttribute(short[] allowedValues, string toStringFunc = null)
         {
             AllowedValues = new List<short>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(long[] allowedValues)
+        public AllowedValueListAttribute(long[] allowedValues, string toStringFunc = null)
         {
             AllowedValues = new List<long>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(uint[] allowedValues)
+        public AllowedValueListAttribute(uint[] allowedValues, string toStringFunc = null)
         {
             AllowedValues = new List<uint>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(ulong[] allowedValues)
+        public AllowedValueListAttribute(ulong[] allowedValues, string toStringFunc = null)
         {
             AllowedValues = new List<ulong>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(ushort[] allowedValues)
+        public AllowedValueListAttribute(ushort[] allowedValues, string toStringFunc = null)
         {
             AllowedValues = new List<ushort>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(Type enumType)
+        public AllowedValueListAttribute(Type enumType, string toStringFunc = null)
         {
             if (!enumType.IsEnum)
                 throw new ArgumentException("Type does not represent an enum!");
 
             AllowedValues = new List<string>(Enum.GetNames(enumType));
+            StringRepresentationFunc = toStringFunc;
         }
 
-        public AllowedValueListAttribute(object allowedValues)
-        {
-            AllowedValues = allowedValues;
-        }
+        //public AllowedValueListAttribute(object allowedValues, string toStringFunc = null)
+        //{
+        //    AllowedValues = allowedValues;
+        //    StringRepresentationFunc = toStringFunc;
+        //}
 
         public AllowedValueListAttribute(string propertyName, string toStringFunc = null)
         {

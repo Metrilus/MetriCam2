@@ -88,7 +88,7 @@ namespace MetriCam2.Cameras
         /// [DUMMY] Gain in [%].
         /// </summary>
         [Description("Gain", "Gain Factor")]
-        [Unit("%")]
+        [Unit(Unit.Percent)]
         [Range(0, 100)]
         [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public int Gain
