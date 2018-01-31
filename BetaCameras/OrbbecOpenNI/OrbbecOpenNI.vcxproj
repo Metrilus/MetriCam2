@@ -161,9 +161,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Reference Include="log4net">
-      <HintPath>..\..\libraries\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="Metrilus.Util">
       <HintPath>..\..\libraries\Metrilus.Util.dll</HintPath>
     </Reference>

@@ -58,9 +58,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net">
-      <HintPath>..\..\libraries\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
     </Reference>
