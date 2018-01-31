@@ -1340,6 +1340,7 @@ namespace MetriCam2.Cameras
             Channels.Clear();
 
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
+            Channels.Add(cr.RegisterChannel(ChannelNames.Distance));
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
 
             Channels.Add(cr.RegisterCustomChannel(ChannelNames.Left, typeof(FloatCameraImage)));
@@ -1526,21 +1527,22 @@ namespace MetriCam2.Cameras
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            if (channelName == ChannelNames.Color)
+            switch(channelName)
             {
-                return CalcColor();
-            }
-            if (channelName == ChannelNames.ZImage)
-            {
-                return CalcZImage();
-            }
-            if (channelName == ChannelNames.Left)
-            {
-                return CalcIRImage(_currentLeftFrame);
-            }
-            if (channelName == ChannelNames.Right)
-            {
-                return CalcIRImage(_currentRightFrame);
+                case ChannelNames.Color:
+                    return CalcColor();
+
+                case ChannelNames.ZImage:
+                    return CalcZImage();
+
+                case ChannelNames.Distance:
+                    return CalcDistanceImage();
+
+                case ChannelNames.Left:
+                    return CalcIRImage(_currentLeftFrame);
+
+                case ChannelNames.Right:
+                    return CalcIRImage(_currentRightFrame);
             }
 
             log.Error("Unexpected ChannelName in CalcChannel().");
@@ -1820,6 +1822,14 @@ namespace MetriCam2.Cameras
             }
 
             return depthData;
+        }
+
+        private FloatCameraImage CalcDistanceImage()
+        {
+            FloatCameraImage zImage = CalcZImage();
+            ProjectiveTransformationZhang projTrans = GetIntrinsics(ChannelNames.ZImage) as ProjectiveTransformationZhang;
+            Point3fCameraImage p3fImage = projTrans.ImageToWorld(zImage);
+            return p3fImage.ToFloatCameraImage();
         }
 
         unsafe private FloatCameraImage CalcIRImage(RealSense2API.RS2Frame frame)
