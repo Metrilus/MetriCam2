@@ -1568,8 +1568,26 @@ namespace MetriCam2.Cameras
                 fps = ColorFPS;
                 index = -1;
             }
-            else if (channelName == ChannelNames.ZImage)
+            else if (channelName == ChannelNames.ZImage
+                || channelName == ChannelNames.Distance)
             {
+                // Distance and ZImage channel access the same data from
+                // the realsense2 device
+                // so check if one of them was already active
+                // and skip activating the DEPTH stream in that case
+
+                if (channelName == ChannelNames.ZImage
+                    && IsChannelActive(ChannelNames.Distance))
+                {
+                    return;
+                }
+
+                if (channelName == ChannelNames.Distance
+                    && IsChannelActive(ChannelNames.ZImage))
+                {
+                    return;
+                }
+
                 stream = RealSense2API.Stream.DEPTH;
                 format = RealSense2API.Format.Z16;
 
@@ -1632,8 +1650,26 @@ namespace MetriCam2.Cameras
             {
                 stream = RealSense2API.Stream.COLOR;
             }
-            else if (channelName == ChannelNames.ZImage)
+            else if (channelName == ChannelNames.ZImage
+            || channelName == ChannelNames.Distance)
             {
+                // Distance and ZImage channel access the same data from
+                // the realsense2 device
+                // so check if one of them is still active
+                // and skip deactivating the DEPTH stream in that case
+
+                if (channelName == ChannelNames.ZImage
+                    && IsChannelActive(ChannelNames.Distance))
+                {
+                    return;
+                }
+
+                if (channelName == ChannelNames.Distance
+                    && IsChannelActive(ChannelNames.ZImage))
+                {
+                    return;
+                }
+
                 stream = RealSense2API.Stream.DEPTH;
             }
             else if (channelName == ChannelNames.Left)
