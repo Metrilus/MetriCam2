@@ -20,7 +20,7 @@ namespace MetriCam2.Tests.TestCameraSettings
 
         static void Main(string[] args)
         {
-            log.SetLogLevel(log4net.Core.Level.Info);
+            log.LogLevel = MetriLog.Levels.Info;
 
             cam = new UEyeCamera(); // Change this type if you want to test your camera implementation.
             List<Camera.ParamDesc> allParameters;
