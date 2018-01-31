@@ -1828,7 +1828,7 @@ namespace MetriCam2.Cameras
         {
             FloatCameraImage zImage = CalcZImage();
             ProjectiveTransformationZhang projTrans = GetIntrinsics(ChannelNames.ZImage) as ProjectiveTransformationZhang;
-            Point3fCameraImage p3fImage = projTrans.ImageToWorld(zImage);
+            Point3fCameraImage p3fImage = projTrans.ZImageToWorld(zImage);
             return p3fImage.ToFloatCameraImage();
         }
 
