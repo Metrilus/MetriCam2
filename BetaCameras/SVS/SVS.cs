@@ -3,6 +3,7 @@
 
 using MetriCam2.Cameras.Internal.SVS;
 using Metrilus.Util;
+using Metrilus.Logging;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -755,19 +756,19 @@ namespace MetriCam2.Cameras
                 string myLogFilename = "MetriCam2.SVS.LogDetail.txt";
                 gigeApi.Gige_Camera_registerForLogMessages(hCamera, myLogLevel_detail, myLogFilename, LogCallback: null, MessageContext: IntPtr.Zero);
 
-                var logLevel = log4net.Core.Level.Info;
+                var logLevel = MetriLog.Levels.Info;
                 switch (LogLevel)
                 {
-                    case 0: logLevel = log4net.Core.Level.Off; break;
-                    case 1: logLevel = log4net.Core.Level.Fatal; break;
-                    case 2: logLevel = log4net.Core.Level.Error; break;
-                    case 3: logLevel = log4net.Core.Level.Warn; break;
-                    case 4: logLevel = log4net.Core.Level.Info; break;
-                    case 5: logLevel = log4net.Core.Level.Debug; break;
-                    case 6: logLevel = log4net.Core.Level.Debug; break;
-                    case 7: logLevel = log4net.Core.Level.All; break;
+                    case 0: logLevel = MetriLog.Levels.Off; break;
+                    case 1: logLevel = MetriLog.Levels.Fatal; break;
+                    case 2: logLevel = MetriLog.Levels.Error; break;
+                    case 3: logLevel = MetriLog.Levels.Warn; break;
+                    case 4: logLevel = MetriLog.Levels.Info; break;
+                    case 5: logLevel = MetriLog.Levels.Debug; break;
+                    case 6: logLevel = MetriLog.Levels.Debug; break;
+                    case 7: logLevel = MetriLog.Levels.All; break;
                 }
-                log.SetLogLevel(logLevel);
+                log.LogLevel = logLevel;
             }
 
             // 5. get width and height
