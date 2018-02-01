@@ -7,8 +7,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MetriCam 2: V3S wrapper")]
-[assembly: AssemblyDescription("MetriCam 2 wrapper for V3S 100 cameras")]
+[assembly: AssemblyTitle("MetriCam 2: SICK Visionary-T wrapper")]
+[assembly: AssemblyDescription("MetriCam 2 wrapper for SICK Visionary-T cameras")]
 [assembly: MetriCam2.Attributes.ContainsCameraImplementations]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

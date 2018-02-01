@@ -1,17 +1,15 @@
-﻿using System.Reflection;
+﻿// Copyright (c) Metrilus GmbH
+// MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
+
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MetriCam 2: SICK TiM561")]
-[assembly: AssemblyDescription("MetriCam 2 Camera Interface: SICK TiM561 2D Laser Scanner")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Metrilus GmbH")]
-[assembly: AssemblyProduct("MetriCam 2")]
-[assembly: AssemblyCopyright("Copyright © Metrilus GmbH 2017")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
+[assembly: AssemblyTitle("MetriCam 2: SICK TiM561 wrapper")]
+[assembly: AssemblyDescription("MetriCam 2 wrapper for SICK TiM561 2D laser scanner")]
+[assembly: MetriCam2.Attributes.ContainsCameraImplementations]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
