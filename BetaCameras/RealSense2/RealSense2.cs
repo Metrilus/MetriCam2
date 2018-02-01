@@ -29,6 +29,8 @@ namespace MetriCam2.Cameras
         private float _depthScale = 0.0f;
         private bool _disposed = false;
         private bool _updatingPipeline = false;
+        private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
+        private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
         #endregion
 
         #region enums
@@ -1201,6 +1203,7 @@ namespace MetriCam2.Cameras
             Channels.Clear();
 
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
+            Channels.Add(cr.RegisterChannel(ChannelNames.Distance));
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
 
             Channels.Add(cr.RegisterCustomChannel(ChannelNames.Left, typeof(FloatCameraImage)));
@@ -1273,7 +1276,16 @@ namespace MetriCam2.Cameras
 
         protected override void DisconnectImpl()
         {
-            StopPipeline();
+            try
+            {
+                _intrinsics.Clear();
+                _extrinsics.Clear();
+                StopPipeline();
+            }
+            catch(Exception e)
+            {
+                log.Warn(e.Message);
+            }
         }
 
         protected override void UpdateImpl()
@@ -1387,21 +1399,22 @@ namespace MetriCam2.Cameras
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            if (channelName == ChannelNames.Color)
+            switch(channelName)
             {
-                return CalcColor();
-            }
-            if (channelName == ChannelNames.ZImage)
-            {
-                return CalcZImage();
-            }
-            if (channelName == ChannelNames.Left)
-            {
-                return CalcIRImage(_currentLeftFrame);
-            }
-            if (channelName == ChannelNames.Right)
-            {
-                return CalcIRImage(_currentRightFrame);
+                case ChannelNames.Color:
+                    return CalcColor();
+
+                case ChannelNames.ZImage:
+                    return CalcZImage();
+
+                case ChannelNames.Distance:
+                    return CalcDistanceImage();
+
+                case ChannelNames.Left:
+                    return CalcIRImage(_currentLeftFrame);
+
+                case ChannelNames.Right:
+                    return CalcIRImage(_currentRightFrame);
             }
 
             log.Error("Unexpected ChannelName in CalcChannel().");
@@ -1427,8 +1440,26 @@ namespace MetriCam2.Cameras
                 fps = ColorFPS;
                 index = -1;
             }
-            else if (channelName == ChannelNames.ZImage)
+            else if (channelName == ChannelNames.ZImage
+                || channelName == ChannelNames.Distance)
             {
+                // Distance and ZImage channel access the same data from
+                // the realsense2 device
+                // so check if one of them was already active
+                // and skip activating the DEPTH stream in that case
+
+                if (channelName == ChannelNames.ZImage
+                    && IsChannelActive(ChannelNames.Distance))
+                {
+                    return;
+                }
+
+                if (channelName == ChannelNames.Distance
+                    && IsChannelActive(ChannelNames.ZImage))
+                {
+                    return;
+                }
+
                 stream = RealSense2API.Stream.DEPTH;
                 format = RealSense2API.Format.Z16;
 
@@ -1491,8 +1522,26 @@ namespace MetriCam2.Cameras
             {
                 stream = RealSense2API.Stream.COLOR;
             }
-            else if (channelName == ChannelNames.ZImage)
+            else if (channelName == ChannelNames.ZImage
+            || channelName == ChannelNames.Distance)
             {
+                // Distance and ZImage channel access the same data from
+                // the realsense2 device
+                // so check if one of them is still active
+                // and skip deactivating the DEPTH stream in that case
+
+                if (channelName == ChannelNames.ZImage
+                    && IsChannelActive(ChannelNames.Distance))
+                {
+                    return;
+                }
+
+                if (channelName == ChannelNames.Distance
+                    && IsChannelActive(ChannelNames.ZImage))
+                {
+                    return;
+                }
+
                 stream = RealSense2API.Stream.DEPTH;
             }
             else if (channelName == ChannelNames.Left)
@@ -1529,6 +1578,12 @@ namespace MetriCam2.Cameras
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
+            // first check if intrincs for requested channel have been cached already
+            if(_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
+            {
+                return cachedIntrinsics;
+            }
+
             RealSense2API.RS2StreamProfile profile = GetProfileFromSensor(channelName);
             if (!profile.IsValid())
             {
@@ -1545,7 +1600,7 @@ namespace MetriCam2.Cameras
                 throw new Exception(msg);
             }
 
-            return new ProjectiveTransformationZhang(
+            var projTrans = new ProjectiveTransformationZhang(
                 intrinsics.width,
                 intrinsics.height,
                 intrinsics.fx,
@@ -1557,6 +1612,10 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3],
                 intrinsics.coeffs[4]);
+
+            _intrinsics.Add(channelName, projTrans);
+
+            return projTrans;
         }
 
         private RealSense2API.RS2StreamProfile GetProfileFromSensor(string channelName)
@@ -1573,6 +1632,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.ZImage:
                 case ChannelNames.Left:
                 case ChannelNames.Right:
+                case ChannelNames.Distance:
                 default:
                     sensorName = RealSense2API.SensorName.STEREO;
                     refResolution = DepthResolution;
@@ -1636,6 +1696,13 @@ namespace MetriCam2.Cameras
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
+            // first check if intrincs for requested channel have been cached already
+            string extrinsicsKey = $"{channelFromName}_{channelToName}";
+            if (_extrinsics.TryGetValue(extrinsicsKey, out RigidBodyTransformation cachedExtrinsics))
+            {
+                return cachedExtrinsics;
+            }
+
             RealSense2API.RS2StreamProfile from = GetProfileFromSensor(channelFromName);
             RealSense2API.RS2StreamProfile to = GetProfileFromSensor(channelToName);
             if (!from.IsValid())
@@ -1654,7 +1721,10 @@ namespace MetriCam2.Cameras
 
             Point3f trans = new Point3f(extrinsics.translation[0], extrinsics.translation[1], extrinsics.translation[2]);
 
-            return new RigidBodyTransformation(rot, trans);
+            RigidBodyTransformation rbt = new RigidBodyTransformation(rot, trans);
+            _extrinsics.Add(extrinsicsKey, rbt);
+
+            return rbt;
         }
 
         unsafe private FloatCameraImage CalcZImage()
@@ -1681,6 +1751,14 @@ namespace MetriCam2.Cameras
             }
 
             return depthData;
+        }
+
+        private FloatCameraImage CalcDistanceImage()
+        {
+            FloatCameraImage zImage = CalcZImage();
+            ProjectiveTransformationZhang projTrans = GetIntrinsics(ChannelNames.ZImage) as ProjectiveTransformationZhang;
+            Point3fCameraImage p3fImage = projTrans.ZImageToWorld(zImage);
+            return p3fImage.ToFloatCameraImage();
         }
 
         unsafe private FloatCameraImage CalcIRImage(RealSense2API.RS2Frame frame)

@@ -41,6 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\SolutionAssemblyInfo.cs">
+      <Link>SolutionAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="CoLaBClient.cs" />
     <Compile Include="CoLaBException.cs" />
     <Compile Include="NetworkBinaryReader.cs" />
