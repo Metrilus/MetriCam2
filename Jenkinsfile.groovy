@@ -13,6 +13,7 @@ pipeline {
 		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
 		def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.RealSense2 MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam'
 		def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json'
+		def dllsToDeployNetStandard = 'MetriCam2.NetStandard Metrilus.Util'
 		// End of Config
 		def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
 	}
@@ -56,8 +57,10 @@ pipeline {
 				def VERSION = 'latest'
 				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\git\\\\${VERSION}\\\\"
 				def BIN_DIR = "${PUBLISH_DIR}lib\\\\"
+				def BIN_DIR_NETSTANDARD = "${PUBLISH_DIR}lib_netstandard2.0\\\\"
 				def RELEASE_DIR_X64 = 'bin\\\\x64\\\\Release\\\\'
 				def RELEASE_DIR_ANYCPU = 'bin\\\\Release\\\\'
+				def RELEASE_DIR_NETSTANDARD = 'bin\\\\Release\\\\netstandard2.0\\\\
 			}
 			steps {
 				echo 'Publish artefacts to Z:\\releases\\'
@@ -69,6 +72,8 @@ pipeline {
 						MKDIR "%PUBLISH_DIR%"
 						IF EXIST "%BIN_DIR%" RMDIR /S /Q "%BIN_DIR%"
 						MKDIR "%BIN_DIR%"
+						IF EXIST "%BIN_DIR_NETSTANDARD%" RMDIR /S /Q "%BIN_DIR_NETSTANDARD%"
+						MKDIR "%BIN_DIR_NETSTANDARD%"
 						'''
 				}
 				echo 'Publish dependencies to Release Folder'
@@ -78,6 +83,9 @@ pipeline {
 					)
 					FOR %%p IN (%dllsToDeployAnyCPU%) DO (
 						COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%BIN_DIR%"
+					)
+					FOR %%p IN (%dllsToDeployNetStandard%) DO (
+						COPY /Y "%RELEASE_DIR_NETSTANDARD%%%p.dll" "%BIN_DIR_NETSTANDARD%"
 					)
 					'''
 				echo 'Write Build Timestamp to file'
