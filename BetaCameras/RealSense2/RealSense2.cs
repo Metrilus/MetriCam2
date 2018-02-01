@@ -1417,9 +1417,9 @@ namespace MetriCam2.Cameras
         {
             try
             {
-                StopPipeline();
                 _intrinsics.Clear();
                 _extrinsics.Clear();
+                StopPipeline();
             }
             catch(Exception e)
             {
@@ -1836,7 +1836,7 @@ namespace MetriCam2.Cameras
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
             // first check if intrincs for requested channel have been cached already
-            string extrinsicsKey = string.Format("{0}_{1}", channelFromName, channelToName);
+            string extrinsicsKey = $"{channelFromName}_{channelToName}";
             if (_extrinsics.TryGetValue(extrinsicsKey, out RigidBodyTransformation cachedExtrinsics))
             {
                 return cachedExtrinsics;
