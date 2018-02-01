@@ -1413,7 +1413,14 @@ namespace MetriCam2.Cameras
 
         protected override void DisconnectImpl()
         {
-            StopPipeline();
+            try
+            {
+                StopPipeline();
+            }
+            catch(Exception e)
+            {
+                log.Warn(e.Message);
+            }
         }
 
         protected override void UpdateImpl()
