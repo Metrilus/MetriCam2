@@ -28,6 +28,8 @@ namespace MetriCam2.Cameras
         private float _depthScale = 0.0f;
         private bool _disposed = false;
         private bool _updatingPipeline = false;
+        private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
+        private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
 
         public enum EmitterMode
         {
@@ -1416,6 +1418,8 @@ namespace MetriCam2.Cameras
             try
             {
                 StopPipeline();
+                _intrinsics.Clear();
+                _extrinsics.Clear();
             }
             catch(Exception e)
             {
@@ -1713,6 +1717,12 @@ namespace MetriCam2.Cameras
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
+            // first check if intrincs for requested channel have been cached already
+            if(_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
+            {
+                return cachedIntrinsics;
+            }
+
             RealSense2API.RS2StreamProfile profile = GetProfileFromSensor(channelName);
             if (!profile.IsValid())
             {
@@ -1729,7 +1739,7 @@ namespace MetriCam2.Cameras
                 throw new Exception(msg);
             }
 
-            return new ProjectiveTransformationZhang(
+            var projTrans = new ProjectiveTransformationZhang(
                 intrinsics.width,
                 intrinsics.height,
                 intrinsics.fx,
@@ -1741,6 +1751,10 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3],
                 intrinsics.coeffs[4]);
+
+            _intrinsics.Add(channelName, projTrans);
+
+            return projTrans;
         }
 
         private RealSense2API.RS2StreamProfile GetProfileFromSensor(string channelName)
@@ -1757,6 +1771,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.ZImage:
                 case ChannelNames.Left:
                 case ChannelNames.Right:
+                case ChannelNames.Distance:
                 default:
                     sensorName = RealSense2API.SensorName.STEREO;
                     refResolution = DepthResolution;
@@ -1820,6 +1835,13 @@ namespace MetriCam2.Cameras
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
+            // first check if intrincs for requested channel have been cached already
+            string extrinsicsKey = string.Format("{0}_{1}", channelFromName, channelToName);
+            if (_extrinsics.TryGetValue(extrinsicsKey, out RigidBodyTransformation cachedExtrinsics))
+            {
+                return cachedExtrinsics;
+            }
+
             RealSense2API.RS2StreamProfile from = GetProfileFromSensor(channelFromName);
             RealSense2API.RS2StreamProfile to = GetProfileFromSensor(channelToName);
             if (!from.IsValid())
@@ -1838,7 +1860,10 @@ namespace MetriCam2.Cameras
 
             Point3f trans = new Point3f(extrinsics.translation[0], extrinsics.translation[1], extrinsics.translation[2]);
 
-            return new RigidBodyTransformation(rot, trans);
+            RigidBodyTransformation rbt = new RigidBodyTransformation(rot, trans);
+            _extrinsics.Add(extrinsicsKey, rbt);
+
+            return rbt;
         }
 
         unsafe private FloatCameraImage CalcZImage()
