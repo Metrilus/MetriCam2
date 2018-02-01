@@ -23,16 +23,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="MetriCam2.NetStandard">
-      <HintPath>Z:\releases\MetriCam2\R9.2\lib_netstandard2.0\MetriCam2.NetStandard.dll</HintPath>
-    </Reference>
-    <Reference Include="Metrilus.Util.NetStandard">
-      <HintPath>Z:\releases\MetriCam2\R9.2\lib_netstandard2.0\Metrilus.Util.NetStandard.dll</HintPath>
-    </Reference>
+    <Folder Include="Properties\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <ProjectReference Include="..\..\MetriCam2\MetriCam2.NetStandard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Metrilus.Util.NetStandard">
+      <HintPath>..\..\libraries\Metrilus.Util.NetStandard.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
