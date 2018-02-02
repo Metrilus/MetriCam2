@@ -1717,7 +1717,7 @@ namespace MetriCam2.Cameras
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
-            // first check if intrincs for requested channel have been cached already
+            // first check if intrinsics for requested channel have been cached already
             if(_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
             {
                 return cachedIntrinsics;
@@ -1835,7 +1835,7 @@ namespace MetriCam2.Cameras
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
-            // first check if intrincs for requested channel have been cached already
+            // first check if extrinsics for requested channel have been cached already
             string extrinsicsKey = $"{channelFromName}_{channelToName}";
             if (_extrinsics.TryGetValue(extrinsicsKey, out RigidBodyTransformation cachedExtrinsics))
             {
