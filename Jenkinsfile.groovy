@@ -60,7 +60,7 @@ pipeline {
 				def BIN_DIR_NETSTANDARD = "${PUBLISH_DIR}lib_netstandard2.0\\\\"
 				def RELEASE_DIR_X64 = 'bin\\\\x64\\\\Release\\\\'
 				def RELEASE_DIR_ANYCPU = 'bin\\\\Release\\\\'
-				def RELEASE_DIR_NETSTANDARD = 'bin\\\\Release\\\\netstandard2.0\\\\
+				def RELEASE_DIR_NETSTANDARD = 'bin\\\\Release\\\\netstandard2.0\\\\'
 			}
 			steps {
 				echo 'Publish artefacts to Z:\\releases\\'
