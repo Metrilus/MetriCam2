@@ -16,14 +16,11 @@ using namespace System::Runtime::InteropServices;
 static TIVoxel::TIVoxel()
 {
 	Voxel::logger.setDefaultLogLevel(Voxel::LOG_INFO);
-	const char* strLib;
-	const char* strConf;
-	const char* strFW;
 	/*
 	String^ libPath = Directory::GetCurrentDirectory() + Path::DirectorySeparatorChar + "lib" + Path::DirectorySeparatorChar;
 	String^ libConf = Directory::GetCurrentDirectory() + Path::DirectorySeparatorChar + "conf" + Path::DirectorySeparatorChar;
 	String^ libFW = Directory::GetCurrentDirectory() + Path::DirectorySeparatorChar + "fw" + Path::DirectorySeparatorChar;
-	
+
 	strLib = (const char*)(Marshal::StringToHGlobalAnsi(libPath)).ToPointer();
 	strConf = (const char*)(Marshal::StringToHGlobalAnsi(libConf)).ToPointer();
 	strFW = (const char*)(Marshal::StringToHGlobalAnsi(libFW)).ToPointer();
@@ -56,7 +53,7 @@ void TIVoxel::ConnectImpl()
 */		{
 			// get number of voxel devices
 			Voxel::Vector<Voxel::DevicePtr> &devices = sys->scan();
-			int numDevices = devices.size();
+			size_t numDevices = devices.size();
 			if (numDevices == 0)
 			{
 				ExceptionBuilder::Throw(MetriCam2::Exceptions::ConnectionFailedException::typeid, this, "error_connectionFailed", "No devices found.");
@@ -150,10 +147,10 @@ void TIVoxel::ConnectImpl()
 			SelectChannel(CHANNEL_NAME_AMPLITUDE);
 		}
 
-		SetParameterByName("coeff_sensor", (int)0);
-		SetParameterByName("coeff_illum", (int)0);
-		SetParameterByName("tillum_calib", (uint)0);
-		SetParameterByName("tsensor_calib", (uint)0);
+		SetParameterByName("coeff_sensor", safe_cast<System::Object^>((int)0));
+		SetParameterByName("coeff_illum", safe_cast<System::Object^>((int)0));
+		SetParameterByName("tillum_calib", safe_cast<System::Object^>((uint)0));
+		SetParameterByName("tsensor_calib", safe_cast<System::Object^>((uint)0));
 		SetIndFreqDataEn(true);
 		SetIndFreqDataSel(true);
 		m_baseModulationFrequency = this->GetBaseModulationFrequency();
@@ -167,14 +164,14 @@ void TIVoxel::ConnectImpl()
 		m_subFrames = this->GetSubFrames();
 		m_dealiased_ph_mask = this->GetDealiased_ph_mask();
 	}
-	catch (MetriCam2::Exceptions::ConnectionFailedException^ cfe)
+	catch (MetriCam2::Exceptions::ConnectionFailedException^)
 	{
-		// this exception was fired by us, don't log it
+		// this exception was thrown by us, don't log it
 		throw;
 	}
 	catch (Exception^ ex)
 	{
-		// this exception was unexpected, log it and fire our own one
+		// this exception was unexpected, log it and throw our own one
 		log->Error(ex->Message);
 		ExceptionBuilder::Throw(MetriCam2::Exceptions::ConnectionFailedException::typeid, this, "error_connectionFailed", "Unexpected error: " + ex->Message);
 		return;
@@ -440,7 +437,7 @@ void TIVoxel::onNewDepthFrame(Voxel::DepthCamera &dc, const Voxel::Frame &frame,
 		{
 			Voxel::ToFRawFramePtr current = Voxel::ToFRawFrame::typeCast(callbackFrame->copy());
 
-			voxel->AdoptCameraData(current->amplitude(), current->phase(), current->ambient(), current->amplitudeWordWidth(), current->phaseWordWidth(), current->ambientWordWidth());
+			voxel->AdoptCameraData(current->amplitude(), current->phase(), current->ambient(), (int)current->amplitudeWordWidth(), (int)current->phaseWordWidth(), (int)current->ambientWordWidth());
 
 			//voxel->AdoptFlagData(current->flags(), current->flagsWordWidth());
 
@@ -457,7 +454,7 @@ Voxel::DevicePtr* TIVoxel::GetDeviceBySerialNumber(String^ _serial)
 
 	Voxel::Vector<Voxel::DevicePtr> &devices = sys->scan();
 
-	int numCameras = devices.size();
+	size_t numCameras = devices.size();
 	if (numCameras == 0)
 	{
 		return NULL;
@@ -485,14 +482,14 @@ void TIVoxel::DisconnectImpl()
 	{
 		cam->stop();
 	}
-	catch (Exception^ ex){}
+	catch (Exception^) {}
 	System::Threading::Thread::Sleep(200);
 	try
 	{
 		Voxel::DepthCameraPtr* ptr = new Voxel::DepthCameraPtr(cam);
 		sys->disconnect(*ptr);
 	}
-	catch (Exception^ ex){}
+	catch (Exception^) {}
 	connectedVoxelObjects->Remove(this);
 }
 
@@ -639,19 +636,18 @@ void TIVoxel::VoxelInit()
 array<String^, 1>^ TIVoxel::ScanForCameras()
 {
 	array<String^, 1>^ res = nullptr;
-	int cameras = 0;
 
 	Voxel::Vector<Voxel::DevicePtr> &devices = sys->scan();
 
-	cameras = devices.size();
+	size_t num_cameras = devices.size();
 
-	if (cameras == 0)
+	if (num_cameras == 0)
 	{
 		return nullptr;
 	}
 
-	res = gcnew array<String^, 1>(cameras);
-	for (int i = 0; i < cameras; ++i)
+	res = gcnew array<String^, 1>((int)num_cameras);
+	for (int i = 0; i < num_cameras; ++i)
 	{
 		Voxel::String str;
 		res[i] = gcnew String(marshal_as<String^>(devices[i]->serialNumber()));
@@ -936,14 +932,13 @@ void TIVoxel::SetAmplitudeThreshold(uint val)
 		{
 			SetParameterByName("amplitude_threshold", val);
 		}
-		m_amplitudeThreshold = val;
 	}
-	catch (Exception^ ex)
+	catch (Exception^)
 	{
-		m_amplitudeThreshold = val;
 	}
 	finally
 	{
+		m_amplitudeThreshold = val;
 		System::Threading::Monitor::Exit(settingsLock);
 	}
 }
@@ -1133,7 +1128,7 @@ void TIVoxel::SetHDRFilter(bool val) {
 			std::cout << "HDR Filter removed." << std::endl;
 		}
 	}
-	catch (Exception^ ex)
+	catch (Exception^)
 	{
 	}
 	finally
@@ -1148,15 +1143,13 @@ void TIVoxel::SetHdrScale(uint val)
 	try
 	{
 		SetParameterByName("hdr_scale", val);
-		m_hdrScale = val;
-		
 	}
-	catch (Exception^ ex)
+	catch (Exception^)
 	{
-		m_hdrScale = val;
 	}
 	finally
 	{
+		m_hdrScale = val;
 		System::Threading::Monitor::Exit(settingsLock);
 	}
 }
@@ -1172,14 +1165,13 @@ void TIVoxel::SetQuads(unsigned int val)
 	try
 	{
 		SetParameterByName("quad_cnt_max", val);
-		m_quadCntMax = val;
 	}
-	catch (Exception^ ex)
+	catch (Exception^)
 	{
-		m_quadCntMax = val;
 	}
 	finally
 	{
+		m_quadCntMax = val;
 		System::Threading::Monitor::Exit(settingsLock);
 	}
 }
@@ -1195,14 +1187,13 @@ void TIVoxel::SetSubFrames(uint val)
 	try
 	{
 		SetParameterByName("sub_frame_cnt_max", val);
-		m_subFrames = val;
 	}
-	catch (Exception^ ex)
+	catch (Exception^)
 	{
-		m_subFrames = val;
 	}
 	finally
 	{
+		m_subFrames = val;
 		System::Threading::Monitor::Exit(settingsLock);
 	}
 }
