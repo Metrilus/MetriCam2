@@ -6,8 +6,8 @@
     <Company>Metrilus GmbH</Company>
     <Authors>Metrilus GmbH</Authors>
     <Product>MetriCam2</Product>
-    <AssemblyName>MetriCam2.RealSense2.NetStandard</AssemblyName>
-    <RootNamespace>MetriCam2.RealSense2.NetStandard</RootNamespace>
+    <AssemblyName>MetriCam2.Cameras.RealSense2.NetStandard</AssemblyName>
+    <RootNamespace>MetriCam2.Cameras</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -21,12 +21,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="obj_netFramework\**" />
     <Compile Remove="Properties\AssemblyInfo.cs" />
     <Compile Remove="Properties\Resources.Designer.cs" />
+    <Compile Remove="Resources\**" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="obj_netFramework\**" />
+    <None Remove="Resources\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="obj_netFramework\**" />
     <EmbeddedResource Remove="Properties\Resources.resx" />
+    <EmbeddedResource Remove="Resources\**" />
   </ItemGroup>
 
   <ItemGroup>
