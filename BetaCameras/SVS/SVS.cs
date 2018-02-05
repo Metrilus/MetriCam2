@@ -200,8 +200,6 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                log.Debug("Get LogLevelDesc");
-
                 return new RangeParamDesc<int>(0, 7)
                 {
                     Description = "Log level",
@@ -227,6 +225,30 @@ namespace MetriCam2.Cameras
         /// 7 - DETAIL for receiving multiple signals for each image callback
         /// </remarks>
         public int LogLevel { get; set; }
+
+        private ParamDesc<bool> LogToFileDesc
+        {
+            get
+            {
+                return new ParamDesc<bool>()
+                {
+                    Description = "Log to file",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Disconnected,
+                };
+            }
+        }
+        /// <summary>
+        /// If enabled before calling <see cref="Connect"/> then a SVS-specific log file is created.
+        /// </summary>
+        /// <seealso cref="LogFilename"/>
+        /// <seealso cref="LogLevel"/>
+        public bool LogToFile { get; set; }
+
+        /// <summary>
+        /// Filename (read-only) of the detailed log file.
+        /// </summary>
+        public const string LogFilename = "MetriCam2.SVS.LogDetail.txt";
 
         private RangeParamDesc<float> ExposureDesc
         {
@@ -738,37 +760,21 @@ namespace MetriCam2.Cameras
             // Register log message callback
             if (LogLevel >= LogLevelDesc.Min && LogLevel <= LogLevelDesc.Max)
             {
-                // TODO: if continuous logging fails [to be tested], set log file name here, and set callback null
-
-                // @TESTING
-                // this is the usual logging code.
-                // it is just commented for a testing release.
-                logMessageCallbackDelegate = new GigeApi.LogMessageCallback(cameraLogMessageCallback);
-                //error = gigeApi.Gige_Camera_registerForLogMessages(handle, LogLevel, LogFilename: "", LogCallback: logMessageCallbackDelegate, MessageContext: IntPtr.Zero);
-                //if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
-                //{
-                //    ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
-                //}
-
-                // @TESTING
-                // this logging code is just for a testing release.
-                int myLogLevel_detail = LogLevel;
-                string myLogFilename = "MetriCam2.SVS.LogDetail.txt";
-                gigeApi.Gige_Camera_registerForLogMessages(hCamera, myLogLevel_detail, myLogFilename, LogCallback: null, MessageContext: IntPtr.Zero);
-
-                var logLevel = MetriLog.Levels.Info;
-                switch (LogLevel)
+                // SVS can log either to callback, or to file.
+                // Since the log can be quite polluted, logging to file is preferred.
+                if (LogToFile)
                 {
-                    case 0: logLevel = MetriLog.Levels.Off; break;
-                    case 1: logLevel = MetriLog.Levels.Fatal; break;
-                    case 2: logLevel = MetriLog.Levels.Error; break;
-                    case 3: logLevel = MetriLog.Levels.Warn; break;
-                    case 4: logLevel = MetriLog.Levels.Info; break;
-                    case 5: logLevel = MetriLog.Levels.Debug; break;
-                    case 6: logLevel = MetriLog.Levels.Debug; break;
-                    case 7: logLevel = MetriLog.Levels.All; break;
+                    gigeApi.Gige_Camera_registerForLogMessages(hCamera, LogLevel, LogFilename, LogCallback: null, MessageContext: IntPtr.Zero);
                 }
-                log.LogLevel = logLevel;
+                else
+                {
+                    logMessageCallbackDelegate = new GigeApi.LogMessageCallback(CameraLogMessageCallback);
+                    error = gigeApi.Gige_Camera_registerForLogMessages(hCamera, LogLevel, LogFilename: "", LogCallback: logMessageCallbackDelegate, MessageContext: IntPtr.Zero);
+                    if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
+                    {
+                        ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
+                    }
+                }
             }
 
             // 5. get width and height
@@ -1364,7 +1370,7 @@ namespace MetriCam2.Cameras
             return rgb;
         }
 
-        private GigeApi.SVSGigeApiReturn cameraLogMessageCallback(string LogMessage, IntPtr MessageContext)
+        private GigeApi.SVSGigeApiReturn CameraLogMessageCallback(string LogMessage, IntPtr MessageContext)
         {
             GigeApi.SVSGigeApiReturn apiReturn = GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS;
             log.InfoFormat("{0} [SVS SDK]: {1}", Name, LogMessage);
