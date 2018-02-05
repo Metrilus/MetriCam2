@@ -1261,7 +1261,10 @@ namespace MetriCam2.Cameras.RealSense2API
         unsafe public void Release()
         {
             if(this.Handle != IntPtr.Zero)
+            {
                 RS2Internals.rs2_release_frame(this.Handle);
+                this.Handle = IntPtr.Zero;
+            }
         }
 
         unsafe public RS2Frame Clone()
