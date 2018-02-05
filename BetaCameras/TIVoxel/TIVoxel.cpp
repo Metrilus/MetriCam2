@@ -1,4 +1,3 @@
-// This is the main DLL file.
 #include "stdafx.h"
 
 #include "TIVoxel.h"
@@ -16,19 +15,6 @@ using namespace System::Runtime::InteropServices;
 static TIVoxel::TIVoxel()
 {
 	Voxel::logger.setDefaultLogLevel(Voxel::LOG_INFO);
-	/*
-	String^ libPath = Directory::GetCurrentDirectory() + Path::DirectorySeparatorChar + "lib" + Path::DirectorySeparatorChar;
-	String^ libConf = Directory::GetCurrentDirectory() + Path::DirectorySeparatorChar + "conf" + Path::DirectorySeparatorChar;
-	String^ libFW = Directory::GetCurrentDirectory() + Path::DirectorySeparatorChar + "fw" + Path::DirectorySeparatorChar;
-
-	strLib = (const char*)(Marshal::StringToHGlobalAnsi(libPath)).ToPointer();
-	strConf = (const char*)(Marshal::StringToHGlobalAnsi(libConf)).ToPointer();
-	strFW = (const char*)(Marshal::StringToHGlobalAnsi(libFW)).ToPointer();
-
-	Voxel::Configuration::addLibPath(strLib);
-	Voxel::Configuration::addConfPath(strConf);
-	Voxel::Configuration::addFirmwarePath(strFW);
-	*/
 	sys = new Voxel::CameraSystem();
 	connectedVoxelObjects = gcnew List<TIVoxel^>();
 }
@@ -40,17 +26,7 @@ void TIVoxel::ConnectImpl()
 	Voxel::DevicePtr device;
 	try
 	{
-/*		if (this->SerialNumber != nullptr && !this->SerialNumber->Equals(""))
 		{
-			device = GetDeviceBySerialNumber(this->SerialNumber);
-			if (device == NULL)
-			{
-				ExceptionBuilder::Throw(MetriCam2::Exceptions::ConnectionFailedException::typeid, this, "error_connectionFailed", "Could not find device with serial number " + this->SerialNumber);
-				return;
-			}
-		}
-		else
-*/		{
 			// get number of voxel devices
 			Voxel::Vector<Voxel::DevicePtr> &devices = sys->scan();
 			size_t numDevices = devices.size();
@@ -75,10 +51,7 @@ void TIVoxel::ConnectImpl()
 			device = toConnect; // first camera
 		}
 
-		// set initial register values
-		//VoxelInit();
 		cam = sys->connect(device).get();
-
 
 		if (m_CameraProfile != Profile::None)
 		{
@@ -439,8 +412,6 @@ void TIVoxel::onNewDepthFrame(Voxel::DepthCamera &dc, const Voxel::Frame &frame,
 
 			voxel->AdoptCameraData(current->amplitude(), current->phase(), current->ambient(), (int)current->amplitudeWordWidth(), (int)current->phaseWordWidth(), (int)current->ambientWordWidth());
 
-			//voxel->AdoptFlagData(current->flags(), current->flagsWordWidth());
-
 			voxel->updateResetEvent->Set();
 
 			break;
@@ -474,7 +445,6 @@ Voxel::DevicePtr* TIVoxel::GetDeviceBySerialNumber(String^ _serial)
 
 	return NULL;
 }
-	
 
 void TIVoxel::DisconnectImpl()
 {
@@ -530,15 +500,15 @@ CameraImage^ TIVoxel::CalcChannelImpl(String^ channelName)
 	{
 		return CalcAmbient();
 	}
-	else if (channelName == CHANNEL_NAME_AMPLITUDE)
+	if (channelName == CHANNEL_NAME_AMPLITUDE)
 	{
 		return CalcAmplitude();
 	}
-	else if (channelName == CHANNEL_NAME_DISTANCE)
+	if (channelName == CHANNEL_NAME_DISTANCE)
 	{
 		return CalcDistance();
 	}
-	else if (channelName == CHANNEL_NAME_PHASE)
+	if (channelName == CHANNEL_NAME_PHASE)
 	{
 		return CalcPhase();
 	}
@@ -624,9 +594,6 @@ TIVoxel::TIVoxel() : m_width(320), m_height(240), m_devnum(0)
 
 TIVoxel::~TIVoxel()
 {
-/*	if (sys != NULL)
-		delete sys;
-*/
 }
 
 void TIVoxel::VoxelInit()
