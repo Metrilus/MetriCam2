@@ -775,20 +775,6 @@ namespace MetriCam2.Cameras
                         ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
                     }
                 }
-
-                var logLevel = MetriLog.Levels.Info;
-                switch (LogLevel)
-                {
-                    case 0: logLevel = MetriLog.Levels.Off; break;
-                    case 1: logLevel = MetriLog.Levels.Fatal; break;
-                    case 2: logLevel = MetriLog.Levels.Error; break;
-                    case 3: logLevel = MetriLog.Levels.Warn; break;
-                    case 4: logLevel = MetriLog.Levels.Info; break;
-                    case 5: logLevel = MetriLog.Levels.Debug; break;
-                    case 6: logLevel = MetriLog.Levels.Debug; break;
-                    case 7: logLevel = MetriLog.Levels.All; break;
-                }
-                log.LogLevel = logLevel;
             }
 
             // 5. get width and height
