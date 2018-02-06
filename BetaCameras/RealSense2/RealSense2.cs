@@ -1313,9 +1313,9 @@ namespace MetriCam2.Cameras
             if (IsConnected)
                 DisconnectImpl();
 
-            _config.Delete();
-            _pipeline.Delete();
-            _context.Delete();
+            _config.Dispose();
+            _pipeline.Dispose();
+            _context.Dispose();
             _disposed = true;
         }
 
@@ -1440,12 +1440,7 @@ namespace MetriCam2.Cameras
                 string msg = "RealSense2: Can't update camera since pipeline is not running";
                 log.Error(msg);
                 throw new InvalidOperationException(msg);
-            }
-
-            _currentColorFrame.Release();
-            _currentDepthFrame.Release();
-            _currentLeftFrame.Release();
-            _currentRightFrame.Release();
+            };
 
             bool getColor = IsChannelActive(ChannelNames.Color);
             bool getDepth = IsChannelActive(ChannelNames.ZImage);
@@ -1462,7 +1457,6 @@ namespace MetriCam2.Cameras
 
                 if (!data.IsValid() || data.Handle == IntPtr.Zero)
                 {
-                    data.Release();
                     continue;
                 }
 
@@ -1489,7 +1483,6 @@ namespace MetriCam2.Cameras
                         case RealSense2API.Stream.COLOR:
                             if (getColor)
                             {
-                                _currentColorFrame.Release();
                                 _currentColorFrame = frame;
                                 haveColor = true;
                             }
@@ -1497,7 +1490,6 @@ namespace MetriCam2.Cameras
                         case RealSense2API.Stream.DEPTH:
                             if (getDepth)
                             {
-                                _currentDepthFrame.Release();
                                 _currentDepthFrame = frame;
                                 haveDepth = true;
                             }
@@ -1507,7 +1499,6 @@ namespace MetriCam2.Cameras
                             {
                                 if (getLeft)
                                 {
-                                    _currentLeftFrame.Release();
                                     _currentLeftFrame = frame;
                                     haveLeft = true;
                                 }
@@ -1516,7 +1507,6 @@ namespace MetriCam2.Cameras
                             {
                                 if (getRight)
                                 {
-                                    _currentRightFrame.Release();
                                     _currentRightFrame = frame;
                                     haveRight = true;
                                 }
@@ -1524,8 +1514,6 @@ namespace MetriCam2.Cameras
                             break;
                     }
                 }
-
-                data.Release();
 
                 if (((getColor && haveColor) || !getColor)
                 && ((getDepth && haveDepth) || !getDepth)
@@ -1723,7 +1711,7 @@ namespace MetriCam2.Cameras
             }
 
             RS2StreamProfile profile = GetProfileFromSensor(channelName);
-            if (!profile.IsValid())
+            if (!profile.IsValid)
             {
                 // try to get profile from captured frame
                 profile = GetProfileFromCapturedFrames(channelName);
@@ -1842,9 +1830,9 @@ namespace MetriCam2.Cameras
 
             RS2StreamProfile from = GetProfileFromSensor(channelFromName);
             RS2StreamProfile to = GetProfileFromSensor(channelToName);
-            if (!from.IsValid())
+            if (!from.IsValid)
                 from = GetProfileFromCapturedFrames(channelFromName);
-            if (!to.IsValid())
+            if (!to.IsValid)
                 to = GetProfileFromCapturedFrames(channelToName);
 
 

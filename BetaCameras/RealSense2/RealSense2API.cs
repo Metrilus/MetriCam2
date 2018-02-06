@@ -606,18 +606,48 @@ namespace MetriCam2.Cameras.RealSense2API
 
 
     #region RS2Objects
-    public class RS2Context
+
+    #region Context
+    public class RS2Context : IDisposable
     {
+        private bool _disposed = false;
         public IntPtr Handle { get; private set; }
+        public bool IsValid { get => this.Handle != IntPtr.Zero; }
 
         public RS2Context(IntPtr p)
         {
             Handle = p;
         }
 
-        public void Delete()
+        public void Dispose()
         {
-            RS2Internals.rs2_delete_context(Handle);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // Free managed resources
+            }
+
+
+            // free unmanaged resources
+            this.Delete();
+            _disposed = true;
+        }
+
+        private void Delete()
+        {
+            if(this.IsValid)
+            {
+                RS2Internals.rs2_delete_context(Handle);
+                this.Handle = IntPtr.Zero;
+            }
         }
 
         unsafe public static RS2Context Create()
@@ -636,11 +666,14 @@ namespace MetriCam2.Cameras.RealSense2API
             }
         }
     }
+    #endregion
 
-    public class RS2Pipeline
+    #region Pipeline
+    public class RS2Pipeline : IDisposable
     {
+        private bool _disposed = false;
         public IntPtr Handle { get; private set; }
-
+        public bool IsValid { get => this.Handle != IntPtr.Zero; }
         public bool Running { get; set; }
 
         public unsafe float DepthScale
@@ -657,9 +690,35 @@ namespace MetriCam2.Cameras.RealSense2API
             Handle = p;
         }
 
-        public void Delete()
+        public void Dispose()
         {
-            RS2Internals.rs2_delete_pipeline(Handle);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // Free managed resources
+            }
+
+
+            // free unmanaged resources
+            this.Delete();
+            _disposed = true;
+        }
+
+        private void Delete()
+        {
+            if(this.IsValid)
+            {
+                RS2Internals.rs2_delete_pipeline(Handle);
+                this.Handle = IntPtr.Zero;
+            }
         }
 
         unsafe public static RS2Pipeline Create(RS2Context ctx)
@@ -757,10 +816,14 @@ namespace MetriCam2.Cameras.RealSense2API
             }
         }
     }
+    #endregion
 
-    public class RS2Device
+    #region Device
+    public class RS2Device : IDisposable
     {
+        private bool _disposed = false;
         public IntPtr Handle { get; private set; }
+        public bool IsValid { get => this.Handle != IntPtr.Zero; }
 
         unsafe public bool AdvancedModeEnabled
         {
@@ -801,9 +864,35 @@ namespace MetriCam2.Cameras.RealSense2API
             Handle = p;
         }
 
-        unsafe public void Delete()
+        public void Dispose()
         {
-            RS2Internals.rs2_delete_device(this.Handle);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // Free managed resources
+            }
+
+
+            // free unmanaged resources
+            this.Delete();
+            _disposed = true;
+        }
+
+        unsafe private void Delete()
+        {
+            if(this.IsValid)
+            {
+                RS2Internals.rs2_delete_device(this.Handle);
+                this.Handle = IntPtr.Zero;
+            }
         }
 
         unsafe public string GetInfo(CameraInfo info)
@@ -853,7 +942,7 @@ namespace MetriCam2.Cameras.RealSense2API
                 RS2Internals.rs2_delete_sensor_list(list);
 
                 RS2Sensor sensor_obj = new RS2Sensor(sensor);
-                if (!sensor_obj.IsValid())
+                if (!sensor_obj.IsValid)
                 {
                     throw new Exception(string.Format("No sensor with the name {0} detected", sensorName));
                 }
@@ -880,10 +969,14 @@ namespace MetriCam2.Cameras.RealSense2API
             }
         }
     }
+    #endregion
 
-    public class RS2Sensor
+    #region Sensor
+    public class RS2Sensor : IDisposable
     {
+        private bool _disposed = false;
         public IntPtr Handle { get; private set; }
+        public bool IsValid { get => this.Handle != IntPtr.Zero; }
 
         unsafe public float DepthScale
         {
@@ -912,9 +1005,35 @@ namespace MetriCam2.Cameras.RealSense2API
             Handle = p;
         }
 
-        public void Delete()
+        public void Dispose()
         {
-            RS2Internals.rs2_delete_sensor(Handle);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // Free managed resources
+            }
+
+
+            // free unmanaged resources
+            this.Delete();
+            _disposed = true;
+        }
+
+        private void Delete()
+        {
+            if(this.IsValid)
+            {
+                RS2Internals.rs2_delete_sensor(Handle);
+                this.Handle = IntPtr.Zero;
+            }
         }
 
         unsafe public RS2StreamProfilesList GetStreamProfileList()
@@ -1079,22 +1198,50 @@ namespace MetriCam2.Cameras.RealSense2API
 
             return res;
         }
-
-        public bool IsValid() => (IntPtr.Zero != Handle);
     }
+    #endregion
 
-    public class RS2Config
+    #region Config
+    public class RS2Config : IDisposable
     {
+        private bool _disposed = false;
         public IntPtr Handle { get; private set; }
+        public bool IsValid { get => this.Handle != IntPtr.Zero; }
 
         public RS2Config(IntPtr p)
         {
             Handle = p;
         }
 
-        public void Delete()
+        public void Dispose()
         {
-            RS2Internals.rs2_delete_config(Handle);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // Free managed resources
+            }
+
+
+            // free unmanaged resources
+            this.Delete();
+            _disposed = true;
+        }
+
+        private void Delete()
+        {
+            if(this.IsValid)
+            {
+                RS2Internals.rs2_delete_config(Handle);
+                this.Handle = IntPtr.Zero;
+            }
         }
 
         unsafe public static RS2Config Create()
@@ -1169,7 +1316,9 @@ namespace MetriCam2.Cameras.RealSense2API
             }
         }
     }
+    #endregion
 
+    #region Frame
     public class RS2Frame : IDisposable
     {
         private bool _disposed = false;
@@ -1254,11 +1403,11 @@ namespace MetriCam2.Cameras.RealSense2API
 
 
             // free unmanaged resources
-            Release();
+            this.Release();
             _disposed = true;
         }
 
-        unsafe public void Release()
+        unsafe private void Release()
         {
             if(this.Handle != IntPtr.Zero)
             {
@@ -1333,10 +1482,14 @@ namespace MetriCam2.Cameras.RealSense2API
 
         public bool IsValid() => (null != Handle);
     }
+    #endregion
 
-    public class RS2StreamProfilesList
+    #region Stream Profile List
+    public class RS2StreamProfilesList : IDisposable
     {
+        private bool _disposed = false;
         public IntPtr Handle { get; private set; }
+        public bool IsValid { get => this.Handle != IntPtr.Zero; }
 
         unsafe public int Count
         {
@@ -1363,9 +1516,35 @@ namespace MetriCam2.Cameras.RealSense2API
             Handle = p;
         }
 
-        public void Delete()
+        public void Dispose()
         {
-            RS2Internals.rs2_delete_stream_profiles_list(Handle);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // Free managed resources
+            }
+
+
+            // free unmanaged resources
+            this.Delete();
+            _disposed = true;
+        }
+
+        private void Delete()
+        {
+            if(this.IsValid)
+            {
+                RS2Internals.rs2_delete_stream_profiles_list(Handle);
+                this.Handle = IntPtr.Zero;
+            }
         }
 
         unsafe public RS2StreamProfile GetStreamProfile(int index)
@@ -1384,10 +1563,14 @@ namespace MetriCam2.Cameras.RealSense2API
             }
         }
     }
+    #endregion
 
-    public class RS2StreamProfile
+    #region Stream Profile
+    public class RS2StreamProfile : IDisposable
     {
+        private bool _disposed = false;
         public IntPtr Handle { get; private set; }
+        public bool IsValid { get => this.Handle != IntPtr.Zero; }
 
         unsafe public Point2i Resolution
         {
@@ -1416,9 +1599,35 @@ namespace MetriCam2.Cameras.RealSense2API
             Handle = p;
         }
 
-        public void Delete()
+        public void Dispose()
         {
-            RS2Internals.rs2_delete_stream_profile(Handle);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // Free managed resources
+            }
+
+
+            // free unmanaged resources
+            this.Delete();
+            _disposed = true;
+        }
+
+        private void Delete()
+        {
+            if(this.IsValid)
+            {
+                RS2Internals.rs2_delete_stream_profile(Handle);
+                this.Handle = IntPtr.Zero;
+            }
         }
 
         unsafe public RS2Device GetDevice()
@@ -1490,8 +1699,8 @@ namespace MetriCam2.Cameras.RealSense2API
                 throw;
             }
         }
-
-        public bool IsValid() => (null != Handle);
     }
+    #endregion
+
     #endregion
 }
