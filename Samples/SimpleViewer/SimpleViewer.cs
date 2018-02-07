@@ -71,7 +71,7 @@ namespace MetriCam2.Samples.SimpleViewer
                 foreach (string preConnectSetting in preConnectSettings)
                 {
                     string[] settingNameValuePair = preConnectSetting.Split('=');
-                    MetriCam2.Camera.ParamDesc param = cam.GetParameter(settingNameValuePair[0]);
+                    ParamDesc param = cam.GetParameter(settingNameValuePair[0]);
                     if (param.Type == typeof(string))
                     {
                         cam.SetParameter(settingNameValuePair[0], settingNameValuePair[1]);
