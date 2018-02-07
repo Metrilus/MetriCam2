@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Metrilus.Logging;
 
 namespace MetriCam2.Tests.UnitTestParameterMechanism
 {
@@ -21,7 +22,7 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
         static void Main(string[] args)
         {
 #if DEBUG
-            log.SetLogLevel(log4net.Core.Level.Debug);
+            log.LogLevel = MetriLog.Levels.Debug;
 #endif
 
             cam = new CameraTemplate();

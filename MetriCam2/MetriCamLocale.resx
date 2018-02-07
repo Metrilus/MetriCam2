@@ -276,4 +276,7 @@
   <data name="error_setParameter" xml:space="preserve">
     <value>Could not set parameter "{0}" to value "{1}".</value>
   </data>
+  <data name="error_invalidApplicationId" xml:space="preserve">
+    <value>The application with id '{0}' does not exist on the camera.</value>
+  </data>
 </root>

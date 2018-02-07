@@ -4,29 +4,22 @@ pipeline {
 	agent any
 	environment {
 		// Begin of Config
-		def gitURL = 'https://github.com/Metrilus/MetriCam2'
-		def gitBranch = 'master'
+		def STATUS_CONTEXT = 'MetriCam2 CI'
 		def filesContainingAssemblyVersion = 'SolutionAssemblyInfo.cs'
-						
 		def solution = 'MetriCam2_SDK.sln'
 		def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
 		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
-		def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.RealSense2 MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam'
-		def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json'
+		def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam'
+		def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json MetriCam2.Cameras.RealSense2'
+		def dllsToDeployNetStandard = 'MetriCam2.NetStandard Metrilus.Util.NetStandard MetriCam2.Cameras.RealSense2.NetStandard'
 		// End of Config
 		def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
 	}
 	stages {
-		stage('Checkout') {
-			steps {
-				retry(3) {
-					deleteDir()
-				}
-				git branch: gitBranch, url: gitURL
-			}
-		}
 		stage('Prebuild') {
 			steps {
+				echo "Set build status pending"
+				setBuildStatus("Build started", "PENDING", "${STATUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
 				echo "Inject version number: ${BUILD_DATETIME}"
 				bat '''
 					FOR %%f IN (%filesContainingIsInternal%) DO (
@@ -53,11 +46,12 @@ pipeline {
 		}
 		stage('Deploy') {
 			environment {
-				def VERSION = 'latest'
-				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\git\\\\${VERSION}\\\\"
+				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\.unstable\\\\${GITHUB_BRANCH_NAME}\\\\"
 				def BIN_DIR = "${PUBLISH_DIR}lib\\\\"
+				def BIN_DIR_NETSTANDARD = "${PUBLISH_DIR}lib_netstandard2.0\\\\"
 				def RELEASE_DIR_X64 = 'bin\\\\x64\\\\Release\\\\'
 				def RELEASE_DIR_ANYCPU = 'bin\\\\Release\\\\'
+				def RELEASE_DIR_NETSTANDARD = 'bin\\\\Release\\\\netstandard2.0\\\\'
 			}
 			steps {
 				echo 'Publish artefacts to Z:\\releases\\'
@@ -69,6 +63,8 @@ pipeline {
 						MKDIR "%PUBLISH_DIR%"
 						IF EXIST "%BIN_DIR%" RMDIR /S /Q "%BIN_DIR%"
 						MKDIR "%BIN_DIR%"
+						IF EXIST "%BIN_DIR_NETSTANDARD%" RMDIR /S /Q "%BIN_DIR_NETSTANDARD%"
+						MKDIR "%BIN_DIR_NETSTANDARD%"
 						'''
 				}
 				echo 'Publish dependencies to Release Folder'
@@ -78,6 +74,9 @@ pipeline {
 					)
 					FOR %%p IN (%dllsToDeployAnyCPU%) DO (
 						COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%BIN_DIR%"
+					)
+					FOR %%p IN (%dllsToDeployNetStandard%) DO (
+						COPY /Y "%RELEASE_DIR_NETSTANDARD%%%p.dll" "%BIN_DIR_NETSTANDARD%"
 					)
 					'''
 				echo 'Write Build Timestamp to file'
@@ -94,7 +93,28 @@ pipeline {
 			}
 		}
 	}
+	post {
+		success {
+			setBuildStatus("Build successful", "SUCCESS", "${STATUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
+		}
+		failure {
+			setBuildStatus("Build failed", "FAILURE", "${STATUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
+		}
+	}
 }
+
+def setBuildStatus(String message, String state, String context, String sha) {
+    step([
+        $class: "GitHubCommitStatusSetter",
+        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/Metrilus/MetriCam2"],
+        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
+        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
+        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+    ]);
+}
+
 // Steps which are not converted to pipeline, yet (or untested with p.)
 // * Inject BUILD_DATETIME into AssemblyInfo files
 // * Modified version numbers for nightly/rolling builds
