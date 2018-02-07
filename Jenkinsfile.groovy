@@ -4,7 +4,7 @@ pipeline {
 	agent any
 	environment {
 		// Begin of Config
-		def STAUS_CONTEXT = 'MetriCam2 CI'
+		def STATUS_CONTEXT = 'MetriCam2 CI'
 		def filesContainingAssemblyVersion = 'SolutionAssemblyInfo.cs'
 		def solution = 'MetriCam2_SDK.sln'
 		def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
@@ -18,8 +18,8 @@ pipeline {
 	stages {
 		stage('Prebuild') {
 			steps {
-				echo "Set commit status pending"
-				setBuildStatus("Build started", "PENDING", "${STAUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
+				echo "Set build status pending"
+				setBuildStatus("Build started", "PENDING", "${STATUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
 				echo "Inject version number: ${BUILD_DATETIME}"
 				bat '''
 					FOR %%f IN (%filesContainingIsInternal%) DO (
@@ -46,7 +46,7 @@ pipeline {
 		}
 		stage('Deploy') {
 			environment {
-				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\${GITHUB_BRANCH_NAME}\\\\"
+				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\.unstable\\\\${GITHUB_BRANCH_NAME}\\\\"
 				def BIN_DIR = "${PUBLISH_DIR}lib\\\\"
 				def BIN_DIR_NETSTANDARD = "${PUBLISH_DIR}lib_netstandard2.0\\\\"
 				def RELEASE_DIR_X64 = 'bin\\\\x64\\\\Release\\\\'
@@ -95,10 +95,10 @@ pipeline {
 	}
 	post {
 		success {
-			setBuildStatus("Build successful", "SUCCESS", "${STAUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
+			setBuildStatus("Build successful", "SUCCESS", "${STATUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
 		}
 		failure {
-			setBuildStatus("Build failed", "FAILURE", "${STAUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
+			setBuildStatus("Build failed", "FAILURE", "${STATUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
 		}
 	}
 }
