@@ -46,7 +46,7 @@ pipeline {
 		}
 		stage('Deploy') {
 			environment {
-				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\git\\\\${GITHUB_BRANCH_NAME}\\\\"
+				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\${GITHUB_BRANCH_NAME}\\\\"
 				def BIN_DIR = "${PUBLISH_DIR}lib\\\\"
 				def BIN_DIR_NETSTANDARD = "${PUBLISH_DIR}lib_netstandard2.0\\\\"
 				def RELEASE_DIR_X64 = 'bin\\\\x64\\\\Release\\\\'
