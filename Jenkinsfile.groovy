@@ -4,16 +4,18 @@ pipeline {
 	agent any
 	environment {
 		// Begin of Config
-		def STATUS_CONTEXT = 'MetriCam2 CI'
 		def filesContainingAssemblyVersion = 'SolutionAssemblyInfo.cs'
 		def solution = 'MetriCam2_SDK.sln'
 		def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
-		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
+		def msbuildArgsRelease = '/p:Configuration=Release;Platform=x64'
+		def msbuildArgsDebug = '/p:Configuration=Debug;Platform=x64'
 		def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam'
 		def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json MetriCam2.Cameras.RealSense2'
 		def dllsToDeployNetStandard = 'MetriCam2.NetStandard Metrilus.Util.NetStandard MetriCam2.Cameras.RealSense2.NetStandard'
 		// End of Config
+		def STATUS_CONTEXT = 'MetriCam2 CI'
 		def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
+		def DEBUG_SUFFIX = "_debug"
 	}
 	stages {
 		stage('Prebuild') {
@@ -41,17 +43,23 @@ pipeline {
 				echo 'Restore NuGet packages'
 				bat '%NUGET_EXE% restore'
 				echo 'Build'
-				bat "\"${tool msbuildToolName}\" ${solution} ${msbuildArgs}"
+				bat "\"${tool msbuildToolName}\" ${solution} ${msbuildArgsRelease}"
+				bat "\"${tool msbuildToolName}\" ${solution} ${msbuildArgsDebug}"
 			}
 		}
 		stage('Deploy') {
 			environment {
 				def PUBLISH_DIR = "Z:\\\\releases\\\\MetriCam2\\\\.unstable\\\\${GITHUB_BRANCH_NAME}\\\\"
 				def BIN_DIR = "${PUBLISH_DIR}lib\\\\"
+				def BIN_DIR_DEBUG = "${PUBLISH_DIR}lib${DEBUG_SUFFIX}\\\\"
 				def BIN_DIR_NETSTANDARD = "${PUBLISH_DIR}lib_netstandard2.0\\\\"
+				def BIN_DIR_NETSTANDARD_DEBUG = "${PUBLISH_DIR}lib_netstandard2.0${DEBUG_SUFFIX}\\\\"
 				def RELEASE_DIR_X64 = 'bin\\\\x64\\\\Release\\\\'
+				def DEBUG_DIR_X64 = 'bin\\\\x64\\\\Debug\\\\'
 				def RELEASE_DIR_ANYCPU = 'bin\\\\Release\\\\'
+				def DEBUG_DIR_ANYCPU = 'bin\\\\Debug\\\\'
 				def RELEASE_DIR_NETSTANDARD = 'bin\\\\Release\\\\netstandard2.0\\\\'
+				def DEBUG_DIR_NETSTANDARD = 'bin\\\\Debug\\\\netstandard2.0\\\\'
 			}
 			steps {
 				echo 'Publish artefacts to Z:\\releases\\'
@@ -63,8 +71,12 @@ pipeline {
 						MKDIR "%PUBLISH_DIR%"
 						IF EXIST "%BIN_DIR%" RMDIR /S /Q "%BIN_DIR%"
 						MKDIR "%BIN_DIR%"
+						IF EXIST "%BIN_DIR_DEBUG%" RMDIR /S /Q "%BIN_DIR_DEBUG%"
+						MKDIR "%BIN_DIR_DEBUG%"
 						IF EXIST "%BIN_DIR_NETSTANDARD%" RMDIR /S /Q "%BIN_DIR_NETSTANDARD%"
 						MKDIR "%BIN_DIR_NETSTANDARD%"
+						IF EXIST "%BIN_DIR_NETSTANDARD_DEBUG%" RMDIR /S /Q "%BIN_DIR_NETSTANDARD_DEBUG%"
+						MKDIR "%BIN_DIR_NETSTANDARD_DEBUG%"
 						'''
 				}
 				echo 'Publish dependencies to Release Folder'
@@ -72,11 +84,20 @@ pipeline {
 					FOR %%p IN (%dllsToDeployX64%) DO (
 						COPY /Y "%RELEASE_DIR_X64%%%p.dll" "%BIN_DIR%"
 					)
+					FOR %%p IN (%dllsToDeployX64%) DO (
+						COPY /Y "%DEBUG_DIR_X64%%%p.dll" "%BIN_DIR_DEBUG%"
+					)
 					FOR %%p IN (%dllsToDeployAnyCPU%) DO (
 						COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%BIN_DIR%"
 					)
+					FOR %%p IN (%dllsToDeployAnyCPU%) DO (
+						COPY /Y "%DEBUG_DIR_ANYCPU%%%p.dll" "%BIN_DIR_DEBUG%"
+					)
 					FOR %%p IN (%dllsToDeployNetStandard%) DO (
 						COPY /Y "%RELEASE_DIR_NETSTANDARD%%%p.dll" "%BIN_DIR_NETSTANDARD%"
+					)
+					FOR %%p IN (%dllsToDeployNetStandard%) DO (
+						COPY /Y "%DEBUG_DIR_NETSTANDARD%%%p.dll" "%BIN_DIR_NETSTANDARD_DEBUG%"
 					)
 					'''
 				echo 'Write Build Timestamp to file'
