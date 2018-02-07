@@ -185,7 +185,7 @@ namespace MetriCam2.Cameras
             editeDevice = XmlRpcProxyGen.Create<IEditDevice>();
             server = XmlRpcProxyGen.Create<IServer>();
             this.applicationId = applicationId;
-            updateWorker = new BackgroundWorker();
+            updateWorker = new System.ComponentModel.BackgroundWorker();
             updateWorker.WorkerSupportsCancellation = true;
             updateWorker.DoWork += UpdateWorker_DoWork;
             updateWorker.RunWorkerCompleted += UpdateWorker_RunWorkerCompleted;
