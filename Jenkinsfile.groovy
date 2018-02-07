@@ -86,18 +86,21 @@ pipeline {
 					)
 					FOR %%p IN (%dllsToDeployX64%) DO (
 						COPY /Y "%DEBUG_DIR_X64%%%p.dll" "%BIN_DIR_DEBUG%"
+						COPY /Y "%DEBUG_DIR_X64%%%p.pdb" "%BIN_DIR_DEBUG%"
 					)
 					FOR %%p IN (%dllsToDeployAnyCPU%) DO (
 						COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%BIN_DIR%"
 					)
 					FOR %%p IN (%dllsToDeployAnyCPU%) DO (
 						COPY /Y "%DEBUG_DIR_ANYCPU%%%p.dll" "%BIN_DIR_DEBUG%"
+						COPY /Y "%DEBUG_DIR_ANYCPU%%%p.pdb" "%BIN_DIR_DEBUG%"
 					)
 					FOR %%p IN (%dllsToDeployNetStandard%) DO (
 						COPY /Y "%RELEASE_DIR_NETSTANDARD%%%p.dll" "%BIN_DIR_NETSTANDARD%"
 					)
 					FOR %%p IN (%dllsToDeployNetStandard%) DO (
 						COPY /Y "%DEBUG_DIR_NETSTANDARD%%%p.dll" "%BIN_DIR_NETSTANDARD_DEBUG%"
+						COPY /Y "%DEBUG_DIR_NETSTANDARD%%%p.pdb" "%BIN_DIR_NETSTANDARD_DEBUG%"
 					)
 					'''
 				echo 'Write Build Timestamp to file'
