@@ -11,7 +11,7 @@ pipeline {
 		def msbuildArgs = '/p:Configuration=Release;Platform=x64'
 		def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam'
 		def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json MetriCam2.Cameras.RealSense2'
-		def dllsToDeployNetStandard = 'MetriCam2.NetStandard Metrilus.Util MetriCam2.Cameras.RealSense2.NetStandard'
+		def dllsToDeployNetStandard = 'MetriCam2.NetStandard Metrilus.Util.NetStandard MetriCam2.Cameras.RealSense2.NetStandard'
 		// End of Config
 		def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
 	}
