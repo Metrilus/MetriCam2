@@ -1005,7 +1005,7 @@ namespace MetriCam2.Cameras
             set
             {
                 CheckOptionSupported(Option.EMITTER_ENABLED, EmmiterModeDesc.Name, SensorName.STEREO);
-                SetOption(SensorName.STEREO, Option.LASER_POWER, (float)value);
+                SetOption(SensorName.STEREO, Option.EMITTER_ENABLED, (float)value);
             }
         }
 
