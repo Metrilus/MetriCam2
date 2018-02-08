@@ -1442,6 +1442,11 @@ namespace MetriCam2.Cameras
                 throw new InvalidOperationException(msg);
             };
 
+            _currentColorFrame.Dispose();
+            _currentDepthFrame.Dispose();
+            _currentRightFrame.Dispose();
+            _currentLeftFrame.Dispose();
+
             bool getColor = IsChannelActive(ChannelNames.Color);
             bool getDepth = IsChannelActive(ChannelNames.ZImage);
             bool getLeft = IsChannelActive(ChannelNames.Left);
@@ -1457,6 +1462,7 @@ namespace MetriCam2.Cameras
 
                 if (!data.IsValid() || data.Handle == IntPtr.Zero)
                 {
+                    data.Dispose();
                     continue;
                 }
 
@@ -1483,6 +1489,7 @@ namespace MetriCam2.Cameras
                         case RealSense2API.Stream.COLOR:
                             if (getColor)
                             {
+                                _currentColorFrame.Dispose();
                                 _currentColorFrame = frame;
                                 haveColor = true;
                             }
@@ -1490,6 +1497,7 @@ namespace MetriCam2.Cameras
                         case RealSense2API.Stream.DEPTH:
                             if (getDepth)
                             {
+                                _currentDepthFrame.Dispose();
                                 _currentDepthFrame = frame;
                                 haveDepth = true;
                             }
@@ -1499,6 +1507,7 @@ namespace MetriCam2.Cameras
                             {
                                 if (getLeft)
                                 {
+                                    _currentLeftFrame.Dispose();
                                     _currentLeftFrame = frame;
                                     haveLeft = true;
                                 }
@@ -1507,6 +1516,7 @@ namespace MetriCam2.Cameras
                             {
                                 if (getRight)
                                 {
+                                    _currentRightFrame.Dispose();
                                     _currentRightFrame = frame;
                                     haveRight = true;
                                 }
@@ -1514,6 +1524,8 @@ namespace MetriCam2.Cameras
                             break;
                     }
                 }
+
+                data.Dispose();
 
                 if (((getColor && haveColor) || !getColor)
                 && ((getDepth && haveDepth) || !getDepth)
