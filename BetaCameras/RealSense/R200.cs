@@ -65,6 +65,11 @@ namespace MetriCam2.Cameras
                 return depthProfiles;
             }
         }
+
+#if !NETSTANDARD2_0
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.RealSenseIcon; }
+#endif
+
         #endregion
 
         #region Constructor

@@ -6,6 +6,13 @@
 #include <OpenNI.h>
 #include "cmd.h"
 
+//Adpated from SimpleViewer of experimental interface
+#define IR_Exposure_MAX 4096
+#define IR_Exposure_MIN 0
+#define IR_Exposure_SCALE 256
+#define IR_Gain_MIN 8
+#define IR_Gain_MAX 96
+
 using namespace System;
 using namespace System::ComponentModel;
 using namespace System::Threading;
@@ -42,31 +49,52 @@ namespace MetriCam2
 			AstraOpenNI();
 			~AstraOpenNI();
 
-			property bool EmitterEnabled 
+			property int ProductID;
+			property int VendorID;
+
+			property bool EmitterEnabled
 			{
-				bool get(void) 
+				bool get(void)
 				{
-					//Reader the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
-					return emitterEnabled;
+					// Reading the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
+					return _emitterEnabled;
 				}
-				void set(bool value) 
+				void set(bool value)
 				{
-					emitterEnabled = value;
-					SetEmitterStatus(emitterEnabled);
-					log->DebugFormat("Emitter state set to: {0}", emitterEnabled.ToString());
+					_emitterEnabled = value;
+					SetEmitterStatus(_emitterEnabled);
+					log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
 				}
 			}
 
-			property unsigned char IRGain
+			property bool IRFlooderEnabled
 			{
-				unsigned char get(void)
+				bool get(void)
 				{
-					return (unsigned char)GetIRGain();
+					// Reading the IrFlood status via the "cmd" class does not yet work. Check in future version of experimental SDK.
+					return _irFlooderEnabled;
 				}
-				void set(unsigned char value)
+				void set(bool value)
 				{
-					SetIRGain(value);
-					irGain = value;
+					_irFlooderEnabled = value;
+					SetIRFlooderStatus(_irFlooderEnabled);
+					log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
+				}
+			}
+
+			property int IRGain
+			{
+				int get(void)
+				{
+					return _irGain;
+				}
+				void set(int value)
+				{
+					if (value != _irGain)
+					{
+						_irGain = value;
+						SetIRGain(_irGain);
+					}
 				}
 			}
 
@@ -83,20 +111,7 @@ namespace MetriCam2
 				{
 					SetIRExposure(value);
 					// Set IRExposure resets the gain to its default value (96 for Astra and 8 for AstraS). We have to set the gain to the memorized value (member irGain).
-					SetIRGain(irGain);
-				}
-			}
-
-			property ParamDesc<bool>^ EmitterEnabledDesc
-			{
-				inline ParamDesc<bool> ^get()
-				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-					res->Unit = "";
-					res->Description = "Emitter is enabled";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
+					SetIRGain(_irGain);
 				}
 			}
 
@@ -104,6 +119,18 @@ namespace MetriCam2
 
 			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 			virtual Metrilus::Util::RigidBodyTransformation^ GetExtrinsics(String^ channelFromName, String^ channelToName) override;
+
+#if !NETSTANDARD2_0
+			property System::Drawing::Icon^ CameraIcon
+			{
+				System::Drawing::Icon^ get() override
+				{
+					System::Reflection::Assembly^ assembly = System::Reflection::Assembly::GetExecutingAssembly();
+					System::IO::Stream^ iconStream = assembly->GetManifestResourceStream("OrbbecIcon.ico");
+					return gcnew System::Drawing::Icon(iconStream);
+				}
+			}
+#endif
 
 		protected:
 			/// <summary>
@@ -151,6 +178,59 @@ namespace MetriCam2
 			virtual void DeactivateChannelImpl(String^ channelName) override;
 			
 		private:
+			property ParamDesc<bool>^ EmitterEnabledDesc
+			{
+				inline ParamDesc<bool> ^get()
+				{
+					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "Emitter is enabled";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property ParamDesc<bool>^ IRFlooderEnabledDesc
+			{
+				inline ParamDesc<bool> ^get()
+				{
+					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "IR flooder is enabled";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			// Disabled while the IRExposure getter is not implemented
+			//property ParamDesc<unsigned int>^ IRExposureDesc
+			//{
+			//	inline ParamDesc<unsigned int> ^get()
+			//	{
+			//		ParamDesc<unsigned int> ^res = gcnew ParamDesc<unsigned int>();
+			//		res->Unit = "";
+			//		res->Description = "IR exposure";
+			//		res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+			//		res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+			//		return res;
+			//	}
+			//}
+
+			property ParamDesc<int>^ IRGainDesc
+			{
+				inline ParamDesc<int> ^get()
+				{
+					ParamDesc<int> ^res = ParamDesc::BuildRangeParamDesc(IR_Gain_MIN, IR_Gain_MAX);
+					res->Unit = "";
+					res->Description = "IR gain";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
 			FloatCameraImage^ CalcZImage();
 			ColorCameraImage^ CalcColor();
 			Point3fCameraImage^ CalcPoint3fImage();
@@ -159,29 +239,31 @@ namespace MetriCam2
 			static bool OpenNIInit();
 			static bool OpenNIShutdown();
 			static void LogOpenNIError(String^ status);
-			static int openNIInitCounter = 0;
+			static int _openNIInitCounter = 0;
 
-			unsigned short irGain = 0;
+			int _irGain = 0;
 
 			void InitDepthStream();
 			void InitIRStream();
 			void InitColorStream();
 
+			String^ GetIRFlooderStatus();
+			void SetIRFlooderStatus(bool on);
+
 			String^ GetEmitterStatus();
 			void SetEmitterStatus(bool on);
 
-			void SetIRGain(char value);
+			void SetIRGain(int value);
 			unsigned short GetIRGain();
 
 			void SetIRExposure(unsigned int value);
 			unsigned int GetIRExposure();
 
-			bool emitterEnabled;
-			OrbbecNativeCameraData* camData;
+			bool _emitterEnabled;
+			bool _irFlooderEnabled;
+			OrbbecNativeCameraData* _pCamData;
 
-			// for converting managed strings to const char*
-			msclr::interop::marshal_context oMarshalContext;
-			System::Collections::Generic::Dictionary<String^, String^>^ serialToUriDictionary;
+			msclr::interop::marshal_context marshalContext;
 		};
 	}
 }

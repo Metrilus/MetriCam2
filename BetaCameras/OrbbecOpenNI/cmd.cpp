@@ -76,6 +76,8 @@ int cmd::init(const char* deviceURI)
 	if (rc != STATUS_OK)
 	{
 		printf("Couldn't open device\n%s\n", OpenNI::getExtendedError());
+		m_vid = 0;
+		m_pid = 0;
 		return rc;
 	}
 	dInfo = device.getDeviceInfo();
@@ -98,7 +100,7 @@ int cmd::init(const char* deviceURI)
 	rc = xnUSBOpenDeviceByPath(/**m_astrDevicePaths*/deviceURI, &m_hUSBDevice);
 	if (rc != STATUS_OK)
 	{
-		cout << " Error: failed to open device" << m_vid << m_pid << endl;
+		cout << " Error: failed to open device " << m_vid << "/" << m_pid << endl;
 		return -1;
 	}
 #endif

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>Wrapper for Intel libRealSense2 cameras</Description>
+    <Company>Metrilus GmbH</Company>
+    <Authors>Metrilus GmbH</Authors>
+    <Product>MetriCam2</Product>
+    <AssemblyName>MetriCam2.RealSense2.NetStandard</AssemblyName>
+    <RootNamespace>MetriCam2.RealSense2.NetStandard</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Properties\AssemblyInfo.cs" />
+    <Compile Remove="Properties\Resources.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\MetriCam2\MetriCam2.NetStandard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Metrilus.Util.NetStandard">
+      <HintPath>..\..\libraries\Metrilus.Util.NetStandard.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

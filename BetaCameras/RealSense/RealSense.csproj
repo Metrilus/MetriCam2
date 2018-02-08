@@ -12,10 +12,6 @@
     <AssemblyName>MetriCam2.Cameras.RealSense</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
     <NuGetPackageImportStamp>3830997a</NuGetPackageImportStamp>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -83,6 +79,11 @@
     </Compile>
     <Compile Include="F200.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="R200.cs" />
     <Compile Include="Utilities\CaptureModuleModel.cs" />
     <Compile Include="Utilities\DeviceDescriptionModel.cs" />
@@ -99,6 +100,13 @@
     <None Include="..\..\.licenseheader">
       <Link>.licenseheader</Link>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RealSenseIcon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
