@@ -916,7 +916,7 @@ namespace MetriCam2.Cameras.RealSense2API
             try
             {
                 IntPtr error = IntPtr.Zero;
-                IntPtr sensor = IntPtr.Zero;
+                RS2Sensor sensor = new RS2Sensor(IntPtr.Zero);
 
                 IntPtr list = RS2Internals.rs2_query_sensors(this.Handle, &error);
                 RS2Internals.HandleError(error);
@@ -925,29 +925,26 @@ namespace MetriCam2.Cameras.RealSense2API
 
                 for (int i = 0; i < sensorCount; i++)
                 {
-                    sensor = RS2Internals.rs2_create_sensor(list, i, &error);
+                    sensor = new RS2Sensor(RS2Internals.rs2_create_sensor(list, i, &error));
                     RS2Internals.HandleError(error);
 
-                    string info = this.GetInfo(CameraInfo.NAME);
+                    string info = sensor.GetInfo(CameraInfo.NAME);
                     RS2Internals.HandleError(error);
 
                     if (info == sensorName)
                     {
                         break;
                     }
-
-                    RS2Internals.rs2_delete_sensor(sensor);
                 }
 
                 RS2Internals.rs2_delete_sensor_list(list);
 
-                RS2Sensor sensor_obj = new RS2Sensor(sensor);
-                if (!sensor_obj.IsValid)
+                if (!sensor.IsValid)
                 {
                     throw new Exception(string.Format("No sensor with the name {0} detected", sensorName));
                 }
 
-                return sensor_obj;
+                return sensor;
             }
             catch (Exception)
             {
@@ -1033,6 +1030,22 @@ namespace MetriCam2.Cameras.RealSense2API
             {
                 RS2Internals.rs2_delete_sensor(Handle);
                 this.Handle = IntPtr.Zero;
+            }
+        }
+
+        unsafe public string GetInfo(CameraInfo info)
+        {
+            try
+            {
+                IntPtr error = IntPtr.Zero;
+                char* res = RS2Internals.rs2_get_sensor_info(this.Handle, info, &error);
+                RS2Internals.HandleError(error);
+
+                return Marshal.PtrToStringAnsi((IntPtr)res);
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
 
