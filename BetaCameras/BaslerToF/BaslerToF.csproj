@@ -76,9 +76,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="ToFCameraWrapper, Version=1.0.6474.22520, Culture=neutral, processorArchitecture=AMD64">
+    <Reference Include="ToFCameraWrapper, Version=1.0.6614.29978, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Basler\ToF\Samples\DotNet\FirstSampleCSharp\bin\x64\Debug\ToFCameraWrapper.dll</HintPath>
+      <HintPath>Z:\external-libraries\Basler\ToF Camera\v1.3.2.1322\ToFCameraWrapper.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
