@@ -233,7 +233,27 @@ namespace MetriCam2.Cameras
 
             CameraList cameras = ToFCamera.EnumerateCameras();
 
-            camera.Open(ToFCamera.EnumerateCameras().Find(camInfo => camInfo.SerialNumber.Equals(SerialNumber)));
+            // check if we want a specific camera or any camera
+            if(string.IsNullOrEmpty(SerialNumber))
+            {
+                if(cameras.Count == 0)
+                {
+                    throw new Exception("No camera available to connect to");
+                }
+
+                // use first camera in list
+                camera.Open(cameras[0]);
+            }
+            else
+            {
+                CameraInfo cInfo = cameras.Find(camInfo => camInfo.SerialNumber.Equals(SerialNumber));
+
+                if (cInfo == default(CameraInfo))
+                    throw new Exception(string.Format("No camera available with the SN: {0}", SerialNumber));
+
+                camera.Open(cInfo);
+            }
+            
 
             camera.SetParameterValue("GevIEEE1588", "true");
 
