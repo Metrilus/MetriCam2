@@ -94,12 +94,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
-      <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>
-      <Name>MetriCam2</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="BaslerIcon.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -107,6 +101,12 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
+      <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>
+      <Name>MetriCam2</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
