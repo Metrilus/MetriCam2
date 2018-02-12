@@ -62,6 +62,10 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Properties
+#if !NETSTANDARD2_0
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.BaslerIcon; }
+#endif
+
         private RangeParamDesc<float> ExposureDesc
         {
             get
