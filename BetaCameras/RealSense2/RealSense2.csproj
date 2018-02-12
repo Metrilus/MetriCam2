@@ -38,8 +38,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="LibrealsenseWrapper">
-      <HintPath>Z:\external-libraries\Intel\libRealSense2\2.9.1\x64\LibrealsenseWrapper.dll</HintPath>
+    <Reference Include="LibrealsenseWrapper, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\external-libraries\Intel\libRealSense2\2.10.0-development\x64\LibrealsenseWrapper.dll</HintPath>
     </Reference>
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
