@@ -1363,8 +1363,10 @@ namespace MetriCam2.Cameras
             if (!haveSerial)
                 this.SerialNumber = dev.Info[CameraInfo.SerialNumber];
 
-            if (!dev.AdvancedMode)
-                dev.AdvancedMode = true;
+            AdvancedDevice adev = dev as AdvancedDevice;
+
+            if (!adev.AdvancedModeEnabled)
+                adev.AdvancedModeEnabled = true;
 
             _depthScale = GetSensor(SensorName.STEREO).DepthScale;
         }
@@ -1834,7 +1836,7 @@ namespace MetriCam2.Cameras
         
         public void LoadCustomConfig(string json)
         {
-            GetDevice().JsonConfiguration = json;
+            (GetDevice() as AdvancedDevice).JsonConfiguration = json;
             _depthScale = GetSensor(SensorName.STEREO).DepthScale;
         }
 
