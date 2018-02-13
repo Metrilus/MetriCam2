@@ -5,6 +5,7 @@ using System.Threading;
 using ToFCameraWrapper;
 using System.Runtime;
 using System.Diagnostics;
+using MetriCam2.Exceptions;
 
 namespace MetriCam2.Cameras
 {
@@ -242,7 +243,7 @@ namespace MetriCam2.Cameras
             {
                 if(cameras.Count == 0)
                 {
-                    throw new Exception("No camera available to connect to");
+                    ExceptionBuilder.Build(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_cameraNotConnected");
                 }
 
                 // use first camera in list
@@ -253,7 +254,9 @@ namespace MetriCam2.Cameras
                 CameraInfo cInfo = cameras.Find(camInfo => camInfo.SerialNumber.Equals(SerialNumber));
 
                 if (cInfo == default(CameraInfo))
-                    throw new Exception(string.Format("No camera available with the SN: {0}", SerialNumber));
+                {
+                    throw new ConnectionFailedException(string.Format("No camera available with the SN: {0}", SerialNumber));
+                }
 
                 camera.Open(cInfo);
             }
