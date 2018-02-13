@@ -162,6 +162,10 @@ namespace MetriCam2.Cameras
                 return res;
             }
         }
+
+#if !NETSTANDARD2_0
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.IfmIcon; }
+#endif
         #endregion
 
         #region Private Fields
@@ -197,9 +201,16 @@ namespace MetriCam2.Cameras
 
         private string serverUrl;
         #endregion
-        
+
         #region Constructor
-        public O3D3xx()
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="applicationId">
+        /// ID of the camera application that will be loaded during connect.
+        /// Warning: Omitting this parameter deletes all applications from the camera and creates a new application with default MetriCam 2 parameter values.
+        /// </param>
+        public O3D3xx(int applicationId = -1)
                 : base()
         {
             CameraIP = "192.168.1.172";
@@ -212,7 +223,7 @@ namespace MetriCam2.Cameras
             edit = XmlRpcProxyGen.Create<IEdit>();
             editeDevice = XmlRpcProxyGen.Create<IEditDevice>();
             server = XmlRpcProxyGen.Create<IServer>();
-
+            this.applicationId = applicationId;
             updateWorker = new BackgroundWorker();
             updateWorker.WorkerSupportsCancellation = true;
             updateWorker.DoWork += UpdateWorker_DoWork;
@@ -253,25 +264,35 @@ namespace MetriCam2.Cameras
         {
             SetConfigurationMode(true);
             string protocolVersion = device.GetParameter("PcicProtocolVersion");
-            for (int i = 1; i < 33; i++)
+            if (applicationId == -1)
+            {
+                for (int i = 1; i < 33; i++)
+                {
+                    try
+                    {
+                        edit.DeleteApplication(i);
+                        log.Debug($"Deleted application: {i}");
+                    }
+                    catch { /* empty */ }
+                }
+                applicationId = edit.CreateApplication();
+                edit.EditApplication(applicationId);
+                triggeredMode = 1;
+                app.SetParameter("TriggerMode", triggeredMode.ToString());
+                appImager.SetParameter("ExposureTime", exposureTime.ToString());
+                appImager.SetParameter("FrameRate", framerate.ToString());
+            }
+            else
             {
                 try
                 {
-                    edit.DeleteApplication(i);
-                    log.Debug("Deleted application: " + i);
+                    edit.EditApplication(applicationId);
                 }
-                catch
+                catch (Exception)
                 {
-                    /* empty */
+                    ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidApplicationId", applicationId.ToString());
                 }
             }
-            applicationId = edit.CreateApplication();
-            edit.EditApplication(applicationId);
-            triggeredMode = 1;
-            app.SetParameter("TriggerMode", triggeredMode.ToString());
-            appImager.SetParameter("ExposureTime", exposureTime.ToString());
-            appImager.SetParameter("FrameRate", framerate.ToString());
-            
 
             int clippingTop = Convert.ToInt32(appImager.GetParameter("ClippingTop"));
             int clippingBottom = Convert.ToInt32(appImager.GetParameter("ClippingBottom"));
@@ -639,7 +660,7 @@ namespace MetriCam2.Cameras
                     }
                     else
                     {
-                        throw new WebException(String.Format("Could not establish TCP connection to {0]:{1}.", server, port.ToString()));
+                        throw new WebException(String.Format("Could not establish TCP connection to {0}:{1}.", server, port.ToString()));
                     }
                 }
             }

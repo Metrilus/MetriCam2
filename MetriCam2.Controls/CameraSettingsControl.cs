@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
+using Metrilus.Util;
 
 namespace MetriCam2.Controls
 {
@@ -91,12 +92,18 @@ namespace MetriCam2.Controls
             get { return cam; }
             set
             {
-                cam = value;
-
                 if (null == value)
                 {
                     return;
                 }
+
+                if (null != cam)
+                {
+                    cam.OnConnected -= InitConfigurationParameters;
+                    cam.OnDisconnected -= InitConfigurationParameters;
+                }
+
+                cam = value;
 
                 // Update icon
                 //   use cam.CameraIcon
@@ -104,6 +111,9 @@ namespace MetriCam2.Controls
                 //   use cam.Channels;
                 // Update child controls.
                 InitConfigurationParameters(cam);
+
+                cam.OnConnected += InitConfigurationParameters;
+                cam.OnDisconnected += InitConfigurationParameters;
             }
         }
 
@@ -235,6 +245,12 @@ namespace MetriCam2.Controls
                         {
                             ContainsOneOrMoreWritableParameters = true;
                         }
+                        scrollbarValue.ValueChanged += (sender, e) =>
+                        {
+                            string parameterValue = scrollbarValue.Value.ToString(CultureInfo.InvariantCulture);
+                            string parameterName = paramDesc.Name;
+                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                        };
                     }
                     else if (paramDesc is MetriCam2.Camera.RangeParamDesc<float>)
                     {
@@ -246,6 +262,13 @@ namespace MetriCam2.Controls
                         {
                             ContainsOneOrMoreWritableParameters = true;
                         }
+
+                        upDownValue.ValueChanged += (sender, e) =>
+                        {
+                            string parameterValue = upDownValue.Value.ToString(CultureInfo.InvariantCulture);
+                            string parameterName = paramDesc.Name;
+                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                        };
                     }
                     else
                     {
@@ -272,6 +295,27 @@ namespace MetriCam2.Controls
                     if (comboBoxValue.Enabled)
                     {
                         ContainsOneOrMoreWritableParameters = true;
+                    }
+
+                    if(paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>
+                    || paramDesc is MetriCam2.Camera.ListParamDesc<int>)
+                    {
+                        comboBoxValue.SelectedValueChanged += (sender, e) =>
+                        {
+                            object parameterValue;
+
+                            if (paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>)
+                            {
+                                parameterValue = ResolutionToPoint2i(comboBoxValue.SelectedItem as string);
+                            }
+                            else
+                            {
+                                parameterValue = int.Parse(comboBoxValue.SelectedItem as string);
+                            }
+
+                            string parameterName = paramDesc.Name;
+                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                        };
                     }
 
                     continue;
@@ -303,6 +347,15 @@ namespace MetriCam2.Controls
                     {
                         ContainsOneOrMoreWritableParameters = true;
                     }
+
+                    checkBoxValue.CheckStateChanged += (sender, e) =>
+                    {
+                        string parameterValue = checkBoxValue.Checked.ToString(CultureInfo.InvariantCulture);
+                        string parameterName = checkBoxValue.Name.Replace(VALUE_SUFFIX, string.Empty);
+                        Dictionary<string, object> keyValues = new Dictionary<string, object>();
+                        keyValues.Add(parameterName, parameterValue);
+                        Camera.SetParameters(keyValues);
+                    };
 
                     continue;
                 }
@@ -469,7 +522,17 @@ namespace MetriCam2.Controls
                     }
                     else
                     {
-                        object tmpVal = Convert.ChangeType(item, paramDesc.Type, CultureInfo.InvariantCulture);
+                        object tmpVal;
+
+                        if (paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>)
+                        {
+                            tmpVal = ResolutionToPoint2i(item);
+                        }
+                        else
+                        {
+                            tmpVal = Convert.ChangeType(item, paramDesc.Type, CultureInfo.InvariantCulture);
+                        }
+
                         if (null != tmpVal && paramDesc.Value.Equals(tmpVal))
                         {
                             comboBoxValue.SelectedIndex = i;
@@ -581,5 +644,11 @@ namespace MetriCam2.Controls
             return textBoxValue;
         }
         #endregion
+
+        public static Point2i ResolutionToPoint2i(string s)
+        {
+            string[] stringValue = s.Split('x');
+            return new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
+        }
     }
 }

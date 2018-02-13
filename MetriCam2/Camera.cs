@@ -704,10 +704,24 @@ namespace MetriCam2
                     }
                     else
                     {
-                        T castedItem = (T)Convert.ChangeType(item, this.Type, CultureInfo.InvariantCulture);
-                        if (castedItem.Equals(castedValue))
+                        
+                        
+                        if(this.Type == typeof(Point2i))
                         {
-                            return true;
+                            string[] stringValue = item.Split('x');
+                            Point2i point = new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
+                            if(point.Equals(castedValue))
+                            {
+                                return true;
+                            }
+                        }
+                        else
+                        {
+                            T castedItem = (T)Convert.ChangeType(item, this.Type, CultureInfo.InvariantCulture);
+                            if (castedItem.Equals(castedValue))
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -1107,10 +1121,12 @@ namespace MetriCam2
         /// </remarks>
         public long TimeStamp { get; protected set; }
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Provides an icon that represents the camera.
         /// </summary>
-        public virtual System.Drawing.Bitmap CameraIcon { get { return Properties.Resources.MetriCam_Icon; } }
+        public virtual System.Drawing.Icon CameraIcon { get { return Properties.Resources.DefaultIcon; } }
+#endif
         #endregion
 
         #region Constructor
@@ -1797,7 +1813,11 @@ namespace MetriCam2
         /// </summary>
         /// <remarks><see cref="ParamDesc.IsReadable"/> and <see cref="ParamDesc.IsWritable"/> are set according to the current camera state.</remarks>
         /// <param name="name">The parameter's name.</param>
-        /// <returns>The <see cref="ParamDesc"/> for the parameter.</returns>
+        /// <returns>
+        /// If <paramref name="name"/> is a property name to which a corresponding <see cref="ParamDesc"/> exists, then that <see cref="ParamDesc"/> is returned.
+        /// If <paramref name="name"/> is a property of the base <see cref="Camera"/> type which has no matching <see cref="ParamDesc"/> then null is returned.
+        /// All other cases throw an exception.
+        /// </returns>
         /// <exception cref="ParameterNotSupportedException">If no parameter by that name exists.</exception>
         /// <exception cref="ArgumentException">Thrown if a parameter descriptor is publicly visible.</exception>
         /// <exception cref="InvalidOperationException">Thrown if an exception has been thrown in the parameter descriptor's Getter. See InnerException for details.</exception>
@@ -1819,6 +1839,14 @@ namespace MetriCam2
             ParamDesc desc = GetParameterDescriptor(pi);
             if (null == desc)
             {
+                // Test if name is a property of the base Camera class
+                PropertyInfo piBase = typeof(Camera).GetProperty(name);
+                if (null != piBase)
+                {
+                    // this is no error, so do not throw an exception
+                    return null;
+                }
+
                 // Test if name is a valid Auto* parameter
                 ParamDesc baseDesc;
                 if (!IsAutoParameter(name, out baseDesc))
@@ -2142,6 +2170,10 @@ namespace MetriCam2
             else if (valueType == typeof(double))
             {
                 valueAsString = ((double)value).ToString("R", CultureInfo.InvariantCulture);
+            }
+            else if (valueType == typeof(Point2i))
+            {
+                valueAsString = string.Format("{0}x{1}", ((Point2i)value).X, ((Point2i)value).Y);
             }
             else
             {

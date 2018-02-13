@@ -21,10 +21,19 @@ namespace MetriCam2
         #region Private Methods
         private static Exception Build(Type exType, string msg)
         {
-            ConstructorInfo ci = exType.GetConstructor(new Type[] { typeof(string) });
             log.ErrorFormat("{0}: {1}", exType.Name, msg);
-            return (Exception)ci.Invoke(new object[] { msg });
+
+            // Try ctor with message
+            ConstructorInfo ci = exType.GetConstructor(new Type[] { typeof(string) });
+            if (null != ci)
+            {
+                return (Exception)ci.Invoke(new object[] { msg });
+            }
+
+            // Fall-back
+            return new Exception(exType + ": " + msg);
         }
+
         private static void Throw(Type exType, string msg)
         {
             throw Build(exType, msg);

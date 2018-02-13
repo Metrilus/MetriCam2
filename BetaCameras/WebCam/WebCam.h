@@ -134,6 +134,18 @@ namespace Cameras
 			}
 		}
 
+#if !NETSTANDARD2_0
+		property System::Drawing::Icon^ CameraIcon
+		{
+			System::Drawing::Icon^ get() override
+			{
+				System::Reflection::Assembly^ assembly = System::Reflection::Assembly::GetExecutingAssembly();
+				System::IO::Stream^ iconStream = assembly->GetManifestResourceStream("WebcamIcon.ico");
+				return gcnew System::Drawing::Icon(iconStream);
+			}
+		}
+#endif
+
 		static array<String^, 1>^ ScanForCameras()
 		{
 			log->EnterMethod();

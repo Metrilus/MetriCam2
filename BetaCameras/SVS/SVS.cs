@@ -3,6 +3,7 @@
 
 using MetriCam2.Cameras.Internal.SVS;
 using Metrilus.Util;
+using Metrilus.Logging;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -25,12 +26,6 @@ namespace MetriCam2.Cameras
         /// <remarks>Similar to MetriCam2.ChannelNames for standard channel names.</remarks>
         public class CustomChannelNames
         {
-            [Obsolete("Use Red16 instead.")]
-            public const string Red12 = "Red12Bit";
-            [Obsolete("Use Green16 instead.")]
-            public const string Green12 = "Green12Bit";
-            [Obsolete("Use Blue16 instead.")]
-            public const string Blue12 = "Blue12Bit";
             /// <summary>
             /// When acquiring 12 or 16 bit data, this channel provides the raw image data.
             /// </summary>
@@ -106,6 +101,11 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Public Properties
+
+#if !NETSTANDARD2_0
+        public override Icon CameraIcon => Properties.Resources.SVSIcon;
+#endif
+
         private ListParamDesc<string> AcquisitionModeDesc
         {
             get
@@ -200,8 +200,6 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                log.Debug("Get LogLevelDesc");
-
                 return new RangeParamDesc<int>(0, 7)
                 {
                     Description = "Log level",
@@ -227,6 +225,30 @@ namespace MetriCam2.Cameras
         /// 7 - DETAIL for receiving multiple signals for each image callback
         /// </remarks>
         public int LogLevel { get; set; }
+
+        private ParamDesc<bool> LogToFileDesc
+        {
+            get
+            {
+                return new ParamDesc<bool>()
+                {
+                    Description = "Log to file",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Disconnected,
+                };
+            }
+        }
+        /// <summary>
+        /// If enabled before calling <see cref="Connect"/> then a SVS-specific log file is created.
+        /// </summary>
+        /// <seealso cref="LogFilename"/>
+        /// <seealso cref="LogLevel"/>
+        public bool LogToFile { get; set; }
+
+        /// <summary>
+        /// Filename (read-only) of the detailed log file.
+        /// </summary>
+        public const string LogFilename = "MetriCam2.SVS.LogDetail.txt";
 
         private RangeParamDesc<float> ExposureDesc
         {
@@ -664,17 +686,17 @@ namespace MetriCam2.Cameras
             container = gigeApi.Gige_CameraContainer_create(GigeApi.SVGigETL_Type.SVGigETL_TypeFilter);
             if (container < 0)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "ContainerCreate failed");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "ContainerCreate failed");
             }
             error = gigeApi.Gige_CameraContainer_discovery(container);
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Camera discovery failed: " + error.ToString());
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Camera discovery failed: " + error.ToString());
             }
             numCameras = gigeApi.Gige_CameraContainer_getNumberOfCameras(container);
             if (numCameras <= 0)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "No cameras found.");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "No cameras found.");
             }
             log.DebugFormat("    found {0} cameras", numCameras);
 
@@ -724,7 +746,7 @@ namespace MetriCam2.Cameras
             // check if connection was successful
             if (IntPtr.Zero == hCamera)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to open connection to camera");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to open connection to camera");
             }
             log.InfoFormat("    connected to camera with serial number {0}", SerialNumber);
 
@@ -732,36 +754,34 @@ namespace MetriCam2.Cameras
             error = CreateStreamingChannel();
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to create stream: " + error.ToString());
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to create stream: " + error.ToString());
             }
 
             // Register log message callback
-            if (LogLevel > 0)
+            if (LogLevel >= LogLevelDesc.Min && LogLevel <= LogLevelDesc.Max)
             {
-                // TODO: if continuous logging fails [to be tested], set log file name here, and set callback null
-
-                // @TESTING
-                // this is the usual logging code.
-                // it is just commented for a testing release.
-                logMessageCallbackDelegate = new GigeApi.LogMessageCallback(cameraLogMessageCallback);
-                //error = gigeApi.Gige_Camera_registerForLogMessages(handle, LogLevel, LogFilename: "", LogCallback: logMessageCallbackDelegate, MessageContext: IntPtr.Zero);
-                //if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
-                //{
-                //    ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
-                //}
-
-                // @TESTING
-                // this logging code is just for a testing release.
-                int myLogLevel_detail = 7;
-                string myLogFilename = "logDetail.txt";
-                gigeApi.Gige_Camera_registerForLogMessages(hCamera, myLogLevel_detail, myLogFilename, LogCallback: null, MessageContext: IntPtr.Zero);
+                // SVS can log either to callback, or to file.
+                // Since the log can be quite polluted, logging to file is preferred.
+                if (LogToFile)
+                {
+                    gigeApi.Gige_Camera_registerForLogMessages(hCamera, LogLevel, LogFilename, LogCallback: null, MessageContext: IntPtr.Zero);
+                }
+                else
+                {
+                    logMessageCallbackDelegate = new GigeApi.LogMessageCallback(CameraLogMessageCallback);
+                    error = gigeApi.Gige_Camera_registerForLogMessages(hCamera, LogLevel, LogFilename: "", LogCallback: logMessageCallbackDelegate, MessageContext: IntPtr.Zero);
+                    if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
+                    {
+                        ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
+                    }
+                }
             }
 
             // 5. get width and height
             if (gigeApi.Gige_Camera_getSizeX(hCamera, ref width) != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS ||
                 gigeApi.Gige_Camera_getSizeY(hCamera, ref height) != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get width and/or height of current stream");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get width and/or height of current stream");
             }
             log.DebugFormat("    resolution is {0}x{1}", width, height);
 
@@ -770,7 +790,7 @@ namespace MetriCam2.Cameras
             error = gigeApi.Gige_Camera_getPixelDepth(hCamera, ref pixelDepth);
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel depth: " + error.ToString());
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel depth: " + error.ToString());
             }
             switch (pixelDepth)
             {
@@ -784,7 +804,7 @@ namespace MetriCam2.Cameras
                     bitCount = 16;
                     break;
                 default:
-                    ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Unsupported pixel depth");
+                    ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Unsupported pixel depth");
                     break;
             }
             log.DebugFormat("    pixel depth is {0}", pixelDepth.ToString());
@@ -793,7 +813,7 @@ namespace MetriCam2.Cameras
             error = GetPixelType();
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel type: " + error.ToString());
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel type: " + error.ToString());
             }
             log.DebugFormat("    pixel type is {0}", pixelType.ToString());
 
@@ -1350,7 +1370,7 @@ namespace MetriCam2.Cameras
             return rgb;
         }
 
-        private GigeApi.SVSGigeApiReturn cameraLogMessageCallback(string LogMessage, IntPtr MessageContext)
+        private GigeApi.SVSGigeApiReturn CameraLogMessageCallback(string LogMessage, IntPtr MessageContext)
         {
             GigeApi.SVSGigeApiReturn apiReturn = GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS;
             log.InfoFormat("{0} [SVS SDK]: {1}", Name, LogMessage);
