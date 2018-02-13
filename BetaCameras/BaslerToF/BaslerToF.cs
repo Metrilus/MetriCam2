@@ -6,6 +6,8 @@ using ToFCameraWrapper;
 using System.Runtime;
 using System.Diagnostics;
 using MetriCam2.Exceptions;
+using MetriCam2.Enums;
+using MetriCam2.Attributes;
 
 namespace MetriCam2.Cameras
 {
@@ -67,22 +69,15 @@ namespace MetriCam2.Cameras
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.BaslerIcon; }
 #endif
 
-        private RangeParamDesc<float> ExposureDesc
-        {
-            get
-            {
-                return new RangeParamDesc<float>(MinExposureMilliseconds, MaxExposureMilliseconds)
-                {
-                    Description = "Exposure time",
-                    Unit = "ms",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>
         /// Gets or sets the exposure time in milliseconds.
         /// </summary>
+        [Description("Exposure", "Exposure time")]
+        [Unit(Unit.Milliseconds)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Range(MinExposureMilliseconds, MaxExposureMilliseconds)]
         public float Exposure
         {
             get
@@ -109,22 +104,13 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> FilterTemporalDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "Temporal Filter",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
-
         /// <summary>
         /// Get/Set the state of the temporal filter.
         /// </summary>
+        [Description("FilterTemporal", "Temporal Filter")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public bool FilterTemporal
         {
             get
@@ -141,22 +127,13 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> FilterSpatialDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "Spatial Filter",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
-
         /// <summary>
         /// Get/Set the state of the spatial filter.
         /// </summary>
+        [Description("FilterSpatial", "Spatial Filter")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public bool FilterSpatial
         {
             get
