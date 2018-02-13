@@ -47,6 +47,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Intel.RealSense">
+      <HintPath>Z:\external-libraries\Intel\libRealSense2\2.10.0-development\AnyCPU\netstandard2.0\Intel.RealSense.dll</HintPath>
+    </Reference>
     <Reference Include="Metrilus.Util.NetStandard">
       <HintPath>..\..\libraries\Metrilus.Util.NetStandard.dll</HintPath>
     </Reference>
