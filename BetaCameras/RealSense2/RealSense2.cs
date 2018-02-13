@@ -1363,7 +1363,7 @@ namespace MetriCam2.Cameras
             if (!haveSerial)
                 this.SerialNumber = dev.Info[CameraInfo.SerialNumber];
 
-            AdvancedDevice adev = dev as AdvancedDevice;
+            AdvancedDevice adev = AdvancedDevice.FromDevice(dev);
 
             if (!adev.AdvancedModeEnabled)
                 adev.AdvancedModeEnabled = true;
@@ -1373,6 +1373,7 @@ namespace MetriCam2.Cameras
 
         private void StopPipeline()
         {
+            
             _pipeline.Stop();
         }
 
@@ -1836,7 +1837,8 @@ namespace MetriCam2.Cameras
         
         public void LoadCustomConfig(string json)
         {
-            (GetDevice() as AdvancedDevice).JsonConfiguration = json;
+            AdvancedDevice adev = AdvancedDevice.FromDevice(GetDevice());
+            adev.JsonConfiguration = json;
             _depthScale = GetSensor(SensorName.STEREO).DepthScale;
         }
 
