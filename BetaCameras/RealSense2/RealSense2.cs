@@ -44,10 +44,10 @@ namespace MetriCam2.Cameras
             AUTO = 3
         }
 
-        public struct SensorName
+        public struct SensorNames
         {
-            public const string COLOR = "RGB Camera";
-            public const string STEREO = "Stereo Module";
+            public const string Color = "RGB Camera";
+            public const string Stereo = "Stereo Module";
         }
 
         private Point2i _colorResolution = new Point2i(640, 480);
@@ -76,7 +76,7 @@ namespace MetriCam2.Cameras
 
                 if (this.IsConnected)
                 {
-                    resolutions = GetSupportedResolutions(SensorName.COLOR);
+                    resolutions = GetSupportedResolutions(SensorNames.Color);
                 }
 
                 List<string> allowedValues = new List<string>();
@@ -120,7 +120,7 @@ namespace MetriCam2.Cameras
 
                 if (this.IsConnected)
                 {
-                    framerates = GetSupportedFramerates(SensorName.COLOR);
+                    framerates = GetSupportedFramerates(SensorNames.Color);
                     framerates.Sort();
                 }
                 
@@ -177,7 +177,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    resolutions = GetSupportedResolutions(SensorName.STEREO);
+                    resolutions = GetSupportedResolutions(SensorNames.Stereo);
                 }
 
                 List<string> allowedValues = new List<string>();
@@ -239,7 +239,7 @@ namespace MetriCam2.Cameras
 
                 if (this.IsConnected)
                 {
-                    framerates = GetSupportedFramerates(SensorName.STEREO);
+                    framerates = GetSupportedFramerates(SensorNames.Stereo);
                     framerates.Sort();
                 }
 
@@ -257,7 +257,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                return GetDevice().Info[CameraInfo.SerialNumber];
+                return GetDevice().Info[CameraInfo.FirmwareVersion];
             }
         }
 
@@ -314,14 +314,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.BacklightCompensation, BacklightCompensationDesc.Name, SensorName.COLOR);
-                return GetOption(SensorName.COLOR, Option.BacklightCompensation) == 1.0f ? true : false;
+                CheckOptionSupported(Option.BacklightCompensation, BacklightCompensationDesc.Name, SensorNames.Color);
+                return GetOption(SensorNames.Color, Option.BacklightCompensation) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.BacklightCompensation, BacklightCompensationDesc.Name, SensorName.COLOR);
-                SetOption(SensorName.COLOR, Option.BacklightCompensation, value ? 1.0f : 0.0f);
+                CheckOptionSupported(Option.BacklightCompensation, BacklightCompensationDesc.Name, SensorNames.Color);
+                SetOption(SensorNames.Color, Option.BacklightCompensation, value ? 1.0f : 0.0f);
             }
         }
 
@@ -344,16 +344,16 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Brightness, BrightnessDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.Brightness);
+                CheckOptionSupported(Option.Brightness, BrightnessDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.Brightness);
             }
 
             set
             {
-                CheckOptionSupported(Option.Brightness, BrightnessDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.Brightness, BrightnessDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(BrightnessDesc, value, 0);
 
-                SetOption(SensorName.COLOR, Option.Brightness, (float)value);
+                SetOption(SensorNames.Color, Option.Brightness, (float)value);
             }
         }
 
@@ -365,7 +365,7 @@ namespace MetriCam2.Cameras
 
                 if (this.IsConnected)
                 {
-                    var option = QueryOption(Option.Brightness, SensorName.COLOR);
+                    var option = QueryOption(Option.Brightness, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -387,16 +387,16 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Contrast, ContrastDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.Contrast);
+                CheckOptionSupported(Option.Contrast, ContrastDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.Contrast);
             }
 
             set
             {
-                CheckOptionSupported(Option.Contrast, ContrastDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.Contrast, ContrastDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(ContrastDesc, value, 0);
 
-                SetOption(SensorName.COLOR, Option.Contrast, (float)value);
+                SetOption(SensorNames.Color, Option.Contrast, (float)value);
             }
         }
 
@@ -408,7 +408,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Contrast, SensorName.COLOR);
+                    var option = QueryOption(Option.Contrast, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -430,16 +430,16 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Exposure, ExposureColorDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.Exposure);
+                CheckOptionSupported(Option.Exposure, ExposureColorDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.Exposure);
             }
 
             set
             {
-                CheckOptionSupported(Option.Exposure, ExposureColorDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.Exposure, ExposureColorDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(ExposureColorDesc, value, 0);
 
-                SetOption(SensorName.COLOR, Option.Exposure, (float)value);
+                SetOption(SensorNames.Color, Option.Exposure, (float)value);
             }
         }
 
@@ -451,7 +451,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Exposure, SensorName.COLOR);
+                    var option = QueryOption(Option.Exposure, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -473,14 +473,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.AutoExposurePriority, AutoExposureColorDesc.Name, SensorName.COLOR);
-                return GetOption(SensorName.COLOR, Option.AutoExposurePriority) == 1.0f ? true : false;
+                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureColorDesc.Name, SensorNames.Color);
+                return GetOption(SensorNames.Color, Option.EnableAutoExposure) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.AutoExposurePriority, AutoExposureColorDesc.Name, SensorName.COLOR);
-                SetOption(SensorName.COLOR, Option.AutoExposurePriority, value ? 1.0f : 0.0f);
+                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureColorDesc.Name, SensorNames.Color);
+                SetOption(SensorNames.Color, Option.EnableAutoExposure, value ? 1.0f : 0.0f);
             }
         }
 
@@ -503,14 +503,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.AutoExposurePriority, AutoExposurePriorityColorDesc.Name, SensorName.COLOR);
-                return GetOption(SensorName.COLOR, Option.AutoExposurePriority) == 1.0f ? true : false;
+                CheckOptionSupported(Option.AutoExposurePriority, AutoExposurePriorityColorDesc.Name, SensorNames.Color);
+                return GetOption(SensorNames.Color, Option.AutoExposurePriority) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.AutoExposurePriority, AutoExposurePriorityColorDesc.Name, SensorName.COLOR);
-                SetOption(SensorName.COLOR, Option.AutoExposurePriority, value ? 1.0f : 0.0f);
+                CheckOptionSupported(Option.AutoExposurePriority, AutoExposurePriorityColorDesc.Name, SensorNames.Color);
+                SetOption(SensorNames.Color, Option.AutoExposurePriority, value ? 1.0f : 0.0f);
             }
         }
 
@@ -533,19 +533,19 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Exposure, ExposureDepthDesc.Name, SensorName.STEREO);
-                return (int)GetOption(SensorName.STEREO, Option.Exposure);
+                CheckOptionSupported(Option.Exposure, ExposureDepthDesc.Name, SensorNames.Stereo);
+                return (int)GetOption(SensorNames.Stereo, Option.Exposure);
             }
 
             set
             {
-                CheckOptionSupported(Option.Exposure, ExposureDepthDesc.Name, SensorName.STEREO);
-                var option = QueryOption(Option.Exposure, SensorName.STEREO);
+                CheckOptionSupported(Option.Exposure, ExposureDepthDesc.Name, SensorNames.Stereo);
+                var option = QueryOption(Option.Exposure, SensorNames.Stereo);
 
                 // step size for depth exposure is 20
                 float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
                 CheckRangeValid<int>(ExposureDepthDesc, value, (int)adjusted_value, true);
-                SetOption(SensorName.STEREO, Option.Exposure, adjusted_value);
+                SetOption(SensorNames.Stereo, Option.Exposure, adjusted_value);
             }
         }
 
@@ -557,7 +557,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Exposure, SensorName.STEREO);
+                    var option = QueryOption(Option.Exposure, SensorNames.Stereo);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -579,14 +579,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureDepthDesc.Name, SensorName.STEREO);
-                return GetOption(SensorName.STEREO, Option.EnableAutoExposure) == 1.0f ? true : false;
+                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureDepthDesc.Name, SensorNames.Stereo);
+                return GetOption(SensorNames.Stereo, Option.EnableAutoExposure) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureDepthDesc.Name, SensorName.STEREO);
-                SetOption(SensorName.STEREO, Option.EnableAutoExposure, value ? 1.0f : 0.0f);
+                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureDepthDesc.Name, SensorNames.Stereo);
+                SetOption(SensorNames.Stereo, Option.EnableAutoExposure, value ? 1.0f : 0.0f);
             }
         }
 
@@ -609,15 +609,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Gain, GainColorDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.Gain);
+                CheckOptionSupported(Option.Gain, GainColorDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.Gain);
             }
 
             set
             {
-                CheckOptionSupported(Option.Gain, GainColorDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.Gain, GainColorDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(GainColorDesc, value, 0);
-                SetOption(SensorName.COLOR, Option.Gain, (float)value);
+                SetOption(SensorNames.Color, Option.Gain, (float)value);
             }
         }
 
@@ -629,7 +629,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Gain, SensorName.COLOR);
+                    var option = QueryOption(Option.Gain, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -651,15 +651,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Gain, GainDepthDesc.Name, SensorName.STEREO);
-                return (int)GetOption(SensorName.STEREO, Option.Gain);
+                CheckOptionSupported(Option.Gain, GainDepthDesc.Name, SensorNames.Stereo);
+                return (int)GetOption(SensorNames.Stereo, Option.Gain);
             }
 
             set
             {
-                CheckOptionSupported(Option.Gain, GainDepthDesc.Name, SensorName.STEREO);
+                CheckOptionSupported(Option.Gain, GainDepthDesc.Name, SensorNames.Stereo);
                 CheckRangeValid<int>(GainDepthDesc, value, 0);
-                SetOption(SensorName.STEREO, Option.Gain, (float)value);
+                SetOption(SensorNames.Stereo, Option.Gain, (float)value);
             }
         }
 
@@ -671,7 +671,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Gain, SensorName.STEREO);
+                    var option = QueryOption(Option.Gain, SensorNames.Stereo);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -693,15 +693,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Gamma, GammaDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.Gamma);
+                CheckOptionSupported(Option.Gamma, GammaDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.Gamma);
             }
 
             set
             {
-                CheckOptionSupported(Option.Gamma, GammaDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.Gamma, GammaDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(GammaDesc, value, 0);
-                SetOption(SensorName.COLOR, Option.Gamma, (float)value);
+                SetOption(SensorNames.Color, Option.Gamma, (float)value);
             }
         }
 
@@ -713,7 +713,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Gamma, SensorName.COLOR);
+                    var option = QueryOption(Option.Gamma, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -735,15 +735,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Hue, HueDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.Hue);
+                CheckOptionSupported(Option.Hue, HueDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.Hue);
             }
 
             set
             {
-                CheckOptionSupported(Option.Hue, HueDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.Hue, HueDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(HueDesc, value, 0);
-                SetOption(SensorName.COLOR, Option.Hue, (float)value);
+                SetOption(SensorNames.Color, Option.Hue, (float)value);
             }
         }
 
@@ -755,7 +755,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Hue, SensorName.COLOR);
+                    var option = QueryOption(Option.Hue, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -777,15 +777,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Saturation, SaturationDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.Saturation);
+                CheckOptionSupported(Option.Saturation, SaturationDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.Saturation);
             }
 
             set
             {
-                CheckOptionSupported(Option.Saturation, SaturationDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.Saturation, SaturationDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(SaturationDesc, value, 0);
-                SetOption(SensorName.COLOR, Option.Saturation, (float)value);
+                SetOption(SensorNames.Color, Option.Saturation, (float)value);
             }
         }
 
@@ -797,7 +797,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Saturation, SensorName.COLOR);
+                    var option = QueryOption(Option.Saturation, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -819,15 +819,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.Sharpness, SharpnessDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.Sharpness);
+                CheckOptionSupported(Option.Sharpness, SharpnessDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.Sharpness);
             }
 
             set
             {
-                CheckOptionSupported(Option.Sharpness, SharpnessDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.Sharpness, SharpnessDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(SharpnessDesc, value, 0);
-                SetOption(SensorName.COLOR, Option.Sharpness, (float)value);
+                SetOption(SensorNames.Color, Option.Sharpness, (float)value);
             }
         }
 
@@ -839,7 +839,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.Sharpness, SensorName.COLOR);
+                    var option = QueryOption(Option.Sharpness, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -861,21 +861,21 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.WhiteBalance, WhiteBalanceDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.WhiteBalance);
+                CheckOptionSupported(Option.WhiteBalance, WhiteBalanceDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.WhiteBalance);
             }
 
             set
             {
-                CheckOptionSupported(Option.WhiteBalance, WhiteBalanceDesc.Name, SensorName.COLOR);
-                var option = QueryOption(Option.WhiteBalance, SensorName.COLOR);
+                CheckOptionSupported(Option.WhiteBalance, WhiteBalanceDesc.Name, SensorNames.Color);
+                var option = QueryOption(Option.WhiteBalance, SensorNames.Color);
 
 
                 // step size for depth white balance is 10
                 float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
                 CheckRangeValid<int>(WhiteBalanceDesc, value, (int)adjusted_value, true);
 
-                SetOption(SensorName.COLOR, Option.WhiteBalance, adjusted_value);
+                SetOption(SensorNames.Color, Option.WhiteBalance, adjusted_value);
             }
         }
 
@@ -887,7 +887,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.WhiteBalance, SensorName.COLOR);
+                    var option = QueryOption(Option.WhiteBalance, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -909,14 +909,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.EnableAutoWhiteBalance, AutoWhiteBalanceDesc.Name, SensorName.COLOR);
-                return GetOption(SensorName.COLOR, Option.EnableAutoWhiteBalance) == 1.0f ? true : false;
+                CheckOptionSupported(Option.EnableAutoWhiteBalance, AutoWhiteBalanceDesc.Name, SensorNames.Color);
+                return GetOption(SensorNames.Color, Option.EnableAutoWhiteBalance) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.EnableAutoWhiteBalance, AutoWhiteBalanceDesc.Name, SensorName.COLOR);
-                SetOption(SensorName.COLOR, Option.EnableAutoWhiteBalance, value ? 1.0f : 0.0f);
+                CheckOptionSupported(Option.EnableAutoWhiteBalance, AutoWhiteBalanceDesc.Name, SensorNames.Color);
+                SetOption(SensorNames.Color, Option.EnableAutoWhiteBalance, value ? 1.0f : 0.0f);
             }
         }
 
@@ -939,19 +939,19 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.LaserPower, LaserPowerDesc.Name, SensorName.STEREO);
-                return (int)GetOption(SensorName.STEREO, Option.LaserPower);
+                CheckOptionSupported(Option.LaserPower, LaserPowerDesc.Name, SensorNames.Stereo);
+                return (int)GetOption(SensorNames.Stereo, Option.LaserPower);
             }
 
             set
             {
-                CheckOptionSupported(Option.LaserPower, LaserPowerDesc.Name, SensorName.STEREO);
-                var option = QueryOption(Option.LaserPower, SensorName.STEREO);
+                CheckOptionSupported(Option.LaserPower, LaserPowerDesc.Name, SensorNames.Stereo);
+                var option = QueryOption(Option.LaserPower, SensorNames.Stereo);
 
                 // step size for depth laser power is 30
                 float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
                 CheckRangeValid<int>(LaserPowerDesc, value, (int)adjusted_value, true);
-                SetOption(SensorName.STEREO, Option.LaserPower, adjusted_value);
+                SetOption(SensorNames.Stereo, Option.LaserPower, adjusted_value);
             }
         }
 
@@ -963,7 +963,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.LaserPower, SensorName.STEREO);
+                    var option = QueryOption(Option.LaserPower, SensorNames.Stereo);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -985,14 +985,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.EmitterEnabled, EmmiterModeDesc.Name, SensorName.STEREO);
-                return (EmitterMode)GetOption(SensorName.STEREO, Option.EmitterEnabled);
+                CheckOptionSupported(Option.EmitterEnabled, EmmiterModeDesc.Name, SensorNames.Stereo);
+                return (EmitterMode)GetOption(SensorNames.Stereo, Option.EmitterEnabled);
             }
 
             set
             {
-                CheckOptionSupported(Option.EmitterEnabled, EmmiterModeDesc.Name, SensorName.STEREO);
-                SetOption(SensorName.STEREO, Option.EmitterEnabled, (float)value);
+                CheckOptionSupported(Option.EmitterEnabled, EmmiterModeDesc.Name, SensorNames.Stereo);
+                SetOption(SensorNames.Stereo, Option.EmitterEnabled, (float)value);
             }
         }
 
@@ -1018,15 +1018,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeColorDesc.Name, SensorName.COLOR);
-                return (int)GetOption(SensorName.COLOR, Option.FramesQueueSize);
+                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeColorDesc.Name, SensorNames.Color);
+                return (int)GetOption(SensorNames.Color, Option.FramesQueueSize);
             }
 
             set
             {
-                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeColorDesc.Name, SensorName.COLOR);
+                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeColorDesc.Name, SensorNames.Color);
                 CheckRangeValid<int>(FrameQueueSizeColorDesc, value, 0);
-                SetOption(SensorName.COLOR, Option.FramesQueueSize, (float)value);
+                SetOption(SensorNames.Color, Option.FramesQueueSize, (float)value);
             }
         }
 
@@ -1038,7 +1038,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.FramesQueueSize, SensorName.COLOR);
+                    var option = QueryOption(Option.FramesQueueSize, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -1060,15 +1060,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeDepthDesc.Name, SensorName.STEREO);
-                return (int)GetOption(SensorName.STEREO, Option.FramesQueueSize);
+                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeDepthDesc.Name, SensorNames.Stereo);
+                return (int)GetOption(SensorNames.Stereo, Option.FramesQueueSize);
             }
 
             set
             {
-                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeDepthDesc.Name, SensorName.STEREO);
+                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeDepthDesc.Name, SensorNames.Stereo);
                 CheckRangeValid<int>(FrameQueueSizeDepthDesc, value, 0);
-                SetOption(SensorName.STEREO, Option.FramesQueueSize, (float)value);
+                SetOption(SensorNames.Stereo, Option.FramesQueueSize, (float)value);
             }
         }
 
@@ -1080,7 +1080,7 @@ namespace MetriCam2.Cameras
 
                 if (this.IsConnected)
                 {
-                    var option = QueryOption(Option.FramesQueueSize, SensorName.STEREO);
+                    var option = QueryOption(Option.FramesQueueSize, SensorNames.Stereo);
                     res = new RangeParamDesc<int>((int)option.min, (int)option.max);
                 }
                 else
@@ -1102,14 +1102,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.PowerLineFrequency, PowerFrequencyModeDesc.Name, SensorName.COLOR);
-                return (PowerLineMode)GetOption(SensorName.COLOR, Option.PowerLineFrequency);
+                CheckOptionSupported(Option.PowerLineFrequency, PowerFrequencyModeDesc.Name, SensorNames.Color);
+                return (PowerLineMode)GetOption(SensorNames.Color, Option.PowerLineFrequency);
             }
 
             set
             {
-                CheckOptionSupported(Option.PowerLineFrequency, PowerFrequencyModeDesc.Name, SensorName.COLOR);
-                SetOption(SensorName.COLOR, Option.PowerLineFrequency, (float)value);
+                CheckOptionSupported(Option.PowerLineFrequency, PowerFrequencyModeDesc.Name, SensorNames.Color);
+                SetOption(SensorNames.Color, Option.PowerLineFrequency, (float)value);
             }
         }
 
@@ -1135,8 +1135,8 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.AsicTemperature, ASICTempDesc.Name, SensorName.STEREO);
-                return GetOption(SensorName.STEREO, Option.AsicTemperature);
+                CheckOptionSupported(Option.AsicTemperature, ASICTempDesc.Name, SensorNames.Stereo);
+                return GetOption(SensorNames.Stereo, Option.AsicTemperature);
             }
         }
 
@@ -1161,14 +1161,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.ErrorPollingEnabled, EnableErrorPollingDesc.Name, SensorName.STEREO);
-                return GetOption(SensorName.STEREO, Option.ErrorPollingEnabled) == 1.0f ? true : false;
+                CheckOptionSupported(Option.ErrorPollingEnabled, EnableErrorPollingDesc.Name, SensorNames.Stereo);
+                return GetOption(SensorNames.Stereo, Option.ErrorPollingEnabled) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.ErrorPollingEnabled, EnableErrorPollingDesc.Name, SensorName.STEREO);
-                SetOption(SensorName.STEREO, Option.ErrorPollingEnabled, value ? 1.0f : 0.0f);
+                CheckOptionSupported(Option.ErrorPollingEnabled, EnableErrorPollingDesc.Name, SensorNames.Stereo);
+                SetOption(SensorNames.Stereo, Option.ErrorPollingEnabled, value ? 1.0f : 0.0f);
             }
         }
 
@@ -1192,8 +1192,8 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.ProjectorTemperature, ProjectorTempDesc.Name, SensorName.STEREO);
-                return GetOption(SensorName.STEREO, Option.ProjectorTemperature);
+                CheckOptionSupported(Option.ProjectorTemperature, ProjectorTempDesc.Name, SensorNames.Stereo);
+                return GetOption(SensorNames.Stereo, Option.ProjectorTemperature);
             }
         }
 
@@ -1218,14 +1218,14 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.OutputTriggerEnabled, OutputTriggerDesc.Name, SensorName.STEREO);
-                return GetOption(SensorName.STEREO, Option.OutputTriggerEnabled) == 1.0f ? true : false;
+                CheckOptionSupported(Option.OutputTriggerEnabled, OutputTriggerDesc.Name, SensorNames.Stereo);
+                return GetOption(SensorNames.Stereo, Option.OutputTriggerEnabled) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.OutputTriggerEnabled, OutputTriggerDesc.Name, SensorName.STEREO);
-                SetOption(SensorName.STEREO, Option.OutputTriggerEnabled, value ? 1.0f : 0.0f);
+                CheckOptionSupported(Option.OutputTriggerEnabled, OutputTriggerDesc.Name, SensorNames.Stereo);
+                SetOption(SensorNames.Stereo, Option.OutputTriggerEnabled, value ? 1.0f : 0.0f);
             }
         }
 
@@ -1249,15 +1249,15 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.DepthUnits, DepthUnitsDesc.Name, SensorName.STEREO);
-                return GetOption(SensorName.STEREO, Option.DepthUnits);
+                CheckOptionSupported(Option.DepthUnits, DepthUnitsDesc.Name, SensorNames.Stereo);
+                return GetOption(SensorNames.Stereo, Option.DepthUnits);
             }
 
             set
             {
-                CheckOptionSupported(Option.DepthUnits, DepthUnitsDesc.Name, SensorName.STEREO);
+                CheckOptionSupported(Option.DepthUnits, DepthUnitsDesc.Name, SensorNames.Stereo);
                 CheckRangeValid<float>(DepthUnitsDesc, value, 0f);
-                SetOption(SensorName.STEREO, Option.DepthUnits, value);
+                SetOption(SensorNames.Stereo, Option.DepthUnits, value);
             }
         }
 
@@ -1269,7 +1269,7 @@ namespace MetriCam2.Cameras
 
                 if(this.IsConnected)
                 {
-                    var option = QueryOption(Option.DepthUnits, SensorName.STEREO);
+                    var option = QueryOption(Option.DepthUnits, SensorNames.Stereo);
                     res = new RangeParamDesc<float>(option.min, option.max);
                 }
                 else
@@ -1368,7 +1368,7 @@ namespace MetriCam2.Cameras
             if (!adev.AdvancedModeEnabled)
                 adev.AdvancedModeEnabled = true;
 
-            _depthScale = GetSensor(SensorName.STEREO).DepthScale;
+            _depthScale = GetSensor(SensorNames.Stereo).DepthScale;
         }
 
         private void StopPipeline()
@@ -1420,7 +1420,6 @@ namespace MetriCam2.Cameras
                 FrameSet data = _pipeline.WaitForFrames(5000);
 
                 int frameCount = data.Count;
-                log.Debug(string.Format("RealSense2: Got {0} Frames", frameCount));
 
 
                 // extract all frames
@@ -1429,8 +1428,6 @@ namespace MetriCam2.Cameras
                     // what kind of frame did we get?
                     StreamProfile profile = vframe.Profile;
                     Stream stream = profile.Stream;
-                    Format format = profile.Format;
-                    int index = profile.Index;
 
 
                     switch (stream)
@@ -1450,6 +1447,7 @@ namespace MetriCam2.Cameras
                             }
                             break;
                         case Stream.Infrared:
+                            int index = profile.Index;
                             if (index == 1)
                             {
                                 if (getLeft)
@@ -1582,6 +1580,7 @@ namespace MetriCam2.Cameras
         protected override void DeactivateChannelImpl(String channelName)
         {
             Stream stream = Stream.Any;
+            int index = -1;
 
             if (channelName == ChannelNames.Color)
             {
@@ -1612,13 +1611,15 @@ namespace MetriCam2.Cameras
             else if (channelName == ChannelNames.Left)
             {
                 stream = Stream.Infrared;
+                index = 1;
             }
             else if (channelName == ChannelNames.Right)
             {
                 stream = Stream.Infrared;
+                index = 2;
             }
 
-            _config.DisableStream(stream);
+            _config.DisableStream(stream, index);
         }
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
@@ -1665,7 +1666,7 @@ namespace MetriCam2.Cameras
             switch (channelName)
             {
                 case ChannelNames.Color:
-                    sensorName = SensorName.COLOR;
+                    sensorName = SensorNames.Color;
                     refResolution = ColorResolution;
                     break;
                 case ChannelNames.ZImage:
@@ -1673,7 +1674,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.Right:
                 case ChannelNames.Distance:
                 default:
-                    sensorName = SensorName.STEREO;
+                    sensorName = SensorNames.Stereo;
                     refResolution = DepthResolution;
                     break;
             }
@@ -1687,8 +1688,7 @@ namespace MetriCam2.Cameras
                     return profile;
             }
 
-            // return default
-            return list[0];
+            throw new ArgumentException(string.Format("StreamProfile for channel '{0}' with resolution {1}x{2} notavailable", channelName, refResolution.X, refResolution.Y));
         }
 
         private StreamProfile GetProfileFromCapturedFrames(string channelName)
@@ -1839,7 +1839,7 @@ namespace MetriCam2.Cameras
         {
             AdvancedDevice adev = AdvancedDevice.FromDevice(GetDevice());
             adev.JsonConfiguration = json;
-            _depthScale = GetSensor(SensorName.STEREO).DepthScale;
+            _depthScale = GetSensor(SensorNames.Stereo).DepthScale;
         }
 
         private void CheckOptionSupported(Option option, string optionName, string sensorName)
@@ -1905,12 +1905,11 @@ namespace MetriCam2.Cameras
             {
                 if (dev.Info[CameraInfo.SerialNumber] == this.SerialNumber)
                 {
-                    device = dev;
-                    break;
+                    return dev;
                 }
             }
 
-            return device;
+            throw new ArgumentException(string.Format("Device with S/N {0} could not be found", this.SerialNumber));
         }
 
         private Sensor GetSensor(string sensorName)
@@ -1920,25 +1919,18 @@ namespace MetriCam2.Cameras
 
             foreach(Sensor sen in dev.Sensors)
             {
-                Sensor.CameraInfos infos = sen.Info;
-                string info = infos[CameraInfo.Name];
-                if(info == sensorName)
+                if(sen.Info[CameraInfo.Name] == sensorName)
                 {
-                    s = sen;
-                    break;
+                    return sen;
                 }
             }
 
-            return s;
+            throw new ArgumentException(string.Format("Sensor with name '{0}' could not be found", sensorName));
         }
 
         private List<Point2i> GetSupportedResolutions(string sensorName)
         {
-            return GetSensor(sensorName).StreamProfiles.Select(p => new Point2i()
-            {
-                X = (p as VideoStreamProfile).Width,
-                Y = (p as VideoStreamProfile).Height
-            }).ToList();
+            return GetSensor(sensorName).VideoStreamProfiles.Select(p => new Point2i(p.Width, p.Height)).ToList();
         }
 
         private List<int> GetSupportedFramerates(string sensorName)
