@@ -24,7 +24,6 @@ namespace MetriCam2.Cameras
         private VideoFrame _currentDepthFrame;
         private VideoFrame _currentLeftFrame;
         private VideoFrame _currentRightFrame;
-        private float _depthScale = 0.0f;
         private bool _disposed = false;
         private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
         private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
@@ -1368,8 +1367,6 @@ namespace MetriCam2.Cameras
 
             if (!adev.AdvancedModeEnabled)
                 adev.AdvancedModeEnabled = true;
-
-            _depthScale = GetSensor(SensorNames.Stereo).DepthScale;
         }
 
         private void StopPipeline()
@@ -1789,6 +1786,10 @@ namespace MetriCam2.Cameras
             int height = _currentDepthFrame.Height;
             int width = _currentDepthFrame.Width;
 
+            Sensor depthSensor = GetSensor(SensorNames.Stereo);
+            depthSensor.Open();
+            float depthScale = depthSensor.DepthScale;
+
             FloatCameraImage depthData = new FloatCameraImage(width, height);
             short* source = (short*)_currentDepthFrame.Data;
 
@@ -1797,7 +1798,7 @@ namespace MetriCam2.Cameras
                 short* sourceLine = source + y * width;
                 for (int x = 0; x < width; x++)
                 {
-                    depthData[y, x] = (float)(_depthScale * (*sourceLine++));
+                    depthData[y, x] = (float)(depthScale * (*sourceLine++));
                 }
             }
 
@@ -1872,7 +1873,6 @@ namespace MetriCam2.Cameras
         {
             AdvancedDevice adev = AdvancedDevice.FromDevice(GetDevice());
             adev.JsonConfiguration = json;
-            _depthScale = GetSensor(SensorNames.Stereo).DepthScale;
         }
 
         private void ExecuteWithStoppedPipeline(Action doStuff)
@@ -1960,7 +1960,6 @@ namespace MetriCam2.Cameras
         private Sensor GetSensor(string sensorName)
         {
             Device dev = GetDevice();
-            Sensor s = dev.Sensors[0];
 
             foreach(Sensor sen in dev.Sensors)
             {
