@@ -1789,6 +1789,7 @@ namespace MetriCam2.Cameras
             Sensor depthSensor = GetSensor(SensorNames.Stereo);
             depthSensor.Open();
             float depthScale = depthSensor.DepthScale;
+            depthSensor.Close();
 
             FloatCameraImage depthData = new FloatCameraImage(width, height);
             short* source = (short*)_currentDepthFrame.Data;
