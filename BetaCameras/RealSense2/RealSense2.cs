@@ -28,6 +28,7 @@ namespace MetriCam2.Cameras
         private bool _disposed = false;
         private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
         private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
+        private bool _pipelineRunning = false;
 
         public enum EmitterMode
         {
@@ -59,11 +60,12 @@ namespace MetriCam2.Cameras
                 if (value == _colorResolution)
                     return;
 
-                StopPipeline();
-                DeactivateChannelImpl(ChannelNames.Color);
-                _colorResolution = value;
-                ActivateChannelImpl(ChannelNames.Color);
-                StartPipeline();
+                ExecuteWithStoppedPipeline(() =>
+                {
+                    DeactivateChannelImpl(ChannelNames.Color);
+                    _colorResolution = value;
+                    ActivateChannelImpl(ChannelNames.Color);
+                });
             }
         }
 
@@ -103,11 +105,12 @@ namespace MetriCam2.Cameras
                 if (value == _colorFPS)
                     return;
 
-                StopPipeline();
-                DeactivateChannelImpl(ChannelNames.Color);
-                _colorFPS = value;
-                ActivateChannelImpl(ChannelNames.Color);
-                StartPipeline();
+                ExecuteWithStoppedPipeline(() =>
+                {
+                    DeactivateChannelImpl(ChannelNames.Color);
+                    _colorFPS = value;
+                    ActivateChannelImpl(ChannelNames.Color);
+                });
             }
         }
 
@@ -142,29 +145,28 @@ namespace MetriCam2.Cameras
                 if (value == _depthResolution)
                     return;
 
-                StopPipeline();
+                ExecuteWithStoppedPipeline(() =>
+                {
+                    if (IsChannelActive(ChannelNames.ZImage))
+                        DeactivateChannelImpl(ChannelNames.ZImage);
 
-                if (IsChannelActive(ChannelNames.ZImage))
-                    DeactivateChannelImpl(ChannelNames.ZImage);
+                    if (IsChannelActive(ChannelNames.Left))
+                        DeactivateChannelImpl(ChannelNames.Left);
 
-                if (IsChannelActive(ChannelNames.Left))
-                    DeactivateChannelImpl(ChannelNames.Left);
+                    if (IsChannelActive(ChannelNames.Right))
+                        DeactivateChannelImpl(ChannelNames.Right);
 
-                if (IsChannelActive(ChannelNames.Right))
-                    DeactivateChannelImpl(ChannelNames.Right);
+                    _depthResolution = value;
 
-                _depthResolution = value;
+                    if (IsChannelActive(ChannelNames.ZImage))
+                        ActivateChannelImpl(ChannelNames.ZImage);
 
-                if (IsChannelActive(ChannelNames.ZImage))
-                    ActivateChannelImpl(ChannelNames.ZImage);
+                    if (IsChannelActive(ChannelNames.Left))
+                        ActivateChannelImpl(ChannelNames.Left);
 
-                if (IsChannelActive(ChannelNames.Left))
-                    ActivateChannelImpl(ChannelNames.Left);
-
-                if (IsChannelActive(ChannelNames.Right))
-                    ActivateChannelImpl(ChannelNames.Right);
-
-                StartPipeline();
+                    if (IsChannelActive(ChannelNames.Right))
+                        ActivateChannelImpl(ChannelNames.Right);
+                });
             }
         }
 
@@ -204,29 +206,28 @@ namespace MetriCam2.Cameras
                 if (value == _depthFPS)
                     return;
 
-                StopPipeline();
+                ExecuteWithStoppedPipeline(() =>
+                {
+                    if (IsChannelActive(ChannelNames.ZImage))
+                        DeactivateChannelImpl(ChannelNames.ZImage);
 
-                if (IsChannelActive(ChannelNames.ZImage))
-                    DeactivateChannelImpl(ChannelNames.ZImage);
+                    if (IsChannelActive(ChannelNames.Left))
+                        DeactivateChannelImpl(ChannelNames.Left);
 
-                if (IsChannelActive(ChannelNames.Left))
-                    DeactivateChannelImpl(ChannelNames.Left);
+                    if (IsChannelActive(ChannelNames.Right))
+                        DeactivateChannelImpl(ChannelNames.Right);
 
-                if (IsChannelActive(ChannelNames.Right))
-                    DeactivateChannelImpl(ChannelNames.Right);
+                    _depthFPS = value;
 
-                _depthFPS = value;
+                    if (IsChannelActive(ChannelNames.ZImage))
+                        ActivateChannelImpl(ChannelNames.ZImage);
 
-                if (IsChannelActive(ChannelNames.ZImage))
-                    ActivateChannelImpl(ChannelNames.ZImage);
+                    if (IsChannelActive(ChannelNames.Left))
+                        ActivateChannelImpl(ChannelNames.Left);
 
-                if (IsChannelActive(ChannelNames.Left))
-                    ActivateChannelImpl(ChannelNames.Left);
-
-                if (IsChannelActive(ChannelNames.Right))
-                    ActivateChannelImpl(ChannelNames.Right);
-
-                StartPipeline();
+                    if (IsChannelActive(ChannelNames.Right))
+                        ActivateChannelImpl(ChannelNames.Right);
+                });
             }
         }
 
@@ -1373,8 +1374,11 @@ namespace MetriCam2.Cameras
 
         private void StopPipeline()
         {
-            
-            _pipeline.Stop();
+            if(_pipelineRunning)
+            {
+                _pipelineRunning = false;
+                _pipeline.Stop();
+            }
         }
 
         private void StartPipeline()
@@ -1387,7 +1391,11 @@ namespace MetriCam2.Cameras
                 throw new InvalidOperationException(msg);
             }
 
-            _pipeline.Start(_config);
+            if(!_pipelineRunning)
+            {
+                _pipeline.Start(_config);
+                _pipelineRunning = true;
+            }
         }
 
         protected override void DisconnectImpl()
@@ -1574,7 +1582,14 @@ namespace MetriCam2.Cameras
                 throw new InvalidOperationException(msg);
             }
 
-            _config.EnableStream(stream, index, res_x, res_y, format, fps);
+
+            Action enableStream = () => { _config.EnableStream(stream, index, res_x, res_y, format, fps); };
+
+            if (_pipelineRunning)
+                ExecuteWithStoppedPipeline(enableStream);
+            else
+                enableStream();
+            
         }
 
         protected override void DeactivateChannelImpl(String channelName)
@@ -1619,7 +1634,13 @@ namespace MetriCam2.Cameras
                 index = 2;
             }
 
-            _config.DisableStream(stream, index);
+            
+            Action disableStream = () => { _config.DisableStream(stream, index); };
+
+            if (_pipelineRunning)
+                ExecuteWithStoppedPipeline(disableStream);
+            else
+                disableStream();
         }
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
@@ -1840,6 +1861,18 @@ namespace MetriCam2.Cameras
             AdvancedDevice adev = AdvancedDevice.FromDevice(GetDevice());
             adev.JsonConfiguration = json;
             _depthScale = GetSensor(SensorNames.Stereo).DepthScale;
+        }
+
+        private void ExecuteWithStoppedPipeline(Action doStuff)
+        {
+            bool running = _pipelineRunning;
+
+            StopPipeline();
+
+            doStuff();
+
+            if (running)
+                StartPipeline();
         }
 
         private void CheckOptionSupported(Option option, string optionName, string sensorName)
