@@ -1423,6 +1423,16 @@ namespace MetriCam2.Cameras
             bool haveLeft = false;
             bool haveRight = false;
 
+            if(null != _currentColorFrame)
+                _currentColorFrame.Dispose();
+            if(null != _currentDepthFrame)
+                _currentDepthFrame.Dispose();
+            if(null != _currentLeftFrame)
+                _currentLeftFrame.Dispose();
+            if(null != _currentRightFrame)
+                _currentRightFrame.Dispose();
+
+
             while (true)
             {
                 FrameSet data = _pipeline.WaitForFrames(5000);
@@ -1475,6 +1485,8 @@ namespace MetriCam2.Cameras
                             break;
                     }
                 }
+
+                data.Dispose();
 
                 if (((getColor && haveColor) || !getColor)
                 && ((getDepth && haveDepth) || !getDepth)
