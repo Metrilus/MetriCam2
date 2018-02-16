@@ -1848,7 +1848,7 @@ namespace MetriCam2.Cameras
                 throw new InvalidOperationException(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
 
             
-            if (GetSensor(sensorName).Options[option].Supported)
+            if (!GetSensor(sensorName).Options[option].Supported)
                 throw new NotSupportedException(string.Format("Option '{0}' is not supported by the {1} sensor of this camera.", optionName, sensorName));
         }
 
