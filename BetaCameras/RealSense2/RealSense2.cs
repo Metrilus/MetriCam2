@@ -24,6 +24,7 @@ namespace MetriCam2.Cameras
         private VideoFrame _currentDepthFrame;
         private VideoFrame _currentLeftFrame;
         private VideoFrame _currentRightFrame;
+        private long _currentFrameTimestamp = DateTime.UtcNow.Ticks;
         private bool _disposed = false;
         private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
         private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
@@ -1423,76 +1424,99 @@ namespace MetriCam2.Cameras
             bool haveLeft = false;
             bool haveRight = false;
 
-            if(null != _currentColorFrame)
-                _currentColorFrame.Dispose();
-            if(null != _currentDepthFrame)
-                _currentDepthFrame.Dispose();
-            if(null != _currentLeftFrame)
-                _currentLeftFrame.Dispose();
-            if(null != _currentRightFrame)
-                _currentRightFrame.Dispose();
+            DisposeCurrentFrames();
+            _pipeline.PollForFrames(out FrameSet data);
 
+            // latest frameset already delivered, nothing new to see here
+            if (data != null)
+            {
+                ExtractFrameSetData(data, getColor, getDepth, getLeft, getRight, ref haveColor, ref haveDepth, ref haveLeft, ref haveRight);
+                data.Dispose();
+            }
 
+            if (CheckUpdateComplete(getColor, getDepth, getLeft, getRight, haveColor, haveDepth, haveLeft, haveRight))
+                return;
+            
             while (true)
             {
-                FrameSet data = _pipeline.WaitForFrames(5000);
+                data = _pipeline.WaitForFrames(5000);
+                ExtractFrameSetData(data, getColor, getDepth, getLeft, getRight, ref haveColor, ref haveDepth, ref haveLeft, ref haveRight);
 
-                int frameCount = data.Count;
+                if (CheckUpdateComplete(getColor, getDepth, getLeft, getRight, haveColor, haveDepth, haveLeft, haveRight))
+                    return;
+            }
+        }
 
+        private void DisposeCurrentFrames()
+        {
+            if (null != _currentColorFrame)
+                _currentColorFrame.Dispose();
+            if (null != _currentDepthFrame)
+                _currentDepthFrame.Dispose();
+            if (null != _currentLeftFrame)
+                _currentLeftFrame.Dispose();
+            if (null != _currentRightFrame)
+                _currentRightFrame.Dispose();
+        }
 
-                // extract all frames
-                foreach (VideoFrame vframe in data)
-                {
-                    // what kind of frame did we get?
-                    StreamProfile profile = vframe.Profile;
-                    Stream stream = profile.Stream;
-
-
-                    switch (stream)
-                    {
-                        case Stream.Color:
-                            if (getColor)
-                            {
-                                _currentColorFrame = vframe;
-                                haveColor = true;
-                            }
-                            break;
-                        case Stream.Depth:
-                            if (getDepth)
-                            {
-                                _currentDepthFrame = vframe;
-                                haveDepth = true;
-                            }
-                            break;
-                        case Stream.Infrared:
-                            int index = profile.Index;
-                            if (index == 1)
-                            {
-                                if (getLeft)
-                                {
-                                    _currentLeftFrame = vframe;
-                                    haveLeft = true;
-                                }
-                            }
-                            else if (index == 2)
-                            {
-                                if (getRight)
-                                {
-                                    _currentRightFrame = vframe;
-                                    haveRight = true;
-                                }
-                            }
-                            break;
-                    }
-                }
-
-                data.Dispose();
-
-                if (((getColor && haveColor) || !getColor)
+        private bool CheckUpdateComplete(bool getColor, bool getDepth, bool getLeft, bool getRight,
+            bool haveColor, bool haveDepth, bool haveLeft, bool haveRight)
+        {
+            return (((getColor && haveColor) || !getColor)
                 && ((getDepth && haveDepth) || !getDepth)
                 && ((getLeft && haveLeft) || !getLeft)
-                && ((getRight && haveRight) || !getRight))
-                    break;
+                && ((getRight && haveRight) || !getRight));
+        }
+
+        private void ExtractFrameSetData(FrameSet data, bool getColor, bool getDepth, bool getLeft, bool getRight,
+            ref bool haveColor, ref bool haveDepth, ref bool haveLeft, ref bool haveRight)
+        {
+            _currentFrameTimestamp = DateTime.UtcNow.Ticks;
+
+            // extract all frames
+            foreach (VideoFrame vframe in data)
+            {
+                // what kind of frame did we get?
+                StreamProfile profile = vframe.Profile;
+                Stream stream = profile.Stream;
+
+
+                switch (stream)
+                {
+                    case Stream.Color:
+                        if (getColor)
+                        {
+                            _currentColorFrame = vframe;
+                            haveColor = true;
+                        }
+                        break;
+                    case Stream.Depth:
+                        if (getDepth)
+                        {
+                            _currentDepthFrame = vframe;
+                            haveDepth = true;
+                        }
+                        break;
+                    case Stream.Infrared:
+                        int index = profile.Index;
+                        if (index == 1)
+                        {
+                            if (getLeft)
+                            {
+                                _currentLeftFrame = vframe;
+                                haveLeft = true;
+                            }
+                        }
+                        else if (index == 2)
+                        {
+                            if (getRight)
+                            {
+                                _currentRightFrame = vframe;
+                                haveRight = true;
+                            }
+                        }
+                        break;
+                }
             }
         }
 
@@ -1790,6 +1814,7 @@ namespace MetriCam2.Cameras
             int width = _currentDepthFrame.Width;
 
             FloatCameraImage depthData = new FloatCameraImage(width, height);
+            depthData.TimeStamp = _currentFrameTimestamp;
             short* source = (short*)_currentDepthFrame.Data;
 
             for (int y = 0; y < height; y++)
@@ -1818,6 +1843,7 @@ namespace MetriCam2.Cameras
             int width = frame.Width;
 
             FloatCameraImage IRData = new FloatCameraImage(width, height);
+            IRData.TimeStamp = _currentFrameTimestamp;
             byte* source = (byte*)frame.Data;
 
             for (int y = 0; y < height; y++)
@@ -1857,6 +1883,7 @@ namespace MetriCam2.Cameras
 
             bitmap.UnlockBits(bmpData);
             ColorCameraImage image = new ColorCameraImage(bitmap);
+            image.TimeStamp = _currentFrameTimestamp;
 
             return image;
         }
