@@ -1425,26 +1425,22 @@ namespace MetriCam2.Cameras
             bool haveRight = false;
 
             DisposeCurrentFrames();
-            _pipeline.PollForFrames(out FrameSet data);
 
-            // latest frameset already delivered, nothing new to see here
-            if (data != null)
+            // check if there is a undelivered frameset available for grabs
+            if (_pipeline.PollForFrames(out FrameSet data))
             {
                 ExtractFrameSetData(data, getColor, getDepth, getLeft, getRight, ref haveColor, ref haveDepth, ref haveLeft, ref haveRight);
                 data.Dispose();
-            }
-
-            if (CheckUpdateComplete(getColor, getDepth, getLeft, getRight, haveColor, haveDepth, haveLeft, haveRight))
+                CheckFrameSetComplete(getColor, getDepth, getLeft, getRight, haveColor, haveDepth, haveLeft, haveRight);
                 return;
-            
-            while (true)
-            {
-                data = _pipeline.WaitForFrames(5000);
-                ExtractFrameSetData(data, getColor, getDepth, getLeft, getRight, ref haveColor, ref haveDepth, ref haveLeft, ref haveRight);
-
-                if (CheckUpdateComplete(getColor, getDepth, getLeft, getRight, haveColor, haveDepth, haveLeft, haveRight))
-                    return;
             }
+
+            // otherwise wait until a new frameset is available
+            data = _pipeline.WaitForFrames(5000);
+            ExtractFrameSetData(data, getColor, getDepth, getLeft, getRight, ref haveColor, ref haveDepth, ref haveLeft, ref haveRight);
+            data.Dispose();
+
+            CheckFrameSetComplete(getColor, getDepth, getLeft, getRight, haveColor, haveDepth, haveLeft, haveRight);
         }
 
         private void DisposeCurrentFrames()
@@ -1459,13 +1455,16 @@ namespace MetriCam2.Cameras
                 _currentRightFrame.Dispose();
         }
 
-        private bool CheckUpdateComplete(bool getColor, bool getDepth, bool getLeft, bool getRight,
+        private void CheckFrameSetComplete(bool getColor, bool getDepth, bool getLeft, bool getRight,
             bool haveColor, bool haveDepth, bool haveLeft, bool haveRight)
         {
-            return (((getColor && haveColor) || !getColor)
-                && ((getDepth && haveDepth) || !getDepth)
-                && ((getLeft && haveLeft) || !getLeft)
-                && ((getRight && haveRight) || !getRight));
+            if (((getColor && haveColor) || !getColor)
+            && ((getDepth && haveDepth) || !getDepth)
+            && ((getLeft && haveLeft) || !getLeft)
+            && ((getRight && haveRight) || !getRight))
+                return;
+
+            throw new Exception("RealSense2: not all requested frames are part of the retrieved FrameSet");
         }
 
         private void ExtractFrameSetData(FrameSet data, bool getColor, bool getDepth, bool getLeft, bool getRight,
