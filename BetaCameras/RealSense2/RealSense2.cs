@@ -28,6 +28,7 @@ namespace MetriCam2.Cameras
         private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
         private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
         private bool _pipelineRunning = false;
+        private float _depthScale = 1.0f;
 
         public enum EmitterMode
         {
@@ -1367,6 +1368,8 @@ namespace MetriCam2.Cameras
 
             if (!adev.AdvancedModeEnabled)
                 adev.AdvancedModeEnabled = true;
+
+            _depthScale = GetDepthScale();
         }
 
         private void StopPipeline()
@@ -1786,11 +1789,6 @@ namespace MetriCam2.Cameras
             int height = _currentDepthFrame.Height;
             int width = _currentDepthFrame.Width;
 
-            Sensor depthSensor = GetSensor(SensorNames.Stereo);
-            depthSensor.Open();
-            float depthScale = depthSensor.DepthScale;
-            depthSensor.Close();
-
             FloatCameraImage depthData = new FloatCameraImage(width, height);
             short* source = (short*)_currentDepthFrame.Data;
 
@@ -1799,7 +1797,7 @@ namespace MetriCam2.Cameras
                 short* sourceLine = source + y * width;
                 for (int x = 0; x < width; x++)
                 {
-                    depthData[y, x] = (float)(depthScale * (*sourceLine++));
+                    depthData[y, x] = (float)(_depthScale * (*sourceLine++));
                 }
             }
 
@@ -1874,6 +1872,7 @@ namespace MetriCam2.Cameras
         {
             AdvancedDevice adev = AdvancedDevice.FromDevice(GetDevice());
             adev.JsonConfiguration = json;
+            _depthScale = GetDepthScale();
         }
 
         private void ExecuteWithStoppedPipeline(Action doStuff)
@@ -1981,6 +1980,16 @@ namespace MetriCam2.Cameras
         private List<int> GetSupportedFramerates(string sensorName)
         {
             return GetSensor(sensorName).StreamProfiles.Select(p => p.Framerate).ToList();
+        }
+
+        private float GetDepthScale()
+        {
+            Sensor depthSensor = GetSensor(SensorNames.Stereo);
+            depthSensor.Open();
+            float depthScale = depthSensor.DepthScale;
+            depthSensor.Close();
+
+            return depthScale;
         }
     }
 }
