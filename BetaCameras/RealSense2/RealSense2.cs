@@ -368,7 +368,7 @@ namespace MetriCam2.Cameras
                 if (this.IsConnected)
                 {
                     var option = QueryOption(Option.Brightness, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -411,7 +411,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Contrast, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -454,7 +454,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Exposure, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -545,7 +545,7 @@ namespace MetriCam2.Cameras
                 var option = QueryOption(Option.Exposure, SensorNames.Stereo);
 
                 // step size for depth exposure is 20
-                float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
+                float adjusted_value = AdjustValue(option.Min, option.Max, value, option.Step);
                 CheckRangeValid<int>(ExposureDepthDesc, value, (int)adjusted_value, true);
                 SetOption(SensorNames.Stereo, Option.Exposure, adjusted_value);
             }
@@ -560,7 +560,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Exposure, SensorNames.Stereo);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -632,7 +632,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Gain, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -674,7 +674,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Gain, SensorNames.Stereo);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -716,7 +716,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Gamma, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -758,7 +758,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Hue, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -800,7 +800,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Saturation, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -842,7 +842,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.Sharpness, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -874,7 +874,7 @@ namespace MetriCam2.Cameras
 
 
                 // step size for depth white balance is 10
-                float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
+                float adjusted_value = AdjustValue(option.Min, option.Max, value, option.Step);
                 CheckRangeValid<int>(WhiteBalanceDesc, value, (int)adjusted_value, true);
 
                 SetOption(SensorNames.Color, Option.WhiteBalance, adjusted_value);
@@ -890,7 +890,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.WhiteBalance, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -951,7 +951,7 @@ namespace MetriCam2.Cameras
                 var option = QueryOption(Option.LaserPower, SensorNames.Stereo);
 
                 // step size for depth laser power is 30
-                float adjusted_value = AdjustValue(option.min, option.max, value, option.step);
+                float adjusted_value = AdjustValue(option.Min, option.Max, value, option.Step);
                 CheckRangeValid<int>(LaserPowerDesc, value, (int)adjusted_value, true);
                 SetOption(SensorNames.Stereo, Option.LaserPower, adjusted_value);
             }
@@ -966,7 +966,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.LaserPower, SensorNames.Stereo);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -1041,7 +1041,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.FramesQueueSize, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -1083,7 +1083,7 @@ namespace MetriCam2.Cameras
                 if (this.IsConnected)
                 {
                     var option = QueryOption(Option.FramesQueueSize, SensorNames.Stereo);
-                    res = new RangeParamDesc<int>((int)option.min, (int)option.max);
+                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
                 }
                 else
                 {
@@ -1272,7 +1272,7 @@ namespace MetriCam2.Cameras
                 if(this.IsConnected)
                 {
                     var option = QueryOption(Option.DepthUnits, SensorNames.Stereo);
-                    res = new RangeParamDesc<float>(option.min, option.max);
+                    res = new RangeParamDesc<float>(option.Min, option.Max);
                 }
                 else
                 {
@@ -1942,10 +1942,10 @@ namespace MetriCam2.Cameras
                     throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
         }
 
-        private (float min, float max, float step, float def) QueryOption(Option option, string sensorName)
+        private Sensor.CameraOption QueryOption(Option option, string sensorName)
         {
             Sensor.CameraOption cop = GetSensor(sensorName).Options[option];
-            return (cop.Min, cop.Max, cop.Step, cop.Default);
+            return cop;
         }
 
         private float AdjustValue(float min, float max, float value, float step)
