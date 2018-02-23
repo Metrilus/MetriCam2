@@ -1609,9 +1609,9 @@ namespace MetriCam2.Cameras
                 intrinsics.ppy,
                 intrinsics.coeffs[0],
                 intrinsics.coeffs[1],
+                intrinsics.coeffs[4],
                 intrinsics.coeffs[2],
-                intrinsics.coeffs[3],
-                intrinsics.coeffs[4]);
+                intrinsics.coeffs[3]);
 
             _intrinsics.Add(channelName, projTrans);
 
