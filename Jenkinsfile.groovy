@@ -21,7 +21,6 @@ pipeline {
 
         def STATUS_CONTEXT = 'MetriCam2 CI'
         def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
-        def DEBUG_SUFFIX = "_debug"
     }
     stages {
         stage('Pre-Build') {
@@ -100,6 +99,7 @@ pipeline {
                     FOR %%p IN (%dllsToDeployX64%) DO (
                         COPY /Y "%RELEASE_DIR_X64%%%p.dll" "%releaseLibraryDirectory%"
                         if errorlevel 1 GOTO StepFailed
+                        COPY /Y "%RELEASE_DIR_X64%%%p.pdb" "%releaseLibraryDirectory%"
 
                         COPY /Y "%DEBUG_DIR_X64%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixDebug%"
                         if errorlevel 1 GOTO StepFailed
@@ -108,6 +108,7 @@ pipeline {
                     FOR %%p IN (%dllsToDeployAnyCPU%) DO (
                         COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%releaseLibraryDirectory%"
                         if errorlevel 1 GOTO StepFailed
+                        COPY /Y "%RELEASE_DIR_ANYCPU%%%p.pdb" "%releaseLibraryDirectory%"
 
                         COPY /Y "%DEBUG_DIR_ANYCPU%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixDebug%"
                         if errorlevel 1 GOTO StepFailed
@@ -116,6 +117,7 @@ pipeline {
                     FOR %%p IN (%dllsToDeployNetStandard%) DO (
                         COPY /Y "%RELEASE_DIR_NETSTANDARD%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixNetStandard20%"
                         if errorlevel 1 GOTO StepFailed
+                        COPY /Y "%RELEASE_DIR_NETSTANDARD%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixNetStandard20%"
 
                         COPY /Y "%DEBUG_DIR_NETSTANDARD%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixNetStandard20%%releaseSuffixDebug%"
                         if errorlevel 1 GOTO StepFailed
