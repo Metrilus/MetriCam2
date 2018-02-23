@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetriCam2", "MetriCam2\MetriCam2.csproj", "{342F049E-668B-4351-B21D-75E4BEF5A1E4}"
 EndProject
@@ -45,6 +45,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.licenseheader = .licenseheader
 		Jenkinsfile.groovy = Jenkinsfile.groovy
 		MetrilusReferencesVersions.props = MetrilusReferencesVersions.props
+		Scripts\Set Assembly-Info Version.cmd = Scripts\Set Assembly-Info Version.cmd
 		SolutionAssemblyInfo.cs = SolutionAssemblyInfo.cs
 		SolutionAssemblyInfo.h = SolutionAssemblyInfo.h
 	EndProjectSection
