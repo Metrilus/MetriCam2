@@ -134,6 +134,10 @@ pipeline {
 
                     copy \"License.txt\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
+                    copy \"libraries\\LICENSE-MathNet\" \"${releaseDirectory}\"
+                    if errorlevel 1 GOTO StepFailed
+                    copy \"libraries\\NOTICE-log4net.md\" \"${releaseDirectory}\"
+                    if errorlevel 1 GOTO StepFailed
                 
                     exit /b 0
 
