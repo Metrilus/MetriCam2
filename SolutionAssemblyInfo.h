@@ -10,7 +10,7 @@ using namespace System::Security::Permissions;
 [assembly:AssemblyConfigurationAttribute("")];
 [assembly:AssemblyCompanyAttribute("Metrilus GmbH")];
 [assembly:AssemblyProductAttribute("MetriCam 2")];
-[assembly:AssemblyCopyrightAttribute("Copyright ©  2013 - 2017")];
+[assembly:AssemblyCopyrightAttribute("Copyright ©  2013 - 2018")];
 [assembly:AssemblyTrademarkAttribute("")];
 [assembly:AssemblyCultureAttribute("")];
 
@@ -24,7 +24,7 @@ using namespace System::Security::Permissions;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly:AssemblyVersionAttribute("10.0.0.0")];
-[assembly:AssemblyFileVersion("10.0.0.0")];
+[assembly:AssemblyVersionAttribute("11.0.0.0")];
+[assembly:AssemblyFileVersion("11.0.0.0")];
 
 // REMINDER: Also update SolutionAssemblyInfo.cs
