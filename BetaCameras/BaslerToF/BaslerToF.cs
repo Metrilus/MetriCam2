@@ -51,7 +51,6 @@ namespace MetriCam2.Cameras
             : base()
         {
             IsMaster = false;
-            camera = new ToFCamera();
             width = 640;
             height = 480;
             modelName = "BaslerToF";
@@ -229,36 +228,45 @@ namespace MetriCam2.Cameras
         /// <seealso cref="Camera.Connect"/>
         protected override void ConnectImpl()
         {
-            if (camera.IsOpen())
+            log.EnterMethod();
+
+            if (null != camera)
             {
+                log.Debug("A camera object exists already.");
                 return;
             }
 
+            try
+            {
+                camera = new ToFCamera();
+            }
+            catch (CameraException ex)
+            {
+                throw new ConnectionFailedException(string.Format("Error creating camera object: {0} in {1}", ex.GetType().Name, ex.Source), ex);
+            }
+
             CameraList cameras = ToFCamera.EnumerateCameras();
+            CameraInfo ci;
 
             // check if we want a specific camera or any camera
-            if(string.IsNullOrEmpty(SerialNumber))
+            if (string.IsNullOrEmpty(SerialNumber))
             {
-                if(cameras.Count == 0)
+                if (0 == cameras.Count)
                 {
-                    ExceptionBuilder.Build(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_cameraNotConnected");
+                    throw new ConnectionFailedException("No cameras found");
                 }
-
                 // use first camera in list
-                camera.Open(cameras[0]);
+                ci = cameras[0];
             }
             else
             {
-                CameraInfo cInfo = cameras.Find(camInfo => camInfo.SerialNumber.Equals(SerialNumber));
-
-                if (cInfo == default(CameraInfo))
+                ci = cameras.Find(camInfo => camInfo.SerialNumber.Equals(SerialNumber));
+                if (ci == default(CameraInfo))
                 {
                     throw new ConnectionFailedException(string.Format("No camera available with the SN: {0}", SerialNumber));
                 }
-
-                camera.Open(cInfo);
             }
-            
+            camera.Open(ci);
 
             camera.SetParameterValue("GevIEEE1588", "true");
             //camera.SetParameterValue("ExposureAuto", "On");
@@ -316,18 +324,8 @@ namespace MetriCam2.Cameras
         {
             StopGrabbing();
             camera.Close();
-        }
-
-        private void StartGrabbing()
-        {
-            camera.ImageGrabbed += ImageGrabbedHandler;
-            camera.StartGrabbing();
-        }
-
-        private void StopGrabbing()
-        {
-            camera.StopGrabbing();
-            camera.ImageGrabbed -= ImageGrabbedHandler;
+            camera.Dispose();
+            camera = null;
         }
 
         /// <summary>
@@ -498,7 +496,20 @@ namespace MetriCam2.Cameras
                 camera.Close();
             }
         }
+
+        private void StartGrabbing()
+        {
+            camera.ImageGrabbed += ImageGrabbedHandler;
+            camera.StartGrabbing();
+        }
+
+        private void StopGrabbing()
+        {
+            camera.StopGrabbing();
+            camera.ImageGrabbed -= ImageGrabbedHandler;
+        }
         #endregion
+
         /// <summary>
         /// Enables interference-free, simultaneous operation of multiple cameras. Please initialize the individual cameras 
         /// before this call as synchronization might depend on several camera parameters such as exposure time.
