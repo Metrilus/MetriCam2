@@ -193,7 +193,7 @@ namespace MetriCam2.Cameras
         /// Activate a channel.
         /// </summary>
         /// <param name="channelName">Channel name.</param>
-        /// <remarks>This method is implicitely called by <see cref="Camera.ActivateChannel"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.ActivateChannel"/> inside a camera lock.</remarks>
         protected override void ActivateChannelImpl(string channelName)
         {
             if (!IsConnected)
@@ -209,7 +209,7 @@ namespace MetriCam2.Cameras
         /// Deactivate a channel to save time in <see cref="Update"/>.
         /// </summary>
         /// <param name="channelName">Channel name.</param>
-        /// <remarks>This method is implicitely called by <see cref="Camera.DeactivateChannel"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.DeactivateChannel"/> inside a camera lock.</remarks>
         protected override void DeactivateChannelImpl(string channelName)
         {
             if (!IsConnected)
@@ -224,7 +224,7 @@ namespace MetriCam2.Cameras
         /// Device-specific implementation of Connect.
         /// Connects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Connect"/>
         protected override void ConnectImpl()
         {
@@ -318,7 +318,7 @@ namespace MetriCam2.Cameras
         /// Device-specific implementation of Disconnect.
         /// Disconnects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Disconnect"/>
         protected override void DisconnectImpl()
         {
@@ -332,7 +332,7 @@ namespace MetriCam2.Cameras
         /// Device-specific implementation of Update.
         /// Updates data buffers of all active channels with data of current frame.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Update"/>
         protected override void UpdateImpl()
         {
