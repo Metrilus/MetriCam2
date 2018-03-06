@@ -596,6 +596,8 @@ namespace MetriCam2.Cameras
                     cameras[i].Connect();
                 }
                 cameras[i].StopGrabbing();
+
+                cameras[i].camera.SetParameterValue("GevIEEE1588", "true");
                 cameras[i].camera.SetParameterValue("TriggerMode", "On");
                 cameras[i].camera.SetParameterValue("TriggerSource", "SyncTimer");
             }
