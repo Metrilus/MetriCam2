@@ -67,6 +67,43 @@ namespace MetriCam2.Cameras
 
         public bool IsMaster { get; private set; }
 
+        private RangeParamDesc<int> DeviceChannelDesc
+        {
+            get
+            {
+                return new RangeParamDesc<int>(0, 3)
+                {
+                    Description = "Device Channel",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+            }
+        }
+        /// <summary>
+        /// Gets or sets the device channel.
+        /// Use this property to minimize interference between multiple cameras.
+        /// </summary>
+        public int DeviceChannel
+        {
+            get => int.Parse(camera.GetParameterValue("DeviceChannel"));
+            set
+            {
+                var desc = DeviceChannelDesc;
+                if (!desc.IsValid(value))
+                {
+                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The device channel must be between {0} and {1}.", desc.Min, desc.Max));
+                    return;
+                }
+
+                if (!IsConnected)
+                {
+                    throw new InvalidOperationException(string.Format("{0}: {1} cannot be set before the camera is connected.", Name, nameof(DeviceChannel)));
+                }
+
+                camera.SetParameterValue("DeviceChannel", value.ToString());
+            }
+        }
+
         private RangeParamDesc<float> ExposureDesc
         {
             get
