@@ -685,6 +685,10 @@ namespace MetriCam2.Cameras
             triggerDelay = 0;
 
             log.Debug("Configuring start time and trigger delays ...");
+
+            // For sanity checks:
+            int nExpTimes0 = -1;
+            ulong[] expTimes0 = null;
             //
             // Cycle through cameras and set trigger delay.
             //
@@ -714,12 +718,15 @@ namespace MetriCam2.Cameras
 
                     // Get exposure time count (in case of HDR there will be 2, otherwise 1).
                     int nExpTimes = int.Parse(cameras[camIdx].camera.GetParameterMaximum("ExposureTimeSelector")) + 1;
+                    nExpTimes0 = nExpTimes;
+                    expTimes0 = new ulong[nExpTimes0];
 
                     // Sum up exposure times.
                     for (int l = 0; l < nExpTimes; l++)
                     {
                         cameras[camIdx].camera.SetParameterValue("ExposureTimeSelector", l.ToString());
                         ulong expTime = ulong.Parse(cameras[camIdx].camera.GetParameterValue("ExposureTime"));
+                        expTimes0[l] = expTime;
                         log.DebugFormat("exposure time {0} = {1}", l, expTime);
                         triggerDelay += (1000 * expTime);   // Convert from us -> ns
                     }
@@ -747,6 +754,30 @@ namespace MetriCam2.Cameras
                     // Print trigger delay and synchronous trigger rate.
                     log.DebugFormat("Trigger delay = {0} ms", triggerDelay / 1000000);
                     log.DebugFormat("Setting synchronous trigger rate to {0} fps\n", syncTriggerRate);
+                }
+                else
+                {
+                    // Perform sanity checks:
+                    // - are all cameras working in (non-)HDR mode?
+                    // - are the exposure times of all cameras equal?
+
+                    // Check exposure time count (in case of HDR there will be 2, otherwise 1).
+                    int nExpTimes = int.Parse(cameras[camIdx].camera.GetParameterMaximum("ExposureTimeSelector")) + 1;
+                    if (nExpTimes != nExpTimes0)
+                    {
+                        throw new InvalidOperationException("Cameras are configured in mixed HDR modes");
+                    }
+
+                    // Check exposure times.
+                    for (int l = 0; l < nExpTimes; l++)
+                    {
+                        cameras[camIdx].camera.SetParameterValue("ExposureTimeSelector", l.ToString());
+                        ulong expTime = ulong.Parse(cameras[camIdx].camera.GetParameterValue("ExposureTime"));
+                        if (expTime != expTimes0[l])
+                        {
+                            throw new InvalidOperationException("Cameras are configured with different exposure times");
+                        }
+                    }
                 }
 
                 // Set synchronization rate.
