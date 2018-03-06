@@ -71,15 +71,14 @@ namespace MetriCam2
 			int deviceCount = 0;
 			result = MV6D_DeviceListUpdate(h6D, &deviceCount);
 			CheckResult(result, ConnectionFailedException::typeid, 2);
-			const char* serial = { 0 };
-
-			char serialTemp[128] = { 0 };
-			int inUse = 1;
+			char serial[128] = { 0 };
+			
 
 			// find a perception camera that's not in use
 			for (int index = 0; index < deviceCount; ++index)
 			{
-				result = MV6D_DeviceListGetSerial(h6D, serialTemp, sizeof(serialTemp), &inUse, index);
+				int inUse = 1;
+				result = MV6D_DeviceListGetSerial(h6D, serial, sizeof(serial), &inUse, index);
 				CheckResult(result, ConnectionFailedException::typeid, 3);
 
 				if (!inUse)
@@ -87,39 +86,45 @@ namespace MetriCam2
 					break;
 				}
 			}
-			if (nullptr != SerialNumber)
+
+			if (nullptr != serial && 0 != strcmp("", serial))
 			{
-				serial = oMarshalContext.marshal_as<const char*>(SerialNumber);
+				SerialNumber = gcnew String(serial);
 			}
+			else
+			{
+				throw ExceptionBuilder::BuildFromID(ConnectionFailedException::typeid, this, 4, "No available mv6D camera found");
+			}
+
 			// open the device
 			result = MV6D_DeviceOpen(h6D, serial);
-			CheckResult(result, ConnectionFailedException::typeid, 4);
+			CheckResult(result, ConnectionFailedException::typeid, 5);
 
 			// configure the stereo algorithm
 			int filterSet = fsNone;
 			result = MV6D_SetDepthPreset(h6D, daFilterSet, filterSet);
-			CheckResult(result, ConnectionFailedException::typeid, 5);
+			CheckResult(result, ConnectionFailedException::typeid, 6);
 
 			int minimumDistance = minDist800mm;
 			result = MV6D_SetDepthPreset(h6D, daMinimumDistance, minimumDistance);
-			CheckResult(result, ConnectionFailedException::typeid, 6);
+			CheckResult(result, ConnectionFailedException::typeid, 7);
 
 			// get framerate property
 			MV6D_Property framerateProperty;
 			result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_FRAMERATE, &framerateProperty);
-			CheckResult(result, ConnectionFailedException::typeid, 7);
+			CheckResult(result, ConnectionFailedException::typeid, 8);
 
 			// set framerate
 			double framerate = 15.0;
 			result = MV6D_PropertyWrite(h6D, framerateProperty, &framerate, sizeof(framerate));
-			CheckResult(result, ConnectionFailedException::typeid, 8);
+			CheckResult(result, ConnectionFailedException::typeid, 9);
 
 			result = MV6D_SetDepthPreset(h6D, daStereoAlgorithm, MV6D_Stereo_Algorithm::stereoAlgoRSGM);
-			CheckResult(result, ConnectionFailedException::typeid, 9);
+			CheckResult(result, ConnectionFailedException::typeid, 10);
 
 			// start capturing from the device
 			result = MV6D_DeviceStart(h6D);
-			CheckResult(result, ConnectionFailedException::typeid, 10);
+			CheckResult(result, ConnectionFailedException::typeid, 11);
 
 			// Check calibration
 
@@ -127,38 +132,6 @@ namespace MetriCam2
 			MV6D_RequestBuffer* currentRequestBuffer = nullptr;
 			MV6D_RequestBuffer* lastRequestBuffer = nullptr;
 
-			// The camera will automatically check its calibration
-			// If the calibration is not correct it will re-calibrate itself using
-			// the live images.
-			/*
-			// Wait until relative extrinsic calibration is ok
-			int framesUntilCalibration = 1000;
-			for (; framesUntilCalibration > 0; --framesUntilCalibration)
-			{
-				// wait up to two seconds
-				int timeout = 2000;
-
-				// get next request buffer
-				result = MV6D_DeviceResultWaitFor(h6D, &currentRequestBuffer, nullptr, timeout);
-				CheckResult(result, ConnectionFailedException::typeid, 10);
-
-				// check for a valid calibration
-				if (currentRequestBuffer->hasValidCalibration)
-				{
-					break;
-				}
-
-				// unlock the request buffer
-				result = MV6D_UnlockRequest(h6D, currentRequestBuffer);
-				currentRequestBuffer = nullptr;
-				CheckResult(result, ConnectionFailedException::typeid, 11);
-			}
-
-			if (framesUntilCalibration == 0)
-			{
-				log->Warn("Relative extrinsic calibration failed.");
-			}
-			*/
 			AutoExposure = true;
 
 			ActivateChannel(ChannelNames::Color);
@@ -272,14 +245,6 @@ namespace MetriCam2
 			{
 				return CalcPointCloudFromDepthRaw();
 			}
-			//if (ChannelNames::Intensity == channelName)
-			//{
-			//	return CalcDepthRawIR();
-			//}
-			//if ("Flow" == channelName)
-			//{
-			//	return CalcFlow();
-			//}
 
 			// this should not happen, because Camera checks if the channel is active.
 			return nullptr;
@@ -474,10 +439,6 @@ namespace MetriCam2
 					float wx = ((x - halfWidth) / focalLength) * wz;
 					float wy = ((y - halfHeight) / focalLength) * wz;
 					pointCloud[y, x] = Point3f(wx, wy, wz);
-					/*					pointCloud[y, x].X = wx;
-					pointCloud[y, x].Y = wy;
-					pointCloud[y, x].Z = wz;
-					*/
 				}
 			}
 

@@ -93,6 +93,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mv6D.h" />
+    <ClInclude Include="mv6DDataStructures.h" />
     <ClInclude Include="MvBlueSirius.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Stdafx.h" />

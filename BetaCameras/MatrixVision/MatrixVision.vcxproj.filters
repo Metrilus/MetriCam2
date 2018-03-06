@@ -24,6 +24,12 @@
     <ClInclude Include="MvBlueSirius.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mv6D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mv6DDataStructures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
