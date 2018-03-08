@@ -28,17 +28,32 @@ namespace MetriCam2.Cameras
         private bool frameAvailable = false;
 
         #region Public Properties
-        public int ImageResolution
+        /// <summary>
+        /// Control pixel binning.
+        /// </summary>
+        public bool Resolution100k
         {
             get
             {
-                return GetImageResolution();
+                return IsResolution100k();
             }
             set
             {
-                SetImageResolution(value);
+                SetResolution100k(value);
             }
         }
+        private ParamDesc<bool> Resolution100kDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "100k px resolution";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
+
         /// <summary>
         /// Frequency channel
         /// </summary>
@@ -812,21 +827,30 @@ namespace MetriCam2.Cameras
             edit.StopEditingApplication();
             SetConfigurationMode(false);
         }
-        private int GetImageResolution()
+
+        /// <summary>
+        /// Checks if pixel binning is disabled or enabled.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsResolution100k()
         {
             if (!IsConnected)
             {
-                return -1;
+                return false;
             }
             SetConfigurationMode(true);
             edit.EditApplication(applicationId);
-            int imageResolution =  Convert.ToInt32(appImager.GetParameter("Resolution"));
-
+            int imageResolution = Convert.ToInt32(appImager.GetParameter("Resolution"));
             SetConfigurationMode(false);
-            return -imageResolution;
+            // a Resolution value of 1 means binning is disabled (i.e. 100k pixels resolution)
+            return (1 == imageResolution);
         }
 
-        private void SetImageResolution(int value)
+        /// <summary>
+        /// Disables or enables pixel binning.
+        /// </summary>
+        /// <param name="binningDisabled">If true, pixel binning will be disabled (i.e. 100k pixels resolution).</param>
+        private void SetResolution100k(bool binningDisabled)
         {
             if (!IsConnected)
             {
@@ -834,11 +858,11 @@ namespace MetriCam2.Cameras
             }
             SetConfigurationMode(true);
             edit.EditApplication(applicationId);
-            string res = appImager.SetParameter("Resolution", value.ToString());
+            // set Resolution to 1 to disable binning and use 100k pixels
+            string res = appImager.SetParameter("Resolution", (binningDisabled ? "1" : "0"));
             app.Save();
             edit.StopEditingApplication();
             SetConfigurationMode(false);
-
         }
         #endregion
     }

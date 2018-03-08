@@ -2,15 +2,9 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using CookComputing.XmlRpc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras.IFM
 {
-
     public interface ISession : IXmlRpcProxy
     {
         [XmlRpcMethod("editApplication")]
@@ -26,7 +20,6 @@ namespace MetriCam2.Cameras.IFM
         string CancelSession();
     }
 
-
     public interface IDevice : IXmlRpcProxy
     {
         [XmlRpcMethod("getParameter")]
@@ -39,7 +32,6 @@ namespace MetriCam2.Cameras.IFM
         string Save();
     }
 
-
     public interface IAppImager : IXmlRpcProxy
     {
         [XmlRpcMethod("getParameter")]
@@ -48,7 +40,6 @@ namespace MetriCam2.Cameras.IFM
         [XmlRpcMethod("setParameter")]
         string SetParameter(string parameter, string value);
     }
-
 
     public interface IApp : IXmlRpcProxy
     {
@@ -61,7 +52,6 @@ namespace MetriCam2.Cameras.IFM
         [XmlRpcMethod("save")]
         string Save();
     }
-
 
     public interface IEdit : IXmlRpcProxy
     {
@@ -77,7 +67,6 @@ namespace MetriCam2.Cameras.IFM
         [XmlRpcMethod("deleteApplication")]
         string DeleteApplication(int param);
     }
-
 
     public interface IEditDevice : IXmlRpcProxy
     {
