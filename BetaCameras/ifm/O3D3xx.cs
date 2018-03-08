@@ -17,17 +17,8 @@ using MetriCam2.Enums;
 namespace MetriCam2.Cameras
 {
     /// <summary>
-    /// This is a template for creating new camera wrappers, and also a dummy camera.
+    /// MetriCam2 Wrapper for ifm O3D3xx cameras.
     /// </summary>
-    /// <remarks>
-    /// Follow this guide if you want to add a new camera implementation:
-    /// 1. Start by reading @link page_adding_a_new_camera Adding a new camera @endlink.
-    /// 2. Delete this how-to and anything named DEMO or DUMMY.
-    /// 3. Add MetriCam2 to the project's references.
-    /// 4. Implement Camera's methods.
-    /// 5. Work through all comments and update them (i.e. remove remarks like "This method is implicitely called [...]" and "Device-specific implementation of [...]").
-    /// 6. (optional) Implement ActivateChannelImpl and DeactivateChannelImpl.
-    /// </remarks>
     public class O3D3xx : Camera
     {
         [DllImport("iphlpapi.dll")]
@@ -219,7 +210,7 @@ namespace MetriCam2.Cameras
         /// Device-specific implementation of Connect.
         /// Connects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Connect"/>
         protected override void ConnectImpl()
         {
@@ -419,7 +410,7 @@ namespace MetriCam2.Cameras
         /// Device-specific implementation of Disconnect.
         /// Disconnects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Disconnect"/>
         protected override void DisconnectImpl()
         {
@@ -430,7 +421,7 @@ namespace MetriCam2.Cameras
         /// Device-specific implementation of Update.
         /// Updates data buffers of all active channels with data of current frame.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Update"/>
         protected override void UpdateImpl()
         {

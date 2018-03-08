@@ -1,17 +1,14 @@
 ﻿using Metrilus.Util;
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 using ToFCameraWrapper;
-using System.Runtime;
-using System.Diagnostics;
 using MetriCam2.Exceptions;
 using MetriCam2.Enums;
 using MetriCam2.Attributes;
 
 namespace MetriCam2.Cameras
 {
-    public unsafe class BaslerToF : Camera
+    public class BaslerToF : Camera
     {
         #region Private Fields
         private ToFCamera camera;
@@ -56,12 +53,15 @@ namespace MetriCam2.Cameras
             : base()
         {
             IsMaster = false;
-            camera = new ToFCamera();
             width = 640;
             height = 480;
+            modelName = "BaslerToF";
         }
 
-        ~BaslerToF() { /* empty */ }
+        ~BaslerToF()
+        {
+            Disconnect();
+        }
         #endregion
 
         #region Properties
@@ -98,8 +98,7 @@ namespace MetriCam2.Cameras
                     camera.SetParameterValue("ExposureTime", (exposureMilliseconds * 1000.0f).ToString("0.0")); // SDK unit is Microseconds
 
                     // Read out exposure time (the exposure time cannot be set continuously)
-                    // TODO: Check if culture settings could be an issue!
-                    exposureMilliseconds = float.Parse(camera.GetParameterValue("ExposureTime")) / 1000.0f;
+                    exposureMilliseconds = float.Parse(camera.GetParameterValue("ExposureTime"), System.Globalization.CultureInfo.InvariantCulture) / 1000.0f;
                 }
             }
         }
@@ -171,7 +170,7 @@ namespace MetriCam2.Cameras
         /// Activate a channel.
         /// </summary>
         /// <param name="channelName">Channel name.</param>
-        /// <remarks>This method is implicitely called by <see cref="Camera.ActivateChannel"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.ActivateChannel"/> inside a camera lock.</remarks>
         protected override void ActivateChannelImpl(string channelName)
         {
             if (!IsConnected)
@@ -182,14 +181,12 @@ namespace MetriCam2.Cameras
             // not supported currently
         }
 
-
-
         /// <summary>
         /// Device-specific implementation of <see cref="DeactivateChannel"/>.
         /// Deactivate a channel to save time in <see cref="Update"/>.
         /// </summary>
         /// <param name="channelName">Channel name.</param>
-        /// <remarks>This method is implicitely called by <see cref="Camera.DeactivateChannel"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.DeactivateChannel"/> inside a camera lock.</remarks>
         protected override void DeactivateChannelImpl(string channelName)
         {
             if (!IsConnected)
@@ -204,54 +201,63 @@ namespace MetriCam2.Cameras
         /// Device-specific implementation of Connect.
         /// Connects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Connect"/>
         protected override void ConnectImpl()
         {
-            if (camera.IsOpen())
+            log.EnterMethod();
+
+            if (null != camera)
             {
+                log.Debug("A camera object exists already.");
                 return;
             }
 
+            try
+            {
+                camera = new ToFCamera();
+            }
+            catch (CameraException ex)
+            {
+                throw new ConnectionFailedException(string.Format("Error creating camera object: {0} in {1}", ex.GetType().Name, ex.Source), ex);
+            }
+
             CameraList cameras = ToFCamera.EnumerateCameras();
+            CameraInfo ci;
 
             // check if we want a specific camera or any camera
-            if(string.IsNullOrEmpty(SerialNumber))
+            if (string.IsNullOrEmpty(SerialNumber))
             {
-                if(cameras.Count == 0)
+                if (0 == cameras.Count)
                 {
-                    ExceptionBuilder.Build(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_cameraNotConnected");
+                    throw new ConnectionFailedException("No cameras found");
                 }
-
                 // use first camera in list
-                camera.Open(cameras[0]);
+                ci = cameras[0];
             }
             else
             {
-                CameraInfo cInfo = cameras.Find(camInfo => camInfo.SerialNumber.Equals(SerialNumber));
-
-                if (cInfo == default(CameraInfo))
+                ci = cameras.Find(camInfo => camInfo.SerialNumber.Equals(SerialNumber));
+                if (ci == default(CameraInfo))
                 {
                     throw new ConnectionFailedException(string.Format("No camera available with the SN: {0}", SerialNumber));
                 }
-
-                camera.Open(cInfo);
             }
-            
+            camera.Open(ci);
 
             camera.SetParameterValue("GevIEEE1588", "true");
-
-           // camera.SetParameterValue("ExposureAuto", "On");
+            //camera.SetParameterValue("ExposureAuto", "On");
 
             camera.SetParameterValue("ComponentSelector", "Range");
             camera.SetParameterValue("ComponentEnable", "true");
             camera.SetParameterValue("PixelFormat", "Coord3D_ABC32f");
+
             camera.SetParameterValue("ComponentSelector", "Intensity");
             camera.SetParameterValue("ComponentEnable", "true");
+
             camera.SetParameterValue("ComponentSelector", "Confidence");
             camera.SetParameterValue("ComponentEnable", "true");
 
-            modelName = "BaslerToF";
             IsConnected = true; // sic!
 
             // Disable auto exposure -> causes large regions of invalid pixels
@@ -265,8 +271,8 @@ namespace MetriCam2.Cameras
             //FilterSpatial = filterSpatial;            
             
             // Activate Channels before streaming starts;
-            // Activate standard channels if no channels are selected 
-            if (ActiveChannels.Count == 0)
+            // Activate default channels if no channels are selected
+            if (0 == ActiveChannels.Count)
             {
                 ActivateChannel(ChannelNames.Point3DImage);
                 ActivateChannel(ChannelNames.Distance);
@@ -276,11 +282,12 @@ namespace MetriCam2.Cameras
             else
             {
                 // Even though MetriCam calls ActivateChannelImpl() for all active channels after Connect() has completed, we need to activate these channels before starting to grab
-                foreach (MetriCam2.ChannelRegistry.ChannelDescriptor s in ActiveChannels)
+                foreach (ChannelRegistry.ChannelDescriptor cd in ActiveChannels)
                 {
-                    ActivateChannelImpl(s.Name);
+                    ActivateChannelImpl(cd.Name);
                 }
             }
+
             StartGrabbing();
         }
 
@@ -288,31 +295,21 @@ namespace MetriCam2.Cameras
         /// Device-specific implementation of Disconnect.
         /// Disconnects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Disconnect"/>
         protected override void DisconnectImpl()
         {
             StopGrabbing();
             camera.Close();
-        }
-
-        protected void StartGrabbing()
-        {
-            camera.ImageGrabbed += ImageGrabbedHandler;
-            camera.StartGrabbing();
-        }
-
-        protected void StopGrabbing()
-        {
-            camera.StopGrabbing();
-            camera.ImageGrabbed -= ImageGrabbedHandler;
+            camera.Dispose();
+            camera = null;
         }
 
         /// <summary>
         /// Device-specific implementation of Update.
         /// Updates data buffers of all active channels with data of current frame.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
         /// <seealso cref="Camera.Update"/>
         protected override void UpdateImpl()
         {
@@ -476,7 +473,20 @@ namespace MetriCam2.Cameras
                 camera.Close();
             }
         }
+
+        private void StartGrabbing()
+        {
+            camera.ImageGrabbed += ImageGrabbedHandler;
+            camera.StartGrabbing();
+        }
+
+        private void StopGrabbing()
+        {
+            camera.StopGrabbing();
+            camera.ImageGrabbed -= ImageGrabbedHandler;
+        }
         #endregion
+
         /// <summary>
         /// Enables interference-free, simultaneous operation of multiple cameras. Please initialize the individual cameras 
         /// before this call as synchronization might depend on several camera parameters such as exposure time.
@@ -505,7 +515,7 @@ namespace MetriCam2.Cameras
             do
             {
                 nMaster = 0;
-                //
+
                 // Wait until a master camera (if any) and the slave cameras have been chosen.
                 // Note that if a PTP master clock is present in the subnet, all TOF cameras
                 // ultimately assume the slave role.

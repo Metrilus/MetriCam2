@@ -185,6 +185,14 @@ namespace MetriCam2.Attributes
             Minimum = min;
             Maximum = max;
         }
+
+        public bool IsValid(T val)
+        {
+            if (val.CompareTo(Minimum) >= 0 && val.CompareTo(Maximum) <= 0)
+                return true;
+
+            return false;
+        }
     }
 
     public class ConstrainAttribute : Attribute
