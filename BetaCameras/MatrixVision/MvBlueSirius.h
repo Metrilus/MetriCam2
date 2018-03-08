@@ -35,6 +35,18 @@ namespace MetriCam2
 
 			float focalLength;
 
+			unsigned char* pRawMasterData;
+			unsigned int masterBufferSizeInBytes;
+			unsigned int masterWidth;
+			unsigned int masterHeight;
+			FloatCameraImage^ currentMasterImage; // caches computed FloatCameraImage
+
+			unsigned char* pRawSlaveData;
+			unsigned int slaveBufferSizeInBytes;
+			unsigned int slaveWidth;
+			unsigned int slaveHeight;
+			FloatCameraImage^ currentSlaveImage; // caches computed FloatCameraImage
+
 			unsigned char* pRawColorData;
 			unsigned int colorBufferSizeInBytes;
 			unsigned int colorWidth;
@@ -204,6 +216,8 @@ namespace MetriCam2
 		private:
 			// Internal helper functions
 			ColorCameraImage^ CalcColor();
+			FloatCameraImage^ CalcMaster();
+			FloatCameraImage^ CalcSlave();
 			FloatCameraImage^ CalcDepthMapped();
 			FloatCameraImage^ CalcDepthRaw();
 			FloatCameraImage^ CalcDistances();
@@ -213,11 +227,33 @@ namespace MetriCam2
 			FloatCameraImage^ CalcDepthRawIR();
 			FloatCameraImage^ CalcFlow();
 			void CopyColorData(MV6D_ColorBuffer colorBuffer);
+			void CopyMasterData(MV6D_GrayBuffer masterBuffer);
+			void CopySlaveData(MV6D_GrayBuffer slaveBuffer);
 			void CopyDepthMappedData(MV6D_DepthBuffer depthBuffer);
 			void CopyDepthRawData(MV6D_DepthBuffer depthBuffer);
+			void ResizeMasterBuffer(int sizeInBytes);
+			void ResizeSlaveBuffer(int sizeInBytes);
 			void ResizeColorBuffer(int sizeInBytes);
 			void ResizeDepthMappedBuffer(int numElements);
 			void ResizeDepthRawBuffer(int numElements);
+			inline void FreeMasterBuffer()
+			{
+				if (nullptr != pRawMasterData)
+				{
+					delete[] pRawMasterData;
+				}
+				colorBufferSizeInBytes = 0;
+				pRawMasterData = nullptr;
+			};
+			inline void FreeSlaveBuffer()
+			{
+				if (nullptr != pRawSlaveData)
+				{
+					delete[] pRawSlaveData;
+				}
+				colorBufferSizeInBytes = 0;
+				pRawSlaveData = nullptr;
+			};
 			inline void FreeColorBuffer()
 			{
 				if (nullptr != pRawColorData)
@@ -249,6 +285,12 @@ namespace MetriCam2
 			{
 				if (r != rcOk)
 				{
+					if (r == rcLaserCritical)
+					{
+						log->Warn("Laser status critical.");
+						return true;
+					}
+
 					String^ msg = String::Format("Failed with message = '{0}'.", gcnew String(MV6D_ResultCodeToString(r)));
 					throw ExceptionBuilder::BuildFromID(exceptionType, this, exceptionID, msg);
 				}

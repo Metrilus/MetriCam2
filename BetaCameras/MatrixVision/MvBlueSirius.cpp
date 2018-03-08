@@ -53,6 +53,8 @@ namespace MetriCam2
 			Channels->Clear();
 			Channels->Add(cr->RegisterChannel(ChannelNames::Color));
 			Channels->Add(cr->RegisterChannel(ChannelNames::Distance));
+			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Left, FloatCameraImage::typeid));
+			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Right, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::DepthMapped, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::DepthRaw, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::DistanceMapped, FloatCameraImage::typeid));
@@ -140,6 +142,8 @@ namespace MetriCam2
 			ActivateChannel((String^)CustomChannelNames::DepthRaw);
 			ActivateChannel((String^)CustomChannelNames::DistanceMapped);
 			ActivateChannel((String^)CustomChannelNames::PointCloudMapped);
+			ActivateChannel(ChannelNames::Left);
+			ActivateChannel(ChannelNames::Right);
 			SelectChannel(ChannelNames::Color);
 		}
 
@@ -182,6 +186,24 @@ namespace MetriCam2
 					CopyColorData(requestBuffer->colorMapped);
 				}
 
+				// get master raw image
+				if (requestBuffer->rawMaster.pData)
+				{
+					currentMasterImage = nullptr;
+					masterWidth = requestBuffer->rawMaster.iWidth;
+					masterHeight = requestBuffer->rawMaster.iHeight;
+					CopyMasterData(requestBuffer->rawMaster);
+				}
+
+				// get slave raw image
+				if (requestBuffer->rawSlave1.pData)
+				{
+					currentSlaveImage = nullptr;
+					slaveWidth = requestBuffer->rawSlave1.iWidth;
+					slaveHeight = requestBuffer->rawSlave1.iHeight;
+					CopySlaveData(requestBuffer->rawSlave1);
+				}
+
 				// get depth mapped image
 				if (requestBuffer->depthMapped.pData)
 				{
@@ -220,6 +242,14 @@ namespace MetriCam2
 			if (ChannelNames::Color == channelName)
 			{
 				return CalcColor();
+			}
+			if (ChannelNames::Left == channelName)
+			{
+				return CalcMaster();
+			}
+			if (ChannelNames::Right == channelName)
+			{
+				return CalcSlave();
 			}
 			if (CustomChannelNames::DepthMapped == channelName)
 			{
@@ -285,6 +315,50 @@ namespace MetriCam2
 			System::Threading::Monitor::Exit(updateLock);
 
 			return currentColorImage;
+		}
+
+		FloatCameraImage ^ MvBlueSirius::CalcMaster()
+		{
+			System::Threading::Monitor::Enter(updateLock);
+
+			if (nullptr == currentMasterImage)
+			{
+				currentMasterImage = gcnew FloatCameraImage(masterWidth, masterHeight);
+				int i = 0;
+				for (unsigned int y = 0; y < masterHeight; y++)
+				{
+					for (unsigned int x = 0; x < masterWidth; x++)
+					{
+						currentMasterImage[y, x] = pRawMasterData[i++];
+					}
+				}
+			}
+
+			System::Threading::Monitor::Exit(updateLock);
+
+			return currentMasterImage;
+		}
+
+		FloatCameraImage ^ MvBlueSirius::CalcSlave()
+		{
+			System::Threading::Monitor::Enter(updateLock);
+
+			if (nullptr == currentSlaveImage)
+			{
+				currentSlaveImage = gcnew FloatCameraImage(slaveWidth, slaveHeight);
+				int i = 0;
+				for (unsigned int y = 0; y < slaveHeight; y++)
+				{
+					for (unsigned int x = 0; x < slaveWidth; x++)
+					{
+						currentSlaveImage[y, x] = pRawSlaveData[i++];
+					}
+				}
+			}
+
+			System::Threading::Monitor::Exit(updateLock);
+
+			return currentMasterImage;
 		}
 
 		FloatCameraImage ^ MvBlueSirius::CalcDepthMapped()
@@ -385,7 +459,7 @@ namespace MetriCam2
 
 		Point3fCameraImage ^ MvBlueSirius::CalcPointCloudFromDepthRaw()
 		{
-			log->Error("CalcPointCloud is incomplete.");
+			//log->Error("CalcPointCloud is incomplete.");
 			System::Threading::Monitor::Enter(updateLock);
 
 			if (nullptr == currentPointCloud)
@@ -401,7 +475,7 @@ namespace MetriCam2
 
 		Point3fCameraImage ^ MvBlueSirius::CalcPointCloudFromDepthMapped()
 		{
-			log->Error("CalcPointCloud is incomplete.");
+			//log->Error("CalcPointCloud is incomplete.");
 			System::Threading::Monitor::Enter(updateLock);
 
 			if (nullptr == currentPointCloudMapped)
@@ -457,6 +531,20 @@ namespace MetriCam2
 			// TODO: insert return statement here
 		}
 
+		void MvBlueSirius::CopyMasterData(MV6D_GrayBuffer masterBuffer)
+		{
+			int sizeInBytes = masterWidth * masterHeight;
+			ResizeMasterBuffer(sizeInBytes);
+			memcpy_s((void*)pRawMasterData, sizeInBytes, (void*)masterBuffer.pData, sizeInBytes);
+		}
+
+		void MvBlueSirius::CopySlaveData(MV6D_GrayBuffer slaveBuffer)
+		{
+			int sizeInBytes = slaveWidth * slaveHeight;
+			ResizeSlaveBuffer(sizeInBytes);
+			memcpy_s((void*)pRawSlaveData, sizeInBytes, (void*)slaveBuffer.pData, sizeInBytes);
+		}
+
 		void MvBlueSirius::CopyColorData(MV6D_ColorBuffer colorBuffer)
 		{
 			int sizeInBytes = colorWidth * colorHeight * 3;
@@ -493,6 +581,42 @@ namespace MetriCam2
 			int sizeInBytes = numElements * sizeof(float);
 			ResizeDepthRawBuffer(sizeInBytes);
 			memcpy_s((void*)pRawDepthRawData, depthRawBufferNumElements, (void*)depthBuffer.pData, sizeInBytes);
+		}
+
+		void MvBlueSirius::ResizeMasterBuffer(int sizeInBytes)
+		{
+			if (nullptr != pRawMasterData)
+			{
+				// Buffer exists
+				if (masterBufferSizeInBytes == sizeInBytes)
+				{
+					// Buffer has correct size
+					return;
+				}
+
+				FreeMasterBuffer();
+			}
+
+			pRawMasterData = new unsigned char[sizeInBytes];
+			masterBufferSizeInBytes = sizeInBytes;
+		}
+
+		void MvBlueSirius::ResizeSlaveBuffer(int sizeInBytes)
+		{
+			if (nullptr != pRawSlaveData)
+			{
+				// Buffer exists
+				if (slaveBufferSizeInBytes == sizeInBytes)
+				{
+					// Buffer has correct size
+					return;
+				}
+
+				FreeSlaveBuffer();
+			}
+
+			pRawSlaveData = new unsigned char[sizeInBytes];
+			slaveBufferSizeInBytes = sizeInBytes;
 		}
 
 		void MvBlueSirius::ResizeColorBuffer(int sizeInBytes)
