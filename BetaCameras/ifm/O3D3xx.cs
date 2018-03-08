@@ -28,6 +28,17 @@ namespace MetriCam2.Cameras
         private bool frameAvailable = false;
 
         #region Public Properties
+        public int ImageResolution
+        {
+            get
+            {
+                return GetImageResolution();
+            }
+            set
+            {
+                SetImageResolution(value);
+            }
+        }
         /// <summary>
         /// Frequency channel
         /// </summary>
@@ -771,7 +782,7 @@ namespace MetriCam2.Cameras
             device.Save();
             SetConfigurationMode(false);
         }
-
+        
         private int GetFrequencyChannel()
         {
             if (!IsConnected)
@@ -801,7 +812,34 @@ namespace MetriCam2.Cameras
             edit.StopEditingApplication();
             SetConfigurationMode(false);
         }
+        private int GetImageResolution()
+        {
+            if (!IsConnected)
+            {
+                return -1;
+            }
+            SetConfigurationMode(true);
+            edit.EditApplication(applicationId);
+            int imageResolution =  Convert.ToInt32(appImager.GetParameter("Resolution"));
+
+            SetConfigurationMode(false);
+            return -imageResolution;
+        }
+
+        private void SetImageResolution(int value)
+        {
+            if (!IsConnected)
+            {
+                return;
+            }
+            SetConfigurationMode(true);
+            edit.EditApplication(applicationId);
+            string res = appImager.SetParameter("Resolution", value.ToString());
+            app.Save();
+            edit.StopEditingApplication();
+            SetConfigurationMode(false);
+
+        }
         #endregion
     }
 }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
