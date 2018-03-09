@@ -21,11 +21,11 @@ namespace MetriCam2
 			/// <remarks>Similar to MetriCam2.ChannelNames for standard channel names.</remarks>
 			static ref class CustomChannelNames
 			{
-			public:
-				static const String^ DepthMapped = "DepthMapped";
-				static const String^ DepthRaw = "DepthRaw";
-				static const String^ DistanceMapped = "DistanceMapped";
-				static const String^ PointCloudMapped = "PointCloudMapped";
+				public:
+					static const String^ DepthMapped = "DepthMapped";
+					static const String^ DepthRaw = "DepthRaw";
+					static const String^ DistanceMapped = "DistanceMapped";
+					static const String^ PointCloudMapped = "PointCloudMapped";
 			};
 
 		private:
@@ -33,38 +33,26 @@ namespace MetriCam2
 			System::Object^ updateLock;
 			String^ ipAddress;
 
+			ref struct ImageData {
+				unsigned int Width;
+				unsigned int Height;
+				unsigned int BufferSize;
+				unsigned char* Data;
+			};
+
 			float focalLength;
 
-			unsigned char* pRawMasterData;
-			unsigned int masterBufferSizeInBytes;
-			unsigned int masterWidth;
-			unsigned int masterHeight;
+			ImageData^ Master;
+			ImageData^ Slave;
+			ImageData^ Color;
+			ImageData^ DepthMapped;
+			ImageData^ DepthRaw;
+
 			FloatCameraImage^ currentMasterImage; // caches computed FloatCameraImage
-
-			unsigned char* pRawSlaveData;
-			unsigned int slaveBufferSizeInBytes;
-			unsigned int slaveWidth;
-			unsigned int slaveHeight;
 			FloatCameraImage^ currentSlaveImage; // caches computed FloatCameraImage
-
-			unsigned char* pRawColorData;
-			unsigned int colorBufferSizeInBytes;
-			unsigned int colorWidth;
-			unsigned int colorHeight;
 			ColorCameraImage^ currentColorImage; // caches computed bitmap
-
-			float* pRawDepthMappedData;
-			unsigned int depthMappedBufferNumElements;
-			unsigned int depthMappedWidth;
-			unsigned int depthMappedHeight;
 			FloatCameraImage^ currentDepthMappedImage; // caches computed FloatCameraImage
-
-			float* pRawDepthRawData;
-			unsigned int depthRawBufferNumElements;
-			unsigned int depthRawWidth;
-			unsigned int depthRawHeight;
 			FloatCameraImage^ currentDepthRawImage; // caches computed FloatCameraImage
-
 			FloatCameraImage^ currentDistanceImage; // caches computed FloatCameraImage
 			FloatCameraImage^ currentDistanceImageMapped; // caches computed FloatCameraImage
 			Point3fCameraImage^ currentPointCloud; // caches computed Point3fCameraImage
@@ -215,71 +203,22 @@ namespace MetriCam2
 
 		private:
 			// Internal helper functions
-			ColorCameraImage^ CalcColor();
-			FloatCameraImage^ CalcMaster();
-			FloatCameraImage^ CalcSlave();
-			FloatCameraImage^ CalcDepthMapped();
-			FloatCameraImage^ CalcDepthRaw();
-			FloatCameraImage^ CalcDistances();
-			FloatCameraImage^ CalcDistancesMapped();
-			Point3fCameraImage^ CalcPointCloudFromDepthRaw();
-			Point3fCameraImage^ CalcPointCloudFromDepthMapped();
-			FloatCameraImage^ CalcDepthRawIR();
-			FloatCameraImage^ CalcFlow();
-			void CopyColorData(MV6D_ColorBuffer colorBuffer);
-			void CopyMasterData(MV6D_GrayBuffer masterBuffer);
-			void CopySlaveData(MV6D_GrayBuffer slaveBuffer);
-			void CopyDepthMappedData(MV6D_DepthBuffer depthBuffer);
-			void CopyDepthRawData(MV6D_DepthBuffer depthBuffer);
-			void ResizeMasterBuffer(int sizeInBytes);
-			void ResizeSlaveBuffer(int sizeInBytes);
-			void ResizeColorBuffer(int sizeInBytes);
-			void ResizeDepthMappedBuffer(int numElements);
-			void ResizeDepthRawBuffer(int numElements);
-			inline void FreeMasterBuffer()
+			ColorCameraImage^ CalcColorImage(ImageData^ image);
+			FloatCameraImage^ CalcFloatImage(ImageData^ image);
+			FloatCameraImage^ CalcDistances(Point3fCameraImage^ image);
+			Point3fCameraImage^ CalcPointCloud(FloatCameraImage^ depthImage);
+			void CopyColorData(MV6D_ColorBuffer& colorBuffer, ImageData^ img);
+			void CopyGrayData(MV6D_GrayBuffer& masterBuffer, ImageData^ img);
+			void CopyDepthData(MV6D_DepthBuffer& depthBuffer, ImageData^ img);
+			void ResizeBuffer(ImageData^ img, int sizeInBytes);
+			inline void FreeImageBuffer(ImageData^ image)
 			{
-				if (nullptr != pRawMasterData)
+				if (nullptr != image->Data)
 				{
-					delete[] pRawMasterData;
+					delete[] image->Data;
 				}
-				colorBufferSizeInBytes = 0;
-				pRawMasterData = nullptr;
-			};
-			inline void FreeSlaveBuffer()
-			{
-				if (nullptr != pRawSlaveData)
-				{
-					delete[] pRawSlaveData;
-				}
-				colorBufferSizeInBytes = 0;
-				pRawSlaveData = nullptr;
-			};
-			inline void FreeColorBuffer()
-			{
-				if (nullptr != pRawColorData)
-				{
-					delete[] pRawColorData;
-				}
-				colorBufferSizeInBytes = 0;
-				pRawColorData = nullptr;
-			};
-			inline void FreeDepthMappedBuffer()
-			{
-				if (nullptr != pRawDepthMappedData)
-				{
-					delete[] pRawDepthMappedData;
-				}
-				depthMappedBufferNumElements = 0;
-				pRawDepthMappedData = nullptr;
-			};
-			inline void FreeDepthRawBuffer()
-			{
-				if (nullptr != pRawDepthRawData)
-				{
-					delete[] pRawDepthRawData;
-				}
-				depthRawBufferNumElements = 0;
-				pRawDepthRawData = nullptr;
+				image->BufferSize = 0;
+				image->Data = nullptr;
 			};
 			inline bool CheckResult(MV6D_ResultCode r, Type^ exceptionType, int exceptionID)
 			{

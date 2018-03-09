@@ -21,23 +21,25 @@ namespace MetriCam2
 			const char* versionString = MV6D_GetBuildVersion(&major, &minor, &patch);
 			log->InfoFormat("mv6D - {0}.{1}.{2} - Build \"{3}\"", major, minor, patch, gcnew String(versionString));
 
-			pRawColorData = nullptr;
-			colorBufferSizeInBytes = 0;
-			colorWidth = 0;
-			colorHeight = 0;
 			currentColorImage = nullptr;
-
-			pRawDepthMappedData = nullptr;
-			depthMappedBufferNumElements = 0;
-			depthMappedWidth = 0;
-			depthMappedHeight = 0;
 			currentDepthMappedImage = nullptr;
-
-			pRawDepthRawData = nullptr;
-			depthRawBufferNumElements = 0;
-			depthRawWidth = 0;
-			depthRawHeight = 0;
 			currentDepthRawImage = nullptr;
+
+			currentMasterImage = nullptr;
+			currentSlaveImage = nullptr;
+			currentColorImage = nullptr;
+			currentDepthMappedImage = nullptr;
+			currentDepthRawImage = nullptr;
+			currentDistanceImage = nullptr;
+			currentDistanceImageMapped = nullptr;
+			currentPointCloud = nullptr;
+			currentPointCloudMapped = nullptr;
+
+			Master = gcnew ImageData;
+			Slave = gcnew ImageData;
+			Color = gcnew ImageData;
+			DepthMapped = gcnew ImageData;
+			DepthRaw = gcnew ImageData;
 		}
 
 		MvBlueSirius::~MvBlueSirius()
@@ -74,7 +76,6 @@ namespace MetriCam2
 			result = MV6D_DeviceListUpdate(h6D, &deviceCount);
 			CheckResult(result, ConnectionFailedException::typeid, 2);
 			char serial[128] = { 0 };
-			
 
 			// find a perception camera that's not in use
 			for (int index = 0; index < deviceCount; ++index)
@@ -155,9 +156,11 @@ namespace MetriCam2
 			CheckResult(result, InvalidOperationException::typeid, 13);
 
 			System::Threading::Monitor::Enter(updateLock);
-			FreeColorBuffer();
-			FreeDepthMappedBuffer();
-			FreeDepthRawBuffer();
+			FreeImageBuffer(Master);
+			FreeImageBuffer(Slave);
+			FreeImageBuffer(Color);
+			FreeImageBuffer(DepthMapped);
+			FreeImageBuffer(DepthRaw);
 			System::Threading::Monitor::Exit(updateLock);
 		}
 
@@ -181,36 +184,36 @@ namespace MetriCam2
 				if (requestBuffer->colorMapped.pData)
 				{
 					currentColorImage = nullptr;
-					colorWidth = requestBuffer->colorMapped.iWidth;
-					colorHeight = requestBuffer->colorMapped.iHeight;
-					CopyColorData(requestBuffer->colorMapped);
+					Color->Width = requestBuffer->colorMapped.iWidth;
+					Color->Height = requestBuffer->colorMapped.iHeight;
+					CopyColorData(requestBuffer->colorMapped, Color);
 				}
 
 				// get master raw image
 				if (requestBuffer->rawMaster.pData)
 				{
 					currentMasterImage = nullptr;
-					masterWidth = requestBuffer->rawMaster.iWidth;
-					masterHeight = requestBuffer->rawMaster.iHeight;
-					CopyMasterData(requestBuffer->rawMaster);
+					Master->Width = requestBuffer->rawMaster.iWidth;
+					Master->Height = requestBuffer->rawMaster.iHeight;
+					CopyGrayData(requestBuffer->rawMaster, Master);
 				}
 
 				// get slave raw image
 				if (requestBuffer->rawSlave1.pData)
 				{
 					currentSlaveImage = nullptr;
-					slaveWidth = requestBuffer->rawSlave1.iWidth;
-					slaveHeight = requestBuffer->rawSlave1.iHeight;
-					CopySlaveData(requestBuffer->rawSlave1);
+					Slave->Width = requestBuffer->rawSlave1.iWidth;
+					Slave->Height = requestBuffer->rawSlave1.iHeight;
+					CopyGrayData(requestBuffer->rawSlave1, Slave);
 				}
 
 				// get depth mapped image
 				if (requestBuffer->depthMapped.pData)
 				{
 					currentDepthMappedImage = nullptr;
-					depthMappedWidth = requestBuffer->depthMapped.iWidth;
-					depthMappedHeight = requestBuffer->depthMapped.iHeight;
-					CopyDepthMappedData(requestBuffer->depthMapped);
+					DepthMapped->Width = requestBuffer->depthMapped.iWidth;
+					DepthMapped->Height = requestBuffer->depthMapped.iHeight;
+					CopyDepthData(requestBuffer->depthMapped, DepthMapped);
 				}
 
 				// get depth raw image
@@ -220,11 +223,11 @@ namespace MetriCam2
 					currentDistanceImageMapped = nullptr;
 					currentPointCloud = nullptr;
 					currentPointCloudMapped = nullptr;
-
 					currentDepthRawImage = nullptr;
-					depthRawWidth = requestBuffer->depthRaw.iWidth;
-					depthRawHeight = requestBuffer->depthRaw.iHeight;
-					CopyDepthRawData(requestBuffer->depthRaw);
+
+					DepthRaw->Width = requestBuffer->depthRaw.iWidth;
+					DepthRaw->Height= requestBuffer->depthRaw.iHeight;
+					CopyDepthData(requestBuffer->depthRaw, DepthRaw);
 				}
 
 				focalLength = (float)requestBuffer->focalLength;
@@ -241,39 +244,81 @@ namespace MetriCam2
 		{
 			if (ChannelNames::Color == channelName)
 			{
-				return CalcColor();
+				if (nullptr == currentColorImage)
+				{
+					currentColorImage = CalcColorImage(Color);
+				}
+				return currentColorImage;
 			}
 			if (ChannelNames::Left == channelName)
 			{
-				return CalcMaster();
+				if (nullptr == currentMasterImage)
+				{
+					currentMasterImage = CalcFloatImage(Master);
+				}
+				return currentMasterImage;
 			}
 			if (ChannelNames::Right == channelName)
 			{
-				return CalcSlave();
+				if (nullptr == currentSlaveImage)
+				{
+					currentSlaveImage = CalcFloatImage(Slave);
+				}
+				return currentSlaveImage;
 			}
 			if (CustomChannelNames::DepthMapped == channelName)
 			{
-				return CalcDepthMapped();
+				if (nullptr == currentDepthMappedImage)
+				{
+					currentDepthMappedImage = CalcFloatImage(DepthMapped);
+				}
+				return currentDepthMappedImage;
 			}
 			if (CustomChannelNames::DepthRaw == channelName)
 			{
-				return CalcDepthRaw();
+				if (nullptr == currentDepthRawImage)
+				{
+					currentDepthRawImage = CalcFloatImage(DepthRaw);
+				}
+				return currentDepthRawImage;
 			}
 			if (CustomChannelNames::PointCloudMapped == channelName)
 			{
-				return CalcPointCloudFromDepthMapped();
+				if (nullptr == currentPointCloudMapped)
+				{
+					FloatCameraImage^ depthImg = (FloatCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::DepthMapped);
+					currentPointCloudMapped = CalcPointCloud(depthImg);
+				}
+				return currentPointCloudMapped;
 			}
 			if (CustomChannelNames::DistanceMapped == channelName)
 			{
-				return CalcDistancesMapped();
+				if (nullptr == currentDistanceImageMapped)
+				{
+					FloatCameraImage^ fImg = (FloatCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::PointCloudMapped);
+					Point3fCameraImage^ pts3D = CalcPointCloud(fImg);
+					currentDistanceImageMapped = CalcDistances(pts3D);
+				}
+				return currentDistanceImageMapped;
 			}
 			if (ChannelNames::Distance == channelName)
 			{
-				return CalcDistances();
+				if (nullptr == currentDistanceImage)
+				{
+					FloatCameraImage^ fImg = (FloatCameraImage^)CalcChannelImpl(ChannelNames::PointCloud);
+					Point3fCameraImage^ pts3D = CalcPointCloud(fImg);
+					currentDistanceImage = CalcDistances(pts3D);
+				}
+				return currentDistanceImage;
 			}
 			if (ChannelNames::PointCloud == channelName)
 			{
-				return CalcPointCloudFromDepthRaw();
+				if (nullptr == currentPointCloud)
+				{
+					FloatCameraImage^ depthImg = (FloatCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::DepthRaw);
+					currentPointCloud = CalcPointCloud(depthImg);
+				}
+				return currentPointCloud;
 			}
 
 			// this should not happen, because Camera checks if the channel is active.
@@ -284,209 +329,84 @@ namespace MetriCam2
 		{
 			if (MetriCam2::ChannelNames::Distance == channelName || MetriCam2::ChannelNames::Amplitude == channelName)
 			{
-				return gcnew ProjectiveTransformationZhang(depthRawWidth, depthRawHeight, FocalLength, FocalLength, depthRawWidth / 2.0f, depthRawHeight / 2.0f, 0, 0, 0, 0, 0);
+				return gcnew ProjectiveTransformationZhang(DepthRaw->Width, DepthRaw->Height, FocalLength, FocalLength, DepthRaw->Width / 2.0f, DepthRaw->Height / 2.0f, 0, 0, 0, 0, 0);
 			}
 			return Camera::GetIntrinsics(channelName);
 		}
 
-		ColorCameraImage ^ MvBlueSirius::CalcColor()
+		ColorCameraImage ^ MvBlueSirius::CalcColorImage(ImageData^ image)
 		{
 			System::Threading::Monitor::Enter(updateLock);
 
-			if (nullptr == currentColorImage)
+			ColorCameraImage^ cImage = gcnew ColorCameraImage(image->Width, image->Height);
+			BitmapData^ bitmapData = cImage->Data->LockBits(System::Drawing::Rectangle(0, 0, image->Width, image->Height), ImageLockMode::WriteOnly, cImage->Data->PixelFormat);
+			int colorIdx = 0;
+			for (unsigned int y = 0; y < image->Height; y++)
 			{
-				currentColorImage = gcnew ColorCameraImage(colorWidth, colorHeight);
-				BitmapData^ bitmapData = currentColorImage->Data->LockBits(System::Drawing::Rectangle(0, 0, colorWidth, colorHeight), ImageLockMode::WriteOnly, currentColorImage->Data->PixelFormat);
-				int colorIdx = 0;
-				for (unsigned int y = 0; y < colorHeight; y++)
+				unsigned char* linePtr = (unsigned char*)(bitmapData->Scan0.ToPointer()) + bitmapData->Stride * y;
+				for (unsigned int x = 0; x < image->Width; x++)
 				{
-					unsigned char* linePtr = (unsigned char*)(bitmapData->Scan0.ToPointer()) + bitmapData->Stride * y;
-					for (unsigned int x = 0; x < colorWidth; x++)
-					{
-						*linePtr++ = pRawColorData[colorIdx++];
-						*linePtr++ = pRawColorData[colorIdx++];
-						*linePtr++ = pRawColorData[colorIdx++];
-						*linePtr++ = 255;
-					}
+					*linePtr++ = image->Data[colorIdx++];
+					*linePtr++ = image->Data[colorIdx++];
+					*linePtr++ = image->Data[colorIdx++];
+					*linePtr++ = 255;
 				}
-				currentColorImage->Data->UnlockBits(bitmapData);
 			}
+			cImage->Data->UnlockBits(bitmapData);
 
 			System::Threading::Monitor::Exit(updateLock);
 
-			return currentColorImage;
+			return cImage;
 		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcMaster()
+		FloatCameraImage ^ MvBlueSirius::CalcFloatImage(ImageData^ image)
 		{
 			System::Threading::Monitor::Enter(updateLock);
 
-			if (nullptr == currentMasterImage)
+			FloatCameraImage^ fImage = gcnew FloatCameraImage(image->Width, image->Height);
+			int i = 0;
+			for (unsigned int y = 0; y < image->Height; y++)
 			{
-				currentMasterImage = gcnew FloatCameraImage(masterWidth, masterHeight);
-				int i = 0;
-				for (unsigned int y = 0; y < masterHeight; y++)
+				for (unsigned int x = 0; x < image->Width; x++)
 				{
-					for (unsigned int x = 0; x < masterWidth; x++)
-					{
-						currentMasterImage[y, x] = pRawMasterData[i++];
-					}
+					fImage[y, x] = image->Data[i++];
 				}
 			}
 
 			System::Threading::Monitor::Exit(updateLock);
 
-			return currentMasterImage;
+			return fImage;
 		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcSlave()
+		FloatCameraImage ^ MvBlueSirius::CalcDistances(Point3fCameraImage^ image)
 		{
 			System::Threading::Monitor::Enter(updateLock);
 
-			if (nullptr == currentSlaveImage)
+			FloatCameraImage^ fImage = gcnew FloatCameraImage(image->Width, image->Height);
+			int i = 0;
+			for (unsigned int y = 0; y < image->Height; y++)
 			{
-				currentSlaveImage = gcnew FloatCameraImage(slaveWidth, slaveHeight);
-				int i = 0;
-				for (unsigned int y = 0; y < slaveHeight; y++)
+				for (unsigned int x = 0; x < image->Width; x++)
 				{
-					for (unsigned int x = 0; x < slaveWidth; x++)
-					{
-						currentSlaveImage[y, x] = pRawSlaveData[i++];
-					}
+					fImage[y, x] = image[y, x].GetLength();
 				}
 			}
 
 			System::Threading::Monitor::Exit(updateLock);
 
-			return currentMasterImage;
+			return fImage;
 		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcDepthMapped()
-		{
-			// TODO: possible optimization: do this in CopyDepthMappedData
-			System::Threading::Monitor::Enter(updateLock);
-
-			if (nullptr == currentDepthMappedImage)
-			{
-				currentDepthMappedImage = gcnew FloatCameraImage(depthMappedWidth, depthMappedHeight);
-				int i = 0;
-				for (unsigned int y = 0; y < depthMappedHeight; y++)
-				{
-					for (unsigned int x = 0; x < depthMappedWidth; x++)
-					{
-						currentDepthMappedImage[y, x] = pRawDepthMappedData[i++];
-					}
-				}
-			}
-
-			System::Threading::Monitor::Exit(updateLock);
-
-			return currentDepthMappedImage;
-		}
-
-		FloatCameraImage ^ MvBlueSirius::CalcDepthRaw()
-		{
-			// TODO: possible optimization: do this in CopyDepthRawData
-			System::Threading::Monitor::Enter(updateLock);
-
-			if (nullptr == currentDepthRawImage)
-			{
-				currentDepthRawImage = gcnew FloatCameraImage(depthRawWidth, depthRawHeight);
-				int i = 0;
-				for (unsigned int y = 0; y < depthRawHeight; y++)
-				{
-					for (unsigned int x = 0; x < depthRawWidth; x++)
-					{
-						currentDepthRawImage[y, x] = pRawDepthRawData[i++];
-					}
-				}
-			}
-
-			System::Threading::Monitor::Exit(updateLock);
-
-			return currentDepthRawImage;
-		}
-
-		FloatCameraImage ^ MvBlueSirius::CalcDistances()
+		Point3fCameraImage ^ MvBlueSirius::CalcPointCloud(FloatCameraImage^ depthImage)
 		{
 			System::Threading::Monitor::Enter(updateLock);
 
-			if (nullptr == currentDistanceImage)
-			{
-				// Compute distances
-				Point3fCameraImage^ pts3D = CalcPointCloudFromDepthRaw();
 
-				currentDistanceImage = gcnew FloatCameraImage(depthRawWidth, depthRawHeight);
-
-				for (unsigned int y = 0; y < depthRawHeight; y++)
-				{
-					for (unsigned int x = 0; x < depthRawWidth; x++)
-					{
-						currentDistanceImage[y, x] = pts3D[y, x].GetLength();
-					}
-				}
-			}
+			Point3fCameraImage^ PointCloud = DepthImageToPointCloud(depthImage, FocalLength);
 
 			System::Threading::Monitor::Exit(updateLock);
 
-			return currentDistanceImage;
-		}
-
-		FloatCameraImage ^ MvBlueSirius::CalcDistancesMapped()
-		{
-			System::Threading::Monitor::Enter(updateLock);
-
-			if (nullptr == currentDistanceImageMapped)
-			{
-				// Compute distances
-				Point3fCameraImage^ pts3D = CalcPointCloudFromDepthMapped();
-
-				currentDistanceImageMapped = gcnew FloatCameraImage(depthRawWidth, depthRawHeight);
-
-				for (unsigned int y = 0; y < depthRawHeight; y++)
-				{
-					for (unsigned int x = 0; x < depthRawWidth; x++)
-					{
-						currentDistanceImageMapped[y, x] = pts3D[y, x].GetLength();
-					}
-				}
-			}
-
-			System::Threading::Monitor::Exit(updateLock);
-
-			return currentDistanceImageMapped;
-		}
-
-		Point3fCameraImage ^ MvBlueSirius::CalcPointCloudFromDepthRaw()
-		{
-			//log->Error("CalcPointCloud is incomplete.");
-			System::Threading::Monitor::Enter(updateLock);
-
-			if (nullptr == currentPointCloud)
-			{
-				FloatCameraImage^ depthRawImage = CalcDepthRaw();
-				currentPointCloud = DepthImageToPointCloud(depthRawImage, FocalLength);
-			}
-
-			System::Threading::Monitor::Exit(updateLock);
-
-			return currentPointCloud;
-		}
-
-		Point3fCameraImage ^ MvBlueSirius::CalcPointCloudFromDepthMapped()
-		{
-			//log->Error("CalcPointCloud is incomplete.");
-			System::Threading::Monitor::Enter(updateLock);
-
-			if (nullptr == currentPointCloudMapped)
-			{
-				FloatCameraImage^ depthMappedImage = CalcDepthMapped();
-				currentPointCloudMapped = DepthImageToPointCloud(depthMappedImage, FocalLength);
-			}
-
-			System::Threading::Monitor::Exit(updateLock);
-
-			return currentPointCloudMapped;
+			return PointCloud;
 		}
 
 
@@ -519,158 +439,54 @@ namespace MetriCam2
 			return pointCloud;
 		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcDepthRawIR()
-		{
-			throw gcnew System::NotImplementedException();
-			// TODO: insert return statement here
-		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcFlow()
-		{
-			throw gcnew System::NotImplementedException();
-			// TODO: insert return statement here
-		}
 
-		void MvBlueSirius::CopyMasterData(MV6D_GrayBuffer masterBuffer)
+		void MvBlueSirius::CopyColorData(MV6D_ColorBuffer& colorBuffer, ImageData^ img)
 		{
-			int sizeInBytes = masterWidth * masterHeight;
-			ResizeMasterBuffer(sizeInBytes);
-			memcpy_s((void*)pRawMasterData, sizeInBytes, (void*)masterBuffer.pData, sizeInBytes);
-		}
+			int numElements = img->Width * img->Height;
+			int sizeInBytes = numElements * sizeof(char) * 3;
+			ResizeBuffer(img, sizeInBytes);
 
-		void MvBlueSirius::CopySlaveData(MV6D_GrayBuffer slaveBuffer)
-		{
-			int sizeInBytes = slaveWidth * slaveHeight;
-			ResizeSlaveBuffer(sizeInBytes);
-			memcpy_s((void*)pRawSlaveData, sizeInBytes, (void*)slaveBuffer.pData, sizeInBytes);
-		}
-
-		void MvBlueSirius::CopyColorData(MV6D_ColorBuffer colorBuffer)
-		{
-			int sizeInBytes = colorWidth * colorHeight * 3;
-			ResizeColorBuffer(sizeInBytes);
-			int pxIdx = 0;
-			int i = 0;
-			for (unsigned int y = 0; y < colorHeight; y++)
+			for (unsigned int i = 0; i < numElements; i++)
 			{
-				for (unsigned int x = 0; x < colorWidth; x++)
-				{
-					pRawColorData[i++] = colorBuffer.pData[pxIdx].b;
-					pRawColorData[i++] = colorBuffer.pData[pxIdx].g;
-					pRawColorData[i++] = colorBuffer.pData[pxIdx].r;
-					pxIdx++;
-				}
+				img->Data[(3 * i) + 0] = colorBuffer.pData[i].b;
+				img->Data[(3 * i) + 1] = colorBuffer.pData[i].g;
+				img->Data[(3 * i) + 2] = colorBuffer.pData[i].r;
 			}
 		}
 
-		void MvBlueSirius::CopyDepthMappedData(MV6D_DepthBuffer depthBuffer)
+		void MvBlueSirius::CopyDepthData(MV6D_DepthBuffer& depthBuffer, ImageData^ img)
 		{
-			int width = depthBuffer.iWidth;
-			int height = depthBuffer.iHeight;
-			int numElements = width * height;
+			int numElements = img->Width * img->Height;
 			int sizeInBytes = numElements * sizeof(float);
-			ResizeDepthMappedBuffer(sizeInBytes);
-			memcpy_s((void*)pRawDepthMappedData, depthMappedBufferNumElements, (void*)depthBuffer.pData, sizeInBytes);
+			ResizeBuffer(img, sizeInBytes);
+			memcpy_s((void*)img->Data, sizeInBytes, (void*)depthBuffer.pData, sizeInBytes);
 		}
 
-		void MvBlueSirius::CopyDepthRawData(MV6D_DepthBuffer depthBuffer)
+		void MvBlueSirius::CopyGrayData(MV6D_GrayBuffer& buffer, ImageData^ img)
 		{
-			int width = depthBuffer.iWidth;
-			int height = depthBuffer.iHeight;
-			int numElements = width * height;
-			int sizeInBytes = numElements * sizeof(float);
-			ResizeDepthRawBuffer(sizeInBytes);
-			memcpy_s((void*)pRawDepthRawData, depthRawBufferNumElements, (void*)depthBuffer.pData, sizeInBytes);
+			int numElements = img->Width * img->Height;
+			int sizeInBytes = numElements * sizeof(char);
+			ResizeBuffer(img, sizeInBytes);
+			memcpy_s((void*)img->Data, sizeInBytes, (void*)buffer.pData, sizeInBytes);
 		}
 
-		void MvBlueSirius::ResizeMasterBuffer(int sizeInBytes)
+		void MvBlueSirius::ResizeBuffer(ImageData^ img, int sizeInBytes)
 		{
-			if (nullptr != pRawMasterData)
+			if (nullptr != img->Data)
 			{
 				// Buffer exists
-				if (masterBufferSizeInBytes == sizeInBytes)
+				if (img->BufferSize == sizeInBytes)
 				{
 					// Buffer has correct size
 					return;
 				}
 
-				FreeMasterBuffer();
+				FreeImageBuffer(img);
 			}
 
-			pRawMasterData = new unsigned char[sizeInBytes];
-			masterBufferSizeInBytes = sizeInBytes;
-		}
-
-		void MvBlueSirius::ResizeSlaveBuffer(int sizeInBytes)
-		{
-			if (nullptr != pRawSlaveData)
-			{
-				// Buffer exists
-				if (slaveBufferSizeInBytes == sizeInBytes)
-				{
-					// Buffer has correct size
-					return;
-				}
-
-				FreeSlaveBuffer();
-			}
-
-			pRawSlaveData = new unsigned char[sizeInBytes];
-			slaveBufferSizeInBytes = sizeInBytes;
-		}
-
-		void MvBlueSirius::ResizeColorBuffer(int sizeInBytes)
-		{
-			if (nullptr != pRawColorData)
-			{
-				// Buffer exists
-				if (colorBufferSizeInBytes == sizeInBytes)
-				{
-					// Buffer has correct size
-					return;
-				}
-
-				FreeColorBuffer();
-			}
-
-			pRawColorData = new unsigned char[sizeInBytes];
-			colorBufferSizeInBytes = sizeInBytes;
-		}
-
-		void MvBlueSirius::ResizeDepthMappedBuffer(int numElements)
-		{
-			if (nullptr != pRawDepthMappedData)
-			{
-				// Buffer exists
-				if (depthMappedBufferNumElements == numElements)
-				{
-					// Buffer has correct size
-					return;
-				}
-
-				FreeDepthMappedBuffer();
-			}
-
-			pRawDepthMappedData = new float[numElements];
-			depthMappedBufferNumElements = numElements;
-		}
-
-		void MvBlueSirius::ResizeDepthRawBuffer(int numElements)
-		{
-			if (nullptr != pRawDepthRawData)
-			{
-				// Buffer exists
-				if (depthRawBufferNumElements == numElements)
-				{
-					// Buffer has correct size
-					return;
-				}
-
-				FreeDepthRawBuffer();
-			}
-
-			pRawDepthRawData = new float[numElements];
-			depthRawBufferNumElements = numElements;
+			img->Data = new unsigned char[sizeInBytes];
+			img->BufferSize = sizeInBytes;
 		}
 	}
 }
