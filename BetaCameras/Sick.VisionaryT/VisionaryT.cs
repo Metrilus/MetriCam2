@@ -8,7 +8,7 @@ using MetriCam2.Cameras.Internal.Sick;
 namespace MetriCam2.Cameras
 {
     /// <summary>
-    /// MetriCam2 Wrapper for V3S100 Cameras.
+    /// MetriCam2 wrapper for Sick V3S100 cameras.
     /// </summary>
     public class VisionaryT : Camera
     {
@@ -173,7 +173,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Connects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
         protected override void ConnectImpl()
         {
             if (ipAddress == null || ipAddress == "")
@@ -224,7 +224,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Disconnects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
         protected override void DisconnectImpl()
         {
             device.Control_StopStream();
@@ -235,7 +235,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Updates data buffers of all channels with data of current frame.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
         protected override void UpdateImpl()
         {
             imageBuffer = device.Stream_GetFrame();

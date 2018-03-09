@@ -5,7 +5,7 @@ MetriCam 2 uses Newtonsoft.Json and xmlrpcnet, both licensed under the MIT licen
 
 MIT License
 
-Copyright (c) 2017 Metrilus GmbH
+Copyright (c) 2013 - 2018 Metrilus GmbH
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
