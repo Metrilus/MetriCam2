@@ -38,27 +38,85 @@ namespace MetriCam2
 				unsigned int Height;
 				unsigned int BufferSize;
 				unsigned char* Data;
+
+				void FreeData()
+				{
+					if (nullptr != this->Data)
+					{
+						delete[] this->Data;
+					}
+					this->BufferSize = 0;
+					this->Data = nullptr;
+				}
+
+				void ResizeBuffer(int sizeInBytes)
+				{
+					if (nullptr != this->Data)
+					{
+						// Buffer exists
+						if (this->BufferSize == sizeInBytes)
+						{
+							// Buffer has correct size
+							return;
+						}
+
+						this->FreeData();
+					}
+
+					this->Data = new unsigned char[sizeInBytes];
+					this->BufferSize = sizeInBytes;
+				}
+
+				void CopyColorData(MV6D_ColorBuffer& colorBuffer)
+				{
+					int numElements = this->Width * this->Height;
+					int sizeInBytes = numElements * sizeof(char) * 3;
+					ResizeBuffer(sizeInBytes);
+
+					for (unsigned int i = 0; i < numElements; i++)
+					{
+						this->Data[(3 * i) + 0] = colorBuffer.pData[i].b;
+						this->Data[(3 * i) + 1] = colorBuffer.pData[i].g;
+						this->Data[(3 * i) + 2] = colorBuffer.pData[i].r;
+					}
+				}
+
+				void CopyDepthData(MV6D_DepthBuffer& depthBuffer)
+				{
+					int numElements = this->Width * this->Height;
+					int sizeInBytes = numElements * sizeof(float);
+					ResizeBuffer(sizeInBytes);
+					memcpy_s((void*)this->Data, sizeInBytes, (void*)depthBuffer.pData, sizeInBytes);
+				}
+
+				void CopyGrayData(MV6D_GrayBuffer& buffer)
+				{
+					int numElements = this->Width * this->Height;
+					int sizeInBytes = numElements * sizeof(char);
+					ResizeBuffer(sizeInBytes);
+					memcpy_s((void*)this->Data, sizeInBytes, (void*)buffer.pData, sizeInBytes);
+				}
 			};
 
-			float focalLength;
+			float _focalLength;
 
-			ImageData^ Master;
-			ImageData^ Slave;
-			ImageData^ Color;
-			ImageData^ DepthMapped;
-			ImageData^ DepthRaw;
+			ImageData^ _Master;
+			ImageData^ _Slave;
+			ImageData^ _Color;
+			ImageData^ _DepthMapped;
+			ImageData^ _DepthRaw;
 
-			FloatCameraImage^ currentMasterImage; // caches computed FloatCameraImage
-			FloatCameraImage^ currentSlaveImage; // caches computed FloatCameraImage
-			ColorCameraImage^ currentColorImage; // caches computed bitmap
-			FloatCameraImage^ currentDepthMappedImage; // caches computed FloatCameraImage
-			FloatCameraImage^ currentDepthRawImage; // caches computed FloatCameraImage
-			FloatCameraImage^ currentDistanceImage; // caches computed FloatCameraImage
-			FloatCameraImage^ currentDistanceImageMapped; // caches computed FloatCameraImage
-			Point3fCameraImage^ currentPointCloud; // caches computed Point3fCameraImage
-			Point3fCameraImage^ currentPointCloudMapped; // caches computed Point3fCameraImage
+			FloatCameraImage^ _currentMasterImage; // caches computed FloatCameraImage
+			FloatCameraImage^ _currentSlaveImage; // caches computed FloatCameraImage
+			ColorCameraImage^ _currentColorImage; // caches computed bitmap
+			FloatCameraImage^ _currentDepthMappedImage; // caches computed FloatCameraImage
+			FloatCameraImage^ _currentDepthRawImage; // caches computed FloatCameraImage
+			FloatCameraImage^ _currentDistanceImage; // caches computed FloatCameraImage
+			FloatCameraImage^ _currentDistanceImageMapped; // caches computed FloatCameraImage
+			Point3fCameraImage^ _currentPointCloud; // caches computed Point3fCameraImage
+			Point3fCameraImage^ _currentPointCloudMapped; // caches computed Point3fCameraImage
 
-			msclr::interop::marshal_context oMarshalContext;
+			msclr::interop::marshal_context _oMarshalContext;
 
 		public:
 			MvBlueSirius();
@@ -158,7 +216,7 @@ namespace MetriCam2
 		{
 			inline float get()
 			{
-				return focalLength;
+				return _focalLength;
 			}
 		}
 
@@ -207,19 +265,6 @@ namespace MetriCam2
 			FloatCameraImage^ CalcFloatImage(ImageData^ image);
 			FloatCameraImage^ CalcDistances(Point3fCameraImage^ image);
 			Point3fCameraImage^ CalcPointCloud(FloatCameraImage^ depthImage);
-			void CopyColorData(MV6D_ColorBuffer& colorBuffer, ImageData^ img);
-			void CopyGrayData(MV6D_GrayBuffer& masterBuffer, ImageData^ img);
-			void CopyDepthData(MV6D_DepthBuffer& depthBuffer, ImageData^ img);
-			void ResizeBuffer(ImageData^ img, int sizeInBytes);
-			inline void FreeImageBuffer(ImageData^ image)
-			{
-				if (nullptr != image->Data)
-				{
-					delete[] image->Data;
-				}
-				image->BufferSize = 0;
-				image->Data = nullptr;
-			};
 			inline bool CheckResult(MV6D_ResultCode r, Type^ exceptionType, int exceptionID)
 			{
 				if (r != rcOk)
