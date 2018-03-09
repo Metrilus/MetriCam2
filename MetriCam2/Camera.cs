@@ -2465,19 +2465,19 @@ namespace MetriCam2
         /// Device-specific implementation of <see cref="Connect"/>.
         /// Connects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Connect"/> inside the camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside the camera lock.</remarks>
         protected abstract void ConnectImpl();
         /// <summary>
         /// Device-specific implementation of <see cref="Disconnect"/>.
         /// Disconnects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Disconnect"/> (usually inside the camera lock).</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> (usually inside the camera lock).</remarks>
         protected abstract void DisconnectImpl();
         /// <summary>
         /// Device-specific implementation of <see cref="Update"/>.
         /// Updates data buffers of all active channels with data of current frame.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Update"/> inside the camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside the camera lock.</remarks>
         protected abstract void UpdateImpl();
         /// <summary>
         /// Device-specific implementation of <see cref="ActivateChannel"/>.
@@ -2486,7 +2486,7 @@ namespace MetriCam2
         /// <param name="channelName">Channel name.</param>
         /// <remarks>
         /// Depending on the underlying camera, the channel stream may be created / registered in this method.
-        /// This method is implicitely called by <see cref="Camera.ActivateChannel"/> inside the camera lock.
+        /// This method is implicitly called by <see cref="Camera.ActivateChannel"/> inside the camera lock.
         /// </remarks>
         protected virtual void ActivateChannelImpl(string channelName)
         {
@@ -2499,7 +2499,7 @@ namespace MetriCam2
         /// <param name="channelName">Channel name.</param>
         /// <remarks>
         /// Depending on the underlying camera, the channel stream may be destroyed / unregistered in this method.
-        /// This method is implicitely called by <see cref="Camera.DeactivateChannel"/> inside the camera lock.
+        /// This method is implicitly called by <see cref="Camera.DeactivateChannel"/> inside the camera lock.
         /// </remarks>
         protected virtual void DeactivateChannelImpl(string channelName)
         {
@@ -2510,7 +2510,7 @@ namespace MetriCam2
         /// <param name="channelName">Channel name.</param>
         /// <returns>(Image) Data.</returns>
         /// <remarks>
-        /// This method is implicitely called by <see cref="Camera.CalcChannel"/>, non-locked.
+        /// This method is implicitly called by <see cref="Camera.CalcChannel"/>, non-locked.
         /// If your implementation needs locking, use <see cref="Camera.cameraLock"/>.
         /// </remarks>
         protected abstract CameraImage CalcChannelImpl(string channelName);
