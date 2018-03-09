@@ -40,6 +40,21 @@ namespace MetriCam2.Cameras
             set
             {
                 SetResolution100k(value);
+
+                // update image width and height
+                SetConfigurationMode(true);
+                edit.EditApplication(applicationId);
+
+                int clippingTop = Convert.ToInt32(appImager.GetParameter("ClippingTop"));
+                int clippingBottom = Convert.ToInt32(appImager.GetParameter("ClippingBottom"));
+                int clippingLeft = Convert.ToInt32(appImager.GetParameter("ClippingLeft"));
+                int clippingRight = Convert.ToInt32(appImager.GetParameter("ClippingRight"));
+
+                edit.StopEditingApplication();
+                SetConfigurationMode(false);
+
+                width = clippingRight - clippingLeft + 1; // indices are zero based --> +1
+                height = clippingBottom - clippingTop + 1;
             }
         }
         private ParamDesc<bool> Resolution100kDesc
