@@ -125,6 +125,18 @@ namespace MetriCam2
 			static Point3fCameraImage^ DepthImageToPointCloud(FloatCameraImage^ depthImage, float focalLength);
 			virtual IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 
+#if !NETSTANDARD2_0
+			property System::Drawing::Icon^ CameraIcon
+			{
+				System::Drawing::Icon^ get() override
+				{
+					System::Reflection::Assembly^ assembly = System::Reflection::Assembly::GetExecutingAssembly();
+					System::IO::Stream^ iconStream = assembly->GetManifestResourceStream("MatrixVisionIcon.ico");
+					return gcnew System::Drawing::Icon(iconStream);
+				}
+			}
+#endif
+
 			////////////////////////////////////////
 			//// CAMERA PARAMETERS
 
