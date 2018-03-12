@@ -21,21 +21,21 @@ namespace MetriCam2
 			ref class CustomChannelNames
 			{
 				public:
-					/// Depth buffer.
-					/// Pixel mapped (color, flow, depth).
+					// Depth buffer.
+					// Pixel mapped (color, flow, depth).
 					static const String^ DepthMapped = "DepthMapped";
 
-					/// Raw depth buffer.
-					/// Not pixel mapped.
-					/// The raw depth buffer is not mapped with the color nor
-					/// the flow buffer. Therefore it holds more depth information
-					/// as the mapped depth buffer.
+					// Raw depth buffer.
+					// Not pixel mapped.
+					// The raw depth buffer is not mapped with the color nor
+					// the flow buffer. Therefore it holds more depth information
+					// as the mapped depth buffer.
 					static const String^ DepthRaw = "DepthRaw";
 
-					/// FloatCameraImage based on PointCloudMapped data
+					// Distance image computed from DepthMapped data
 					static const String^ DistanceMapped = "DistanceMapped";
 
-					/// Point3fCameraImage based on DepthMapped buffer
+					// Point cloud computed from DepthMapped data
 					static const String^ PointCloudMapped = "PointCloudMapped";
 			};
 
