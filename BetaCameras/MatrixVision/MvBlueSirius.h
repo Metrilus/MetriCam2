@@ -14,12 +14,11 @@ namespace MetriCam2
 		public ref class MvBlueSirius : Camera
 		{
 		public:
-		public:
 			/// <summary>
 			/// Defines the custom channel names for easier handling.
 			/// </summary>
 			/// <remarks>Similar to MetriCam2.ChannelNames for standard channel names.</remarks>
-			static ref class CustomChannelNames
+			ref class CustomChannelNames
 			{
 				public:
 					static const String^ DepthMapped = "DepthMapped";
@@ -29,10 +28,6 @@ namespace MetriCam2
 			};
 
 		private:
-			MV6D_Handle h6D;
-			System::Object^ updateLock;
-			String^ ipAddress;
-
 			ref struct ImageData {
 				unsigned int Width;
 				unsigned int Height;
@@ -49,27 +44,9 @@ namespace MetriCam2
 					this->Data = nullptr;
 				}
 
-				void ResizeBuffer(int sizeInBytes)
-				{
-					if (nullptr != this->Data)
-					{
-						// Buffer exists
-						if (this->BufferSize == sizeInBytes)
-						{
-							// Buffer has correct size
-							return;
-						}
-
-						this->FreeData();
-					}
-
-					this->Data = new unsigned char[sizeInBytes];
-					this->BufferSize = sizeInBytes;
-				}
-
 				void CopyColorData(MV6D_ColorBuffer& colorBuffer)
 				{
-					int numElements = this->Width * this->Height;
+					unsigned int numElements = this->Width * this->Height;
 					int sizeInBytes = numElements * sizeof(char) * 3;
 					ResizeBuffer(sizeInBytes);
 
@@ -96,15 +73,36 @@ namespace MetriCam2
 					ResizeBuffer(sizeInBytes);
 					memcpy_s((void*)this->Data, sizeInBytes, (void*)buffer.pData, sizeInBytes);
 				}
+
+			private:
+				void ResizeBuffer(int sizeInBytes)
+				{
+					if (nullptr != this->Data)
+					{
+						// Buffer exists
+						if (this->BufferSize == sizeInBytes)
+						{
+							// Buffer has correct size
+							return;
+						}
+
+						this->FreeData();
+					}
+
+					this->Data = new unsigned char[sizeInBytes];
+					this->BufferSize = sizeInBytes;
+				}
 			};
 
+			MV6D_Handle _h6D;
+			System::Object^ _updateLock;
 			float _focalLength;
 
-			ImageData^ _Master;
-			ImageData^ _Slave;
-			ImageData^ _Color;
-			ImageData^ _DepthMapped;
-			ImageData^ _DepthRaw;
+			ImageData^ _master;
+			ImageData^ _slave;
+			ImageData^ _color;
+			ImageData^ _depthMapped;
+			ImageData^ _depthRaw;
 
 			FloatCameraImage^ _currentMasterImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentSlaveImage; // caches computed FloatCameraImage
@@ -146,8 +144,8 @@ namespace MetriCam2
 			{
 				MV6D_Property myAutoProperty;
 				int regValue = value ? 1 : 0;
-				MV6D_ResultCode	result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_CAMERA_CONTROL_AUTO, &myAutoProperty);
-				result = MV6D_PropertyWrite(h6D, myAutoProperty, &regValue, sizeof(regValue));
+				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_AUTO, &myAutoProperty);
+				result = MV6D_PropertyWrite(_h6D, myAutoProperty, &regValue, sizeof(regValue));
 			}
 		}
 				//! Gets/Sets the exposure time in [?].
@@ -159,9 +157,9 @@ namespace MetriCam2
 				int size = sizeof(exposure);
 
 				MV6D_Property exposureProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_CAMERA_CONTROL_EXPOSURE, &exposureProperty);
+				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_EXPOSURE, &exposureProperty);
 
-				result = MV6D_PropertyRead(h6D, exposureProperty, &exposure, &size);
+				result = MV6D_PropertyRead(_h6D, exposureProperty, &exposure, &size);
 				return (float)exposure;
 			}
 			void set(float value)
@@ -170,8 +168,8 @@ namespace MetriCam2
 				int size = sizeof(exposure);
 
 				MV6D_Property myExposureProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_CAMERA_CONTROL_EXPOSURE, &myExposureProperty);
-				result = MV6D_PropertyWrite(h6D, myExposureProperty, &exposure, size);
+				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_EXPOSURE, &myExposureProperty);
+				result = MV6D_PropertyWrite(_h6D, myExposureProperty, &exposure, size);
 			}
 		}
 				//! Gets/Sets the gain.
@@ -183,9 +181,9 @@ namespace MetriCam2
 				int size = sizeof(gain);
 
 				MV6D_Property gainProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN, &gainProperty);
+				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN, &gainProperty);
 
-				result = MV6D_PropertyRead(h6D, gainProperty, &gain, &size);
+				result = MV6D_PropertyRead(_h6D, gainProperty, &gain, &size);
 				return (float)gain;
 			}
 			void set(float value)
@@ -194,8 +192,8 @@ namespace MetriCam2
 				int size = sizeof(gain);
 
 				MV6D_Property myGainProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN, &myGainProperty);
-				result = MV6D_PropertyWrite(h6D, myGainProperty, &gain, size);
+				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN, &myGainProperty);
+				result = MV6D_PropertyWrite(_h6D, myGainProperty, &gain, size);
 			}
 		}
 				// TODO: Add GainDesc
@@ -207,9 +205,9 @@ namespace MetriCam2
 				int size = sizeof(gain);
 
 				MV6D_Property gainProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN_COLOR, &gainProperty);
+				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN_COLOR, &gainProperty);
 
-				result = MV6D_PropertyRead(h6D, gainProperty, &gain, &size);
+				result = MV6D_PropertyRead(_h6D, gainProperty, &gain, &size);
 				return (float)gain;
 			}
 			void set(float value)
@@ -218,8 +216,8 @@ namespace MetriCam2
 				int size = sizeof(gain);
 
 				MV6D_Property myGainProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN_COLOR, &myGainProperty);
-				result = MV6D_PropertyWrite(h6D, myGainProperty, &gain, size);
+				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN_COLOR, &myGainProperty);
+				result = MV6D_PropertyWrite(_h6D, myGainProperty, &gain, size);
 			}
 		}
 				// TODO: Add GainColorDesc

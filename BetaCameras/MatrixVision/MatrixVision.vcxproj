@@ -12,14 +12,10 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{249420A5-952B-4C58-A35A-377E0CDCC023}</ProjectGuid>
-    <SccProjectName>SAK</SccProjectName>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccProvider>SAK</SccProvider>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
-    <RootNamespace>MatrixVision</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <RootNamespace>MetriCam2.Cameras.MatrixVision</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -67,6 +63,7 @@
       <AdditionalIncludeDirectories>Z:\external-libraries\Matrix Vision\mvIMPACT6D 2.2.1\include%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <AdditionalDependencies>mv6D.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>Z:\external-libraries\Matrix Vision\mvIMPACT6D 2.2.1\lib%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
@@ -79,6 +76,7 @@
       <AdditionalIncludeDirectories>Z:\external-libraries\Matrix Vision\mvIMPACT6D 2.2.1\include%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>mv6D.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>Z:\external-libraries\Matrix Vision\mvIMPACT6D 2.2.1\lib%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
@@ -101,9 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
-    <ClCompile Include="MvBlueSirius.cpp">
-      <FileType>CppClass</FileType>
-    </ClCompile>
+    <ClCompile Include="MvBlueSirius.cpp" />
     <ClCompile Include="Stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

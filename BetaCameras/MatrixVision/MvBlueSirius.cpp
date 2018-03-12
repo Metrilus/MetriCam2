@@ -11,7 +11,7 @@ namespace MetriCam2
 	namespace Cameras
 	{
 		MvBlueSirius::MvBlueSirius()
-			: _focalLength(0.0f), updateLock(gcnew Object())
+			: _focalLength(0.0f), _updateLock(gcnew Object())
 		{
 			modelName = "mvBlueSirius";
 
@@ -35,16 +35,16 @@ namespace MetriCam2
 			_currentPointCloud = nullptr;
 			_currentPointCloudMapped = nullptr;
 
-			_Master = gcnew ImageData;
-			_Slave = gcnew ImageData;
-			_Color = gcnew ImageData;
-			_DepthMapped = gcnew ImageData;
-			_DepthRaw = gcnew ImageData;
+			_master = gcnew ImageData;
+			_slave = gcnew ImageData;
+			_color = gcnew ImageData;
+			_depthMapped = gcnew ImageData;
+			_depthRaw = gcnew ImageData;
 		}
 
 		MvBlueSirius::~MvBlueSirius()
 		{
-			/* empty */
+			Disconnect(false);
 		}
 
 		void MvBlueSirius::LoadAllAvailableChannels()
@@ -66,14 +66,14 @@ namespace MetriCam2
 
 		void MvBlueSirius::ConnectImpl()
 		{
-			MV6D_Handle h6D_myass;
-			MV6D_ResultCode result = MV6D_Create(&h6D_myass, MV6D_ANY_GPU);
+			MV6D_Handle camHandle;
+			MV6D_ResultCode result = MV6D_Create(&camHandle, MV6D_ANY_GPU);
 			CheckResult(result, ConnectionFailedException::typeid, 1);
-			h6D = h6D_myass;
+			_h6D = camHandle;
 
 			// Update list of supported cameras
 			int deviceCount = 0;
-			result = MV6D_DeviceListUpdate(h6D, &deviceCount);
+			result = MV6D_DeviceListUpdate(_h6D, &deviceCount);
 			CheckResult(result, ConnectionFailedException::typeid, 2);
 			char serial[128] = { 0 };
 
@@ -81,7 +81,7 @@ namespace MetriCam2
 			for (int index = 0; index < deviceCount; ++index)
 			{
 				int inUse = 1;
-				result = MV6D_DeviceListGetSerial(h6D, serial, sizeof(serial), &inUse, index);
+				result = MV6D_DeviceListGetSerial(_h6D, serial, sizeof(serial), &inUse, index);
 				CheckResult(result, ConnectionFailedException::typeid, 3);
 
 				if (!inUse)
@@ -90,43 +90,40 @@ namespace MetriCam2
 				}
 			}
 
-			if (nullptr != serial && 0 != strcmp("", serial))
-			{
-				SerialNumber = gcnew String(serial);
-			}
-			else
+			if (nullptr == serial || 0 == strcmp("", serial))
 			{
 				throw ExceptionBuilder::BuildFromID(ConnectionFailedException::typeid, this, 4, "No available mv6D camera found");
 			}
+			SerialNumber = gcnew String(serial);
 
 			// open the device
-			result = MV6D_DeviceOpen(h6D, serial);
+			result = MV6D_DeviceOpen(_h6D, serial);
 			CheckResult(result, ConnectionFailedException::typeid, 5);
 
 			// configure the stereo algorithm
 			int filterSet = fsNone;
-			result = MV6D_SetDepthPreset(h6D, daFilterSet, filterSet);
+			result = MV6D_SetDepthPreset(_h6D, daFilterSet, filterSet);
 			CheckResult(result, ConnectionFailedException::typeid, 6);
 
 			int minimumDistance = minDist800mm;
-			result = MV6D_SetDepthPreset(h6D, daMinimumDistance, minimumDistance);
+			result = MV6D_SetDepthPreset(_h6D, daMinimumDistance, minimumDistance);
 			CheckResult(result, ConnectionFailedException::typeid, 7);
 
 			// get framerate property
 			MV6D_Property framerateProperty;
-			result = MV6D_PropertyGet(h6D, MV6D_PROPERTY_FRAMERATE, &framerateProperty);
+			result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_FRAMERATE, &framerateProperty);
 			CheckResult(result, ConnectionFailedException::typeid, 8);
 
 			// set framerate
 			double framerate = 15.0;
-			result = MV6D_PropertyWrite(h6D, framerateProperty, &framerate, sizeof(framerate));
+			result = MV6D_PropertyWrite(_h6D, framerateProperty, &framerate, sizeof(framerate));
 			CheckResult(result, ConnectionFailedException::typeid, 9);
 
-			result = MV6D_SetDepthPreset(h6D, daStereoAlgorithm, MV6D_Stereo_Algorithm::stereoAlgoRSGM);
+			result = MV6D_SetDepthPreset(_h6D, daStereoAlgorithm, MV6D_Stereo_Algorithm::stereoAlgoRSGM);
 			CheckResult(result, ConnectionFailedException::typeid, 10);
 
 			// start capturing from the device
-			result = MV6D_DeviceStart(h6D);
+			result = MV6D_DeviceStart(_h6D);
 			CheckResult(result, ConnectionFailedException::typeid, 11);
 
 			// Check calibration
@@ -150,18 +147,18 @@ namespace MetriCam2
 
 		void MvBlueSirius::DisconnectImpl()
 		{
-			MV6D_ResultCode result = MV6D_DeviceClose(h6D);
+			MV6D_ResultCode result = MV6D_DeviceClose(_h6D);
 			CheckResult(result, InvalidOperationException::typeid, 12);
-			result = MV6D_Close(h6D);
+			result = MV6D_Close(_h6D);
 			CheckResult(result, InvalidOperationException::typeid, 13);
 
-			System::Threading::Monitor::Enter(updateLock);
-			_Master->FreeData();
-			_Slave->FreeData();
-			_Color->FreeData();
-			_DepthMapped->FreeData();
-			_DepthRaw->FreeData();
-			System::Threading::Monitor::Exit(updateLock);
+			System::Threading::Monitor::Enter(_updateLock);
+			_master->FreeData();
+			_slave->FreeData();
+			_color->FreeData();
+			_depthMapped->FreeData();
+			_depthRaw->FreeData();
+			System::Threading::Monitor::Exit(_updateLock);
 		}
 
 		void MvBlueSirius::UpdateImpl()
@@ -176,44 +173,44 @@ namespace MetriCam2
 			int dropped = 0;
 
 			// request a new buffer object
-			if (MV6D_DeviceResultWaitFor(h6D, &requestBuffer, &dropped, timeout) == rcOk)
+			if (MV6D_DeviceResultWaitFor(_h6D, &requestBuffer, &dropped, timeout) == rcOk)
 			{
-				System::Threading::Monitor::Enter(updateLock);
+				System::Threading::Monitor::Enter(_updateLock);
 
 				// get color image
 				if (requestBuffer->colorMapped.pData)
 				{
 					_currentColorImage = nullptr;
-					_Color->Width = requestBuffer->colorMapped.iWidth;
-					_Color->Height = requestBuffer->colorMapped.iHeight;
-					_Color->CopyColorData(requestBuffer->colorMapped);
+					_color->Width = requestBuffer->colorMapped.iWidth;
+					_color->Height = requestBuffer->colorMapped.iHeight;
+					_color->CopyColorData(requestBuffer->colorMapped);
 				}
 
 				// get master raw image
 				if (requestBuffer->rawMaster.pData)
 				{
 					_currentMasterImage = nullptr;
-					_Master->Width = requestBuffer->rawMaster.iWidth;
-					_Master->Height = requestBuffer->rawMaster.iHeight;
-					_Master->CopyGrayData(requestBuffer->rawMaster);
+					_master->Width = requestBuffer->rawMaster.iWidth;
+					_master->Height = requestBuffer->rawMaster.iHeight;
+					_master->CopyGrayData(requestBuffer->rawMaster);
 				}
 
 				// get slave raw image
 				if (requestBuffer->rawSlave1.pData)
 				{
 					_currentSlaveImage = nullptr;
-					_Slave->Width = requestBuffer->rawSlave1.iWidth;
-					_Slave->Height = requestBuffer->rawSlave1.iHeight;
-					_Slave->CopyGrayData(requestBuffer->rawSlave1);
+					_slave->Width = requestBuffer->rawSlave1.iWidth;
+					_slave->Height = requestBuffer->rawSlave1.iHeight;
+					_slave->CopyGrayData(requestBuffer->rawSlave1);
 				}
 
 				// get depth mapped image
 				if (requestBuffer->depthMapped.pData)
 				{
 					_currentDepthMappedImage = nullptr;
-					_DepthMapped->Width = requestBuffer->depthMapped.iWidth;
-					_DepthMapped->Height = requestBuffer->depthMapped.iHeight;
-					_DepthMapped->CopyDepthData(requestBuffer->depthMapped);
+					_depthMapped->Width = requestBuffer->depthMapped.iWidth;
+					_depthMapped->Height = requestBuffer->depthMapped.iHeight;
+					_depthMapped->CopyDepthData(requestBuffer->depthMapped);
 				}
 
 				// get depth raw image
@@ -225,17 +222,17 @@ namespace MetriCam2
 					_currentPointCloudMapped = nullptr;
 					_currentDepthRawImage = nullptr;
 
-					_DepthRaw->Width = requestBuffer->depthRaw.iWidth;
-					_DepthRaw->Height= requestBuffer->depthRaw.iHeight;
-					_DepthRaw->CopyDepthData(requestBuffer->depthRaw);
+					_depthRaw->Width = requestBuffer->depthRaw.iWidth;
+					_depthRaw->Height= requestBuffer->depthRaw.iHeight;
+					_depthRaw->CopyDepthData(requestBuffer->depthRaw);
 				}
 
 				_focalLength = (float)requestBuffer->focalLength;
 
-				System::Threading::Monitor::Exit(updateLock);
+				System::Threading::Monitor::Exit(_updateLock);
 
 				// unlock request buffer
-				MV6D_ResultCode result = MV6D_UnlockRequest(h6D, requestBuffer);
+				MV6D_ResultCode result = MV6D_UnlockRequest(_h6D, requestBuffer);
 				CheckResult(result, InvalidOperationException::typeid, 14);
 			}
 		}
@@ -246,7 +243,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentColorImage)
 				{
-					_currentColorImage = CalcColorImage(_Color);
+					_currentColorImage = CalcColorImage(_color);
 				}
 				return _currentColorImage;
 			}
@@ -254,7 +251,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentMasterImage)
 				{
-					_currentMasterImage = CalcFloatImage(_Master);
+					_currentMasterImage = CalcFloatImage(_master);
 				}
 				return _currentMasterImage;
 			}
@@ -262,7 +259,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentSlaveImage)
 				{
-					_currentSlaveImage = CalcFloatImage(_Slave);
+					_currentSlaveImage = CalcFloatImage(_slave);
 				}
 				return _currentSlaveImage;
 			}
@@ -270,7 +267,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentDepthMappedImage)
 				{
-					_currentDepthMappedImage = CalcFloatImage(_DepthMapped);
+					_currentDepthMappedImage = CalcFloatImage(_depthMapped);
 				}
 				return _currentDepthMappedImage;
 			}
@@ -278,7 +275,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentDepthRawImage)
 				{
-					_currentDepthRawImage = CalcFloatImage(_DepthRaw);
+					_currentDepthRawImage = CalcFloatImage(_depthRaw);
 				}
 				return _currentDepthRawImage;
 			}
@@ -329,14 +326,14 @@ namespace MetriCam2
 		{
 			if (MetriCam2::ChannelNames::Distance == channelName || MetriCam2::ChannelNames::Amplitude == channelName)
 			{
-				return gcnew ProjectiveTransformationZhang(_DepthRaw->Width, _DepthRaw->Height, FocalLength, FocalLength, _DepthRaw->Width / 2.0f, _DepthRaw->Height / 2.0f, 0, 0, 0, 0, 0);
+				return gcnew ProjectiveTransformationZhang(_depthRaw->Width, _depthRaw->Height, FocalLength, FocalLength, _depthRaw->Width / 2.0f, _depthRaw->Height / 2.0f, 0, 0, 0, 0, 0);
 			}
 			return Camera::GetIntrinsics(channelName);
 		}
 
 		ColorCameraImage ^ MvBlueSirius::CalcColorImage(ImageData^ image)
 		{
-			System::Threading::Monitor::Enter(updateLock);
+			System::Threading::Monitor::Enter(_updateLock);
 
 			ColorCameraImage^ cImage = gcnew ColorCameraImage(image->Width, image->Height);
 			BitmapData^ bitmapData = cImage->Data->LockBits(System::Drawing::Rectangle(0, 0, image->Width, image->Height), ImageLockMode::WriteOnly, cImage->Data->PixelFormat);
@@ -354,14 +351,14 @@ namespace MetriCam2
 			}
 			cImage->Data->UnlockBits(bitmapData);
 
-			System::Threading::Monitor::Exit(updateLock);
+			System::Threading::Monitor::Exit(_updateLock);
 
 			return cImage;
 		}
 
 		FloatCameraImage ^ MvBlueSirius::CalcFloatImage(ImageData^ image)
 		{
-			System::Threading::Monitor::Enter(updateLock);
+			System::Threading::Monitor::Enter(_updateLock);
 
 			FloatCameraImage^ fImage = gcnew FloatCameraImage(image->Width, image->Height);
 			int i = 0;
@@ -373,38 +370,37 @@ namespace MetriCam2
 				}
 			}
 
-			System::Threading::Monitor::Exit(updateLock);
+			System::Threading::Monitor::Exit(_updateLock);
 
 			return fImage;
 		}
 
 		FloatCameraImage ^ MvBlueSirius::CalcDistances(Point3fCameraImage^ image)
 		{
-			System::Threading::Monitor::Enter(updateLock);
+			System::Threading::Monitor::Enter(_updateLock);
 
 			FloatCameraImage^ fImage = gcnew FloatCameraImage(image->Width, image->Height);
 			int i = 0;
-			for (unsigned int y = 0; y < image->Height; y++)
+			for (int y = 0; y < image->Height; y++)
 			{
-				for (unsigned int x = 0; x < image->Width; x++)
+				for (int x = 0; x < image->Width; x++)
 				{
 					fImage[y, x] = image[y, x].GetLength();
 				}
 			}
 
-			System::Threading::Monitor::Exit(updateLock);
+			System::Threading::Monitor::Exit(_updateLock);
 
 			return fImage;
 		}
 
 		Point3fCameraImage ^ MvBlueSirius::CalcPointCloud(FloatCameraImage^ depthImage)
 		{
-			System::Threading::Monitor::Enter(updateLock);
-
+			System::Threading::Monitor::Enter(_updateLock);
 
 			Point3fCameraImage^ PointCloud = DepthImageToPointCloud(depthImage, FocalLength);
 
-			System::Threading::Monitor::Exit(updateLock);
+			System::Threading::Monitor::Exit(_updateLock);
 
 			return PointCloud;
 		}
