@@ -19,7 +19,7 @@ namespace MetriCam2
 			int minor = 0;
 			int patch = 0;
 			const char* versionString = MV6D_GetBuildVersion(&major, &minor, &patch);
-			log->InfoFormat("mv6D - {0}.{1}.{2} - Build \"{3}\"", major, minor, patch, gcnew String(versionString));
+			log->DebugFormat("mv6D - {0}.{1}.{2} - Build \"{3}\"", major, minor, patch, gcnew String(versionString));
 
 			_currentColorImage = nullptr;
 			_currentDepthMappedImage = nullptr;
@@ -66,6 +66,8 @@ namespace MetriCam2
 
 		void MvBlueSirius::ConnectImpl()
 		{
+			log->EnterMethod();
+
 			MV6D_Handle camHandle;
 			MV6D_ResultCode result = MV6D_Create(&camHandle, MV6D_ANY_GPU);
 			CheckResult(result, ConnectionFailedException::typeid, 1);
@@ -147,6 +149,8 @@ namespace MetriCam2
 
 		void MvBlueSirius::DisconnectImpl()
 		{
+			log->EnterMethod();
+
 			MV6D_ResultCode result = MV6D_DeviceClose(_h6D);
 			CheckResult(result, InvalidOperationException::typeid, 12);
 			result = MV6D_Close(_h6D);
