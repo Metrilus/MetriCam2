@@ -6,6 +6,7 @@ using namespace MetriCam2;
 using namespace MetriCam2::Exceptions;
 using namespace Metrilus::Util;
 using namespace System;
+using namespace System::Runtime::InteropServices;
 
 namespace MetriCam2
 {
@@ -125,8 +126,6 @@ namespace MetriCam2
 			FloatCameraImage^ _currentDistanceImageMapped; // caches computed FloatCameraImage
 			Point3fCameraImage^ _currentPointCloud; // caches computed Point3fCameraImage
 			Point3fCameraImage^ _currentPointCloudMapped; // caches computed Point3fCameraImage
-
-			msclr::interop::marshal_context _oMarshalContext;
 
 			property ParamDesc<bool>^ AutoExposureDesc
 			{
@@ -262,6 +261,22 @@ namespace MetriCam2
 
 			static Point3fCameraImage^ DepthImageToPointCloud(FloatCameraImage^ depthImage, float focalLength);
 			virtual IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
+
+			property System::String^ Vendor
+			{
+				System::String^ get() override
+				{
+					return "Matrix Vision";
+				}
+			}
+
+			property System::String^ Model
+			{
+				System::String^ get() override
+				{
+					return "mvBlueSirius";
+				}
+			}
 
 #if !NETSTANDARD2_0
 			property System::Drawing::Icon^ CameraIcon
@@ -440,6 +455,28 @@ namespace MetriCam2
 				}
 				return true;
 			}
+			inline bool IsNullOrWhiteSpace(char* str)
+			{
+				if (nullptr == str || 0 == strcmp("", str))
+				{
+					return true;
+				}
+
+				return false;
+			}
+			inline char* GCStrToCStr(System::String^ str)
+			{
+				IntPtr ptrToNativeString = Marshal::StringToHGlobalAnsi(str);
+				return static_cast<char*>(ptrToNativeString.ToPointer());
+			}
+			inline void CheckSerial(char* serial)
+			{
+				if (IsNullOrWhiteSpace(serial))
+				{
+					throw ExceptionBuilder::BuildFromID(ConnectionFailedException::typeid, this, 4, "No available mv6D camera found");
+				}
+			}
+
 		};
 
 	}

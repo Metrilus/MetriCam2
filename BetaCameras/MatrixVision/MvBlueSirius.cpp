@@ -13,8 +13,6 @@ namespace MetriCam2
 		MvBlueSirius::MvBlueSirius()
 			: _focalLength(0.0f), _updateLock(gcnew Object())
 		{
-			modelName = "mvBlueSirius";
-
 			int major = 0;
 			int minor = 0;
 			int patch = 0;
@@ -76,29 +74,31 @@ namespace MetriCam2
 			int deviceCount = 0;
 			result = MV6D_DeviceListUpdate(_h6D, &deviceCount);
 			CheckResult(result, ConnectionFailedException::typeid, 2);
-			char serial[128] = { 0 };
+			char tmpSerial[128] = { 0 };
+			char* CSerial = GCStrToCStr(this->SerialNumber);
 
 			// find a perception camera that's not in use
 			for (int index = 0; index < deviceCount; ++index)
 			{
 				int inUse = 1;
-				result = MV6D_DeviceListGetSerial(_h6D, serial, sizeof(serial), &inUse, index);
+				result = MV6D_DeviceListGetSerial(_h6D, tmpSerial, sizeof(tmpSerial), &inUse, index);
 				CheckResult(result, ConnectionFailedException::typeid, 3);
-
-				if (!inUse)
+				
+				if (!inUse && !IsNullOrWhiteSpace(tmpSerial))
 				{
-					break;
+					if (IsNullOrWhiteSpace(CSerial) || CSerial == tmpSerial)
+					{
+						this->SerialNumber = gcnew String(tmpSerial);
+						break;
+					}
 				}
 			}
 
-			if (nullptr == serial || 0 == strcmp("", serial))
-			{
-				throw ExceptionBuilder::BuildFromID(ConnectionFailedException::typeid, this, 4, "No available mv6D camera found");
-			}
-			SerialNumber = gcnew String(serial);
+			delete CSerial;
+			CheckSerial(tmpSerial);
 
 			// open the device
-			result = MV6D_DeviceOpen(_h6D, serial);
+			result = MV6D_DeviceOpen(_h6D, tmpSerial);
 			CheckResult(result, ConnectionFailedException::typeid, 5);
 
 			// configure the stereo algorithm
