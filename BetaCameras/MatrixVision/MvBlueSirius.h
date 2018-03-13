@@ -128,6 +128,134 @@ namespace MetriCam2
 
 			msclr::interop::marshal_context _oMarshalContext;
 
+			property ParamDesc<bool>^ AutoExposureDesc
+			{
+				inline ParamDesc<bool> ^get()
+				{
+					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "Auto Exposure enabled";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property RangeParamDesc<float>^ ExposureDesc
+			{
+				inline RangeParamDesc<float> ^get()
+				{
+					MV6D_Property exposureProperty;
+					MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_EXPOSURE, &exposureProperty);
+					CheckResult(result, InvalidOperationException::typeid, 1007);
+
+					int hasMinimum = 0;
+					float minimum = 0;
+					int minimumSize = 0;
+					result = MV6D_PropertyGetMinimum(_h6D, exposureProperty, &hasMinimum, &minimum, &minimumSize);
+					CheckResult(result, InvalidOperationException::typeid, 1008);
+
+					int hasMaximum = 0;
+					float maximum = 0;
+					int maximumSize = 0;
+					result = MV6D_PropertyGetMaximum(_h6D, exposureProperty, &hasMaximum, &maximum, &maximumSize);
+					CheckResult(result, InvalidOperationException::typeid, 1009);
+
+					if (hasMinimum == 0 || hasMaximum == 0)
+					{
+						throw gcnew Exception("Property Exposure does not have maximum or minimum");
+					}
+
+					RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
+					res->Unit = "";
+					res->Description = "Exposure time in [?]";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property RangeParamDesc<float>^ GainDesc
+			{
+				inline RangeParamDesc<float> ^get()
+				{
+					MV6D_Property gainProperty;
+					MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN, &gainProperty);
+					CheckResult(result, InvalidOperationException::typeid, 1014);
+
+					int hasMinimum = 0;
+					float minimum = 0;
+					int minimumSize = 0;
+					result = MV6D_PropertyGetMinimum(_h6D, gainProperty, &hasMinimum, &minimum, &minimumSize);
+					CheckResult(result, InvalidOperationException::typeid, 1015);
+
+					int hasMaximum = 0;
+					float maximum = 0;
+					int maximumSize = 0;
+					result = MV6D_PropertyGetMaximum(_h6D, gainProperty, &hasMaximum, &maximum, &maximumSize);
+					CheckResult(result, InvalidOperationException::typeid, 1016);
+
+					if (hasMinimum == 0 || hasMaximum == 0)
+					{
+						throw gcnew Exception("Property Gain does not have maximum or minimum");
+					}
+
+					RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
+					res->Unit = "";
+					res->Description = "Gain";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property RangeParamDesc<float>^ GainColorDesc
+			{
+				inline RangeParamDesc<float> ^get()
+				{
+					MV6D_Property gainColorProperty;
+					MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN_COLOR, &gainColorProperty);
+					CheckResult(result, InvalidOperationException::typeid, 1020);
+
+					int hasMinimum = 0;
+					float minimum = 0;
+					int minimumSize = 0;
+					result = MV6D_PropertyGetMinimum(_h6D, gainColorProperty, &hasMinimum, &minimum, &minimumSize);
+					CheckResult(result, InvalidOperationException::typeid, 1021);
+
+					int hasMaximum = 0;
+					float maximum = 0;
+					int maximumSize = 0;
+					result = MV6D_PropertyGetMaximum(_h6D, gainColorProperty, &hasMaximum, &maximum, &maximumSize);
+					CheckResult(result, InvalidOperationException::typeid, 1022);
+
+					if (hasMinimum == 0 || hasMaximum == 0)
+					{
+						throw gcnew Exception("Property GainColor does not have maximum or minimum");
+					}
+
+					RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
+					res->Unit = "";
+					res->Description = "Gain";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property ParamDesc<float>^ FocalLengthDesc
+			{
+				inline ParamDesc<float> ^get()
+				{
+					ParamDesc<float> ^res = gcnew ParamDesc<float>();
+					res->Unit = "";
+					res->Description = "Focal Length";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					return res;
+				}
+			}
+
 		public:
 			MvBlueSirius();
 			~MvBlueSirius();
@@ -163,19 +291,6 @@ namespace MetriCam2
 				CheckResult(result, InvalidOperationException::typeid, 1002);
 			}
 		}
-
-		property ParamDesc<bool>^ AutoExposureDesc
-		{
-			inline ParamDesc<bool> ^get()
-			{
-				ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-				res->Unit = "";
-				res->Description = "Auto Exposure enabled";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
 		
 		//! Gets/Sets the exposure time in [?].
 		property float Exposure
@@ -203,40 +318,6 @@ namespace MetriCam2
 				CheckResult(result, InvalidOperationException::typeid, 1005);
 				result = MV6D_PropertyWrite(_h6D, myExposureProperty, &exposure, size);
 				CheckResult(result, InvalidOperationException::typeid, 1006);
-			}
-		}
-
-		property RangeParamDesc<float>^ ExposureDesc
-		{
-			inline RangeParamDesc<float> ^get()
-			{
-				MV6D_Property exposureProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_EXPOSURE, &exposureProperty);
-				CheckResult(result, InvalidOperationException::typeid, 1007);
-
-				int hasMinimum = 0;
-				float minimum = 0;
-				int minimumSize = 0;
-				result = MV6D_PropertyGetMinimum(_h6D, exposureProperty, &hasMinimum, &minimum, &minimumSize);
-				CheckResult(result, InvalidOperationException::typeid, 1008);
-
-				int hasMaximum = 0;
-				float maximum = 0;
-				int maximumSize = 0;
-				result = MV6D_PropertyGetMaximum(_h6D, exposureProperty, &hasMaximum, &maximum, &maximumSize);
-				CheckResult(result, InvalidOperationException::typeid, 1009);
-
-				if (hasMinimum == 0 || hasMaximum == 0)
-				{
-					throw gcnew Exception("Property Exposure does not have maximum or minimum");
-				}
-
-				RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
-				res->Unit = "";
-				res->Description = "Exposure time in [?]";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
 			}
 		}
 		
@@ -268,40 +349,6 @@ namespace MetriCam2
 				CheckResult(result, InvalidOperationException::typeid, 1013);
 			}
 		}
-
-		property RangeParamDesc<float>^ GainDesc
-		{
-			inline RangeParamDesc<float> ^get()
-			{
-				MV6D_Property gainProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN, &gainProperty);
-				CheckResult(result, InvalidOperationException::typeid, 1014);
-
-				int hasMinimum = 0;
-				float minimum = 0;
-				int minimumSize = 0;
-				result = MV6D_PropertyGetMinimum(_h6D, gainProperty, &hasMinimum, &minimum, &minimumSize);
-				CheckResult(result, InvalidOperationException::typeid, 1015);
-
-				int hasMaximum = 0;
-				float maximum = 0;
-				int maximumSize = 0;
-				result = MV6D_PropertyGetMaximum(_h6D, gainProperty, &hasMaximum, &maximum, &maximumSize);
-				CheckResult(result, InvalidOperationException::typeid, 1016);
-
-				if (hasMinimum == 0 || hasMaximum == 0)
-				{
-					throw gcnew Exception("Property Gain does not have maximum or minimum");
-				}
-
-				RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
-				res->Unit = "";
-				res->Description = "Gain";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
 		
 		property float GainColor
 		{
@@ -331,58 +378,11 @@ namespace MetriCam2
 			}
 		}
 
-		property RangeParamDesc<float>^ GainColorDesc
-		{
-			inline RangeParamDesc<float> ^get()
-			{
-				MV6D_Property gainColorProperty;
-				MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN_COLOR, &gainColorProperty);
-				CheckResult(result, InvalidOperationException::typeid, 1020);
-
-				int hasMinimum = 0;
-				float minimum = 0;
-				int minimumSize = 0;
-				result = MV6D_PropertyGetMinimum(_h6D, gainColorProperty, &hasMinimum, &minimum, &minimumSize);
-				CheckResult(result, InvalidOperationException::typeid, 1021);
-
-				int hasMaximum = 0;
-				float maximum = 0;
-				int maximumSize = 0;
-				result = MV6D_PropertyGetMaximum(_h6D, gainColorProperty, &hasMaximum, &maximum, &maximumSize);
-				CheckResult(result, InvalidOperationException::typeid, 1022);
-
-				if (hasMinimum == 0 || hasMaximum == 0)
-				{
-					throw gcnew Exception("Property GainColor does not have maximum or minimum");
-				}
-
-				RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
-				res->Unit = "";
-				res->Description = "Gain";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
 		property float FocalLength
 		{
 			inline float get()
 			{
 				return _focalLength;
-			}
-		}
-
-		property ParamDesc<float>^ FocalLengthDesc
-		{
-			inline ParamDesc<float> ^get()
-			{
-				ParamDesc<float> ^res = gcnew ParamDesc<float>();
-				res->Unit = "";
-				res->Description = "Focal Length";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				return res;
 			}
 		}
 
