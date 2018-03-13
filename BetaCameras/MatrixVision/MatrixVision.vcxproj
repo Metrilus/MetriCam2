@@ -80,6 +80,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>mv6D.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>Z:\external-libraries\Matrix Vision\mvIMPACT6D 2.2.1\lib%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <EmbedManagedResourceFile>MatrixVisionIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
