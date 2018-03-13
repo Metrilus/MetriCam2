@@ -132,6 +132,7 @@
     <Link>
       <AdditionalDependencies>XnLib_win32_debug.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;Z:\external-libraries\Orbbec\OpenNI2\2.3.0\Win32\Lib</AdditionalLibraryDirectories>
+      <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -148,6 +149,7 @@
       <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;Z:\external-libraries\Orbbec\OpenNI2\2.3.0\Win32\Lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
