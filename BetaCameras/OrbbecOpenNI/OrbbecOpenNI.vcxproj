@@ -162,6 +162,7 @@
       <AdditionalDependencies>XnLib_x64_release.lib;OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\XnLib\Lib;Z:\external-libraries\Orbbec\OpenNI2\2.3.0\x64\Lib</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
