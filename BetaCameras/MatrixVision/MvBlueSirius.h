@@ -1,6 +1,6 @@
 #pragma once
 #include <msclr/marshal.h>
-#include "mv6D.h"
+#include <mv6D.h>
 
 using namespace MetriCam2;
 using namespace MetriCam2::Exceptions;
