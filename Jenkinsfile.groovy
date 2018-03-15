@@ -21,6 +21,7 @@ pipeline {
 
         def STATUS_CONTEXT = 'MetriCam2 CI'
         def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
+		def BUILD_URL = "${BUILD_URL}".replace("-server.metrilus.informatik.uni-erlangen.de:8080", ".metrilus.de")
     }
     stages {
         stage('Pre-Build') {
@@ -210,7 +211,7 @@ def setBuildStatus(String message, String state, String context, String sha) {
         contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
         errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
         commitShaSource: [$class: "ManuallyEnteredShaSource", sha: sha ],
-        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}flowGraphTable/"],
+        statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: "${BUILD_URL}"],
         statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
     ]);
 }
