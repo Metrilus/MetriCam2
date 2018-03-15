@@ -457,12 +457,7 @@ namespace MetriCam2
 			}
 			inline bool IsNullOrWhiteSpace(char* str)
 			{
-				if (nullptr == str || 0 == strcmp("", str))
-				{
-					return true;
-				}
-
-				return false;
+				return (nullptr == str || 0 == strcmp("", str));
 			}
 			inline char* GCStrToCStr(System::String^ str)
 			{
