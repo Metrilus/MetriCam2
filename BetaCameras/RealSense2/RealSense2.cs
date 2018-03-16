@@ -1726,6 +1726,7 @@ namespace MetriCam2.Cameras
                     streamType = Stream.Color;
                     break;
                 case ChannelNames.ZImage:
+                case ChannelNames.Distance:
                     sensorName = SensorNames.Stereo;
                     streamType = Stream.Depth;
                     refResolution = DepthResolution;
@@ -1745,7 +1746,6 @@ namespace MetriCam2.Cameras
                     refFPS = DepthFPS;
                     index = 2;
                     break;
-                case ChannelNames.Distance:
                 default:
                     string msg = string.Format("RealSense2: stream profile for channel {0} not available", channelName);
                     log.Error(msg);
