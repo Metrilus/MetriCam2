@@ -21,7 +21,6 @@ namespace MetriCam2.Cameras
         OpenNI2CApi.Frame _irFrame = new OpenNI2CApi.Frame();
 
         public override string Vendor { get => "Asus"; }
-        public override string Model { get => "Xtion2"; }
 
 #if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.XtionIcon; }
@@ -45,6 +44,7 @@ namespace MetriCam2.Cameras
 
         #region Constructor
         public Xtion2()
+            : base(modelName: "Xtion2")
         {
             OpenNI2CApi.Init();
         }

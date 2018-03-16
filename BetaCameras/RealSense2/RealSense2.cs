@@ -63,12 +63,6 @@ namespace MetriCam2.Cameras
         #region Device Information
         public override string Vendor { get => "Intel"; }
 
-        private string _model = "RealSense2";
-        public override string Model
-        {
-            get => _model;
-        }
-
         public override string Name { get => Model; }
 
 #if !NETSTANDARD2_0
@@ -1185,6 +1179,7 @@ namespace MetriCam2.Cameras
 
         #region Constructor
         public RealSense2()
+            : base(modelName: "RealSense2")
         {
             _context = new Context();
             _pipeline = new Pipeline(_context);
@@ -1230,7 +1225,7 @@ namespace MetriCam2.Cameras
 
             StartPipeline();
             Device dev = GetDevice();
-            _model = dev.Info[CameraInfo.Name];
+            Model = dev.Info[CameraInfo.Name];
 
             if (!haveSerial)
                 this.SerialNumber = dev.Info[CameraInfo.SerialNumber];
