@@ -716,7 +716,7 @@ namespace MetriCam2.Cameras
                     }
 
                     hCamera = tmpHandle;
-                    modelName = gigeApi.Gige_Camera_getModelName(hCamera);
+                    Model = gigeApi.Gige_Camera_getModelName(hCamera);
                     SerialNumber = gigeApi.Gige_Camera_getSerialNumber(hCamera);
                     break;
                 }
@@ -734,7 +734,7 @@ namespace MetriCam2.Cameras
                     if (tmpSerialNumber == SerialNumber)
                     {
                         hCamera = tmpHandle;
-                        modelName = gigeApi.Gige_Camera_getModelName(hCamera);
+                        Model = gigeApi.Gige_Camera_getModelName(hCamera);
                         break;
                     }
                 }
