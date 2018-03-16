@@ -1769,8 +1769,6 @@ namespace MetriCam2.Cameras
                 .Where(p => p.Width == refResolution.X && p.Height == refResolution.Y)
                 .Where(p => p.Index == index)
                 .First();
-
-            throw new ArgumentException(string.Format("{0}: stream profile for channel {1} with resolution {2}x{3} not available", Name, channelName, refResolution.X, refResolution.Y));
         }
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
