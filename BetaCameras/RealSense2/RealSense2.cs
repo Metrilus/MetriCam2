@@ -20,6 +20,7 @@ namespace MetriCam2.Cameras
         private Context _context;
         private Pipeline _pipeline;
         private Config _config;
+        private Device _dev;
         private VideoFrame _currentColorFrame;
         private VideoFrame _currentDepthFrame;
         private VideoFrame _currentLeftFrame;
@@ -259,7 +260,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                return GetDevice().Info[CameraInfo.FirmwareVersion];
+                return _dev.Info[CameraInfo.FirmwareVersion];
             }
         }
 
@@ -1312,6 +1313,7 @@ namespace MetriCam2.Cameras
             _context = new Context();
             _pipeline = new Pipeline(_context);
             _config = new Config();
+            _dev = _context.Devices[0];
 
             _config.DisableAllStreams();
         }
@@ -1352,13 +1354,13 @@ namespace MetriCam2.Cameras
             }
 
             StartPipeline();
-            Device dev = GetDevice();
-            Model = dev.Info[CameraInfo.Name];
+            _dev = GetDevice();
+            Model = _dev.Info[CameraInfo.Name];
 
             if (!haveSerial)
-                this.SerialNumber = dev.Info[CameraInfo.SerialNumber];
+                this.SerialNumber = _dev.Info[CameraInfo.SerialNumber];
 
-            AdvancedDevice adev = AdvancedDevice.FromDevice(dev);
+            AdvancedDevice adev = AdvancedDevice.FromDevice(_dev);
 
             if (!adev.AdvancedModeEnabled)
                 adev.AdvancedModeEnabled = true;
@@ -1707,68 +1709,59 @@ namespace MetriCam2.Cameras
             return projTrans;
         }
 
-        private StreamProfile GetProfileFromSensor(string channelName)
+        private VideoStreamProfile GetProfileFromSensor(string channelName)
         {
             string sensorName;
             Point2i refResolution;
+            int refFPS;
+            Stream streamType;
+            int index = 0;
 
             switch (channelName)
             {
                 case ChannelNames.Color:
                     sensorName = SensorNames.Color;
                     refResolution = ColorResolution;
+                    refFPS = ColorFPS;
+                    streamType = Stream.Color;
                     break;
                 case ChannelNames.ZImage:
-                case ChannelNames.Left:
-                case ChannelNames.Right:
-                case ChannelNames.Distance:
-                default:
                     sensorName = SensorNames.Stereo;
+                    streamType = Stream.Depth;
                     refResolution = DepthResolution;
+                    refFPS = DepthFPS;
                     break;
-            }
-
-            StreamProfileList list = GetSensor(sensorName).StreamProfiles;
-
-            foreach(VideoStreamProfile profile in list)
-            {
-                Point2i res = new Point2i(profile.Width, profile.Height);
-                if (res == refResolution)
-                    return profile;
-            }
-
-            throw new ArgumentException(string.Format("StreamProfile for channel '{0}' with resolution {1}x{2} notavailable", channelName, refResolution.X, refResolution.Y));
-        }
-
-        private StreamProfile GetProfileFromCapturedFrames(string channelName)
-        {
-            Frame frame;
-
-            switch (channelName)
-            {
-                case ChannelNames.Color:
-                    frame = _currentColorFrame;
-                    break;
-
-                case ChannelNames.ZImage:
-                    frame = _currentDepthFrame;
-                    break;
-
                 case ChannelNames.Left:
-                    frame = _currentLeftFrame;
+                    sensorName = SensorNames.Stereo;
+                    streamType = Stream.Infrared;
+                    refResolution = DepthResolution;
+                    refFPS = DepthFPS;
+                    index = 1;
                     break;
-
                 case ChannelNames.Right:
-                    frame = _currentRightFrame;
+                    sensorName = SensorNames.Stereo;
+                    streamType = Stream.Infrared;
+                    refResolution = DepthResolution;
+                    refFPS = DepthFPS;
+                    index = 2;
                     break;
-
+                case ChannelNames.Distance:
                 default:
                     string msg = string.Format("RealSense2: stream profile for channel {0} not available", channelName);
                     log.Error(msg);
                     throw new ArgumentException(msg, nameof(channelName));
             }
 
-            return frame.Profile;
+            Sensor sensor = GetSensor(sensorName);
+
+            return sensor.VideoStreamProfiles
+                .Where(p => p.Stream == streamType)
+                .Where(p => p.Framerate == refFPS)
+                .Where(p => p.Width == refResolution.X && p.Height == refResolution.Y)
+                .Where(p => p.Index == index)
+                .First();
+
+            throw new ArgumentException(string.Format("StreamProfile for channel '{0}' with resolution {1}x{2} notavailable", channelName, refResolution.X, refResolution.Y));
         }
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
@@ -1780,8 +1773,8 @@ namespace MetriCam2.Cameras
                 return cachedExtrinsics;
             }
 
-            StreamProfile from = GetProfileFromSensor(channelFromName);
-            StreamProfile to = GetProfileFromSensor(channelToName);
+            VideoStreamProfile from = GetProfileFromSensor(channelFromName);
+            VideoStreamProfile to = GetProfileFromSensor(channelToName);
 
 
             Extrinsics extrinsics = from.GetExtrinsicsTo(to);
@@ -1889,7 +1882,7 @@ namespace MetriCam2.Cameras
         
         public void LoadCustomConfig(string json)
         {
-            AdvancedDevice adev = AdvancedDevice.FromDevice(GetDevice());
+            AdvancedDevice adev = AdvancedDevice.FromDevice(_dev);
             adev.JsonConfiguration = json;
             _depthScale = GetDepthScale();
         }
@@ -1978,9 +1971,7 @@ namespace MetriCam2.Cameras
 
         private Sensor GetSensor(string sensorName)
         {
-            Device dev = GetDevice();
-
-            foreach(Sensor sen in dev.Sensors)
+            foreach(Sensor sen in _dev.Sensors)
             {
                 if(sen.Info[CameraInfo.Name] == sensorName)
                 {
