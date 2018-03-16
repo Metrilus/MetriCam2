@@ -14,14 +14,14 @@ pipeline {
         def releaseVersion = getReleaseVersion(currentBranch);
         def releaseFolder = getReleaseFolder(currentBranch, releaseVersion)
 
-        def releaseDirectory = "Z:\\\\releases\\MetriCam2\\${releaseFolder}"
+        def releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
         def releaseLibraryDirectory = "${releaseDirectory}\\lib"
         def releaseSuffixNetStandard20 = "_netstandard2.0"
         def releaseSuffixDebug = "_debug"
 
         def STATUS_CONTEXT = 'MetriCam2 CI'
         def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
-		def BUILD_URL = "${BUILD_URL}".replace("-server.metrilus.informatik.uni-erlangen.de:8080", ".metrilus.de")
+        def BUILD_URL = "${BUILD_URL}".replace("http://", "https://").replace("-server.metrilus.informatik.uni-erlangen.de:8080", ".metrilus.de")
     }
     stages {
         stage('Pre-Build') {
