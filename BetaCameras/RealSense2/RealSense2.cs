@@ -1382,7 +1382,7 @@ namespace MetriCam2.Cameras
             
             if(!_config.CanResolve(_pipeline))
             {
-                string msg = "RealSense2: No camera that supports the current configuration detected";
+                string msg = $"{Name}: No camera that supports the current configuration detected";
                 log.Error(msg);
                 throw new InvalidOperationException(msg);
             }
@@ -1454,12 +1454,14 @@ namespace MetriCam2.Cameras
             bool haveColor, bool haveDepth, bool haveLeft, bool haveRight)
         {
             if (((getColor && haveColor) || !getColor)
-            && ((getDepth && haveDepth) || !getDepth)
-            && ((getLeft && haveLeft) || !getLeft)
-            && ((getRight && haveRight) || !getRight))
+                && ((getDepth && haveDepth) || !getDepth)
+                && ((getLeft && haveLeft) || !getLeft)
+                && ((getRight && haveRight) || !getRight))
+            {
                 return;
+            }
 
-            throw new Exception("RealSense2: not all requested frames are part of the retrieved FrameSet");
+            throw new Exception($"{Name}: not all requested frames are part of the retrieved FrameSet");
         }
 
         private void ExtractFrameSetData(FrameSet data, bool getColor, bool getDepth, bool getLeft, bool getRight,
@@ -1607,7 +1609,7 @@ namespace MetriCam2.Cameras
             }
             else
             {
-                string msg = string.Format("RealSense2: Channel not supported {0}", channelName);
+                string msg = string.Format("{0}: Channel not supported {1}", Name, channelName);
                 log.Error(msg);
                 throw new InvalidOperationException(msg);
             }
@@ -1616,10 +1618,13 @@ namespace MetriCam2.Cameras
             Action enableStream = () => { _config.EnableStream(stream, index, res_x, res_y, format, fps); };
 
             if (_pipelineRunning)
+            {
                 ExecuteWithStoppedPipeline(enableStream);
+            }
             else
+            {
                 enableStream();
-            
+            }
         }
 
         protected override void DeactivateChannelImpl(String channelName)
@@ -1632,7 +1637,7 @@ namespace MetriCam2.Cameras
                 stream = Stream.Color;
             }
             else if (channelName == ChannelNames.ZImage
-            || channelName == ChannelNames.Distance)
+                || channelName == ChannelNames.Distance)
             {
                 // Distance and ZImage channel access the same data from
                 // the realsense2 device
@@ -1668,15 +1673,19 @@ namespace MetriCam2.Cameras
             Action disableStream = () => { _config.DisableStream(stream, index); };
 
             if (_pipelineRunning)
+            {
                 ExecuteWithStoppedPipeline(disableStream);
+            }
             else
+            {
                 disableStream();
+            }
         }
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
             // first check if intrinsics for requested channel have been cached already
-            if(_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
+            if (_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
             {
                 return cachedIntrinsics;
             }
@@ -1684,9 +1693,9 @@ namespace MetriCam2.Cameras
             VideoStreamProfile profile = GetProfileFromSensor(channelName) as VideoStreamProfile;
             Intrinsics intrinsics = profile.GetIntrinsics();
 
-            if(intrinsics.model != Distortion.BrownConrady)
+            if (intrinsics.model != Distortion.BrownConrady)
             {
-                string msg = string.Format("RealSense2: intrinsics distrotion model {0} does not match Metrilus.Util", intrinsics.model.ToString());
+                string msg = string.Format("{0}: intrinsics distrotion model {1} does not match Metrilus.Util", Name, intrinsics.model.ToString());
                 log.Error(msg);
                 throw new Exception(msg);
             }
@@ -1747,7 +1756,7 @@ namespace MetriCam2.Cameras
                     index = 2;
                     break;
                 default:
-                    string msg = string.Format("RealSense2: stream profile for channel {0} not available", channelName);
+                    string msg = string.Format("{0}: stream profile for channel {1} not available", Name, channelName);
                     log.Error(msg);
                     throw new ArgumentException(msg, nameof(channelName));
             }
@@ -1761,7 +1770,7 @@ namespace MetriCam2.Cameras
                 .Where(p => p.Index == index)
                 .First();
 
-            throw new ArgumentException(string.Format("StreamProfile for channel '{0}' with resolution {1}x{2} notavailable", channelName, refResolution.X, refResolution.Y));
+            throw new ArgumentException(string.Format("{0}: stream profile for channel {1} with resolution {2}x{3} not available", Name, channelName, refResolution.X, refResolution.Y));
         }
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
@@ -1896,17 +1905,22 @@ namespace MetriCam2.Cameras
             doStuff();
 
             if (running)
+            {
                 StartPipeline();
+            }
         }
 
         private void CheckOptionSupported(Option option, string optionName, string sensorName)
         {
-            if (!this.IsConnected)
+            if (!IsConnected)
+            {
                 throw new InvalidOperationException(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
+            }
 
-            
             if (!GetSensor(sensorName).Options[option].Supported)
+            {
                 throw new NotSupportedException(string.Format("Option '{0}' is not supported by the {1} sensor of this camera.", optionName, sensorName));
+            }
         }
 
         private float GetOption(string sensorName, Option option)
@@ -1921,11 +1935,19 @@ namespace MetriCam2.Cameras
 
         private void CheckRangeValid<T>(RangeParamDesc<T> desc, T value, T adjustedValue, bool adjusted = false)
         {
-            if (!desc.IsValid(value))
-                if (adjusted)
-                    throw new ArgumentOutOfRangeException(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
-                else
-                    throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
+            if (desc.IsValid(value))
+            {
+                return;
+            }
+
+            if (adjusted)
+            {
+                throw new ArgumentOutOfRangeException(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
+            }
         }
 
         private Sensor.CameraOption QueryOption(Option option, string sensorName)
@@ -1953,29 +1975,30 @@ namespace MetriCam2.Cameras
 
         private Device GetDevice()
         {
-            Device device = _context.Devices[0];
-
-            if (string.IsNullOrEmpty(this.SerialNumber))
-                return device;
+            if (string.IsNullOrEmpty(SerialNumber))
+            {
+                // No S/N -> return first device
+                return _context.Devices[0];
+            }
 
             foreach(Device dev in _context.Devices)
             {
-                if (dev.Info[CameraInfo.SerialNumber] == this.SerialNumber)
+                if (dev.Info[CameraInfo.SerialNumber] == SerialNumber)
                 {
                     return dev;
                 }
             }
 
-            throw new ArgumentException(string.Format("Device with S/N {0} could not be found", this.SerialNumber));
+            throw new ArgumentException(string.Format("Device with S/N {0} could not be found", SerialNumber));
         }
 
         private Sensor GetSensor(string sensorName)
         {
-            foreach(Sensor sen in _dev.Sensors)
+            foreach (Sensor sensor in _dev.Sensors)
             {
-                if(sen.Info[CameraInfo.Name] == sensorName)
+                if (sensor.Info[CameraInfo.Name] == sensorName)
                 {
-                    return sen;
+                    return sensor;
                 }
             }
 
