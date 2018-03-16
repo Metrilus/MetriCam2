@@ -48,15 +48,11 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <TargetName>MetriCam2.Cameras.$(ProjectName)</TargetName>
-    <IncludePath>Z:\external-libraries\Matrix Vision\mv6D\API\include;$(IncludePath)</IncludePath>
-    <LibraryPath>Z:\external-libraries\Matrix Vision\mv6D\API\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <TargetName>MetriCam2.Cameras.$(ProjectName)</TargetName>
-    <IncludePath>Z:\external-libraries\Matrix Vision\mv6D\API\include;$(IncludePath)</IncludePath>
-    <LibraryPath>Z:\external-libraries\Matrix Vision\mv6D\API\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
