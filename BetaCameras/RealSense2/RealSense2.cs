@@ -20,6 +20,7 @@ namespace MetriCam2.Cameras
         private Context _context;
         private Pipeline _pipeline;
         private Config _config;
+        private Device _dev;
         private VideoFrame _currentColorFrame;
         private VideoFrame _currentDepthFrame;
         private VideoFrame _currentLeftFrame;
@@ -259,7 +260,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                return GetDevice().Info[CameraInfo.FirmwareVersion];
+                return _dev.Info[CameraInfo.FirmwareVersion];
             }
         }
 
@@ -1312,6 +1313,7 @@ namespace MetriCam2.Cameras
             _context = new Context();
             _pipeline = new Pipeline(_context);
             _config = new Config();
+            _dev = _context.Devices[0];
 
             _config.DisableAllStreams();
         }
@@ -1352,13 +1354,13 @@ namespace MetriCam2.Cameras
             }
 
             StartPipeline();
-            Device dev = GetDevice();
-            Model = dev.Info[CameraInfo.Name];
+            _dev = GetDevice();
+            Model = _dev.Info[CameraInfo.Name];
 
             if (!haveSerial)
-                this.SerialNumber = dev.Info[CameraInfo.SerialNumber];
+                this.SerialNumber = _dev.Info[CameraInfo.SerialNumber];
 
-            AdvancedDevice adev = AdvancedDevice.FromDevice(dev);
+            AdvancedDevice adev = AdvancedDevice.FromDevice(_dev);
 
             if (!adev.AdvancedModeEnabled)
                 adev.AdvancedModeEnabled = true;
@@ -1380,7 +1382,7 @@ namespace MetriCam2.Cameras
             
             if(!_config.CanResolve(_pipeline))
             {
-                string msg = "RealSense2: No camera that supports the current configuration detected";
+                string msg = $"{Name}: No camera that supports the current configuration detected";
                 log.Error(msg);
                 throw new InvalidOperationException(msg);
             }
@@ -1452,12 +1454,14 @@ namespace MetriCam2.Cameras
             bool haveColor, bool haveDepth, bool haveLeft, bool haveRight)
         {
             if (((getColor && haveColor) || !getColor)
-            && ((getDepth && haveDepth) || !getDepth)
-            && ((getLeft && haveLeft) || !getLeft)
-            && ((getRight && haveRight) || !getRight))
+                && ((getDepth && haveDepth) || !getDepth)
+                && ((getLeft && haveLeft) || !getLeft)
+                && ((getRight && haveRight) || !getRight))
+            {
                 return;
+            }
 
-            throw new Exception("RealSense2: not all requested frames are part of the retrieved FrameSet");
+            throw new Exception($"{Name}: not all requested frames are part of the retrieved FrameSet");
         }
 
         private void ExtractFrameSetData(FrameSet data, bool getColor, bool getDepth, bool getLeft, bool getRight,
@@ -1605,7 +1609,7 @@ namespace MetriCam2.Cameras
             }
             else
             {
-                string msg = string.Format("RealSense2: Channel not supported {0}", channelName);
+                string msg = string.Format("{0}: Channel not supported {1}", Name, channelName);
                 log.Error(msg);
                 throw new InvalidOperationException(msg);
             }
@@ -1614,10 +1618,13 @@ namespace MetriCam2.Cameras
             Action enableStream = () => { _config.EnableStream(stream, index, res_x, res_y, format, fps); };
 
             if (_pipelineRunning)
+            {
                 ExecuteWithStoppedPipeline(enableStream);
+            }
             else
+            {
                 enableStream();
-            
+            }
         }
 
         protected override void DeactivateChannelImpl(String channelName)
@@ -1630,7 +1637,7 @@ namespace MetriCam2.Cameras
                 stream = Stream.Color;
             }
             else if (channelName == ChannelNames.ZImage
-            || channelName == ChannelNames.Distance)
+                || channelName == ChannelNames.Distance)
             {
                 // Distance and ZImage channel access the same data from
                 // the realsense2 device
@@ -1666,15 +1673,19 @@ namespace MetriCam2.Cameras
             Action disableStream = () => { _config.DisableStream(stream, index); };
 
             if (_pipelineRunning)
+            {
                 ExecuteWithStoppedPipeline(disableStream);
+            }
             else
+            {
                 disableStream();
+            }
         }
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
             // first check if intrinsics for requested channel have been cached already
-            if(_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
+            if (_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
             {
                 return cachedIntrinsics;
             }
@@ -1682,9 +1693,9 @@ namespace MetriCam2.Cameras
             VideoStreamProfile profile = GetProfileFromSensor(channelName) as VideoStreamProfile;
             Intrinsics intrinsics = profile.GetIntrinsics();
 
-            if(intrinsics.model != Distortion.BrownConrady)
+            if (intrinsics.model != Distortion.BrownConrady)
             {
-                string msg = string.Format("RealSense2: intrinsics distrotion model {0} does not match Metrilus.Util", intrinsics.model.ToString());
+                string msg = string.Format("{0}: intrinsics distrotion model {1} does not match Metrilus.Util", Name, intrinsics.model.ToString());
                 log.Error(msg);
                 throw new Exception(msg);
             }
@@ -1707,68 +1718,57 @@ namespace MetriCam2.Cameras
             return projTrans;
         }
 
-        private StreamProfile GetProfileFromSensor(string channelName)
+        private VideoStreamProfile GetProfileFromSensor(string channelName)
         {
             string sensorName;
             Point2i refResolution;
+            int refFPS;
+            Stream streamType;
+            int index = 0;
 
             switch (channelName)
             {
                 case ChannelNames.Color:
                     sensorName = SensorNames.Color;
                     refResolution = ColorResolution;
+                    refFPS = ColorFPS;
+                    streamType = Stream.Color;
                     break;
                 case ChannelNames.ZImage:
-                case ChannelNames.Left:
-                case ChannelNames.Right:
                 case ChannelNames.Distance:
-                default:
                     sensorName = SensorNames.Stereo;
+                    streamType = Stream.Depth;
                     refResolution = DepthResolution;
+                    refFPS = DepthFPS;
                     break;
-            }
-
-            StreamProfileList list = GetSensor(sensorName).StreamProfiles;
-
-            foreach(VideoStreamProfile profile in list)
-            {
-                Point2i res = new Point2i(profile.Width, profile.Height);
-                if (res == refResolution)
-                    return profile;
-            }
-
-            throw new ArgumentException(string.Format("StreamProfile for channel '{0}' with resolution {1}x{2} notavailable", channelName, refResolution.X, refResolution.Y));
-        }
-
-        private StreamProfile GetProfileFromCapturedFrames(string channelName)
-        {
-            Frame frame;
-
-            switch (channelName)
-            {
-                case ChannelNames.Color:
-                    frame = _currentColorFrame;
-                    break;
-
-                case ChannelNames.ZImage:
-                    frame = _currentDepthFrame;
-                    break;
-
                 case ChannelNames.Left:
-                    frame = _currentLeftFrame;
+                    sensorName = SensorNames.Stereo;
+                    streamType = Stream.Infrared;
+                    refResolution = DepthResolution;
+                    refFPS = DepthFPS;
+                    index = 1;
                     break;
-
                 case ChannelNames.Right:
-                    frame = _currentRightFrame;
+                    sensorName = SensorNames.Stereo;
+                    streamType = Stream.Infrared;
+                    refResolution = DepthResolution;
+                    refFPS = DepthFPS;
+                    index = 2;
                     break;
-
                 default:
-                    string msg = string.Format("RealSense2: stream profile for channel {0} not available", channelName);
+                    string msg = string.Format("{0}: stream profile for channel {1} not available", Name, channelName);
                     log.Error(msg);
                     throw new ArgumentException(msg, nameof(channelName));
             }
 
-            return frame.Profile;
+            Sensor sensor = GetSensor(sensorName);
+
+            return sensor.VideoStreamProfiles
+                .Where(p => p.Stream == streamType)
+                .Where(p => p.Framerate == refFPS)
+                .Where(p => p.Width == refResolution.X && p.Height == refResolution.Y)
+                .Where(p => p.Index == index)
+                .First();
         }
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
@@ -1780,8 +1780,8 @@ namespace MetriCam2.Cameras
                 return cachedExtrinsics;
             }
 
-            StreamProfile from = GetProfileFromSensor(channelFromName);
-            StreamProfile to = GetProfileFromSensor(channelToName);
+            VideoStreamProfile from = GetProfileFromSensor(channelFromName);
+            VideoStreamProfile to = GetProfileFromSensor(channelToName);
 
 
             Extrinsics extrinsics = from.GetExtrinsicsTo(to);
@@ -1889,7 +1889,7 @@ namespace MetriCam2.Cameras
         
         public void LoadCustomConfig(string json)
         {
-            AdvancedDevice adev = AdvancedDevice.FromDevice(GetDevice());
+            AdvancedDevice adev = AdvancedDevice.FromDevice(_dev);
             adev.JsonConfiguration = json;
             _depthScale = GetDepthScale();
         }
@@ -1903,17 +1903,22 @@ namespace MetriCam2.Cameras
             doStuff();
 
             if (running)
+            {
                 StartPipeline();
+            }
         }
 
         private void CheckOptionSupported(Option option, string optionName, string sensorName)
         {
-            if (!this.IsConnected)
+            if (!IsConnected)
+            {
                 throw new InvalidOperationException(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
+            }
 
-            
             if (!GetSensor(sensorName).Options[option].Supported)
+            {
                 throw new NotSupportedException(string.Format("Option '{0}' is not supported by the {1} sensor of this camera.", optionName, sensorName));
+            }
         }
 
         private float GetOption(string sensorName, Option option)
@@ -1928,11 +1933,19 @@ namespace MetriCam2.Cameras
 
         private void CheckRangeValid<T>(RangeParamDesc<T> desc, T value, T adjustedValue, bool adjusted = false)
         {
-            if (!desc.IsValid(value))
-                if (adjusted)
-                    throw new ArgumentOutOfRangeException(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
-                else
-                    throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
+            if (desc.IsValid(value))
+            {
+                return;
+            }
+
+            if (adjusted)
+            {
+                throw new ArgumentOutOfRangeException(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
+            }
         }
 
         private Sensor.CameraOption QueryOption(Option option, string sensorName)
@@ -1960,31 +1973,30 @@ namespace MetriCam2.Cameras
 
         private Device GetDevice()
         {
-            Device device = _context.Devices[0];
-
-            if (string.IsNullOrEmpty(this.SerialNumber))
-                return device;
+            if (string.IsNullOrEmpty(SerialNumber))
+            {
+                // No S/N -> return first device
+                return _context.Devices[0];
+            }
 
             foreach(Device dev in _context.Devices)
             {
-                if (dev.Info[CameraInfo.SerialNumber] == this.SerialNumber)
+                if (dev.Info[CameraInfo.SerialNumber] == SerialNumber)
                 {
                     return dev;
                 }
             }
 
-            throw new ArgumentException(string.Format("Device with S/N {0} could not be found", this.SerialNumber));
+            throw new ArgumentException(string.Format("Device with S/N {0} could not be found", SerialNumber));
         }
 
         private Sensor GetSensor(string sensorName)
         {
-            Device dev = GetDevice();
-
-            foreach(Sensor sen in dev.Sensors)
+            foreach (Sensor sensor in _dev.Sensors)
             {
-                if(sen.Info[CameraInfo.Name] == sensorName)
+                if (sensor.Info[CameraInfo.Name] == sensorName)
                 {
-                    return sen;
+                    return sensor;
                 }
             }
 
