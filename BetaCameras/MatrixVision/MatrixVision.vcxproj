@@ -68,7 +68,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
-      <AdditionalDependencies>mv6D.lib</AdditionalDependencies>
+      <AdditionalDependencies>mv6D.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>Z:\external-libraries\Matrix Vision\mvIMPACT6D 2.2.1\lib%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <EmbedManagedResourceFile>MatrixVisionIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
