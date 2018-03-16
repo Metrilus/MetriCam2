@@ -941,11 +941,6 @@ namespace MetriCam2
         /// </summary>
         protected static MetriLog log = new MetriLog("MetriCam2.Camera");
         /// <summary>
-        /// The camera's model name.
-        /// </summary>
-        /// <remarks>Default is empty string. The actual model will usually be known after <see cref="Connect"/>.</remarks>
-        protected string modelName = "";
-        /// <summary>
         /// Flag which remembers if <see cref="Update"/> was ever called.
         /// </summary>
         /// <remarks>This flag is checked in <see cref="CalcChannel"/> to catch this common error in end user software.</remarks>
@@ -1036,11 +1031,12 @@ namespace MetriCam2
                 };
             }
         }
-        /// <summary>Name of camera model.</summary>
-        public virtual string Model
-        {
-            get { return modelName; }
-        }
+
+        /// <summary>
+        /// The camera's model name.
+        /// </summary>
+        /// <remarks>Default is empty string. The actual model will usually be known after <see cref="Connect"/>.</remarks>
+        public string Model { get; protected set; }
 
         private ParamDesc<string> SerialNumberDesc
         {
@@ -1155,7 +1151,7 @@ namespace MetriCam2
             LoadAllAvailableChannels();
 
             SerialNumber = "";
-            this.modelName = modelName;
+            Model = modelName;
 
             IsConnected = false;
             FrameNumber = 0;

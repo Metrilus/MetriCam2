@@ -22,7 +22,6 @@ static TIVoxel::TIVoxel()
 void TIVoxel::ConnectImpl()
 {
 	System::Threading::Monitor::Enter(settingsLock);
-	modelName = "TinTin";
 	Voxel::DevicePtr device;
 	try
 	{
@@ -587,7 +586,8 @@ CameraImage^ TIVoxel::CalcDistance()
 	return result;
 }
 
-TIVoxel::TIVoxel() : m_width(320), m_height(240), m_devnum(0)
+TIVoxel::TIVoxel()
+	: Camera("TinTin"), m_width(320), m_height(240), m_devnum(0)
 {
 	updateResetEvent = gcnew AutoResetEvent(false);
 }

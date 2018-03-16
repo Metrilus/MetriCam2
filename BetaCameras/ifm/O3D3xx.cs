@@ -202,7 +202,7 @@ namespace MetriCam2.Cameras
         /// Warning: Omitting this parameter deletes all applications from the camera and creates a new application with default MetriCam 2 parameter values.
         /// </param>
         public O3D3xx(int applicationId = -1)
-                : base()
+                : base(modelName: "O3D3xx")
         {
             CameraIP = "192.168.1.172";
             XMLRPCPort = 80;
@@ -333,7 +333,7 @@ namespace MetriCam2.Cameras
                     FloatCameraImage localZImage = new FloatCameraImage(width, height);
                     Point3fCameraImage localPoint3fImage = new Point3fCameraImage(width, height);
                     ByteCameraImage localRawConfidenceImage = new ByteCameraImage(width, height);
-                    
+
                     // All units in mm, thus we need to divide by 1000 to obtain meters
                     float factor = 1 / 1000.0f;
                     // Response shall start with ASCII string "0000star"
@@ -416,34 +416,14 @@ namespace MetriCam2.Cameras
         }
 
         /// <summary>
-        /// Name of camera model.
-        /// </summary>
-        public override string Model
-        {
-            get
-            {
-                return "O3D3xx";
-            }
-        }
-        
-        /// <summary>
         /// Serial number of camera. The camera does not provide a serial number therefore we use the MAC address.
         /// </summary>
-        public override string SerialNumber
-        {
-            get
-            {
-                return RequestMACAddress(CameraIP);
-            }
-        }
+        public override string SerialNumber { get => RequestMACAddress(CameraIP); }
 
         /// <summary>
         /// Name of camera vendor.
         /// </summary>
-        public override string Vendor
-        {
-            get { return "IFM"; }
-        }
+        public override string Vendor { get => "ifm"; }
 
         /// <summary>
         /// Device-specific implementation of Disconnect.
