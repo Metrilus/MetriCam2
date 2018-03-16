@@ -48,12 +48,11 @@ namespace MetriCam2.Cameras
 
         #region Constructor
         public BaslerToF()
-            : base()
+            : base(modelName: "BaslerToF")
         {
             IsMaster = false;
             width = 640;
             height = 480;
-            modelName = "BaslerToF";
         }
 
         ~BaslerToF()
