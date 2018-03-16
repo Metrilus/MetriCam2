@@ -11,7 +11,7 @@ namespace MetriCam2
 	namespace Cameras
 	{
 		MvBlueSirius::MvBlueSirius()
-			: _focalLength(0.0f), _updateLock(gcnew Object())
+			: Camera("mvBlueSirius"), _focalLength(0.0f), _updateLock(gcnew Object())
 		{
 			int major = 0;
 			int minor = 0;

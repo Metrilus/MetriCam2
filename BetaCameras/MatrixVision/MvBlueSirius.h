@@ -270,14 +270,6 @@ namespace MetriCam2
 				}
 			}
 
-			property System::String^ Model
-			{
-				System::String^ get() override
-				{
-					return "mvBlueSirius";
-				}
-			}
-
 #if !NETSTANDARD2_0
 			property System::Drawing::Icon^ CameraIcon
 			{
