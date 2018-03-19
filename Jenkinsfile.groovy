@@ -3,9 +3,9 @@
 pipeline {
     agent any
     environment {
-        def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.MatrixVision'
-        def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json MetriCam2.Cameras.RealSense2'
-        def dllsToDeployNetStandard = 'MetriCam2.NetStandard Metrilus.Util.NetStandard MetriCam2.Cameras.RealSense2.NetStandard'
+        def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.MatrixVision MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.TIVoxel MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam'
+        def dllsToDeployAnyCPU = 'Intel.RealSense log4net MathNet.Numerics MetriCam2 MetriCam2.Cameras.RealSense2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
+        def dllsToDeployNetStandard = 'MetriCam2.NetStandard MetriCam2.Cameras.RealSense2.NetStandard Metrilus.Util.NetStandard'
 
         def currentBranch = "${env.GITHUB_BRANCH_NAME}"
         def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
