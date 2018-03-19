@@ -3,7 +3,7 @@
 pipeline {
     agent any
     environment {
-        def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam MetriCam2.Cameras.BaslerToF'
+        def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.MatrixVision'
         def dllsToDeployAnyCPU = 'MetriCam2.Controls MetriCam2 Metrilus.Util Newtonsoft.Json MetriCam2.Cameras.RealSense2'
         def dllsToDeployNetStandard = 'MetriCam2.NetStandard Metrilus.Util.NetStandard MetriCam2.Cameras.RealSense2.NetStandard'
 
