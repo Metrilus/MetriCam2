@@ -1130,23 +1130,27 @@ namespace MetriCam2.Cameras
         {
             get
             {
+                // Workaround: open and start up depthsensor
+                OpenDepthSensor();
                 CheckOptionSupported(Option.AsicTemperature, nameof(ASICTemp), SensorNames.Stereo);
-                return GetOption(SensorNames.Stereo, Option.AsicTemperature);
+                float temp = GetOption(SensorNames.Stereo, Option.AsicTemperature);
+                CloseDepthSensor();
+                return temp;
             }
         }
 
-        //ParamDesc<float> ASICTempDesc
-        //{
-        //    get
-        //    {
-        //        ParamDesc<float> res = new ParamDesc<float>();
-        //        res.Unit = "°C";
-        //        res.Description = "Asic Temperature";
-        //        res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-        //        res.WritableWhen = ParamDesc.ConnectionStates.Connected;
-        //        return res;
-        //    }
-        //}
+        ParamDesc<float> ASICTempDesc
+        {
+            get
+            {
+                ParamDesc<float> res = new ParamDesc<float>();
+                res.Unit = "°C";
+                res.Description = "Asic Temperature";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
 
 
         /// <summary>
@@ -1187,23 +1191,28 @@ namespace MetriCam2.Cameras
         {
             get
             {
+                // Workaround
+                OpenDepthSensor();
                 CheckOptionSupported(Option.ProjectorTemperature, nameof(ProjectorTemp), SensorNames.Stereo);
-                return GetOption(SensorNames.Stereo, Option.ProjectorTemperature);
+                float temp = GetOption(SensorNames.Stereo, Option.ProjectorTemperature);
+                CloseDepthSensor();
+
+                return temp;
             }
         }
 
-        //ParamDesc<float> ProjectorTempDesc
-        //{
-        //    get
-        //    {
-        //        ParamDesc<float> res = new ParamDesc<float>();
-        //        res.Unit = "°C";
-        //        res.Description = "Projector Temperature";
-        //        res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-        //        res.WritableWhen = ParamDesc.ConnectionStates.Connected;
-        //        return res;
-        //    }
-        //}
+        ParamDesc<float> ProjectorTempDesc
+        {
+            get
+            {
+                ParamDesc<float> res = new ParamDesc<float>();
+                res.Unit = "°C";
+                res.Description = "Projector Temperature";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
 
 
         /// <summary>
@@ -2015,12 +2024,26 @@ namespace MetriCam2.Cameras
 
         private float GetDepthScale()
         {
-            Sensor depthSensor = GetSensor(SensorNames.Stereo);
-            depthSensor.Open();
-            float depthScale = depthSensor.DepthScale;
-            depthSensor.Close();
+            OpenDepthSensor();
+            float depthScale = GetSensor(SensorNames.Stereo).DepthScale;
+            CloseDepthSensor();
 
             return depthScale;
+        }
+
+        private void OpenDepthSensor()
+        {
+            var depthSensor = GetSensor(SensorNames.Stereo);
+            FrameQueue q = new FrameQueue();
+            depthSensor.Open();
+            depthSensor.Start(q);
+        }
+
+        private void CloseDepthSensor()
+        {
+            var depthSensor = GetSensor(SensorNames.Stereo);
+            depthSensor.Stop();
+            depthSensor.Close();
         }
     }
 }
