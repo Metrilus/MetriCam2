@@ -1187,23 +1187,23 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.ProjectorTemperature, ProjectorTempDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.ProjectorTemperature, nameof(ProjectorTemp), SensorNames.Stereo);
                 return GetOption(SensorNames.Stereo, Option.ProjectorTemperature);
             }
         }
 
-        ParamDesc<float> ProjectorTempDesc
-        {
-            get
-            {
-                ParamDesc<float> res = new ParamDesc<float>();
-                res.Unit = "°C";
-                res.Description = "Projector Temperature";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
-                return res;
-            }
-        }
+        //ParamDesc<float> ProjectorTempDesc
+        //{
+        //    get
+        //    {
+        //        ParamDesc<float> res = new ParamDesc<float>();
+        //        res.Unit = "°C";
+        //        res.Description = "Projector Temperature";
+        //        res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+        //        res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+        //        return res;
+        //    }
+        //}
 
 
         /// <summary>
