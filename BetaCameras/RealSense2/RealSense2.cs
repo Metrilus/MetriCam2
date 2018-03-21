@@ -20,7 +20,7 @@ namespace MetriCam2.Cameras
         private Context _context;
         private Pipeline _pipeline;
         private Config _config;
-        private Device _dev;
+        private PipelineProfile _pipelineProfile = null;
         private VideoFrame _currentColorFrame;
         private VideoFrame _currentDepthFrame;
         private VideoFrame _currentLeftFrame;
@@ -51,6 +51,33 @@ namespace MetriCam2.Cameras
         {
             public const string Color = "RGB Camera";
             public const string Stereo = "Stereo Module";
+        }
+
+        private Device RealSenseDevice
+        {
+            get
+            {
+                if(_pipelineRunning)
+                {
+                    return _pipelineProfile.Device;
+                }
+
+                if (string.IsNullOrEmpty(SerialNumber))
+                {
+                    // No S/N -> return first device
+                    return _context.Devices[0];
+                }
+
+                foreach (Device dev in _context.Devices)
+                {
+                    if (dev.Info[CameraInfo.SerialNumber] == SerialNumber)
+                    {
+                        return dev;
+                    }
+                }
+
+                throw new ArgumentException(string.Format("Device with S/N {0} could not be found", SerialNumber));
+            }
         }
 
         private Point2i _colorResolution = new Point2i(640, 480);
@@ -260,7 +287,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                return _dev.Info[CameraInfo.FirmwareVersion];
+                return RealSenseDevice.Info[CameraInfo.FirmwareVersion];
             }
         }
 
@@ -1131,10 +1158,8 @@ namespace MetriCam2.Cameras
             get
             {
                 // Workaround: open and start up depthsensor
-                OpenDepthSensor();
                 CheckOptionSupported(Option.AsicTemperature, nameof(ASICTemp), SensorNames.Stereo);
                 float temp = GetOption(SensorNames.Stereo, Option.AsicTemperature);
-                CloseDepthSensor();
                 return temp;
             }
         }
@@ -1191,13 +1216,8 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                // Workaround
-                OpenDepthSensor();
                 CheckOptionSupported(Option.ProjectorTemperature, nameof(ProjectorTemp), SensorNames.Stereo);
-                float temp = GetOption(SensorNames.Stereo, Option.ProjectorTemperature);
-                CloseDepthSensor();
-
-                return temp;
+                return GetOption(SensorNames.Stereo, Option.ProjectorTemperature);
             }
         }
 
@@ -1322,7 +1342,6 @@ namespace MetriCam2.Cameras
             _context = new Context();
             _pipeline = new Pipeline(_context);
             _config = new Config();
-            _dev = _context.Devices[0];
 
             _config.DisableAllStreams();
         }
@@ -1363,13 +1382,12 @@ namespace MetriCam2.Cameras
             }
 
             StartPipeline();
-            _dev = GetDevice();
-            Model = _dev.Info[CameraInfo.Name];
+            Model = RealSenseDevice.Info[CameraInfo.Name];
 
             if (!haveSerial)
-                this.SerialNumber = _dev.Info[CameraInfo.SerialNumber];
+                this.SerialNumber = RealSenseDevice.Info[CameraInfo.SerialNumber];
 
-            AdvancedDevice adev = AdvancedDevice.FromDevice(_dev);
+            AdvancedDevice adev = AdvancedDevice.FromDevice(RealSenseDevice);
 
             if (!adev.AdvancedModeEnabled)
                 adev.AdvancedModeEnabled = true;
@@ -1381,6 +1399,7 @@ namespace MetriCam2.Cameras
         {
             if(_pipelineRunning)
             {
+                _pipelineProfile = null;
                 _pipelineRunning = false;
                 _pipeline.Stop();
             }
@@ -1398,7 +1417,7 @@ namespace MetriCam2.Cameras
 
             if(!_pipelineRunning)
             {
-                _pipeline.Start(_config);
+                _pipelineProfile = _pipeline.Start(_config);
                 _pipelineRunning = true;
             }
         }
@@ -1898,7 +1917,7 @@ namespace MetriCam2.Cameras
         
         public void LoadCustomConfig(string json)
         {
-            AdvancedDevice adev = AdvancedDevice.FromDevice(_dev);
+            AdvancedDevice adev = AdvancedDevice.FromDevice(RealSenseDevice);
             adev.JsonConfiguration = json;
             _depthScale = GetDepthScale();
         }
@@ -1980,28 +1999,9 @@ namespace MetriCam2.Cameras
             return adjusted_value;
         }
 
-        private Device GetDevice()
-        {
-            if (string.IsNullOrEmpty(SerialNumber))
-            {
-                // No S/N -> return first device
-                return _context.Devices[0];
-            }
-
-            foreach(Device dev in _context.Devices)
-            {
-                if (dev.Info[CameraInfo.SerialNumber] == SerialNumber)
-                {
-                    return dev;
-                }
-            }
-
-            throw new ArgumentException(string.Format("Device with S/N {0} could not be found", SerialNumber));
-        }
-
         private Sensor GetSensor(string sensorName)
         {
-            foreach (Sensor sensor in _dev.Sensors)
+            foreach (Sensor sensor in RealSenseDevice.Sensors)
             {
                 if (sensor.Info[CameraInfo.Name] == sensorName)
                 {
@@ -2024,26 +2024,7 @@ namespace MetriCam2.Cameras
 
         private float GetDepthScale()
         {
-            OpenDepthSensor();
-            float depthScale = GetSensor(SensorNames.Stereo).DepthScale;
-            CloseDepthSensor();
-
-            return depthScale;
-        }
-
-        private void OpenDepthSensor()
-        {
-            var depthSensor = GetSensor(SensorNames.Stereo);
-            FrameQueue q = new FrameQueue();
-            depthSensor.Open();
-            depthSensor.Start(q);
-        }
-
-        private void CloseDepthSensor()
-        {
-            var depthSensor = GetSensor(SensorNames.Stereo);
-            depthSensor.Stop();
-            depthSensor.Close();
+            return GetSensor(SensorNames.Stereo).DepthScale;
         }
     }
 }
