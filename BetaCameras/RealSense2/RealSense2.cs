@@ -1130,23 +1130,23 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                CheckOptionSupported(Option.AsicTemperature, ASICTempDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.AsicTemperature, nameof(ASICTemp), SensorNames.Stereo);
                 return GetOption(SensorNames.Stereo, Option.AsicTemperature);
             }
         }
 
-        ParamDesc<float> ASICTempDesc
-        {
-            get
-            {
-                ParamDesc<float> res = new ParamDesc<float>();
-                res.Unit = "°C";
-                res.Description = "Asic Temperature";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
-                return res;
-            }
-        }
+        //ParamDesc<float> ASICTempDesc
+        //{
+        //    get
+        //    {
+        //        ParamDesc<float> res = new ParamDesc<float>();
+        //        res.Unit = "°C";
+        //        res.Description = "Asic Temperature";
+        //        res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+        //        res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+        //        return res;
+        //    }
+        //}
 
 
         /// <summary>
