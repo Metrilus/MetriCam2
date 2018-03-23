@@ -20,6 +20,10 @@ namespace MetriCam2.Cameras
         private Bitmap _bitmap;
         private TaskCompletionSource<bool> _tsc = null;
 
+#if !NETSTANDARD2_0
+        public override Icon CameraIcon { get => Properties.Resources.BaslerIcon; }
+#endif
+
         private static bool _IsInitialized = false;
         private void Init()
         {
@@ -86,6 +90,11 @@ namespace MetriCam2.Cameras
             }
 
             _imageProvider.Open(dev.Index);
+
+            if (ActiveChannels.Count == 0)
+            {
+                ActivateChannel(ChannelNames.Color);
+            }
         }
 
         protected override void DisconnectImpl()
@@ -102,7 +111,14 @@ namespace MetriCam2.Cameras
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            throw new NotImplementedException();
+            switch (channelName)
+            {
+                case ChannelNames.Color:
+                    return new ColorCameraImage(_bitmap);
+            }
+
+            log.Error("Unexpected ChannelName in CalcChannel().");
+            return null;
         }
 
         private void OnImageReadyEventCallback()
@@ -125,7 +141,6 @@ namespace MetriCam2.Cameras
             }
 
             _imageProvider.ReleaseImage();
-            //_bitmap.Save(@"G:\bitmap.bmp");
             _tsc?.TrySetResult(true);
         }
     }
