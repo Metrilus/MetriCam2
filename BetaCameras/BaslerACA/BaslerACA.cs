@@ -124,8 +124,8 @@ namespace MetriCam2.Cameras
                 BitmapFactory.UpdateBitmap(_bitmap, image.Buffer, image.Width, image.Height, image.Color);
             }
 
-            //_imageProvider.ReleaseImage();
-            _bitmap.Save(@"G:\bitmap.bmp");
+            _imageProvider.ReleaseImage();
+            //_bitmap.Save(@"G:\bitmap.bmp");
             _tsc?.TrySetResult(true);
         }
     }
