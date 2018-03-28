@@ -108,7 +108,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> FilterTemporalDesc
+        private ParamDesc<bool> TemporalFilterDesc
         {
             get
             {
@@ -124,18 +124,18 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Enables/disables the temporal filter.
         /// </summary>
-        public bool FilterTemporal
+        public bool TemporalFilter
         {
             get
             {
-                return filterTemporal;
+                return _isTemporalFilterEnabled;
             }
             set
             {
-                filterTemporal = value;
+                _isTemporalFilterEnabled = value;
                 if (IsConnected)
                 {
-                    camera.SetParameterValue("FilterTemporal", filterTemporal.ToString().ToLower());
+                    camera.SetParameterValue("FilterTemporal", _isTemporalFilterEnabled.ToString().ToLower());
                 }
             }
         }
@@ -173,7 +173,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> FilterSpatialDesc
+        private ParamDesc<bool> SpatialFilterDesc
         {
             get
             {
@@ -189,18 +189,18 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Enables/disables the spatial filter.
         /// </summary>
-        public bool FilterSpatial
+        public bool SpatialFilter
         {
             get
             {
-                return filterSpatial;
+                return _isSpatialFilterEnabled;
             }
             set
             {
-                filterSpatial = value;
+                _isSpatialFilterEnabled = value;
                 if (IsConnected)
                 {
-                    camera.SetParameterValue("FilterSpatial", filterSpatial.ToString().ToLower());
+                    camera.SetParameterValue("FilterSpatial", _isSpatialFilterEnabled.ToString().ToLower());
                 }
             }
         }
@@ -358,7 +358,7 @@ namespace MetriCam2.Cameras
 
             //// Enable/Disable spatial filtering
             //FilterSpatial = filterSpatial;            
-            
+
             // Activate Channels before streaming starts;
             // Activate default channels if no channels are selected
             if (0 == ActiveChannels.Count)
