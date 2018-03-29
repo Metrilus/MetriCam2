@@ -27,9 +27,10 @@ namespace MetriCam2.Cameras
         private Object dataLock = new Object();
 
         private float exposureMilliseconds = 10.0f;
-        private bool filterTemporal = false;
-        private bool filterSpatial = true;
-
+        private bool _isTemporalFilterEnabled = false;
+        private int _temporalFilterStrength = 240;
+        private bool _isSpatialFilterEnabled = true;
+        private int _outlierTolerance = 6000;
         private const ulong c_TriggerBaseDelay = 250000000;    // 250 ms
         // Readout time. [ns]
         // Though basically a constant inherent to the ToF camera, the exact value may still change in future firmware releases.
@@ -80,7 +81,7 @@ namespace MetriCam2.Cameras
             }
         }
         /// <summary>
-        /// Gets or sets the exposure time in milliseconds.
+        /// Gets/sets the exposure time in milliseconds.
         /// </summary>
         public float Exposure
         {
@@ -107,7 +108,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> FilterTemporalDesc
+        private ParamDesc<bool> TemporalFilterDesc
         {
             get
             {
@@ -121,25 +122,58 @@ namespace MetriCam2.Cameras
         }
 
         /// <summary>
-        /// Get/Set the state of the temporal filter.
+        /// Enables/disables the temporal filter.
         /// </summary>
-        public bool FilterTemporal
+        public bool TemporalFilter
         {
             get
             {
-                return filterTemporal;
+                return _isTemporalFilterEnabled;
             }
             set
             {
-                filterTemporal = value;
+                _isTemporalFilterEnabled = value;
                 if (IsConnected)
                 {
-                    camera.SetParameterValue("FilterTemporal", filterTemporal.ToString().ToLower());
+                    camera.SetParameterValue("FilterTemporal", _isTemporalFilterEnabled.ToString().ToLower());
                 }
             }
         }
 
-        private ParamDesc<bool> FilterSpatialDesc
+        private ParamDesc<int> TemporalFilterStrengthDesc
+        {
+            get
+            {
+                return new RangeParamDesc<int>(50, 240)
+                {
+                    Description = "Temporal Filter Strength",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets the strength of the temporal filter.
+        /// </summary>
+        /// <remarks>A higher value means the filter reaches back more frames.</remarks>
+        public int TemporalFilterStrength
+        {
+            get
+            {
+                return _temporalFilterStrength;
+            }
+            set
+            {
+                _temporalFilterStrength = value;
+                if (IsConnected)
+                {
+                    camera.SetParameterValue("FilterStrength", _temporalFilterStrength.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                }
+            }
+        }
+
+        private ParamDesc<bool> SpatialFilterDesc
         {
             get
             {
@@ -153,20 +187,53 @@ namespace MetriCam2.Cameras
         }
 
         /// <summary>
-        /// Get/Set the state of the spatial filter.
+        /// Enables/disables the spatial filter.
         /// </summary>
-        public bool FilterSpatial
+        public bool SpatialFilter
         {
             get
             {
-                return filterSpatial;
+                return _isSpatialFilterEnabled;
             }
             set
             {
-                filterSpatial = value;
+                _isSpatialFilterEnabled = value;
                 if (IsConnected)
                 {
-                    camera.SetParameterValue("FilterSpatial", filterSpatial.ToString().ToLower());
+                    camera.SetParameterValue("FilterSpatial", _isSpatialFilterEnabled.ToString().ToLower());
+                }
+            }
+        }
+
+        private ParamDesc<int> OutlierToleranceDesc
+        {
+            get
+            {
+                return new RangeParamDesc<int>(0, 65535)
+                {
+                    Description = "Outlier Tolerance",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets the outlier tolerance.
+        /// </summary>
+        /// <remarks>Pixels which deviate from their neighbours more than this value will be set to 0 (distance) / NaN (3-D).</remarks>
+        public int OutlierTolerance
+        {
+            get
+            {
+                return _outlierTolerance;
+            }
+            set
+            {
+                _outlierTolerance = value;
+                if (IsConnected)
+                {
+                    camera.SetParameterValue("OutlierTolerance", _outlierTolerance.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 }
             }
         }
@@ -291,7 +358,7 @@ namespace MetriCam2.Cameras
 
             //// Enable/Disable spatial filtering
             //FilterSpatial = filterSpatial;            
-            
+
             // Activate Channels before streaming starts;
             // Activate default channels if no channels are selected
             if (0 == ActiveChannels.Count)
