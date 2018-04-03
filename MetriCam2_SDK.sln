@@ -78,7 +78,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RealSense2.NetStandard", "B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaslerToF", "BetaCameras\BaslerToF\BaslerToF.csproj", "{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaslerACA", "BetaCameras\BaslerACA\BaslerACA.csproj", "{474D94F4-857B-4199-97AF-C600AED44406}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaslerACE", "BetaCameras\BaslerACE\BaslerACE.csproj", "{474D94F4-857B-4199-97AF-C600AED44406}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
