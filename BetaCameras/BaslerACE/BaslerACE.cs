@@ -5,19 +5,19 @@ using Metrilus.Util;
 using System;
 using System.Linq;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Threading;
 using System.Collections.Generic;
-using PylonC.NETSupportLibrary;
-using PylonC.NET;
+using Basler.Pylon;
 
 namespace MetriCam2.Cameras
 {
     public class BaslerACE : Camera
     {
         private const string DeviceClass = "acA1300";
-        private ImageProvider _imageProvider;
+        private Basler.Pylon.Camera _camera;
         private Bitmap _bitmap;
-        private AutoResetEvent _resetEvent = new AutoResetEvent(false);
+        private PixelDataConverter _converter;
 
 #if !NETSTANDARD2_0
         public override Icon CameraIcon { get => Properties.Resources.BaslerIcon; }
@@ -25,34 +25,14 @@ namespace MetriCam2.Cameras
 
         public override string Vendor { get => "Basler"; }
 
-        private static bool _isInitialized = false;
-        private void Init()
-        {
-            if(!_isInitialized)
-            {
-                Pylon.Initialize();
-                _isInitialized = true;
-            }
-        }
-
-        private void Terminate()
-        {
-            if(_isInitialized)
-            {
-                Pylon.Terminate();
-            }
-        }
-
         public BaslerACE() : base(modelName: "Ace")
         {
-            Init();
-            _imageProvider = new ImageProvider();
-            _imageProvider.ImageReadyEvent += new ImageProvider.ImageReadyEventHandler(OnImageReadyEventCallback);
+            _converter = new PixelDataConverter();
         }
 
         ~BaslerACE()
         {
-            Terminate();
+            
         }
 
         protected override void LoadAllAvailableChannels()
@@ -65,44 +45,55 @@ namespace MetriCam2.Cameras
 
         protected override void ConnectImpl()
         {
-            List<DeviceEnumerator.Device> list = DeviceEnumerator.EnumerateDevices();
-            DeviceEnumerator.Device dev = null;
-
-            if (!String.IsNullOrEmpty(SerialNumber))
+            if(!string.IsNullOrEmpty(SerialNumber))
             {
-                dev = list.Where(d => d.SerialNumber == SerialNumber).First();
-                if(null == dev)
-                {
-                    string msg = string.Format("{0}: no {1} device with s/n {2} found.", Name, DeviceClass, SerialNumber);
-                    log.Error(msg);
-                    throw new InvalidOperationException(msg);
-                }
+                _camera = new Basler.Pylon.Camera(SerialNumber);
             }
             else
             {
-                dev = list.Where(d => d.Model.StartsWith(DeviceClass)).First();
-                if (null == dev)
-                {
-                    string msg = string.Format("{0}: no device of type {1} found.", Name, DeviceClass);
-                    log.Error(msg);
-                    throw new InvalidOperationException(msg);
-                }
+                List<ICameraInfo> devices = CameraFinder.Enumerate();
+                ICameraInfo device = devices.Where(i => i[CameraInfoKey.FullName].Contains(DeviceClass)).First();
+                _camera = new Basler.Pylon.Camera(device);
             }
 
-            _imageProvider.Open(dev.Index);
+            _camera.CameraOpened += Configuration.AcquireSingleFrame;
+            _camera.Open();
+
             ActivateChannel(ChannelNames.Color);
         }
 
         protected override void DisconnectImpl()
         {
-            _imageProvider.Close();
+            _camera.Close();
         }
 
         protected override void UpdateImpl()
         {
-            _resetEvent.Reset();
-            _imageProvider.OneShot();
-            _resetEvent.WaitOne();
+            _camera.StreamGrabber.Start();
+            IGrabResult grabResult = _camera.StreamGrabber.RetrieveResult(5000, TimeoutHandling.ThrowException);
+
+            using (grabResult)
+            {
+                if (grabResult.GrabSucceeded)
+                {
+                    _bitmap = new Bitmap(grabResult.Width, grabResult.Height, PixelFormat.Format32bppRgb);
+                    byte[] buffer = grabResult.PixelData as byte[];
+                    PixelType type = grabResult.PixelTypeValue;
+                    
+                    BitmapData bmpData = _bitmap.LockBits(new Rectangle(0, 0, _bitmap.Width, _bitmap.Height), ImageLockMode.ReadWrite, _bitmap.PixelFormat);
+
+                    _converter.OutputPixelFormat = PixelType.BGRA8packed;
+                    IntPtr ptrBmp = bmpData.Scan0;
+                    _converter.Convert(ptrBmp, bmpData.Stride * _bitmap.Height, grabResult);
+                    _bitmap.UnlockBits(bmpData);
+                }
+                else
+                {
+                    Console.WriteLine("{0}: {1} {2}", Name, grabResult.ErrorCode, grabResult.ErrorDescription);
+                }
+            }
+
+            _camera.StreamGrabber.Stop();
         }
 
         protected override CameraImage CalcChannelImpl(string channelName)
@@ -115,26 +106,6 @@ namespace MetriCam2.Cameras
 
             log.Error("Unexpected ChannelName in CalcChannel().");
             return null;
-        }
-
-        private void OnImageReadyEventCallback()
-        {
-            ImageProvider.Image image = _imageProvider.GetLatestImage();
-
-            
-            if (!BitmapFactory.IsCompatible(_bitmap, image.Width, image.Height, image.Color))
-            {
-                if (_bitmap != null)
-                {
-                    _bitmap.Dispose();
-                }
-
-                BitmapFactory.CreateBitmap(out _bitmap, image.Width, image.Height, image.Color);
-            }
-
-            BitmapFactory.UpdateBitmap(_bitmap, image.Buffer, image.Width, image.Height, image.Color);
-            _imageProvider.ReleaseImage();
-            _resetEvent.Set();
         }
     }
 }

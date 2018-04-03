@@ -79,9 +79,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\Kinect2\Kinect2.csproj">
-      <Project>{03558646-61b1-4f4e-bf70-7a623df27095}</Project>
-      <Name>Kinect2</Name>
+    <ProjectReference Include="..\..\BetaCameras\BaslerACE\BaslerACE.csproj">
+      <Project>{474d94f4-857b-4199-97af-c600aed44406}</Project>
+      <Name>BaslerACE</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
       <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>

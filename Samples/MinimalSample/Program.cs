@@ -24,7 +24,7 @@ namespace MetriCam2.Samples.MinimalSample
             Camera camera;
             try
             {
-                camera = new Kinect2();
+                camera = new BaslerACE();
             }
             catch (Exception e)
             {
@@ -40,7 +40,10 @@ namespace MetriCam2.Samples.MinimalSample
             camera.Connect();
 
             Console.WriteLine("Fetching one frame");
-            camera.Update();
+            for(int i = 0; i < 100; i++)
+            {
+                camera.Update();
+            }
 
             try
             {
