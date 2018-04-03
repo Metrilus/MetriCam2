@@ -12,12 +12,13 @@ using Basler.Pylon;
 
 namespace MetriCam2.Cameras
 {
-    public class BaslerACE : Camera
+    public class BaslerACE : Camera, IDisposable
     {
         private const string DeviceClass = "acA1300";
         private Basler.Pylon.Camera _camera;
         private Bitmap _bitmap;
         private PixelDataConverter _converter;
+        private bool _disposed = false;
 
 #if !NETSTANDARD2_0
         public override Icon CameraIcon { get => Properties.Resources.BaslerIcon; }
@@ -33,6 +34,28 @@ namespace MetriCam2.Cameras
         ~BaslerACE()
         {
             
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (IsConnected)
+                DisconnectImpl();
+
+            if (disposing)
+            {
+                // dispose managed resources
+            }
+
+            _disposed = true;
         }
 
         protected override void LoadAllAvailableChannels()
