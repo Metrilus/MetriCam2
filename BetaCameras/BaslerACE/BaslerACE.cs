@@ -5,7 +5,7 @@ using Metrilus.Util;
 using System;
 using System.Linq;
 using System.Drawing;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Collections.Generic;
 using PylonC.NETSupportLibrary;
 using PylonC.NET;
@@ -17,7 +17,7 @@ namespace MetriCam2.Cameras
         private const string DeviceClass = "acA1300";
         private ImageProvider _imageProvider;
         private Bitmap _bitmap;
-        private TaskCompletionSource<bool> _tcs = null;
+        private AutoResetEvent _resetEvent = new AutoResetEvent(false);
 
 #if !NETSTANDARD2_0
         public override Icon CameraIcon { get => Properties.Resources.BaslerIcon; }
@@ -100,9 +100,9 @@ namespace MetriCam2.Cameras
 
         protected override void UpdateImpl()
         {
-            _tcs = new TaskCompletionSource<bool>();
+            _resetEvent.Reset();
             _imageProvider.OneShot();
-            _tcs.Task.Wait();
+            _resetEvent.WaitOne();
         }
 
         protected override CameraImage CalcChannelImpl(string channelName)
@@ -134,7 +134,7 @@ namespace MetriCam2.Cameras
 
             BitmapFactory.UpdateBitmap(_bitmap, image.Buffer, image.Width, image.Height, image.Color);
             _imageProvider.ReleaseImage();
-            _tcs?.TrySetResult(true);
+            _resetEvent.Set();
         }
     }
 }
