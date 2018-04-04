@@ -2014,12 +2014,12 @@ namespace MetriCam2.Cameras
 
         private List<Point2i> GetSupportedResolutions(string sensorName)
         {
-            return GetSensor(sensorName).VideoStreamProfiles.Select(p => new Point2i(p.Width, p.Height)).ToList();
+            return GetSensor(sensorName).VideoStreamProfiles.Select(p => new Point2i(p.Width, p.Height)).Distinct().ToList();
         }
 
         private List<int> GetSupportedFramerates(string sensorName)
         {
-            return GetSensor(sensorName).StreamProfiles.Select(p => p.Framerate).ToList();
+            return GetSensor(sensorName).StreamProfiles.Select(p => p.Framerate).Distinct().ToList();
         }
 
         private float GetDepthScale()
