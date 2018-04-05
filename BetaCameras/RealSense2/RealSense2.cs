@@ -103,7 +103,7 @@ namespace MetriCam2.Cameras
                 }
                 catch(ConfigurationNotSupportedException)
                 {
-                    _colorResolution = oldValue;
+                    ColorResolution = oldValue;
                     if (this.IsConnected)
                         StartPipeline();
                     throw;
@@ -160,7 +160,7 @@ namespace MetriCam2.Cameras
                 }
                 catch (ConfigurationNotSupportedException)
                 {
-                    _colorFPS = oldValue;
+                    ColorFPS = oldValue;
                     if (this.IsConnected)
                         StartPipeline();
                     throw;
@@ -199,7 +199,7 @@ namespace MetriCam2.Cameras
                 if (value == _depthResolution)
                     return;
 
-                Point2i oldValue = _depthResolution;
+                Point2i oldValue = value;
 
                 try
                 {
@@ -228,7 +228,7 @@ namespace MetriCam2.Cameras
                 }
                 catch(ConfigurationNotSupportedException)
                 {
-                    _depthResolution = oldValue;
+                    DepthResolution = oldValue;
                     if (this.IsConnected)
                         StartPipeline();
                     throw;
@@ -301,7 +301,7 @@ namespace MetriCam2.Cameras
                 }
                 catch (ConfigurationNotSupportedException)
                 {
-                    _depthFPS = oldValue;
+                    DepthFPS = oldValue;
                     if (this.IsConnected)
                         StartPipeline();
                     throw;
