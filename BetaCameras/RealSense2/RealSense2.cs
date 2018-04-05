@@ -199,7 +199,7 @@ namespace MetriCam2.Cameras
                 if (value == _depthResolution)
                     return;
 
-                Point2i oldValue = value;
+                Point2i oldValue = _depthResolution;
 
                 try
                 {
