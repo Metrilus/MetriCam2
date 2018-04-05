@@ -434,6 +434,8 @@ namespace MetriCam2
             /// <param name="value">Parameter value to be tested.</param>
             /// <returns><c>true</c> if <paramref name="value"/> is in AllowedValues, <c>false</c> otherwise.</returns>
             bool IsValid(string value);
+
+            Type GetListType();
         }
 
         /// <summary>
@@ -746,6 +748,11 @@ namespace MetriCam2
                 }
 
                 return base.ToString() + "\t{" + allowedValuesAsString + "}";
+            }
+
+            public Type GetListType()
+            {
+                return typeof(T);
             }
             #endregion
         }

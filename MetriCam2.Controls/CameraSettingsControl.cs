@@ -243,9 +243,9 @@ namespace MetriCam2.Controls
 
                 // Build a suitable control for the current parameter
                 // Parameter with a value range
-                if (paramDesc is MetriCam2.Camera.IRangeParamDesc)
+                if (paramDesc is Camera.IRangeParamDesc)
                 {
-                    if (paramDesc is MetriCam2.Camera.RangeParamDesc<int>)
+                    if (paramDesc is Camera.RangeParamDesc<int>)
                     {
                         Slider scrollbarValue = CreateSlider((MetriCam2.Camera.RangeParamDesc<int>)paramDesc, currentRow);
                         tableLayoutPanel1.Controls.Add(scrollbarValue, COL_PARAM_VAL, currentRow);
@@ -271,9 +271,9 @@ namespace MetriCam2.Controls
                             }
                         };
                     }
-                    else if (paramDesc is MetriCam2.Camera.RangeParamDesc<float>)
+                    else if (paramDesc is Camera.RangeParamDesc<float>)
                     {
-                        NumericUpDown upDownValue = CreateNumericUpDown((MetriCam2.Camera.RangeParamDesc<float>)paramDesc, currentRow);
+                        NumericUpDown upDownValue = CreateNumericUpDown((Camera.RangeParamDesc<float>)paramDesc, currentRow);
                         tableLayoutPanel1.Controls.Add(upDownValue, COL_PARAM_VAL, currentRow);
                         Label unit = CreateUnitLabel(paramDesc);
                         tableLayoutPanel1.Controls.Add(unit, COL_PARAM_UNIT, currentRow);
@@ -314,7 +314,7 @@ namespace MetriCam2.Controls
                 }
 
                 // Parameter with a list of values
-                if (paramDesc is MetriCam2.Camera.IListParamDesc)
+                if (paramDesc is Camera.IListParamDesc)
                 {
                     ComboBox comboBoxValue = CreateComboBox(paramDesc as Camera.IListParamDesc, currentRow);
                     tableLayoutPanel1.Controls.Add(comboBoxValue, COL_PARAM_VAL, currentRow);
@@ -325,20 +325,25 @@ namespace MetriCam2.Controls
                         ContainsOneOrMoreWritableParameters = true;
                     }
 
-                    if(paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>
-                    || paramDesc is MetriCam2.Camera.ListParamDesc<int>)
+                    if(paramDesc is Camera.ListParamDesc<Point2i>
+                    || paramDesc is Camera.ListParamDesc<int>
+                    || paramDesc is Camera.IListParamDesc && (paramDesc as Camera.IListParamDesc).GetType().IsEnum)
                     {
                         comboBoxValue.SelectedValueChanged += (sender, e) =>
                         {
                             object parameterValue;
 
-                            if (paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>)
+                            if (paramDesc is Camera.ListParamDesc<Point2i>)
                             {
                                 parameterValue = ResolutionToPoint2i(comboBoxValue.SelectedItem as string);
                             }
-                            else
+                            else if (paramDesc is Camera.ListParamDesc<int>)
                             {
                                 parameterValue = int.Parse(comboBoxValue.SelectedItem as string);
+                            }
+                            else // Enum
+                            {
+                                parameterValue = Enum.Parse((paramDesc as Camera.IListParamDesc).GetType(), comboBoxValue.SelectedItem as string);
                             }
 
                             string parameterName = paramDesc.Name;
