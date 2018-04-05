@@ -2294,7 +2294,16 @@ namespace MetriCam2
         {
             PropertyInfo pi = this.GetType().GetProperty(name);
             object myItem = Convert.ChangeType(value, pi.PropertyType, CultureInfo.InvariantCulture);
-            pi.SetValue(this, myItem, new object[] { });
+
+            try
+            {
+                pi.SetValue(this, myItem, new object[] { });
+            }
+            catch(TargetInvocationException e)
+            {
+                throw e.InnerException;
+            }
+            
             log.InfoFormat("{0}: {1} <- {2}", this.Name, name, myItem);
         }
         #endregion
