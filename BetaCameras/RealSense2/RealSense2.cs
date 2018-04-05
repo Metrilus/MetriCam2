@@ -1364,7 +1364,7 @@ namespace MetriCam2.Cameras
             get => _preset;
             set
             {
-                LoadCustomConfigInternal(AdvancedMode.GetPreset(_preset));
+                LoadCustomConfigInternal(AdvancedMode.GetPreset(value));
                 _preset = value;
             }
         }
