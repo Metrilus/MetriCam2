@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using Metrilus.Util;
+using MetriCam2.Exceptions;
 
 namespace MetriCam2.Controls
 {
@@ -169,9 +170,18 @@ namespace MetriCam2.Controls
                 keyValues.Add(parameterName, parameterValue);
             }
 
-            Camera.SetParameters(keyValues);
-
-            InitConfigurationParameters(this.Camera);
+            try
+            {
+                Camera.SetParameters(keyValues);
+            }
+            catch(ConfigurationNotSupportedException)
+            {
+                MessageBox.Show("This Configuration is not supported by this camera");
+            }
+            finally
+            {
+                InitConfigurationParameters(this.Camera);
+            }
         }
         #endregion
 
