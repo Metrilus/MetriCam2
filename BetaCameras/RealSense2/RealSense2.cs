@@ -1358,12 +1358,14 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private AdvancedMode.Preset _preset = AdvancedMode.Preset.NONE;
+        private AdvancedMode.Preset _preset = AdvancedMode.Preset.UNKNOWN;
         public AdvancedMode.Preset ConfigPreset
         {
             get => _preset;
             set
             {
+                if (value == AdvancedMode.Preset.UNKNOWN)
+                    return;
                 LoadCustomConfigInternal(AdvancedMode.GetPreset(value));
                 _preset = value;
             }
@@ -1986,7 +1988,7 @@ namespace MetriCam2.Cameras
         public void LoadCustomConfig(string json)
         {
             LoadCustomConfigInternal(json);
-            _preset = AdvancedMode.Preset.NONE;
+            _preset = AdvancedMode.Preset.UNKNOWN;
         }
 
         private void LoadCustomConfigInternal(string json)
