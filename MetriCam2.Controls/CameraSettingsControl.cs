@@ -259,7 +259,15 @@ namespace MetriCam2.Controls
                         {
                             string parameterValue = scrollbarValue.Value.ToString(CultureInfo.InvariantCulture);
                             string parameterName = paramDesc.Name;
-                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                            
+                            try
+                            {
+                                Camera.SetParameter(paramDesc.Name, parameterValue);
+                            }
+                            catch (ConfigurationNotSupportedException)
+                            {
+                                MessageBox.Show("This Configuration is not supported by this camera");
+                            }
                         };
                     }
                     else if (paramDesc is MetriCam2.Camera.RangeParamDesc<float>)
@@ -277,7 +285,15 @@ namespace MetriCam2.Controls
                         {
                             string parameterValue = upDownValue.Value.ToString(CultureInfo.InvariantCulture);
                             string parameterName = paramDesc.Name;
-                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                            
+                            try
+                            {
+                                Camera.SetParameter(paramDesc.Name, parameterValue);
+                            }
+                            catch (ConfigurationNotSupportedException)
+                            {
+                                MessageBox.Show("This Configuration is not supported by this camera");
+                            }
                         };
                     }
                     else
@@ -324,7 +340,15 @@ namespace MetriCam2.Controls
                             }
 
                             string parameterName = paramDesc.Name;
-                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                            
+                            try
+                            {
+                                Camera.SetParameter(paramDesc.Name, parameterValue);
+                            }
+                            catch (ConfigurationNotSupportedException)
+                            {
+                                MessageBox.Show("This Configuration is not supported by this camera");
+                            }
                         };
                     }
 
@@ -364,7 +388,15 @@ namespace MetriCam2.Controls
                         string parameterName = checkBoxValue.Name.Replace(VALUE_SUFFIX, string.Empty);
                         Dictionary<string, object> keyValues = new Dictionary<string, object>();
                         keyValues.Add(parameterName, parameterValue);
-                        Camera.SetParameters(keyValues);
+                        
+                        try
+                        {
+                            Camera.SetParameters(keyValues);
+                        }
+                        catch (ConfigurationNotSupportedException)
+                        {
+                            MessageBox.Show("This Configuration is not supported by this camera");
+                        }
                     };
 
                     continue;
