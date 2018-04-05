@@ -9,6 +9,7 @@ using System.Drawing.Imaging;
 using System.Threading;
 using System.Collections.Generic;
 using Basler.Pylon;
+using MetriCam2.Exceptions;
 
 namespace MetriCam2.Cameras
 {
@@ -70,13 +71,30 @@ namespace MetriCam2.Cameras
         {
             if(!string.IsNullOrEmpty(SerialNumber))
             {
-                _camera = new Basler.Pylon.Camera(SerialNumber);
+                try
+                {
+                    _camera = new Basler.Pylon.Camera(SerialNumber);
+                }
+                catch(Exception e)
+                {
+                    throw new ConnectionFailedException($"No {Name} with S/N {SerialNumber} found: {e.Message}");
+                }
             }
             else
             {
                 List<ICameraInfo> devices = CameraFinder.Enumerate();
                 ICameraInfo device = devices.Where(i => i[CameraInfoKey.FullName].Contains(DeviceClass)).First();
-                _camera = new Basler.Pylon.Camera(device);
+                if(null == device)
+                    throw new ConnectionFailedException($"No device of supported type {DeviceClass} found");
+
+                try
+                {
+                    _camera = new Basler.Pylon.Camera(device);
+                }
+                catch(Exception e)
+                {
+                    throw new ConnectionFailedException($"{Name} failed to connect: {e.Message}");
+                }
             }
 
             _camera.CameraOpened += Configuration.AcquireSingleFrame;
@@ -114,7 +132,7 @@ namespace MetriCam2.Cameras
                 {
                     string msg = string.Format("{0}: {1} {2}", Name, grabResult.ErrorCode, grabResult.ErrorDescription);
                     log.Error(msg);
-                    throw new InvalidOperationException(msg);
+                    throw new ImageAcquisitionFailedException(msg);
                 }
             }
 
