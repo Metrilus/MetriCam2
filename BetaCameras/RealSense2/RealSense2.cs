@@ -1358,6 +1358,29 @@ namespace MetriCam2.Cameras
             }
         }
 
+        private AdvancedMode.Preset _preset = AdvancedMode.Preset.NONE;
+        public AdvancedMode.Preset ConfigPreset
+        {
+            get => _preset;
+            set
+            {
+                LoadCustomConfigInternal(AdvancedMode.GetPreset(_preset));
+                _preset = value;
+            }
+        }
+
+        ListParamDesc<AdvancedMode.Preset> ConfigPresetDesc
+        {
+            get
+            {
+                ListParamDesc<AdvancedMode.Preset> res = new ListParamDesc<AdvancedMode.Preset>(typeof(AdvancedMode.Preset));
+                res.Description = "Visual Preset";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
+
         #endregion
 
         public void Dispose()
@@ -1959,13 +1982,14 @@ namespace MetriCam2.Cameras
         }
 
         #endregion
-
-        public void LoadConfigPreset(AdvancedMode.Preset preset)
-        {
-            LoadCustomConfig(AdvancedMode.GetPreset(preset));
-        }
         
         public void LoadCustomConfig(string json)
+        {
+            LoadCustomConfigInternal(json);
+            _preset = AdvancedMode.Preset.NONE;
+        }
+
+        private void LoadCustomConfigInternal(string json)
         {
             AdvancedDevice adev = AdvancedDevice.FromDevice(RealSenseDevice);
             adev.JsonConfiguration = json;
