@@ -327,7 +327,7 @@ namespace MetriCam2.Controls
 
                     if(paramDesc is Camera.ListParamDesc<Point2i>
                     || paramDesc is Camera.ListParamDesc<int>
-                    || paramDesc is Camera.IListParamDesc && (paramDesc as Camera.IListParamDesc).GetType().IsEnum)
+                    || (paramDesc as Camera.IListParamDesc).GetListType().IsEnum)
                     {
                         comboBoxValue.SelectedValueChanged += (sender, e) =>
                         {
@@ -343,7 +343,7 @@ namespace MetriCam2.Controls
                             }
                             else // Enum
                             {
-                                parameterValue = Enum.Parse((paramDesc as Camera.IListParamDesc).GetType(), comboBoxValue.SelectedItem as string);
+                                parameterValue = Enum.Parse((paramDesc as Camera.IListParamDesc).GetListType(), comboBoxValue.SelectedItem as string);
                             }
 
                             string parameterName = paramDesc.Name;
