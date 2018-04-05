@@ -112,7 +112,9 @@ namespace MetriCam2.Cameras
                 }
                 else
                 {
-                    Console.WriteLine("{0}: {1} {2}", Name, grabResult.ErrorCode, grabResult.ErrorDescription);
+                    string msg = string.Format("{0}: {1} {2}", Name, grabResult.ErrorCode, grabResult.ErrorDescription);
+                    log.Error(msg);
+                    throw new InvalidOperationException(msg);
                 }
             }
 
