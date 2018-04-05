@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
 using Intel.RealSense;
+using MetriCam2.Exceptions;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -1410,9 +1411,9 @@ namespace MetriCam2.Cameras
             
             if(!_config.CanResolve(_pipeline))
             {
-                string msg = $"{Name}: No camera that supports the current configuration detected";
+                string msg = $"{Name}: current configuration is not supported";
                 log.Error(msg);
-                throw new InvalidOperationException(msg);
+                throw new ConfigurationNotSupportedException(msg);
             }
 
             if(!_pipelineRunning)
@@ -1489,7 +1490,7 @@ namespace MetriCam2.Cameras
                 return;
             }
 
-            throw new Exception($"{Name}: not all requested frames are part of the retrieved FrameSet");
+            throw new ImageAcquisitionFailedException($"{Name}: not all requested frames are part of the retrieved FrameSet");
         }
 
         private void ExtractFrameSetData(FrameSet data, bool getColor, bool getDepth, bool getLeft, bool getRight,
