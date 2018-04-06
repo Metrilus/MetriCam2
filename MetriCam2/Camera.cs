@@ -908,7 +908,6 @@ namespace MetriCam2
             string msgNotSupported = String.Format("{0} does not support parameter {1}.", Name, name);
             PropertyInfo pi = this.GetType().GetProperty(name);
             Type propertyType = pi.PropertyType;
-            object propertyValue = pi.GetValue(this, null);
 
             if (null == pi)
             {
@@ -916,6 +915,7 @@ namespace MetriCam2
                 throw new ParameterNotSupportedException(msgNotSupported);
             }
 
+            object propertyValue = pi.GetValue(this, null);
             ParamDesc desc = null;
 
             Attribute[] attributes = Attribute.GetCustomAttributes(pi);
