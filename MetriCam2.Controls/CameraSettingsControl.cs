@@ -176,12 +176,10 @@ namespace MetriCam2.Controls
             }
             catch(ConfigurationNotSupportedException)
             {
-                MessageBox.Show("This Configuration is not supported by this camera");
+                ShowMessageBox();
             }
-            finally
-            {
-                InitConfigurationParameters(this.Camera);
-            }
+
+            InitConfigurationParameters(this.Camera);
         }
         #endregion
 
@@ -266,8 +264,7 @@ namespace MetriCam2.Controls
                             }
                             catch (ConfigurationNotSupportedException)
                             {
-                                InitConfigurationParameters(this.Camera);
-                                MessageBox.Show("This Configuration is not supported by this camera");
+                                ShowMessageBox();
                             }
                         };
                     }
@@ -293,8 +290,7 @@ namespace MetriCam2.Controls
                             }
                             catch (ConfigurationNotSupportedException)
                             {
-                                InitConfigurationParameters(this.Camera);
-                                MessageBox.Show("This Configuration is not supported by this camera");
+                                ShowMessageBox();
                             }
                         };
                     }
@@ -354,8 +350,7 @@ namespace MetriCam2.Controls
                             }
                             catch (ConfigurationNotSupportedException)
                             {
-                                InitConfigurationParameters(this.Camera);
-                                MessageBox.Show("This Configuration is not supported by this camera");
+                                ShowMessageBox();
                             }
                         };
                     }
@@ -403,8 +398,7 @@ namespace MetriCam2.Controls
                         }
                         catch (ConfigurationNotSupportedException)
                         {
-                            InitConfigurationParameters(this.Camera);
-                            MessageBox.Show("This Configuration is not supported by this camera");
+                            ShowMessageBox();
                         }
                     };
 
@@ -700,6 +694,12 @@ namespace MetriCam2.Controls
         {
             string[] stringValue = s.Split('x');
             return new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
+        }
+
+        private void ShowMessageBox()
+        {
+            InitConfigurationParameters(this.Camera);
+            MessageBox.Show("This Configuration is not supported by this camera");
         }
     }
 }
