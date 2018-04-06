@@ -70,19 +70,6 @@ namespace MetriCam2.Cameras
 
         public bool IsMaster { get; private set; }
 
-        private RangeParamDesc<int> DeviceChannelDesc
-        {
-            get
-            {
-                return new RangeParamDesc<int>(0, 3)
-                {
-                    Description = "Device Channel",
-                    ReadableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected,
-                    WritableWhen = ConnectionStates.Connected,
-                };
-            }
-        }
-
         public Range<int> DeviceChannelRange { get; } = new Range<int>(0, 3);
 
         /// <summary>
@@ -236,10 +223,11 @@ namespace MetriCam2.Cameras
         /// Gets/sets the outlier tolerance.
         /// </summary>
         /// <remarks>Pixels which deviate from their neighbours more than this value will be set to 0 (distance) / NaN (3-D).</remarks>
-        [Description("FilterSpatial", "Spatial Filter")]
+        [Description("OutlierTolerance", "Outlier Tolerance")]
         [AccessState(
             readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
             writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Range(0, 65535)]
         public int OutlierTolerance
         {
             get
