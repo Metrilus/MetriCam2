@@ -33,6 +33,63 @@ namespace MetriCam2.Cameras
         private bool _pipelineRunning = false;
         private float _depthScale = 1.0f;
 
+        #region Filter
+        public class RealSense2Filter
+        {
+            private ProcessingBlock _filter;
+
+            public bool Enabled { get; set; }
+            public Sensor.SensorOptions Options { get => _filter.Options; }
+
+            public RealSense2Filter(ProcessingBlock filter)
+            {
+                _filter = filter;
+            }
+
+            internal VideoFrame ApplyFilter(VideoFrame frame)
+            {
+                if (_filter is DecimationFilter)
+                    return (_filter as DecimationFilter).ApplyFilter(frame);
+                else if (_filter is SpatialFilter)
+                    return (_filter as SpatialFilter).ApplyFilter(frame);
+                else if (_filter is TemporalFilter)
+                    return (_filter as TemporalFilter).ApplyFilter(frame);
+                else if (_filter is DisparityTransform)
+                    return (_filter as DisparityTransform).ApplyFilter(frame);
+
+                throw new NotImplementedException();
+            }
+        }
+
+        public RealSense2Filter DecimationFilter { get; } = new RealSense2Filter(new DecimationFilter());
+        public RealSense2Filter SpatialFilter { get; } = new RealSense2Filter(new SpatialFilter());
+        public RealSense2Filter TemporalFilter { get; } = new RealSense2Filter(new TemporalFilter());
+        public RealSense2Filter DepthToDisparityFilter { get; } = new RealSense2Filter(new DisparityTransform(true));
+        public RealSense2Filter DisparityToDepthFilter { get; } = new RealSense2Filter(new DisparityTransform(false));
+
+        private VideoFrame FilterFrame(VideoFrame frame)
+        {
+            VideoFrame filteredFrame = frame;
+
+            if (TemporalFilter.Enabled)
+                filteredFrame = TemporalFilter.ApplyFilter(filteredFrame);
+
+            if (SpatialFilter.Enabled)
+                filteredFrame = SpatialFilter.ApplyFilter(filteredFrame);
+
+            if (DecimationFilter.Enabled)
+                filteredFrame = DecimationFilter.ApplyFilter(filteredFrame);
+
+            if (DepthToDisparityFilter.Enabled)
+                filteredFrame = DepthToDisparityFilter.ApplyFilter(filteredFrame);
+
+            if (DisparityToDepthFilter.Enabled)
+                filteredFrame = DisparityToDepthFilter.ApplyFilter(filteredFrame);
+
+            return filteredFrame;
+        }
+        #endregion
+
         public enum EmitterMode
         {
             OFF = 0,
@@ -1592,7 +1649,7 @@ namespace MetriCam2.Cameras
                     case Stream.Depth:
                         if (getDepth)
                         {
-                            _currentDepthFrame = vframe;
+                            _currentDepthFrame = FilterFrame(vframe);
                             haveDepth = true;
                         }
                         break;
