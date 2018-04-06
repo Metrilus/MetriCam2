@@ -15,7 +15,6 @@ namespace MetriCam2.Cameras
         private int width;
         private int height;
 
-        private static double syncTriggerRate;
         private UInt16[] bufferIntensity;
         private UInt16[] bufferConfidence;
         private Coord3D[] bufferPoint3f;
@@ -29,23 +28,24 @@ namespace MetriCam2.Cameras
         private Object dataLock = new Object();
 
         private float exposureMilliseconds = 10.0f;
-        private bool filterTemporal = false;
-        private bool filterSpatial = true;
 
-        private const ulong c_TriggerBaseDelay = 250000000;    // 250 ms
-        // Readout time. [ns]
-        // Though basically a constant inherent to the ToF camera, the exact value may still change in future firmware releases.
-        private const ulong c_ReadoutTime = 21000000;
-        #endregion
+        private bool _isTemporalFilterEnabled = false;
+        private int _temporalFilterStrength = 240;
+        private bool _isSpatialFilterEnabled = true;
+        private int _outlierTolerance = 6000;
 
-        #region Properties
-        public bool IsMaster { get; private set; }
-        private static ulong TriggerDelay { get; set; }
+        private static double syncTriggerRate;
+        private static ulong triggerDelay;
         #endregion
 
         #region Private Constants
         private const float MinExposureMilliseconds = 0.1f;
         private const float MaxExposureMilliseconds = 25.0f;
+        private readonly Range<float> ExposureMilliseconds = new Range<float>(MinExposureMilliseconds, MaxExposureMilliseconds);
+        private const ulong TriggerBaseDelay = 250000000;    // 250 ms
+        // Readout time. [ns]
+        // Though basically a constant inherent to the ToF camera, the exact value may still change in future firmware releases.
+        private const ulong ReadoutTime = 21000000;
         #endregion
 
         #region Constructor
@@ -68,8 +68,54 @@ namespace MetriCam2.Cameras
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.BaslerIcon; }
 #endif
 
+        public bool IsMaster { get; private set; }
+
+        private RangeParamDesc<int> DeviceChannelDesc
+        {
+            get
+            {
+                return new RangeParamDesc<int>(0, 3)
+                {
+                    Description = "Device Channel",
+                    ReadableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected,
+                    WritableWhen = ConnectionStates.Connected,
+                };
+            }
+        }
+
+        public Range<int> DeviceChannelRange { get; } = new Range<int>(0, 3);
+
         /// <summary>
-        /// Gets or sets the exposure time in milliseconds.
+        /// Gets or sets the device channel.
+        /// Use this property to minimize interference between multiple cameras.
+        /// </summary>
+        [Description("DeviceChannel", "Device Channel")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(DeviceChannelRange))]
+        public int DeviceChannel
+        {
+            get => int.Parse(camera.GetParameterValue("DeviceChannel"));
+            set
+            {
+                if (!DeviceChannelRange.IsValid(value))
+                {
+                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The device channel must be between {0} and {1}.", DeviceChannelRange.Minimum, DeviceChannelRange.Maximum));
+                    return;
+                }
+
+                if (!IsConnected)
+                {
+                    throw new InvalidOperationException(string.Format("{0}: {1} cannot be set before the camera is connected.", Name, nameof(DeviceChannel)));
+                }
+
+                camera.SetParameterValue("DeviceChannel", value.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets the exposure time in milliseconds.
         /// </summary>
         [Description("Exposure", "Exposure time")]
         [Unit(Unit.Milliseconds)]
@@ -85,9 +131,9 @@ namespace MetriCam2.Cameras
             }
             set
             {
-                if (value < MinExposureMilliseconds || value > MaxExposureMilliseconds)
+                if (!ExposureMilliseconds.IsValid(value))
                 {
-                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The exposure time must be between {0} and {1} ms.", MinExposureMilliseconds, MaxExposureMilliseconds));
+                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The exposure time must be between {0} and {1} ms.", ExposureMilliseconds.Minimum, ExposureMilliseconds.Maximum));
                     return;
                 }
 
@@ -103,47 +149,109 @@ namespace MetriCam2.Cameras
         }
 
         /// <summary>
-        /// Get/Set the state of the temporal filter.
+        /// Enables/disables the temporal filter.
         /// </summary>
-        [Description("FilterTemporal", "Temporal Filter")]
+        [Description("TemporalFilter", "Temporal Filter")]
         [AccessState(
             readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
             writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
-        public bool FilterTemporal
+        public bool TemporalFilter
         {
             get
             {
-                return filterTemporal;
+                return _isTemporalFilterEnabled;
             }
             set
             {
-                filterTemporal = value;
+                _isTemporalFilterEnabled = value;
                 if (IsConnected)
                 {
-                    camera.SetParameterValue("FilterTemporal", filterTemporal.ToString().ToLower());
+                    camera.SetParameterValue("FilterTemporal", _isTemporalFilterEnabled.ToString().ToLower());
                 }
             }
         }
 
         /// <summary>
-        /// Get/Set the state of the spatial filter.
+        /// Gets/sets the strength of the temporal filter.
         /// </summary>
+        /// <remarks>A higher value means the filter reaches back more frames.</remarks>
+        [Description("TemporalFilterStrength", "Temporal Filter Strength")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Range(50, 240)]
+        public int TemporalFilterStrength
+        {
+            get
+            {
+                return _temporalFilterStrength;
+            }
+            set
+            {
+                _temporalFilterStrength = value;
+                if (IsConnected)
+                {
+                    camera.SetParameterValue("FilterStrength", _temporalFilterStrength.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Enables/disables the spatial filter.
+        /// </summary>
+        [Description("SpatialFilter", "Spatial Filter")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        public bool SpatialFilter
+        {
+            get
+            {
+                return _isSpatialFilterEnabled;
+            }
+            set
+            {
+                _isSpatialFilterEnabled = value;
+                if (IsConnected)
+                {
+                    camera.SetParameterValue("FilterSpatial", _isSpatialFilterEnabled.ToString().ToLower());
+                }
+            }
+        }
+
+        private ParamDesc<int> OutlierToleranceDesc
+        {
+            get
+            {
+                return new RangeParamDesc<int>(0, 65535)
+                {
+                    Description = "Outlier Tolerance",
+                    ReadableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected,
+                    WritableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected,
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets/sets the outlier tolerance.
+        /// </summary>
+        /// <remarks>Pixels which deviate from their neighbours more than this value will be set to 0 (distance) / NaN (3-D).</remarks>
         [Description("FilterSpatial", "Spatial Filter")]
         [AccessState(
             readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
             writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
-        public bool FilterSpatial
+        public int OutlierTolerance
         {
             get
             {
-                return filterSpatial;
+                return _outlierTolerance;
             }
             set
             {
-                filterSpatial = value;
+                _outlierTolerance = value;
                 if (IsConnected)
                 {
-                    camera.SetParameterValue("FilterSpatial", filterSpatial.ToString().ToLower());
+                    camera.SetParameterValue("OutlierTolerance", _outlierTolerance.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 }
             }
         }
@@ -268,7 +376,7 @@ namespace MetriCam2.Cameras
 
             //// Enable/Disable spatial filtering
             //FilterSpatial = filterSpatial;            
-            
+
             // Activate Channels before streaming starts;
             // Activate default channels if no channels are selected
             if (0 == ActiveChannels.Count)
@@ -505,15 +613,19 @@ namespace MetriCam2.Cameras
                     cameras[i].Connect();
                 }
                 cameras[i].StopGrabbing();
+
+                cameras[i].camera.SetParameterValue("GevIEEE1588", "true");
                 cameras[i].camera.SetParameterValue("TriggerMode", "On");
                 cameras[i].camera.SetParameterValue("TriggerSource", "SyncTimer");
             }
-            log.Info("Waiting for cameras to negotiate master role ...");
+
+            log.Debug("Waiting for cameras to negotiate master role ...");
+
             // negotiate master:
-            int nMaster;
+            int numMasters;
             do
             {
-                nMaster = 0;
+                numMasters = 0;
 
                 // Wait until a master camera (if any) and the slave cameras have been chosen.
                 // Note that if a PTP master clock is present in the subnet, all TOF cameras
@@ -528,41 +640,41 @@ namespace MetriCam2.Cameras
                     {
                         // Latch GevIEEE1588 status.
                         camera.ExecuteCommand("GevIEEE1588DataSetLatch");
-                        System.Threading.Thread.Sleep(1000);
+                        Thread.Sleep(TimeSpan.FromMilliseconds(1000));
                     }
 
                     if (camera.GetParameterValue("GevIEEE1588StatusLatched") == "Master")
                     {
                         cameras[i].IsMaster = true;
-                        nMaster++;
+                        numMasters++;
                     }
                     else
                     {
                         cameras[i].IsMaster = false;
                     }
                 }
-            } while (nMaster > 1);    // Repeat until there is at most one master left.
+            } while (numMasters > 1);    // Repeat until there is at most one master left.
 
             // Use this variable to check whether there is an external master clock.
             bool externalMasterClock = true;
-
             for (int i = 0; i < cameras.Length; ++i)
             {
                 if (cameras[i].IsMaster)
                 {
-                    log.InfoFormat("Camera {0} is master.", i);
+                    log.DebugFormat("Camera {0} is master.", i);
                     externalMasterClock = false;
+                    break;
                 }
             }
-
-            if (true == externalMasterClock)
+            if (externalMasterClock)
             {
                 log.Info("External master clock present in subnet: All cameras are slaves.");
             }
+
             // Synchronize clocks:
             // Maximum allowed offset from master clock. 
-            const long tsOffsetMax = 10000;
-            log.InfoFormat("Wait until offsets from master clock have settled below {0} ns", tsOffsetMax);
+            const long maxOffsetFromMasterClock = 10000;
+            log.DebugFormat("Wait until offsets from master clock have settled below {0} ns", maxOffsetFromMasterClock);
 
             for (int camIdx = 0; camIdx < cameras.Length; camIdx++)
             {
@@ -573,10 +685,11 @@ namespace MetriCam2.Cameras
                     do
                     {
                         tsOffset = GetMaxAbsGevIEEE1588OffsetFromMasterInTimeWindow(cameras[camIdx], 1.0, 0.1);
-                        log.InfoFormat("max offset of cam {0} = {1} ns", camIdx, tsOffset);
-                    } while (tsOffset >= tsOffsetMax);
+                        log.DebugFormat("max offset of cam {0} = {1} ns", camIdx, tsOffset);
+                    } while (tsOffset >= maxOffsetFromMasterClock);
                 }
             }
+
             // Set trigger delays:
             // Current timestamp
             ulong timestamp = 0;
@@ -586,16 +699,19 @@ namespace MetriCam2.Cameras
             ulong tsLow, tsHigh;
 
             // Initialize trigger delay.
-            TriggerDelay = 0;
+            triggerDelay = 0;
 
-            log.Info("Configuring start time and trigger delays ...");
+            log.Debug("Configuring start time and trigger delays ...");
 
+            // For sanity checks:
+            int nExpTimes0 = -1;
+            ulong[] expTimes0 = null;
             //
             // Cycle through cameras and set trigger delay.
             //
             for (int camIdx = 0; camIdx < cameras.Length; camIdx++)
             {
-                log.InfoFormat("Camera {0} : ", camIdx);
+                log.DebugFormat("Camera {0} : ", camIdx);
 
                 //
                 // Read timestamp and exposure time.
@@ -613,33 +729,36 @@ namespace MetriCam2.Cameras
 
                     // Assemble 64-bit timestamp and keep it.
                     timestamp = tsLow + (tsHigh << 32);
-                    log.InfoFormat("Reading time stamp from first camera.\ntimestamp = {0}\n", timestamp);
+                    log.DebugFormat("Reading time stamp from first camera.\ntimestamp = {0}\n", timestamp);
 
-                    log.Info("Reading exposure times from first camera:");
+                    log.Debug("Reading exposure times from first camera:");
 
                     // Get exposure time count (in case of HDR there will be 2, otherwise 1).
                     int nExpTimes = int.Parse(cameras[camIdx].camera.GetParameterMaximum("ExposureTimeSelector")) + 1;
+                    nExpTimes0 = nExpTimes;
+                    expTimes0 = new ulong[nExpTimes0];
 
                     // Sum up exposure times.
                     for (int l = 0; l < nExpTimes; l++)
                     {
                         cameras[camIdx].camera.SetParameterValue("ExposureTimeSelector", l.ToString());
                         ulong expTime = ulong.Parse(cameras[camIdx].camera.GetParameterValue("ExposureTime"));
-                        log.InfoFormat("exposure time {0} = ", l);
-                        TriggerDelay += (1000 * expTime);   // Convert from us -> ns
+                        expTimes0[l] = expTime;
+                        log.DebugFormat("exposure time {0} = {1}", l, expTime);
+                        triggerDelay += (1000 * expTime);   // Convert from us -> ns
                     }
 
-                    log.Info("Calculating trigger delay.");
+                    log.Debug("Calculating trigger delay.");
 
                     // Add readout time.
-                    TriggerDelay += (uint)(nExpTimes - 1) * c_ReadoutTime;
+                    triggerDelay += (uint)(nExpTimes - 1) * ReadoutTime;
 
                     // Add safety margin for clock jitter.
-                    TriggerDelay += 1000000;
+                    triggerDelay += 1000000;
 
                     // Calculate synchronous trigger rate.
-                    log.InfoFormat("Calculating maximum synchronous trigger rate ... ");
-                    syncTriggerRate = 1000000000 / ((uint)cameras.Length * TriggerDelay);
+                    log.DebugFormat("Calculating maximum synchronous trigger rate ... ");
+                    syncTriggerRate = 1000000000 / ((uint)cameras.Length * triggerDelay);
 
                     // If the calculated value is greater than the maximum supported rate, 
                     // adjust it. 
@@ -650,8 +769,32 @@ namespace MetriCam2.Cameras
                     }
 
                     // Print trigger delay and synchronous trigger rate.
-                    log.InfoFormat("Trigger delay = {0} ms", TriggerDelay / 1000000);
-                    log.InfoFormat("Setting synchronous trigger rate to {0} fps\n", syncTriggerRate);
+                    log.DebugFormat("Trigger delay = {0} ms", triggerDelay / 1000000);
+                    log.DebugFormat("Setting synchronous trigger rate to {0} fps\n", syncTriggerRate);
+                }
+                else
+                {
+                    // Perform sanity checks:
+                    // - are all cameras working in (non-)HDR mode?
+                    // - are the exposure times of all cameras equal?
+
+                    // Check exposure time count (in case of HDR there will be 2, otherwise 1).
+                    int nExpTimes = int.Parse(cameras[camIdx].camera.GetParameterMaximum("ExposureTimeSelector")) + 1;
+                    if (nExpTimes != nExpTimes0)
+                    {
+                        throw new InvalidOperationException("Cameras are configured in mixed HDR modes");
+                    }
+
+                    // Check exposure times.
+                    for (int l = 0; l < nExpTimes; l++)
+                    {
+                        cameras[camIdx].camera.SetParameterValue("ExposureTimeSelector", l.ToString());
+                        ulong expTime = ulong.Parse(cameras[camIdx].camera.GetParameterValue("ExposureTime"));
+                        if (expTime != expTimes0[l])
+                        {
+                            throw new InvalidOperationException("Cameras are configured with different exposure times");
+                        }
+                    }
                 }
 
                 // Set synchronization rate.
@@ -660,7 +803,7 @@ namespace MetriCam2.Cameras
                 // Calculate new timestamp by adding trigger delay.
                 // First camera starts after triggerBaseDelay, nth camera is triggered 
                 // after a delay of triggerBaseDelay +  n * triggerDelay.
-                syncStartTimestamp = timestamp + c_TriggerBaseDelay + (uint)camIdx * TriggerDelay;
+                syncStartTimestamp = timestamp + TriggerBaseDelay + (uint)camIdx * triggerDelay;
 
                 // Disassemble 64-bit timestamp.
                 tsHigh = syncStartTimestamp >> 32;
@@ -674,6 +817,7 @@ namespace MetriCam2.Cameras
                 // Until the values have been latched, they won't have any effect.
                 cameras[camIdx].camera.ExecuteCommand("SyncUpdate");
             }
+
             for (int i = 0; i < cameras.Length; i++)
             {
                 cameras[i].StartGrabbing();
@@ -705,7 +849,7 @@ namespace MetriCam2.Cameras
                     // Increase number of samples.
                     n++;
                 }
-                System.Threading.Thread.Sleep(1);
+                Thread.Sleep(1);
             } while (currTime <= timeToMeasureSec);
             // Return maximum of offsets from master for given time interval.
             return maxOffset;
