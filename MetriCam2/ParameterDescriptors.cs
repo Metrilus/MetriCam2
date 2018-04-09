@@ -784,7 +784,7 @@ namespace MetriCam2
             valueAsString = valueAsString.ToLower();
             foreach (var item in AllowedValues)
             {
-                if (value is string)
+                if (item is string)
                 {
                     if (item.ToLower() == valueAsString)
                     {
