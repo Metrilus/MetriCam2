@@ -34,57 +34,51 @@ namespace MetriCam2.Cameras
         private float _depthScale = 1.0f;
 
         #region Filter
-        public class RealSense2Filter
+        public class Filter
         {
             private ProcessingBlock _filter;
 
             public bool Enabled { get; set; }
             public Sensor.SensorOptions Options { get => _filter.Options; }
 
-            public RealSense2Filter(ProcessingBlock filter)
+            internal Filter(ProcessingBlock filter)
             {
                 _filter = filter;
             }
 
-            internal VideoFrame ApplyFilter(VideoFrame frame)
+            internal VideoFrame Apply(VideoFrame frame)
             {
-                if (_filter is DecimationFilter)
-                    return (_filter as DecimationFilter).ApplyFilter(frame);
-                else if (_filter is SpatialFilter)
-                    return (_filter as SpatialFilter).ApplyFilter(frame);
-                else if (_filter is TemporalFilter)
-                    return (_filter as TemporalFilter).ApplyFilter(frame);
-                else if (_filter is DisparityTransform)
-                    return (_filter as DisparityTransform).ApplyFilter(frame);
+                if (!this.Enabled)
+                    return frame;
+
+                if (_filter is DecimationFilter df)
+                    return df.ApplyFilter(frame);
+                if (_filter is SpatialFilter sf)
+                    return sf.ApplyFilter(frame);
+                if (_filter is TemporalFilter tf)
+                    return tf.ApplyFilter(frame);
+                if (_filter is DisparityTransform dt)
+                    return dt.ApplyFilter(frame);
 
                 throw new NotImplementedException();
             }
         }
 
-        public RealSense2Filter DecimationFilter { get; } = new RealSense2Filter(new DecimationFilter());
-        public RealSense2Filter SpatialFilter { get; } = new RealSense2Filter(new SpatialFilter());
-        public RealSense2Filter TemporalFilter { get; } = new RealSense2Filter(new TemporalFilter());
-        public RealSense2Filter DepthToDisparityFilter { get; } = new RealSense2Filter(new DisparityTransform(true));
-        public RealSense2Filter DisparityToDepthFilter { get; } = new RealSense2Filter(new DisparityTransform(false));
+        public Filter DecimationFilter { get; } = new Filter(new DecimationFilter());
+        public Filter SpatialFilter { get; } = new Filter(new SpatialFilter());
+        public Filter TemporalFilter { get; } = new Filter(new TemporalFilter());
+        public Filter DepthToDisparityTransform { get; } = new Filter(new DisparityTransform(true));
+        public Filter DisparityToDepthTransform { get; } = new Filter(new DisparityTransform(false));
 
         private VideoFrame FilterFrame(VideoFrame frame)
         {
             VideoFrame filteredFrame = frame;
 
-            if (TemporalFilter.Enabled)
-                filteredFrame = TemporalFilter.ApplyFilter(filteredFrame);
-
-            if (SpatialFilter.Enabled)
-                filteredFrame = SpatialFilter.ApplyFilter(filteredFrame);
-
-            if (DecimationFilter.Enabled)
-                filteredFrame = DecimationFilter.ApplyFilter(filteredFrame);
-
-            if (DepthToDisparityFilter.Enabled)
-                filteredFrame = DepthToDisparityFilter.ApplyFilter(filteredFrame);
-
-            if (DisparityToDepthFilter.Enabled)
-                filteredFrame = DisparityToDepthFilter.ApplyFilter(filteredFrame);
+            filteredFrame = TemporalFilter.Apply(filteredFrame);
+            filteredFrame = SpatialFilter.Apply(filteredFrame);
+            filteredFrame = DecimationFilter.Apply(filteredFrame);
+            filteredFrame = DepthToDisparityTransform.Apply(filteredFrame);
+            filteredFrame = DisparityToDepthTransform.Apply(filteredFrame);
 
             return filteredFrame;
         }
@@ -158,7 +152,7 @@ namespace MetriCam2.Cameras
                         ActivateChannelImpl(ChannelNames.Color);
                     });
                 }
-                catch(ConfigurationNotSupportedException)
+                catch(SettingCombinationNotSupportedException)
                 {
                     ColorResolution = oldValue;
                     if (this.IsConnected)
@@ -215,7 +209,7 @@ namespace MetriCam2.Cameras
                         ActivateChannelImpl(ChannelNames.Color);
                     });
                 }
-                catch (ConfigurationNotSupportedException)
+                catch (SettingCombinationNotSupportedException)
                 {
                     ColorFPS = oldValue;
                     if (this.IsConnected)
@@ -283,7 +277,7 @@ namespace MetriCam2.Cameras
                             ActivateChannelImpl(ChannelNames.Right);
                     });
                 }
-                catch(ConfigurationNotSupportedException)
+                catch(SettingCombinationNotSupportedException)
                 {
                     DepthResolution = oldValue;
                     if (this.IsConnected)
@@ -356,7 +350,7 @@ namespace MetriCam2.Cameras
                             ActivateChannelImpl(ChannelNames.Right);
                     });
                 }
-                catch (ConfigurationNotSupportedException)
+                catch (SettingCombinationNotSupportedException)
                 {
                     DepthFPS = oldValue;
                     if (this.IsConnected)
@@ -1542,9 +1536,9 @@ namespace MetriCam2.Cameras
             
             if(!_config.CanResolve(_pipeline))
             {
-                string msg = $"{Name}: current configuration is not supported";
+                string msg = $"{Name}: current combination of settings is not supported";
                 log.Error(msg);
-                throw new ConfigurationNotSupportedException(msg);
+                throw new SettingCombinationNotSupportedException(msg);
             }
 
             if(!_pipelineRunning)
