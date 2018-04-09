@@ -524,7 +524,10 @@ namespace MetriCam2.Cameras
             do
             {
                 if (Environment.TickCount > startTickCount + timeout)
-                    throw new Exception("Timeout.");
+                {
+                    throw new TimeoutException("Timeout while receiving data");
+                }
+
                 try
                 {
                     received += socket.Receive(buffer, offset + received, size - received, SocketFlags.None);
@@ -539,7 +542,9 @@ namespace MetriCam2.Cameras
                         Thread.Sleep(30);
                     }
                     else
-                        throw ex;  // any serious error occurr
+                    {
+                        throw;  // any serious error occurred
+                    }
                 }
             } while (received < size);
         }
