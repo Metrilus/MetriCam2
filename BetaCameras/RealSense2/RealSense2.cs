@@ -143,23 +143,13 @@ namespace MetriCam2.Cameras
                 if (value == _colorResolution)
                     return;
 
-                Point2i oldValue = _colorResolution;
-
-                try
-                {
-                    ExecuteWithStoppedPipeline(() =>
-                    {
-                        DeactivateChannelImpl(ChannelNames.Color);
-                        _colorResolution = value;
-                        ActivateChannelImpl(ChannelNames.Color);
-                    });
-                }
-                catch(SettingCombinationNotSupportedException)
-                {
-                    _colorResolution = oldValue;
-                    StartPipeline();
-                    throw;
-                }
+                TryChangeSetting<Point2i>(
+                    ref _colorResolution,
+                    value,
+                    new List<string>() {
+                        ChannelNames.Color
+                    }
+                );
             }
         }
 
@@ -199,23 +189,13 @@ namespace MetriCam2.Cameras
                 if (value == _colorFPS)
                     return;
 
-                int oldValue = _colorFPS;
-
-                try
-                {
-                    ExecuteWithStoppedPipeline(() =>
-                    {
-                        DeactivateChannelImpl(ChannelNames.Color);
-                        _colorFPS = value;
-                        ActivateChannelImpl(ChannelNames.Color);
-                    });
-                }
-                catch (SettingCombinationNotSupportedException)
-                {
-                    _colorFPS = oldValue;
-                    StartPipeline();
-                    throw;
-                }
+                TryChangeSetting<int>(
+                    ref _colorFPS,
+                    value,
+                    new List<string>() {
+                        ChannelNames.Color
+                    }
+                );
             }
         }
 
@@ -250,39 +230,15 @@ namespace MetriCam2.Cameras
                 if (value == _depthResolution)
                     return;
 
-                Point2i oldValue = _depthResolution;
-
-                try
-                {
-                    ExecuteWithStoppedPipeline(() =>
-                    {
-                        if (IsChannelActive(ChannelNames.ZImage))
-                            DeactivateChannelImpl(ChannelNames.ZImage);
-
-                        if (IsChannelActive(ChannelNames.Left))
-                            DeactivateChannelImpl(ChannelNames.Left);
-
-                        if (IsChannelActive(ChannelNames.Right))
-                            DeactivateChannelImpl(ChannelNames.Right);
-
-                        _depthResolution = value;
-
-                        if (IsChannelActive(ChannelNames.ZImage))
-                            ActivateChannelImpl(ChannelNames.ZImage);
-
-                        if (IsChannelActive(ChannelNames.Left))
-                            ActivateChannelImpl(ChannelNames.Left);
-
-                        if (IsChannelActive(ChannelNames.Right))
-                            ActivateChannelImpl(ChannelNames.Right);
-                    });
-                }
-                catch(SettingCombinationNotSupportedException)
-                {
-                    _depthResolution = oldValue;
-                    StartPipeline();
-                    throw;
-                }
+                TryChangeSetting<Point2i>(
+                    ref _depthResolution,
+                    value,
+                    new List<string>() {
+                        ChannelNames.ZImage,
+                        ChannelNames.Left,
+                        ChannelNames.Right
+                    }
+                );
             }
         }
 
@@ -322,40 +278,15 @@ namespace MetriCam2.Cameras
                 if (value == _depthFPS)
                     return;
 
-                int oldValue = _depthFPS;
-
-                try
-                {
-                    ExecuteWithStoppedPipeline(() =>
-                    {
-                        if (IsChannelActive(ChannelNames.ZImage))
-                            DeactivateChannelImpl(ChannelNames.ZImage);
-
-                        if (IsChannelActive(ChannelNames.Left))
-                            DeactivateChannelImpl(ChannelNames.Left);
-
-                        if (IsChannelActive(ChannelNames.Right))
-                            DeactivateChannelImpl(ChannelNames.Right);
-
-                        _depthFPS = value;
-
-                        if (IsChannelActive(ChannelNames.ZImage))
-                            ActivateChannelImpl(ChannelNames.ZImage);
-
-                        if (IsChannelActive(ChannelNames.Left))
-                            ActivateChannelImpl(ChannelNames.Left);
-
-                        if (IsChannelActive(ChannelNames.Right))
-                            ActivateChannelImpl(ChannelNames.Right);
-                    });
-                }
-                catch (SettingCombinationNotSupportedException)
-                {
-                    _depthFPS = oldValue;
-                    StartPipeline();
-                    throw;
-                }
-                
+                TryChangeSetting<int>(
+                    ref _depthFPS,
+                    value,
+                    new List<string>() {
+                        ChannelNames.ZImage,
+                        ChannelNames.Left,
+                        ChannelNames.Right
+                    }
+                );
             }
         }
 
@@ -2150,6 +2081,48 @@ namespace MetriCam2.Cameras
         private float GetDepthScale()
         {
             return GetSensor(SensorNames.Stereo).DepthScale;
+        }
+
+        private void TryChangeSetting<T>(ref T property, T newValue, List<string> channelNames)
+        {
+            T oldValue = property;
+            bool running = _pipelineRunning;
+
+            try
+            {
+                StopPipeline();
+                DeactivateChannels(channelNames);
+                property = newValue;
+                ActivateChannels(channelNames);
+            }
+            catch (SettingCombinationNotSupportedException)
+            {
+                property = oldValue;
+                ActivateChannels(channelNames);
+                throw;
+            }
+            finally
+            {
+                if (running) StartPipeline();
+            }
+        }
+
+        private void ActivateChannels(List<string> channelNames)
+        {
+            foreach (string channel in channelNames)
+            {
+                if (IsChannelActive(channel))
+                    ActivateChannelImpl(channel);
+            }
+        }
+
+        private void DeactivateChannels(List<string> channelNames)
+        {
+            foreach (string channel in channelNames)
+            {
+                if (IsChannelActive(channel))
+                    DeactivateChannelImpl(channel);
+            }
         }
     }
 }
