@@ -15,7 +15,10 @@ namespace MetriCam2.Cameras
 {
     public class BaslerACE : Camera, IDisposable
     {
-        private const string DeviceClass = "acA1300";
+        public List<string> SupportedDevices { get; set; } = new List<string>()
+        {
+            "acA1300",
+        };
         private Basler.Pylon.Camera _camera;
         private Bitmap _bitmap;
         private PixelDataConverter _converter;
@@ -34,7 +37,7 @@ namespace MetriCam2.Cameras
 
         ~BaslerACE()
         {
-            
+            Dispose(false);
         }
 
         public void Dispose()
@@ -77,15 +80,21 @@ namespace MetriCam2.Cameras
                 }
                 catch(Exception e)
                 {
-                    throw new ConnectionFailedException($"No {Name} with S/N {SerialNumber} found: {e.Message}");
+                    string msg = $"No {Name} with S/N {SerialNumber} found: {e.Message}";
+                    log.Error(msg);
+                    throw new ConnectionFailedException(msg);
                 }
             }
             else
             {
                 List<ICameraInfo> devices = CameraFinder.Enumerate();
-                ICameraInfo device = devices.Where(i => i[CameraInfoKey.FullName].Contains(DeviceClass)).First();
+                ICameraInfo device = devices.Where(i => ContainsAny(i[CameraInfoKey.FullName], SupportedDevices)).First();
                 if(null == device)
-                    throw new ConnectionFailedException($"No device of supported type {DeviceClass} found");
+                {
+                    string msg = $"{Name}: No device of supported types {SupportedDevices} found";
+                    log.Error(msg);
+                    throw new ConnectionFailedException(msg);
+                }
 
                 try
                 {
@@ -93,27 +102,28 @@ namespace MetriCam2.Cameras
                 }
                 catch(Exception e)
                 {
-                    throw new ConnectionFailedException($"{Name} failed to connect: {e.Message}");
+                    string msg = $"{Name} failed to connect: {e.Message}";
+                    log.Error(msg);
+                    throw new ConnectionFailedException(msg);
                 }
             }
 
             _camera.CameraOpened += Configuration.AcquireSingleFrame;
             _camera.Open();
+            _camera.StreamGrabber.Start();
 
             ActivateChannel(ChannelNames.Color);
         }
 
         protected override void DisconnectImpl()
         {
+            _camera.StreamGrabber.Stop();
             _camera.Close();
         }
 
         protected override void UpdateImpl()
         {
-            _camera.StreamGrabber.Start();
-            IGrabResult grabResult = _camera.StreamGrabber.RetrieveResult(5000, TimeoutHandling.ThrowException);
-
-            using (grabResult)
+            using (IGrabResult grabResult = _camera.StreamGrabber.RetrieveResult(5000, TimeoutHandling.ThrowException))
             {
                 if (grabResult.GrabSucceeded)
                 {
@@ -135,8 +145,6 @@ namespace MetriCam2.Cameras
                     throw new ImageAcquisitionFailedException(msg);
                 }
             }
-
-            _camera.StreamGrabber.Stop();
         }
 
         protected override CameraImage CalcChannelImpl(string channelName)
@@ -147,8 +155,19 @@ namespace MetriCam2.Cameras
                     return new ColorCameraImage(_bitmap);
             }
 
-            log.Error("Unexpected ChannelName in CalcChannel().");
+            log.Error($"{Name}: Unexpected ChannelName in CalcChannel().");
             return null;
+        }
+
+        public bool ContainsAny(string haystack, List<string> needles)
+        {
+            foreach (string needle in needles)
+            {
+                if (haystack.Contains(needle))
+                    return true;
+            }
+
+            return false;
         }
     }
 }
