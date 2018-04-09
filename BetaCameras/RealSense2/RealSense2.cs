@@ -60,7 +60,9 @@ namespace MetriCam2.Cameras
                 if (_filter is DisparityTransform dt)
                     return dt.ApplyFilter(frame);
 
-                throw new NotImplementedException();
+                string msg = $"RealSense2: Filter type {_filter.GetType().ToString()} not supported";
+                log.Error(msg);
+                throw new NotImplementedException(msg);
             }
         }
 
