@@ -63,7 +63,7 @@
     <Compile Include="CameraManagement.cs" />
     <Compile Include="ChannelNames.cs" />
     <Compile Include="ChannelRegistry.cs" />
-    <Compile Include="Exceptions\ConfigurationNotSupportedException.cs" />
+    <Compile Include="Exceptions\SettingCombinationNotSupportedException.cs" />
     <Compile Include="Exceptions\ConnectionFailedException.cs" />
     <Compile Include="Exceptions\ExceptionBuilder.cs" />
     <Compile Include="Camera.cs" />

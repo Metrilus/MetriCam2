@@ -174,7 +174,7 @@ namespace MetriCam2.Controls
             {
                 Camera.SetParameters(keyValues);
             }
-            catch(ConfigurationNotSupportedException)
+            catch(SettingCombinationNotSupportedException)
             {
                 ShowMessageBox();
             }
@@ -262,7 +262,7 @@ namespace MetriCam2.Controls
                             {
                                 Camera.SetParameter(paramDesc.Name, parameterValue);
                             }
-                            catch (ConfigurationNotSupportedException)
+                            catch (SettingCombinationNotSupportedException)
                             {
                                 ShowMessageBox();
                             }
@@ -288,7 +288,7 @@ namespace MetriCam2.Controls
                             {
                                 Camera.SetParameter(paramDesc.Name, parameterValue);
                             }
-                            catch (ConfigurationNotSupportedException)
+                            catch (SettingCombinationNotSupportedException)
                             {
                                 ShowMessageBox();
                             }
@@ -348,7 +348,7 @@ namespace MetriCam2.Controls
                             {
                                 Camera.SetParameter(paramDesc.Name, parameterValue);
                             }
-                            catch (ConfigurationNotSupportedException)
+                            catch (SettingCombinationNotSupportedException)
                             {
                                 ShowMessageBox();
                             }
@@ -396,7 +396,7 @@ namespace MetriCam2.Controls
                         {
                             Camera.SetParameters(keyValues);
                         }
-                        catch (ConfigurationNotSupportedException)
+                        catch (SettingCombinationNotSupportedException)
                         {
                             ShowMessageBox();
                         }
