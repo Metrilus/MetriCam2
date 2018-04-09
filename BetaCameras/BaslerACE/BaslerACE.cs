@@ -99,6 +99,8 @@ namespace MetriCam2.Cameras
                 try
                 {
                     _camera = new Basler.Pylon.Camera(device);
+                    this.SerialNumber = _camera.CameraInfo.ContainsKey("SerialNumber") ? _camera.CameraInfo["SerialNumber"] : null;
+                    this.Model = _camera.CameraInfo.ContainsKey("ModelName") ? _camera.CameraInfo["ModelName"] : "Basler ace";
                 }
                 catch(Exception e)
                 {
