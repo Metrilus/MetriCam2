@@ -351,7 +351,7 @@ namespace MetriCam2.Controls
                     checkBoxValue.CheckStateChanged += (sender, e) =>
                     {
                         string parameterValue = checkBoxValue.Checked.ToString(CultureInfo.InvariantCulture);
-                        string parameterName = checkBoxValue.Name.Replace(VALUE_SUFFIX, string.Empty);
+                        string parameterName = paramDesc.Name;
                         Dictionary<string, object> keyValues = new Dictionary<string, object>();
                         keyValues.Add(parameterName, parameterValue);
                         Camera.SetParameters(keyValues);
