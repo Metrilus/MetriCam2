@@ -466,6 +466,8 @@ namespace MetriCam2.Cameras
                     }
                 }
             }
+
+            dataAvailable.Reset();
         }
 
         /// <summary>Computes (image) data for a given channel.</summary>
