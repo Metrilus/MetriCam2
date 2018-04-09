@@ -943,7 +943,7 @@ namespace MetriCam2
                 desc = ParamDesc.CreateRange(
                     propertyType,
                     range,
-                    description.Name,
+                    name,
                     description.Description,
                     GetUnit(unit),
                     propertyValue,
@@ -964,7 +964,7 @@ namespace MetriCam2
                 desc = ParamDesc.CreateList(
                     propertyType,
                     list,
-                    description.Name,
+                    name,
                     description.Description,
                     GetUnit(unit),
                     propertyValue,
@@ -975,7 +975,7 @@ namespace MetriCam2
             {
                 desc = ParamDesc.Create(
                     propertyType, 
-                    description.Name, 
+                    name, 
                     description.Description,
                     GetUnit(unit),
                     propertyValue,
@@ -983,6 +983,7 @@ namespace MetriCam2
                     IsWritable(accessState));
             }
 
+            desc.DisplayName = description.Name;
             desc.IsReadable = (desc.ReadableWhen & (IsConnected ? ConnectionStates.Connected : ConnectionStates.Disconnected)) > 0;
             desc.IsWritable = (desc.WritableWhen & (IsConnected ? ConnectionStates.Connected : ConnectionStates.Disconnected)) > 0;
 

@@ -135,46 +135,6 @@ namespace MetriCam2.Controls
         }
         #endregion
 
-        #region Public Methods
-        public void ApplyCameraSettings()
-        {
-            Dictionary<string, object> keyValues = new Dictionary<string, object>();
-
-            for (int j = 0; j < tableLayoutPanel1.Controls.Count; j++)
-            {
-                Control ctrl = tableLayoutPanel1.Controls[j];
-                if (ctrl is Label || !ctrl.Name.EndsWith(VALUE_SUFFIX) || !ctrl.Enabled)
-                {
-                    continue;
-                }
-
-                string parameterName = ctrl.Name.Replace(VALUE_SUFFIX, string.Empty);
-                object parameterValue = ctrl.Text;
-                if (ctrl is CheckBox)
-                {
-                    parameterValue = ((CheckBox)ctrl).Checked.ToString(CultureInfo.InvariantCulture);
-                }
-                if (ctrl is NumericUpDown)
-                {
-                    parameterValue = ((NumericUpDown)ctrl).Value.ToString(CultureInfo.InvariantCulture);
-                }
-                if (ctrl is Slider)
-                {
-                    parameterValue = ((Slider)ctrl).Value.ToString(CultureInfo.InvariantCulture);
-                }
-                if (ctrl is MultiFileSelector)
-                {
-                    parameterValue = ((MultiFileSelector)ctrl).SelectedFiles;
-                }
-                keyValues.Add(parameterName, parameterValue);
-            }
-
-            Camera.SetParameters(keyValues);
-
-            InitConfigurationParameters(this.Camera);
-        }
-        #endregion
-
         #region Private Methods
         private string SeperateString(string value)
         {
@@ -248,7 +208,6 @@ namespace MetriCam2.Controls
                         scrollbarValue.ValueChanged += (sender, e) =>
                         {
                             string parameterValue = scrollbarValue.Value.ToString(CultureInfo.InvariantCulture);
-                            string parameterName = paramDesc.Name;
                             Camera.SetParameter(paramDesc.Name, parameterValue);
                         };
                     }
@@ -266,7 +225,6 @@ namespace MetriCam2.Controls
                         upDownValue.ValueChanged += (sender, e) =>
                         {
                             string parameterValue = upDownValue.Value.ToString(CultureInfo.InvariantCulture);
-                            string parameterName = paramDesc.Name;
                             Camera.SetParameter(paramDesc.Name, parameterValue);
                         };
                     }
@@ -313,7 +271,6 @@ namespace MetriCam2.Controls
                                 parameterValue = int.Parse(comboBoxValue.SelectedItem as string);
                             }
 
-                            string parameterName = paramDesc.Name;
                             Camera.SetParameter(paramDesc.Name, parameterValue);
                         };
                     }
@@ -351,9 +308,8 @@ namespace MetriCam2.Controls
                     checkBoxValue.CheckStateChanged += (sender, e) =>
                     {
                         string parameterValue = checkBoxValue.Checked.ToString(CultureInfo.InvariantCulture);
-                        string parameterName = paramDesc.Name;
                         Dictionary<string, object> keyValues = new Dictionary<string, object>();
-                        keyValues.Add(parameterName, parameterValue);
+                        keyValues.Add(paramDesc.Name, parameterValue);
                         Camera.SetParameters(keyValues);
                     };
 
@@ -426,7 +382,7 @@ namespace MetriCam2.Controls
             Label labelName = new Label();
             labelName.Font = LabelFont;
             labelName.Name = paramDesc.Name + "_label";
-            labelName.Text = SeperateString(paramDesc.Name) + ":";
+            labelName.Text = SeperateString(paramDesc.DisplayName) + ":";
             labelName.ForeColor = TextColor;
             labelName.AutoSize = true;
             labelName.Anchor = AnchorStyles.Right;

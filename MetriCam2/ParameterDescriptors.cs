@@ -39,6 +39,8 @@ namespace MetriCam2
         public Type Type { get; set; }
         /// <summary>Name of the parameter.</summary>
         public string Name { get; internal set; }
+        // <summary>Name to be displayed to the user</summary>
+        public string DisplayName { get; internal set; }
         /// <summary>Value of the parameter.</summary>
         /// <remarks>May be null if the parameter is not readable.</remarks>
         public object Value { get; set; }
