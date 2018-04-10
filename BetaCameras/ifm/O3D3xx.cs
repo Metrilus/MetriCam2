@@ -46,9 +46,9 @@ namespace MetriCam2.Cameras
                     return -1;
                 }
                 SetConfigurationMode(Mode.Edit);
-                edit.EditApplication(applicationId);
+                _edit.EditApplication(_applicationId);
 
-                _frequencyChannel = Convert.ToInt32(appImager.GetParameter("Channel"));
+                _frequencyChannel = Convert.ToInt32(_appImager.GetParameter("Channel"));
 
                 SetConfigurationMode(Mode.Run);
                 return _frequencyChannel;
@@ -61,10 +61,10 @@ namespace MetriCam2.Cameras
                     return;
                 }
                 SetConfigurationMode(Mode.Edit);
-                edit.EditApplication(applicationId);
-                appImager.SetParameter("Channel", value.ToString());
-                app.Save();
-                edit.StopEditingApplication();
+                _edit.EditApplication(_applicationId);
+                _appImager.SetParameter("Channel", value.ToString());
+                _app.Save();
+                _edit.StopEditingApplication();
                 SetConfigurationMode(Mode.Run);
             }
         }
@@ -97,9 +97,9 @@ namespace MetriCam2.Cameras
                     return -1;
                 }
                 SetConfigurationMode(Mode.Edit);
-                edit.EditApplication(applicationId);
-                _framerate = Convert.ToInt32(appImager.GetParameter("FrameRate"));
-                edit.StopEditingApplication();
+                _edit.EditApplication(_applicationId);
+                _framerate = Convert.ToInt32(_appImager.GetParameter("FrameRate"));
+                _edit.StopEditingApplication();
                 SetConfigurationMode(Mode.Run);
                 return _framerate;
             }
@@ -111,10 +111,10 @@ namespace MetriCam2.Cameras
                     return;
                 }
                 SetConfigurationMode(Mode.Edit);
-                edit.EditApplication(applicationId);
-                appImager.SetParameter("FrameRate", value.ToString());
-                app.Save();
-                edit.StopEditingApplication();
+                _edit.EditApplication(_applicationId);
+                _appImager.SetParameter("FrameRate", value.ToString());
+                _app.Save();
+                _edit.StopEditingApplication();
                 SetConfigurationMode(Mode.Run);
             }
         }
@@ -146,9 +146,9 @@ namespace MetriCam2.Cameras
                     return -1;
                 }
                 SetConfigurationMode(Mode.Edit);
-                edit.EditApplication(applicationId);
-                _exposureTime = Convert.ToInt32(appImager.GetParameter("ExposureTime"));
-                edit.StopEditingApplication();
+                _edit.EditApplication(_applicationId);
+                _exposureTime = Convert.ToInt32(_appImager.GetParameter("ExposureTime"));
+                _edit.StopEditingApplication();
                 SetConfigurationMode(Mode.Run);
                 return _exposureTime;
             }
@@ -160,10 +160,10 @@ namespace MetriCam2.Cameras
                     return;
                 }
                 SetConfigurationMode(Mode.Edit);
-                edit.EditApplication(applicationId);
-                appImager.SetParameter("ExposureTime", value.ToString());
-                app.Save();
-                edit.StopEditingApplication();
+                _edit.EditApplication(_applicationId);
+                _appImager.SetParameter("ExposureTime", value.ToString());
+                _app.Save();
+                _edit.StopEditingApplication();
                 SetConfigurationMode(Mode.Run);
             }
         }
@@ -248,12 +248,12 @@ namespace MetriCam2.Cameras
         private AutoResetEvent _frameAvailable = new AutoResetEvent(false);
         private byte[] _frameBuffer = new byte[0];
 
-        private Socket clientSocket;
-        private Mode configurationMode = Mode.Run;
-        private int triggeredMode = 1;
-        private int applicationId;
-        private int width;
-        private int height;
+        private Socket _clientSocket;
+        private Mode _configurationMode = Mode.Run;
+        private int _triggeredMode = 1;
+        private int _applicationId;
+        private int _width;
+        private int _height;
 
         private FloatCameraImage _amplitudeImage;
         private FloatCameraImage _distanceImage;
@@ -261,15 +261,15 @@ namespace MetriCam2.Cameras
         private FloatCameraImage _zImage;
         private ByteCameraImage _rawConfidenceImage;
 
-        private ISession session;
-        private IDevice device;
-        private IAppImager appImager;
-        private IApp app;
-        private IEdit edit;
-        private IEditDevice editeDevice;
-        private IServer server;
+        private ISession _session;
+        private IDevice _device;
+        private IAppImager _appImager;
+        private IApp _app;
+        private IEdit _edit;
+        private IEditDevice _editeDevice;
+        private IServer _server;
 
-        private string serverUrl;
+        private string _serverUrl;
         #endregion
 
         #region Constructor
@@ -286,14 +286,14 @@ namespace MetriCam2.Cameras
             CameraIP = "192.168.1.172";
             XMLRPCPort = 80;
             ImageOutputPort = 50010;
-            session = XmlRpcProxyGen.Create<ISession>();
-            device = XmlRpcProxyGen.Create<IDevice>();
-            appImager = XmlRpcProxyGen.Create<IAppImager>();
-            app = XmlRpcProxyGen.Create<IApp>();
-            edit = XmlRpcProxyGen.Create<IEdit>();
-            editeDevice = XmlRpcProxyGen.Create<IEditDevice>();
-            server = XmlRpcProxyGen.Create<IServer>();
-            this.applicationId = applicationId;
+            _session = XmlRpcProxyGen.Create<ISession>();
+            _device = XmlRpcProxyGen.Create<IDevice>();
+            _appImager = XmlRpcProxyGen.Create<IAppImager>();
+            _app = XmlRpcProxyGen.Create<IApp>();
+            _edit = XmlRpcProxyGen.Create<IEdit>();
+            _editeDevice = XmlRpcProxyGen.Create<IEditDevice>();
+            _server = XmlRpcProxyGen.Create<IServer>();
+            _applicationId = applicationId;
             _updateThread = new Thread(new ThreadStart(UpdateLoop));
         }
         #endregion
@@ -329,48 +329,48 @@ namespace MetriCam2.Cameras
         protected override void ConnectImpl()
         {
             SetConfigurationMode(Mode.Edit);
-            string protocolVersion = device.GetParameter("PcicProtocolVersion");
-            if (applicationId == -1)
+            string protocolVersion = _device.GetParameter("PcicProtocolVersion");
+            if (_applicationId == -1)
             {
                 for (int i = 1; i < 33; i++)
                 {
                     try
                     {
-                        edit.DeleteApplication(i);
+                        _edit.DeleteApplication(i);
                         log.Debug($"Deleted application: {i}");
                     }
                     catch { /* empty */ }
                 }
-                applicationId = edit.CreateApplication();
-                edit.EditApplication(applicationId);
-                triggeredMode = 1;
-                app.SetParameter("TriggerMode", triggeredMode.ToString());
-                appImager.SetParameter("ExposureTime", _exposureTime.ToString());
-                appImager.SetParameter("FrameRate", _framerate.ToString());
+                _applicationId = _edit.CreateApplication();
+                _edit.EditApplication(_applicationId);
+                _triggeredMode = 1;
+                _app.SetParameter("TriggerMode", _triggeredMode.ToString());
+                _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
+                _appImager.SetParameter("FrameRate", _framerate.ToString());
             }
             else
             {
                 try
                 {
-                    edit.EditApplication(applicationId);
+                    _edit.EditApplication(_applicationId);
                 }
                 catch (Exception)
                 {
-                    ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidApplicationId", applicationId.ToString());
+                    ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidApplicationId", _applicationId.ToString());
                 }
             }
 
-            int clippingTop = Convert.ToInt32(appImager.GetParameter("ClippingTop"));
-            int clippingBottom = Convert.ToInt32(appImager.GetParameter("ClippingBottom"));
-            int clippingLeft = Convert.ToInt32(appImager.GetParameter("ClippingLeft"));
-            int clippingRight = Convert.ToInt32(appImager.GetParameter("ClippingRight"));
-            width = clippingRight - clippingLeft + 1; // indices are zero based --> +1
-            height = clippingBottom - clippingTop + 1;
+            int clippingTop = Convert.ToInt32(_appImager.GetParameter("ClippingTop"));
+            int clippingBottom = Convert.ToInt32(_appImager.GetParameter("ClippingBottom"));
+            int clippingLeft = Convert.ToInt32(_appImager.GetParameter("ClippingLeft"));
+            int clippingRight = Convert.ToInt32(_appImager.GetParameter("ClippingRight"));
+            _width = clippingRight - clippingLeft + 1; // indices are zero based --> +1
+            _height = clippingBottom - clippingTop + 1;
 
-            app.Save();
-            edit.StopEditingApplication();
-            device.SetParameter("ActiveApplication", applicationId.ToString());
-            device.Save();
+            _app.Save();
+            _edit.StopEditingApplication();
+            _device.SetParameter("ActiveApplication", _applicationId.ToString());
+            _device.Save();
             SetConfigurationMode(Mode.Run);
 
             ActivateChannel(ChannelNames.Amplitude);
@@ -380,7 +380,7 @@ namespace MetriCam2.Cameras
             ActivateChannel(ChannelNames.ConfidenceMap);
             ActivateChannel(ChannelNames.RawConfidenceMap);
             SelectChannel(ChannelNames.Amplitude);
-            clientSocket = ConnectSocket(CameraIP, ImageOutputPort);
+            _clientSocket = ConnectSocket(CameraIP, ImageOutputPort);
 
             _updateThread.Start();
         }
@@ -392,15 +392,15 @@ namespace MetriCam2.Cameras
                 byte[] hdrBuffer = new byte[16];
                 byte[] frameBuffer = new byte[0];
 
-                Receive(clientSocket, hdrBuffer, 0, 16, 300000);
+                Receive(_clientSocket, hdrBuffer, 0, 16, 300000);
                 var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
                 Int32.TryParse(str, out int frameSize);
 
-                if (frameBuffer.Length != frameSize)
+                if (_frameBuffer.Length != frameSize)
                 {
-                    frameBuffer = new byte[frameSize];
+                    _frameBuffer = new byte[frameSize];
                 }
-                Receive(clientSocket, frameBuffer, 0, frameSize, 300000);
+                Receive(_clientSocket, frameBuffer, 0, frameSize, 300000);
 
                 lock (updateLock)
                 {
@@ -450,14 +450,14 @@ namespace MetriCam2.Cameras
             {
                 _frameAvailable.WaitOne();
 
-                _amplitudeImage = new FloatCameraImage(width, height);
-                _distanceImage = new FloatCameraImage(width, height);
-                _point3fImage = new Point3fCameraImage(width, height);
-                _rawConfidenceImage = new ByteCameraImage(width, height);
-                _zImage = new FloatCameraImage(width, height);
+                _amplitudeImage = new FloatCameraImage(_width, _height);
+                _distanceImage = new FloatCameraImage(_width, _height);
+                _point3fImage = new Point3fCameraImage(_width, _height);
+                _rawConfidenceImage = new ByteCameraImage(_width, _height);
+                _zImage = new FloatCameraImage(_width, _height);
 
-                FloatCameraImage xImage = new FloatCameraImage(width, height);
-                FloatCameraImage yImage = new FloatCameraImage(width, height);
+                FloatCameraImage xImage = new FloatCameraImage(_width, _height);
+                FloatCameraImage yImage = new FloatCameraImage(_width, _height);
                 
 
                 // Response shall start with ASCII string "0000star"
@@ -471,18 +471,18 @@ namespace MetriCam2.Cameras
                     // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
                     // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
                     reader.BaseStream.Position = 44;
-                    for (int y = 0; y < height; y++)
+                    for (int y = 0; y < _height; y++)
                     {
-                        for (int x = 0; x < width; x++)
+                        for (int x = 0; x < _width; x++)
                         {
                             _amplitudeImage[y, x] = (float)reader.ReadUInt16();
                         }
                     }
 
                     reader.BaseStream.Position += 36;
-                    for (int y = 0; y < height; y++)
+                    for (int y = 0; y < _height; y++)
                     {
-                        for (int x = 0; x < width; x++)
+                        for (int x = 0; x < _width; x++)
                         {
                             _distanceImage[y, x] = (float)reader.ReadUInt16();
                             _distanceImage[y, x] *= factor;
@@ -490,9 +490,9 @@ namespace MetriCam2.Cameras
                     }
 
                     reader.BaseStream.Position += 36;
-                    for (int y = 0; y < height; y++)
+                    for (int y = 0; y < _height; y++)
                     {
-                        for (int x = 0; x < width; x++)
+                        for (int x = 0; x < _width; x++)
                         {
                             xImage[y, x] = (float)reader.ReadInt16();
                             xImage[y, x] *= factor;
@@ -500,9 +500,9 @@ namespace MetriCam2.Cameras
                     }
 
                     reader.BaseStream.Position += 36;
-                    for (int y = 0; y < height; y++)
+                    for (int y = 0; y < _height; y++)
                     {
-                        for (int x = 0; x < width; x++)
+                        for (int x = 0; x < _width; x++)
                         {
                             yImage[y, x] = (float)reader.ReadInt16();
                             yImage[y, x] *= factor;
@@ -510,9 +510,9 @@ namespace MetriCam2.Cameras
                     }
 
                     reader.BaseStream.Position += 36;
-                    for (int y = 0; y < height; y++)
+                    for (int y = 0; y < _height; y++)
                     {
-                        for (int x = 0; x < width; x++)
+                        for (int x = 0; x < _width; x++)
                         {
                             _zImage[y, x] = (float)reader.ReadInt16();
                             _zImage[y, x] *= factor;
@@ -520,18 +520,18 @@ namespace MetriCam2.Cameras
                     }
 
                     reader.BaseStream.Position += 36;
-                    for (int y = 0; y < height; y++)
+                    for (int y = 0; y < _height; y++)
                     {
-                        for (int x = 0; x < width; x++)
+                        for (int x = 0; x < _width; x++)
                         {
                             _rawConfidenceImage[y, x] = reader.ReadByte();
                         }
                     }
                 } // using memstream
 
-                for (int y = 0; y < height; y++)
+                for (int y = 0; y < _height; y++)
                 {
-                    for (int x = 0; x < width; x++)
+                    for (int x = 0; x < _width; x++)
                     {
                         _point3fImage[y, x] = new Point3f(xImage[y, x], yImage[y, x], _zImage[y, x]);
                     }
@@ -640,7 +640,7 @@ namespace MetriCam2.Cameras
         private string SetConfigurationMode(Mode state)
         {
             string res;
-            if (configurationMode == state)
+            if (_configurationMode == state)
             {
                 return "0";
             }
@@ -649,16 +649,16 @@ namespace MetriCam2.Cameras
             {
                 case Mode.Edit:
                     SetUrls();
-                    res = session.SetOperatingMode(Mode.Edit.ToString());
+                    res = _session.SetOperatingMode(Mode.Edit.ToString());
                     break;
 
                 case Mode.Run:
                 default:
-                    res = session.SetOperatingMode(Mode.Run.ToString());
-                    res = session.CancelSession();
+                    res = _session.SetOperatingMode(Mode.Run.ToString());
+                    res = _session.CancelSession();
                     break;
             }
-            configurationMode = state;
+            _configurationMode = state;
             return res;
         }
 
@@ -666,7 +666,7 @@ namespace MetriCam2.Cameras
         {
             try
             {
-                return server.RequestSession("", "");
+                return _server.RequestSession("", "");
             }
             catch (Exception)
             {
@@ -743,13 +743,13 @@ namespace MetriCam2.Cameras
 
         private void SetUrls()
         {
-            serverUrl = "http://" + CameraIP + ":" + XMLRPCPort.ToString() + "/api/rpc/v1/com.ifm.efector/";
-            server.Url = serverUrl;
-            session.Url = serverUrl + "session_" + RequestSessionId() + "/";
-            edit.Url = session.Url + "edit/";
-            device.Url = edit.Url + "device/";
-            app.Url = session.Url + "edit/application/";
-            appImager.Url = session.Url + "edit/application/imager_001";
+            _serverUrl = "http://" + CameraIP + ":" + XMLRPCPort.ToString() + "/api/rpc/v1/com.ifm.efector/";
+            _server.Url = _serverUrl;
+            _session.Url = _serverUrl + "session_" + RequestSessionId() + "/";
+            _edit.Url = _session.Url + "edit/";
+            _device.Url = _edit.Url + "device/";
+            _app.Url = _session.Url + "edit/application/";
+            _appImager.Url = _session.Url + "edit/application/imager_001";
         }
 
         /// <summary>
@@ -782,11 +782,11 @@ namespace MetriCam2.Cameras
 
         private void UpdateWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            clientSocket.Shutdown(SocketShutdown.Both);
-            clientSocket.Disconnect(true);
+            _clientSocket.Shutdown(SocketShutdown.Both);
+            _clientSocket.Disconnect(true);
             SetConfigurationMode(Mode.Edit);
-            edit.DeleteApplication(applicationId);
-            device.Save();
+            _edit.DeleteApplication(_applicationId);
+            _device.Save();
             SetConfigurationMode(Mode.Run);
         }
         #endregion
