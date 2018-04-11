@@ -442,10 +442,6 @@ namespace MetriCam2.Cameras
         /// <seealso cref="Camera.Update"/>
         protected override void UpdateImpl()
         {
-            if (!IsConnected)
-            {
-                return;
-            }
             lock (updateLock)
             {
                 _frameAvailable.WaitOne();
