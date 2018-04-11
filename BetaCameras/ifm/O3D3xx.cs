@@ -246,7 +246,8 @@ namespace MetriCam2.Cameras
         private bool _cancelUpdateThread = false;
         private object updateLock = new object();
         private AutoResetEvent _frameAvailable = new AutoResetEvent(false);
-        private byte[] _frameBuffer = new byte[0];
+        private byte[] _backBuffer = new byte[0];
+        private byte[] _frontBuffer = new byte[0];
 
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
@@ -390,21 +391,21 @@ namespace MetriCam2.Cameras
             while (!_cancelUpdateThread)
             {
                 byte[] hdrBuffer = new byte[16];
-                byte[] frameBuffer = new byte[0];
-
                 Receive(_clientSocket, hdrBuffer, 0, 16, 300000);
                 var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
                 Int32.TryParse(str, out int frameSize);
 
-                if (_frameBuffer.Length != frameSize)
+                if(_backBuffer.Length != frameSize)
                 {
-                    _frameBuffer = new byte[frameSize];
+                    _backBuffer = new byte[frameSize];
                 }
-                Receive(_clientSocket, frameBuffer, 0, frameSize, 300000);
+                Receive(_clientSocket, _backBuffer, 0, frameSize, 300000);
 
                 lock (updateLock)
                 {
-                    _frameBuffer = frameBuffer;
+                    byte[] tmpRef = _frontBuffer;
+                    _frontBuffer = _backBuffer;
+                    _backBuffer = tmpRef;
                     _frameAvailable.Set();
                 }
             } // while
@@ -442,10 +443,10 @@ namespace MetriCam2.Cameras
         /// <seealso cref="Camera.Update"/>
         protected override void UpdateImpl()
         {
+            _frameAvailable.WaitOne();
+
             lock (updateLock)
             {
-                _frameAvailable.WaitOne();
-
                 _amplitudeImage = new FloatCameraImage(_width, _height);
                 _distanceImage = new FloatCameraImage(_width, _height);
                 _point3fImage = new Point3fCameraImage(_width, _height);
@@ -457,7 +458,7 @@ namespace MetriCam2.Cameras
                 
 
                 // Response shall start with ASCII string "0000star"
-                using (MemoryStream stream = new MemoryStream(_frameBuffer))
+                using (MemoryStream stream = new MemoryStream(_frontBuffer))
                 using (BinaryReader reader = new BinaryReader(stream))
                 {
                     // All units in mm, thus we need to divide by 1000 to obtain meters
@@ -645,12 +646,12 @@ namespace MetriCam2.Cameras
             {
                 case Mode.Edit:
                     SetUrls();
-                    res = _session.SetOperatingMode(Mode.Edit.ToString());
+                    res = _session.SetOperatingMode(GetValue(Mode.Edit));
                     break;
 
                 case Mode.Run:
                 default:
-                    res = _session.SetOperatingMode(Mode.Run.ToString());
+                    res = _session.SetOperatingMode(GetValue(Mode.Run));
                     res = _session.CancelSession();
                     break;
             }
@@ -784,6 +785,11 @@ namespace MetriCam2.Cameras
             _edit.DeleteApplication(_applicationId);
             _device.Save();
             SetConfigurationMode(Mode.Run);
+        }
+
+        private string GetValue(Mode mode)
+        {
+            return ((int)mode).ToString();
         }
         #endregion
     }
