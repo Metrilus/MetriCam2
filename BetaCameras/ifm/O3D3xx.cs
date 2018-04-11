@@ -244,10 +244,12 @@ namespace MetriCam2.Cameras
         #region Private Fields
         private Thread _updateThread;
         private bool _cancelUpdateThread = false;
-        private object updateLock = new object();
+        private object _frontLock = new object();
+        private object _backLock = new object();
         private AutoResetEvent _frameAvailable = new AutoResetEvent(false);
         private byte[] _backBuffer = new byte[0];
         private byte[] _frontBuffer = new byte[0];
+        private const float _scalingFactor = 1.0f / 1000.0f; // All units in mm, thus we need to divide by 1000 to obtain meters
 
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
@@ -255,12 +257,6 @@ namespace MetriCam2.Cameras
         private int _applicationId;
         private int _width;
         private int _height;
-
-        private FloatCameraImage _amplitudeImage;
-        private FloatCameraImage _distanceImage;
-        private Point3fCameraImage _point3fImage;
-        private FloatCameraImage _zImage;
-        private ByteCameraImage _rawConfidenceImage;
 
         private ISession _session;
         private IDevice _device;
@@ -395,17 +391,13 @@ namespace MetriCam2.Cameras
                 var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
                 Int32.TryParse(str, out int frameSize);
 
-                if(_backBuffer.Length != frameSize)
+                lock (_backLock)
                 {
-                    _backBuffer = new byte[frameSize];
-                }
-                Receive(_clientSocket, _backBuffer, 0, frameSize, 300000);
-
-                lock (updateLock)
-                {
-                    byte[] tmpRef = _frontBuffer;
-                    _frontBuffer = _backBuffer;
-                    _backBuffer = tmpRef;
+                    if (_backBuffer.Length != frameSize)
+                    {
+                        _backBuffer = new byte[frameSize];
+                    }
+                    Receive(_clientSocket, _backBuffer, 0, frameSize, 300000);
                     _frameAvailable.Set();
                 }
             } // while
@@ -445,110 +437,17 @@ namespace MetriCam2.Cameras
         {
             _frameAvailable.WaitOne();
 
-            lock (updateLock)
+            lock (_backLock)
+            lock (_frontLock)
             {
-                _amplitudeImage = new FloatCameraImage(_width, _height);
-                _distanceImage = new FloatCameraImage(_width, _height);
-                _point3fImage = new Point3fCameraImage(_width, _height);
-                _rawConfidenceImage = new ByteCameraImage(_width, _height);
-                _zImage = new FloatCameraImage(_width, _height);
-
-                FloatCameraImage xImage = new FloatCameraImage(_width, _height);
-                FloatCameraImage yImage = new FloatCameraImage(_width, _height);
-                
-
-                // Response shall start with ASCII string "0000star"
-                using (MemoryStream stream = new MemoryStream(_frontBuffer))
-                using (BinaryReader reader = new BinaryReader(stream))
-                {
-                    // All units in mm, thus we need to divide by 1000 to obtain meters
-                    const float factor = 1.0f / 1000.0f;
-
-                    // After the start sequence of 8 bytes, the images follow in chunks
-                    // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
-                    // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
-                    reader.BaseStream.Position = 44;
-                    for (int y = 0; y < _height; y++)
-                    {
-                        for (int x = 0; x < _width; x++)
-                        {
-                            _amplitudeImage[y, x] = (float)reader.ReadUInt16();
-                        }
-                    }
-
-                    reader.BaseStream.Position += 36;
-                    for (int y = 0; y < _height; y++)
-                    {
-                        for (int x = 0; x < _width; x++)
-                        {
-                            _distanceImage[y, x] = (float)reader.ReadUInt16();
-                            _distanceImage[y, x] *= factor;
-                        }
-                    }
-
-                    reader.BaseStream.Position += 36;
-                    for (int y = 0; y < _height; y++)
-                    {
-                        for (int x = 0; x < _width; x++)
-                        {
-                            xImage[y, x] = (float)reader.ReadInt16();
-                            xImage[y, x] *= factor;
-                        }
-                    }
-
-                    reader.BaseStream.Position += 36;
-                    for (int y = 0; y < _height; y++)
-                    {
-                        for (int x = 0; x < _width; x++)
-                        {
-                            yImage[y, x] = (float)reader.ReadInt16();
-                            yImage[y, x] *= factor;
-                        }
-                    }
-
-                    reader.BaseStream.Position += 36;
-                    for (int y = 0; y < _height; y++)
-                    {
-                        for (int x = 0; x < _width; x++)
-                        {
-                            _zImage[y, x] = (float)reader.ReadInt16();
-                            _zImage[y, x] *= factor;
-                        }
-                    }
-
-                    reader.BaseStream.Position += 36;
-                    for (int y = 0; y < _height; y++)
-                    {
-                        for (int x = 0; x < _width; x++)
-                        {
-                            _rawConfidenceImage[y, x] = reader.ReadByte();
-                        }
-                    }
-                } // using memstream
-
-                for (int y = 0; y < _height; y++)
-                {
-                    for (int x = 0; x < _width; x++)
-                    {
-                        _point3fImage[y, x] = new Point3f(xImage[y, x], yImage[y, x], _zImage[y, x]);
-                    }
-                }
-
-                if (_amplitudeImage == null 
-                || _distanceImage == null 
-                || _point3fImage == null 
-                || _zImage == null 
-                || _rawConfidenceImage == null)
-                {
-                    string msg = $"{Name}: One or more images failed to be computed";
-                    log.Error(msg);
-                    throw new ImageAcquisitionFailedException(msg);
-                }
+                byte[] tmpRef = _frontBuffer;
+                _frontBuffer = _backBuffer;
+                _backBuffer = tmpRef;
                 _frameAvailable.Reset();
             }
         }
-            
-        
+
+
 
         /// <summary>Computes (image) data for a given channel.</summary>
         /// <param name="channelName">Channel name.</param>
@@ -556,20 +455,23 @@ namespace MetriCam2.Cameras
         /// <seealso cref="Camera.CalcChannel"/>
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            switch (channelName)
+            lock(_frontLock)
             {
-                case ChannelNames.Amplitude:
-                    return _amplitudeImage;
-                case ChannelNames.Distance:
-                    return _distanceImage;
-                case ChannelNames.Point3DImage:
-                    return _point3fImage;
-                case ChannelNames.ZImage:
-                    return _zImage;
-                case ChannelNames.ConfidenceMap:
-                    return CalcConfidenceMap(_rawConfidenceImage);
-                case ChannelNames.RawConfidenceMap:
-                    return _rawConfidenceImage;
+                switch (channelName)
+                {
+                    case ChannelNames.Amplitude:
+                        return CalcAmplidueImge();
+                    case ChannelNames.Distance:
+                        return CalcDistanceImage();
+                    case ChannelNames.Point3DImage:
+                        return CalcPoint3fImage();
+                    case ChannelNames.ZImage:
+                        return CalcZImage();
+                    case ChannelNames.ConfidenceMap:
+                        return CalcConfidenceMap(CalcRawConfidanceImage());
+                    case ChannelNames.RawConfidenceMap:
+                        return CalcRawConfidanceImage();
+                }
             }
             ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidChannelName", channelName);
             return null;
@@ -642,7 +544,7 @@ namespace MetriCam2.Cameras
                 return "0";
             }
 
-            switch(state)
+            switch (state)
             {
                 case Mode.Edit:
                     SetUrls();
@@ -790,6 +692,147 @@ namespace MetriCam2.Cameras
         private string GetValue(Mode mode)
         {
             return ((int)mode).ToString();
+        }
+
+        private FloatCameraImage CalcAmplidueImge()
+        {
+            FloatCameraImage amplitudeImage = new FloatCameraImage(_width, _height);
+
+            using (MemoryStream stream = new MemoryStream(_frontBuffer))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                reader.BaseStream.Position = CalcBufferPosition(0);
+                for (int y = 0; y < _height; y++)
+                {
+                    for (int x = 0; x < _width; x++)
+                    {
+                        amplitudeImage[y, x] = (float)reader.ReadUInt16();
+                    }
+                }
+            }
+
+            return amplitudeImage;
+        }
+
+        private FloatCameraImage CalcDistanceImage()
+        {
+            FloatCameraImage distanceImage = new FloatCameraImage(_width, _height);
+
+            using (MemoryStream stream = new MemoryStream(_frontBuffer))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                reader.BaseStream.Position = CalcBufferPosition(1);
+                for (int y = 0; y < _height; y++)
+                {
+                    for (int x = 0; x < _width; x++)
+                    {
+                        distanceImage[y, x] = (float)reader.ReadUInt16() * _scalingFactor;
+                    }
+                }
+            }
+
+            return distanceImage;
+        }
+
+        private Point3fCameraImage CalcPoint3fImage()
+        {
+            Point3fCameraImage point3fImage = new Point3fCameraImage(_width, _height);
+            FloatCameraImage xImage = new FloatCameraImage(_width, _height);
+            FloatCameraImage yImage = new FloatCameraImage(_width, _height);
+            FloatCameraImage zImage = new FloatCameraImage(_width, _height);
+
+            using (MemoryStream stream = new MemoryStream(_frontBuffer))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                reader.BaseStream.Position = CalcBufferPosition(2);
+                for (int y = 0; y < _height; y++)
+                {
+                    for (int x = 0; x < _width; x++)
+                    {
+                        xImage[y, x] = (float)reader.ReadInt16() * _scalingFactor;
+                    }
+                }
+
+                reader.BaseStream.Position += 36;
+                for (int y = 0; y < _height; y++)
+                {
+                    for (int x = 0; x < _width; x++)
+                    {
+                        yImage[y, x] = (float)reader.ReadInt16() * _scalingFactor;
+                    }
+                }
+
+                reader.BaseStream.Position += 36;
+                for (int y = 0; y < _height; y++)
+                {
+                    for (int x = 0; x < _width; x++)
+                    {
+                        zImage[y, x] = (float)reader.ReadInt16() * _scalingFactor;
+                    }
+                }
+            }
+
+            for (int y = 0; y < _height; y++)
+            {
+                for (int x = 0; x < _width; x++)
+                {
+                    point3fImage[y, x] = new Point3f(xImage[y, x], yImage[y, x], zImage[y, x]);
+                }
+            }
+
+            return point3fImage;
+        }
+
+        private FloatCameraImage CalcZImage()
+        {
+            FloatCameraImage zImage = new FloatCameraImage(_width, _height);
+
+            using (MemoryStream stream = new MemoryStream(_frontBuffer))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                reader.BaseStream.Position = CalcBufferPosition(4);
+                for (int y = 0; y < _height; y++)
+                {
+                    for (int x = 0; x < _width; x++)
+                    {
+                        zImage[y, x] = (float)reader.ReadInt16() * _scalingFactor;
+                    }
+                }
+            }
+
+            return zImage;
+        }
+
+        private ByteCameraImage CalcRawConfidanceImage()
+        {
+            ByteCameraImage rawConfidenceImage = new ByteCameraImage(_width, _height);
+
+            using (MemoryStream stream = new MemoryStream(_frontBuffer))
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                reader.BaseStream.Position = CalcBufferPosition(5);
+                for (int y = 0; y < _height; y++)
+                {
+                    for (int x = 0; x < _width; x++)
+                    {
+                        rawConfidenceImage[y, x] = reader.ReadByte();
+                    }
+                }
+            }
+
+            return rawConfidenceImage;
+        }
+
+        private long CalcBufferPosition(int image)
+        {
+            // Position |     0     |     1    | 2 | 3 | 4 |      5        |
+            // -------------------------------------------------------------
+            // Image    | amplitude | distance | x | y | z | rawConfidence |
+
+            // After the start sequence of 8 bytes, the images follow in chunks
+            // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
+            // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
+            return 44 + image * (_height * _width * 2 + 36);
         }
         #endregion
     }
