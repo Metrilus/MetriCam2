@@ -425,6 +425,13 @@ namespace MetriCam2.Cameras
         {
             _cancelUpdateThread = true;
             _updateThread.Join();
+
+            _clientSocket.Shutdown(SocketShutdown.Both);
+            _clientSocket.Disconnect(true);
+            SetConfigurationMode(Mode.Edit);
+            _edit.DeleteApplication(_applicationId);
+            _device.Save();
+            SetConfigurationMode(Mode.Run);
         }
 
         /// <summary>
@@ -670,16 +677,6 @@ namespace MetriCam2.Cameras
             SendARP(address, 0, mac, ref length);
             string macAddress = BitConverter.ToString(mac, 0, length);
             return macAddress;
-        }
-
-        private void UpdateWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            _clientSocket.Shutdown(SocketShutdown.Both);
-            _clientSocket.Disconnect(true);
-            SetConfigurationMode(Mode.Edit);
-            _edit.DeleteApplication(_applicationId);
-            _device.Save();
-            SetConfigurationMode(Mode.Run);
         }
 
         private string GetValue(Mode mode)
