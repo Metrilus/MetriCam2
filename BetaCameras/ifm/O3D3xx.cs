@@ -312,99 +312,109 @@ namespace MetriCam2.Cameras
 
         private void UpdateWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            // All units in mm, thus we need to divide by 1000 to obtain meters
+            const float factor = 1.0f / 1000.0f;
+            byte[] hdrBuffer = new byte[16];
+            byte[] frameBuffer = new byte[0];
+
             while (!updateWorker.CancellationPending)
             {
-                lock (updateLock)
+                Receive(clientSocket, hdrBuffer, 0, 16, 300000);
+                var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
+                Int32.TryParse(str, out int frameSize);
+
+                if (frameBuffer.Length != frameSize)
                 {
-                    byte[] buffer = new byte[16];
-                    Receive(clientSocket, buffer, 0, 16, 300000);
+                    frameBuffer = new byte[frameSize];
+                }
+                Receive(clientSocket, frameBuffer, 0, frameSize, 300000);
 
-                    var str = Encoding.Default.GetString(buffer, 5, 9);
+                FloatCameraImage localAmplitudeImage = new FloatCameraImage(width, height);
+                FloatCameraImage localDistanceImage = new FloatCameraImage(width, height);
+                FloatCameraImage localXImage = new FloatCameraImage(width, height);
+                FloatCameraImage localYImage = new FloatCameraImage(width, height);
+                FloatCameraImage localZImage = new FloatCameraImage(width, height);
+                Point3fCameraImage localPoint3fImage = new Point3fCameraImage(width, height);
+                ByteCameraImage localRawConfidenceImage = new ByteCameraImage(width, height);
 
-                    int frameSize;
-                    Int32.TryParse(str, out frameSize);
-                    byte[] frameBuffer = new byte[frameSize];
-                    Receive(clientSocket, frameBuffer, 0, frameSize, 300000);
-
-                    FloatCameraImage localAmplitudeImage = new FloatCameraImage(width, height);
-                    FloatCameraImage localDistanceImage = new FloatCameraImage(width, height);
-                    FloatCameraImage localXImage = new FloatCameraImage(width, height);
-                    FloatCameraImage localYImage = new FloatCameraImage(width, height);
-                    FloatCameraImage localZImage = new FloatCameraImage(width, height);
-                    Point3fCameraImage localPoint3fImage = new Point3fCameraImage(width, height);
-                    ByteCameraImage localRawConfidenceImage = new ByteCameraImage(width, height);
-
-                    // All units in mm, thus we need to divide by 1000 to obtain meters
-                    float factor = 1 / 1000.0f;
-                    // Response shall start with ASCII string "0000star"
-                    using (MemoryStream stream = new MemoryStream(frameBuffer))
+                // Response shall start with ASCII string "0000star"
+                using (MemoryStream stream = new MemoryStream(frameBuffer))
+                {
+                    using (BinaryReader reader = new BinaryReader(stream))
                     {
-                        using (BinaryReader reader = new BinaryReader(stream))
-                        {
-                            // After the start sequence of 8 bytes, the images follow in chunks
-                            // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
-                            // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
-                            reader.BaseStream.Position = 44;
-                            for (int y = 0; y < height; y++)
-                            {
-                                for (int x = 0; x < width; x++)
-                                {
-                                    localAmplitudeImage[y, x] = (float)reader.ReadUInt16();
-                                }
-                            }
-                            reader.BaseStream.Position += 36;
-                            for (int y = 0; y < height; y++)
-                            {
-                                for (int x = 0; x < width; x++)
-                                {
-                                    localDistanceImage[y, x] = (float)reader.ReadUInt16();
-                                    localDistanceImage[y, x] *= factor;
-                                }
-                            }
-                            reader.BaseStream.Position += 36;
-                            for (int y = 0; y < height; y++)
-                            {
-                                for (int x = 0; x < width; x++)
-                                {
-                                    localXImage[y, x] = (float)reader.ReadInt16();
-                                    localXImage[y, x] *= factor;
-                                }
-                            }
-                            reader.BaseStream.Position += 36;
-                            for (int y = 0; y < height; y++)
-                            {
-                                for (int x = 0; x < width; x++)
-                                {
-                                    localYImage[y, x] = (float)reader.ReadInt16();
-                                    localYImage[y, x] *= factor;
-                                }
-                            }
-                            reader.BaseStream.Position += 36;
-                            for (int y = 0; y < height; y++)
-                            {
-                                for (int x = 0; x < width; x++)
-                                {
-                                    localZImage[y, x] = (float)reader.ReadInt16();
-                                    localZImage[y, x] *= factor;
-                                }
-                            }
-                            reader.BaseStream.Position += 36;
-                            for (int y = 0; y < height; y++)
-                            {
-                                for (int x = 0; x < width; x++)
-                                {
-                                    localRawConfidenceImage[y, x] = reader.ReadByte();
-                                }
-                            }
-                        }
+                        // After the start sequence of 8 bytes, the images follow in chunks
+                        // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
+                        // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
+                        reader.BaseStream.Position = 44;
                         for (int y = 0; y < height; y++)
                         {
                             for (int x = 0; x < width; x++)
                             {
-                                localPoint3fImage[y, x] = new Point3f(localXImage[y, x], localYImage[y, x], localZImage[y, x]);
+                                localAmplitudeImage[y, x] = (float)reader.ReadUInt16();
                             }
                         }
+
+                        reader.BaseStream.Position += 36;
+                        for (int y = 0; y < height; y++)
+                        {
+                            for (int x = 0; x < width; x++)
+                            {
+                                localDistanceImage[y, x] = (float)reader.ReadUInt16();
+                                localDistanceImage[y, x] *= factor;
+                            }
+                        }
+
+                        reader.BaseStream.Position += 36;
+                        for (int y = 0; y < height; y++)
+                        {
+                            for (int x = 0; x < width; x++)
+                            {
+                                localXImage[y, x] = (float)reader.ReadInt16();
+                                localXImage[y, x] *= factor;
+                            }
+                        }
+
+                        reader.BaseStream.Position += 36;
+                        for (int y = 0; y < height; y++)
+                        {
+                            for (int x = 0; x < width; x++)
+                            {
+                                localYImage[y, x] = (float)reader.ReadInt16();
+                                localYImage[y, x] *= factor;
+                            }
+                        }
+
+                        reader.BaseStream.Position += 36;
+                        for (int y = 0; y < height; y++)
+                        {
+                            for (int x = 0; x < width; x++)
+                            {
+                                localZImage[y, x] = (float)reader.ReadInt16();
+                                localZImage[y, x] *= factor;
+                            }
+                        }
+
+                        reader.BaseStream.Position += 36;
+                        for (int y = 0; y < height; y++)
+                        {
+                            for (int x = 0; x < width; x++)
+                            {
+                                localRawConfidenceImage[y, x] = reader.ReadByte();
+                            }
+                        }
+                    } // using reader
+                } // using memstream
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        localPoint3fImage[y, x] = new Point3f(localXImage[y, x], localYImage[y, x], localZImage[y, x]);
                     }
+                }
+
+                lock (updateLock)
+                {
                     latestAmplitudeImage = localAmplitudeImage;
                     latestDistanceImage = localDistanceImage;
                     latestPoint3fImage = localPoint3fImage;
@@ -524,7 +534,10 @@ namespace MetriCam2.Cameras
             do
             {
                 if (Environment.TickCount > startTickCount + timeout)
-                    throw new Exception("Timeout.");
+                {
+                    throw new TimeoutException("Timeout while receiving data");
+                }
+
                 try
                 {
                     received += socket.Receive(buffer, offset + received, size - received, SocketFlags.None);
@@ -539,7 +552,9 @@ namespace MetriCam2.Cameras
                         Thread.Sleep(30);
                     }
                     else
-                        throw ex;  // any serious error occurr
+                    {
+                        throw;  // any serious error occurred
+                    }
                 }
             } while (received < size);
         }
