@@ -29,6 +29,47 @@ namespace MetriCam2.Cameras
 
         #region Public Properties
         /// <summary>
+        /// Control pixel binning.
+        /// </summary>
+        public bool Resolution100k
+        {
+            get
+            {
+                return IsResolution100k();
+            }
+            set
+            {
+                SetResolution100k(value);
+
+                // update image width and height
+                SetConfigurationMode(true);
+                edit.EditApplication(applicationId);
+
+                int clippingTop = Convert.ToInt32(appImager.GetParameter("ClippingTop"));
+                int clippingBottom = Convert.ToInt32(appImager.GetParameter("ClippingBottom"));
+                int clippingLeft = Convert.ToInt32(appImager.GetParameter("ClippingLeft"));
+                int clippingRight = Convert.ToInt32(appImager.GetParameter("ClippingRight"));
+
+                edit.StopEditingApplication();
+                SetConfigurationMode(false);
+
+                width = clippingRight - clippingLeft + 1; // indices are zero based --> +1
+                height = clippingBottom - clippingTop + 1;
+            }
+        }
+        private ParamDesc<bool> Resolution100kDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "100k px resolution";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
+
+        /// <summary>
         /// Frequency channel
         /// </summary>
         public int FrequencyChannel
@@ -766,7 +807,7 @@ namespace MetriCam2.Cameras
             device.Save();
             SetConfigurationMode(false);
         }
-
+        
         private int GetFrequencyChannel()
         {
             if (!IsConnected)
@@ -796,7 +837,43 @@ namespace MetriCam2.Cameras
             edit.StopEditingApplication();
             SetConfigurationMode(false);
         }
+
+        /// <summary>
+        /// Checks if pixel binning is disabled or enabled.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsResolution100k()
+        {
+            if (!IsConnected)
+            {
+                return false;
+            }
+            SetConfigurationMode(true);
+            edit.EditApplication(applicationId);
+            int imageResolution = Convert.ToInt32(appImager.GetParameter("Resolution"));
+            SetConfigurationMode(false);
+            // a Resolution value of 1 means binning is disabled (i.e. 100k pixels resolution)
+            return (1 == imageResolution);
+        }
+
+        /// <summary>
+        /// Disables or enables pixel binning.
+        /// </summary>
+        /// <param name="binningDisabled">If true, pixel binning will be disabled (i.e. 100k pixels resolution).</param>
+        private void SetResolution100k(bool binningDisabled)
+        {
+            if (!IsConnected)
+            {
+                return;
+            }
+            SetConfigurationMode(true);
+            edit.EditApplication(applicationId);
+            // set Resolution to 1 to disable binning and use 100k pixels
+            string res = appImager.SetParameter("Resolution", (binningDisabled ? "1" : "0"));
+            app.Save();
+            edit.StopEditingApplication();
+            SetConfigurationMode(false);
+        }
         #endregion
     }
 }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
