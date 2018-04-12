@@ -1483,7 +1483,7 @@ namespace MetriCam2.Cameras
             {
                 string msg = $"{Name}: current combination of settings is not supported";
                 log.Error(msg);
-                throw new SettingCombinationNotSupportedException(msg);
+                throw new SettingsCombinationNotSupportedException(msg);
             }
 
             if (!_pipelineRunning)
