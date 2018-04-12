@@ -174,9 +174,9 @@ namespace MetriCam2.Controls
             {
                 Camera.SetParameters(keyValues);
             }
-            catch(SettingCombinationNotSupportedException)
+            catch (SettingsCombinationNotSupportedException)
             {
-                ShowMessageBox();
+                ShowMessageBoxCombinationOfSettingsNotSupported();
             }
 
             InitConfigurationParameters(this.Camera);
@@ -202,8 +202,8 @@ namespace MetriCam2.Controls
 
             AddHeadingRow(currentRow);
 
-            List<MetriCam2.Camera.ParamDesc> parameters = new List<MetriCam2.Camera.ParamDesc>();
-            List<MetriCam2.Camera.ParamDesc> allParameters = cam.GetParameters();
+            List<Camera.ParamDesc> parameters = new List<Camera.ParamDesc>();
+            List<Camera.ParamDesc> allParameters = cam.GetParameters();
 
             if (VisibleParameters != null)
             {
@@ -230,7 +230,7 @@ namespace MetriCam2.Controls
                 tableLayoutPanel1.RowCount = currentRow + 1;
 
                 int rowHeight = LabelFont.Height * 2;
-                if (paramDesc is MetriCam2.Camera.MultiFileParamDesc)
+                if (paramDesc is Camera.MultiFileParamDesc)
                 {
                     rowHeight = MultiFileSelector.StandardHeight + 8;
                 }
@@ -245,7 +245,7 @@ namespace MetriCam2.Controls
                 {
                     if (paramDesc is Camera.RangeParamDesc<int>)
                     {
-                        Slider scrollbarValue = CreateSlider((MetriCam2.Camera.RangeParamDesc<int>)paramDesc, currentRow);
+                        Slider scrollbarValue = CreateSlider((Camera.RangeParamDesc<int>)paramDesc, currentRow);
                         tableLayoutPanel1.Controls.Add(scrollbarValue, COL_PARAM_VAL, currentRow);
                         Label unit = CreateUnitLabel(paramDesc);
                         tableLayoutPanel1.Controls.Add(unit, COL_PARAM_UNIT, currentRow);
@@ -256,15 +256,13 @@ namespace MetriCam2.Controls
                         scrollbarValue.ValueChanged += (sender, e) =>
                         {
                             string parameterValue = scrollbarValue.Value.ToString(CultureInfo.InvariantCulture);
-                            string parameterName = paramDesc.Name;
-                            
                             try
                             {
                                 Camera.SetParameter(paramDesc.Name, parameterValue);
                             }
-                            catch (SettingCombinationNotSupportedException)
+                            catch (SettingsCombinationNotSupportedException)
                             {
-                                ShowMessageBox();
+                                ShowMessageBoxCombinationOfSettingsNotSupported();
                             }
                         };
                     }
@@ -282,15 +280,13 @@ namespace MetriCam2.Controls
                         upDownValue.ValueChanged += (sender, e) =>
                         {
                             string parameterValue = upDownValue.Value.ToString(CultureInfo.InvariantCulture);
-                            string parameterName = paramDesc.Name;
-                            
                             try
                             {
                                 Camera.SetParameter(paramDesc.Name, parameterValue);
                             }
-                            catch (SettingCombinationNotSupportedException)
+                            catch (SettingsCombinationNotSupportedException)
                             {
-                                ShowMessageBox();
+                                ShowMessageBoxCombinationOfSettingsNotSupported();
                             }
                         };
                     }
@@ -321,9 +317,9 @@ namespace MetriCam2.Controls
                         ContainsOneOrMoreWritableParameters = true;
                     }
 
-                    if(paramDesc is Camera.ListParamDesc<Point2i>
-                    || paramDesc is Camera.ListParamDesc<int>
-                    || (paramDesc as Camera.IListParamDesc).GetListType().IsEnum)
+                    if (paramDesc is Camera.ListParamDesc<Point2i>
+                        || paramDesc is Camera.ListParamDesc<int>
+                        || (paramDesc as Camera.IListParamDesc).GetListType().IsEnum)
                     {
                         comboBoxValue.SelectedValueChanged += (sender, e) =>
                         {
@@ -342,15 +338,13 @@ namespace MetriCam2.Controls
                                 parameterValue = Enum.Parse((paramDesc as Camera.IListParamDesc).GetListType(), comboBoxValue.SelectedItem as string);
                             }
 
-                            string parameterName = paramDesc.Name;
-                            
                             try
                             {
                                 Camera.SetParameter(paramDesc.Name, parameterValue);
                             }
-                            catch (SettingCombinationNotSupportedException)
+                            catch (SettingsCombinationNotSupportedException)
                             {
-                                ShowMessageBox();
+                                ShowMessageBoxCombinationOfSettingsNotSupported();
                             }
                         };
                     }
@@ -358,9 +352,9 @@ namespace MetriCam2.Controls
                     continue;
                 }
 
-                if (paramDesc is MetriCam2.Camera.MultiFileParamDesc)
+                if (paramDesc is Camera.MultiFileParamDesc)
                 {
-                    MultiFileSelector fileSelector = CreateMultiFileSelector(paramDesc as MetriCam2.Camera.MultiFileParamDesc, currentRow);
+                    MultiFileSelector fileSelector = CreateMultiFileSelector(paramDesc as Camera.MultiFileParamDesc, currentRow);
                     tableLayoutPanel1.Controls.Add(fileSelector, COL_PARAM_VAL, currentRow);
                     Label unit = CreateUnitLabel(paramDesc);
                     tableLayoutPanel1.Controls.Add(unit, COL_PARAM_UNIT, currentRow);
@@ -373,7 +367,7 @@ namespace MetriCam2.Controls
                 }
 
                 // Parameter of type bool
-                if (paramDesc is MetriCam2.Camera.ParamDesc<bool>)
+                if (paramDesc is Camera.ParamDesc<bool>)
                 {
                     // TODO: build a checkbox
                     CheckBox checkBoxValue = CreateCheckBox(paramDesc as Camera.ParamDesc<bool>, currentRow);
@@ -391,14 +385,14 @@ namespace MetriCam2.Controls
                         string parameterName = checkBoxValue.Name.Replace(VALUE_SUFFIX, string.Empty);
                         Dictionary<string, object> keyValues = new Dictionary<string, object>();
                         keyValues.Add(parameterName, parameterValue);
-                        
+
                         try
                         {
                             Camera.SetParameters(keyValues);
                         }
-                        catch (SettingCombinationNotSupportedException)
+                        catch (SettingsCombinationNotSupportedException)
                         {
-                            ShowMessageBox();
+                            ShowMessageBoxCombinationOfSettingsNotSupported();
                         }
                     };
 
@@ -406,7 +400,7 @@ namespace MetriCam2.Controls
                 }
 
                 // Parameter with a primitive value (e.g. int, string, float, ...)
-                if (paramDesc is MetriCam2.Camera.ParamDesc)
+                if (paramDesc is Camera.ParamDesc)
                 {
                     // build a text box
                     TextBox textBoxValue = CreateTextBox(paramDesc, currentRow);
@@ -569,7 +563,7 @@ namespace MetriCam2.Controls
                     {
                         object tmpVal;
 
-                        if (paramDesc is MetriCam2.Camera.ListParamDesc<Point2i>)
+                        if (paramDesc is Camera.ListParamDesc<Point2i>)
                         {
                             tmpVal = ResolutionToPoint2i(item);
                         }
@@ -593,7 +587,7 @@ namespace MetriCam2.Controls
             return comboBoxValue;
         }
 
-        private MultiFileSelector CreateMultiFileSelector(MetriCam2.Camera.MultiFileParamDesc multiFileParamDesc, int currentRow)
+        private MultiFileSelector CreateMultiFileSelector(Camera.MultiFileParamDesc multiFileParamDesc, int currentRow)
         {
             MultiFileSelector fileSelector = new MultiFileSelector(multiFileParamDesc);
             fileSelector.Name = multiFileParamDesc.Name + VALUE_SUFFIX;
@@ -646,9 +640,9 @@ namespace MetriCam2.Controls
             {
                 try
                 {
-                    slider.Minimum = (int)paramDesc.Min;
-                    slider.Maximum = (int)paramDesc.Max;
-                    slider.Value = (int)paramDesc.Value;
+                    slider.Minimum = paramDesc.Min;
+                    slider.Maximum = paramDesc.Max;
+                    slider.Value = paramDesc.Value;
                 }
                 catch (Exception ex)
                 {
@@ -696,10 +690,10 @@ namespace MetriCam2.Controls
             return new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
         }
 
-        private void ShowMessageBox()
+        private void ShowMessageBoxCombinationOfSettingsNotSupported()
         {
-            InitConfigurationParameters(this.Camera);
-            MessageBox.Show("This Configuration is not supported by this camera");
+            InitConfigurationParameters(Camera);
+            MessageBox.Show(this, $"The camera {Camera.Name} does not support your selected combination of settings.");
         }
     }
 }
