@@ -28,8 +28,6 @@ namespace MetriCam2.Cameras
         private VideoFrame _currentRightFrame;
         private long _currentFrameTimestamp = DateTime.UtcNow.Ticks;
         private bool _disposed = false;
-        private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
-        private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
         private bool _pipelineRunning = false;
         private float _depthScale = 1.0f;
 
@@ -1481,8 +1479,6 @@ namespace MetriCam2.Cameras
         {
             try
             {
-                _intrinsics.Clear();
-                _extrinsics.Clear();
                 StopPipeline();
             }
             catch(Exception e)
@@ -1767,12 +1763,6 @@ namespace MetriCam2.Cameras
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
-            // first check if intrinsics for requested channel have been cached already
-            if (_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
-            {
-                return cachedIntrinsics;
-            }
-
             VideoStreamProfile profile = GetProfileFromSensor(channelName) as VideoStreamProfile;
             Intrinsics intrinsics = profile.GetIntrinsics();
 
@@ -1795,8 +1785,6 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[4],
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3]);
-
-            _intrinsics.Add(channelName, projTrans);
 
             return projTrans;
         }
@@ -1856,13 +1844,6 @@ namespace MetriCam2.Cameras
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
-            // first check if extrinsics for requested channel have been cached already
-            string extrinsicsKey = $"{channelFromName}_{channelToName}";
-            if (_extrinsics.TryGetValue(extrinsicsKey, out RigidBodyTransformation cachedExtrinsics))
-            {
-                return cachedExtrinsics;
-            }
-
             VideoStreamProfile from = GetProfileFromSensor(channelFromName);
             VideoStreamProfile to = GetProfileFromSensor(channelToName);
 
@@ -1878,7 +1859,6 @@ namespace MetriCam2.Cameras
             Point3f trans = new Point3f(extrinsics.translation[0], extrinsics.translation[1], extrinsics.translation[2]);
 
             RigidBodyTransformation rbt = new RigidBodyTransformation(rot, trans);
-            _extrinsics.Add(extrinsicsKey, rbt);
 
             return rbt;
         }
