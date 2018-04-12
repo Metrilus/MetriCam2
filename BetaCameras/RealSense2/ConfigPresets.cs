@@ -9,7 +9,7 @@ namespace MetriCam2.Cameras
     {
         public enum Preset
         {
-            NONE,
+            UNKNOWN,
             SHORT_RANGE,
             HAND,
             HIGH_ACCURACY,
@@ -36,7 +36,7 @@ namespace MetriCam2.Cameras
                 case Preset.HIGH_ACCURACY:
                     return HIGH_ACCURACY;
 
-                case Preset.NONE:
+                case Preset.UNKNOWN:
                 default:
                     return "";
             }

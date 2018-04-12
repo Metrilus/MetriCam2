@@ -434,6 +434,8 @@ namespace MetriCam2
             /// <param name="value">Parameter value to be tested.</param>
             /// <returns><c>true</c> if <paramref name="value"/> is in AllowedValues, <c>false</c> otherwise.</returns>
             bool IsValid(string value);
+
+            Type GetListType();
         }
 
         /// <summary>
@@ -704,13 +706,13 @@ namespace MetriCam2
                     }
                     else
                     {
-                        
-                        
-                        if(this.Type == typeof(Point2i))
+
+
+                        if (this.Type == typeof(Point2i))
                         {
                             string[] stringValue = item.Split('x');
                             Point2i point = new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
-                            if(point.Equals(castedValue))
+                            if (point.Equals(castedValue))
                             {
                                 return true;
                             }
@@ -746,6 +748,11 @@ namespace MetriCam2
                 }
 
                 return base.ToString() + "\t{" + allowedValuesAsString + "}";
+            }
+
+            public Type GetListType()
+            {
+                return typeof(T);
             }
             #endregion
         }
@@ -869,7 +876,7 @@ namespace MetriCam2
             /// <returns><c>true</c> if <paramref name="value"/> is valid, <c>false</c> otherwise.</returns>
             public bool IsValid(object value)
             {
-                if(!(value is List<string>))
+                if (!(value is List<string>))
                 {
                     return false;
                 }
@@ -1399,7 +1406,7 @@ namespace MetriCam2
                 intrinsicsCache[channelName] = pt;
                 return pt;
             }
-            
+
             throw new FileNotFoundException(
                 String.Format(
                     "{0}: No valid calibration file for channel '{1}' available." + Environment.NewLine
@@ -2294,7 +2301,16 @@ namespace MetriCam2
         {
             PropertyInfo pi = this.GetType().GetProperty(name);
             object myItem = Convert.ChangeType(value, pi.PropertyType, CultureInfo.InvariantCulture);
-            pi.SetValue(this, myItem, new object[] { });
+
+            try
+            {
+                pi.SetValue(this, myItem, new object[] { });
+            }
+            catch (TargetInvocationException e)
+            {
+                throw e.InnerException;
+            }
+
             log.InfoFormat("{0}: {1} <- {2}", this.Name, name, myItem);
         }
         #endregion

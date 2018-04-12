@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
 using Intel.RealSense;
+using MetriCam2.Exceptions;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -27,10 +28,61 @@ namespace MetriCam2.Cameras
         private VideoFrame _currentRightFrame;
         private long _currentFrameTimestamp = DateTime.UtcNow.Ticks;
         private bool _disposed = false;
-        private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
-        private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
         private bool _pipelineRunning = false;
         private float _depthScale = 1.0f;
+
+        #region Filter
+        public class Filter
+        {
+            private ProcessingBlock _filter;
+
+            public bool Enabled { get; set; }
+            public Sensor.SensorOptions Options { get => _filter.Options; }
+
+            internal Filter(ProcessingBlock filter)
+            {
+                _filter = filter;
+            }
+
+            internal VideoFrame Apply(VideoFrame frame)
+            {
+                if (!this.Enabled)
+                    return frame;
+
+                if (_filter is DecimationFilter df)
+                    return df.ApplyFilter(frame);
+                if (_filter is SpatialFilter sf)
+                    return sf.ApplyFilter(frame);
+                if (_filter is TemporalFilter tf)
+                    return tf.ApplyFilter(frame);
+                if (_filter is DisparityTransform dt)
+                    return dt.ApplyFilter(frame);
+
+                string msg = $"RealSense2: Filter type {_filter.GetType().ToString()} not supported";
+                log.Error(msg);
+                throw new NotImplementedException(msg);
+            }
+        }
+
+        public Filter DecimationFilter { get; } = new Filter(new DecimationFilter());
+        public Filter SpatialFilter { get; } = new Filter(new SpatialFilter());
+        public Filter TemporalFilter { get; } = new Filter(new TemporalFilter());
+        public Filter DepthToDisparityTransform { get; } = new Filter(new DisparityTransform(true));
+        public Filter DisparityToDepthTransform { get; } = new Filter(new DisparityTransform(false));
+
+        private VideoFrame FilterFrame(VideoFrame frame)
+        {
+            VideoFrame filteredFrame = frame;
+
+            filteredFrame = TemporalFilter.Apply(filteredFrame);
+            filteredFrame = SpatialFilter.Apply(filteredFrame);
+            filteredFrame = DecimationFilter.Apply(filteredFrame);
+            filteredFrame = DepthToDisparityTransform.Apply(filteredFrame);
+            filteredFrame = DisparityToDepthTransform.Apply(filteredFrame);
+
+            return filteredFrame;
+        }
+        #endregion
 
         public enum EmitterMode
         {
@@ -57,7 +109,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if(_pipelineRunning)
+                if (_pipelineRunning)
                 {
                     return _pipelineProfile.Device;
                 }
@@ -89,12 +141,11 @@ namespace MetriCam2.Cameras
                 if (value == _colorResolution)
                     return;
 
-                ExecuteWithStoppedPipeline(() =>
-                {
-                    DeactivateChannelImpl(ChannelNames.Color);
-                    _colorResolution = value;
-                    ActivateChannelImpl(ChannelNames.Color);
-                });
+                TryChangeSetting<Point2i>(
+                    ref _colorResolution,
+                    value,
+                    new string[] { ChannelNames.Color }
+                );
             }
         }
 
@@ -105,7 +156,7 @@ namespace MetriCam2.Cameras
                 List<Point2i> resolutions = new List<Point2i>();
                 resolutions.Add(new Point2i(640, 480));
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     resolutions = GetSupportedResolutions(SensorNames.Color);
                 }
@@ -116,11 +167,13 @@ namespace MetriCam2.Cameras
                     allowedValues.Add(string.Format("{0}x{1}", resolution.X, resolution.Y));
                 }
 
-                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
-                res.Unit = "px";
-                res.Description = "Resolution of the color sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues)
+                {
+                    Unit = "px",
+                    Description = "Resolution of the color sensor.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
                 return res;
             }
         }
@@ -134,12 +187,11 @@ namespace MetriCam2.Cameras
                 if (value == _colorFPS)
                     return;
 
-                ExecuteWithStoppedPipeline(() =>
-                {
-                    DeactivateChannelImpl(ChannelNames.Color);
-                    _colorFPS = value;
-                    ActivateChannelImpl(ChannelNames.Color);
-                });
+                TryChangeSetting<int>(
+                    ref _colorFPS,
+                    value,
+                    new string[] { ChannelNames.Color }
+                );
             }
         }
 
@@ -150,17 +202,19 @@ namespace MetriCam2.Cameras
                 List<int> framerates = new List<int>();
                 framerates.Add(30);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     framerates = GetSupportedFramerates(SensorNames.Color);
                     framerates.Sort();
                 }
-                
-                ListParamDesc<int> res = new ListParamDesc<int>(framerates);
-                res.Unit = "fps";
-                res.Description = "Frames per Second of the color sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+
+                ListParamDesc<int> res = new ListParamDesc<int>(framerates)
+                {
+                    Unit = "fps",
+                    Description = "Frames per Second of the color sensor.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
                 return res;
             }
         }
@@ -174,28 +228,11 @@ namespace MetriCam2.Cameras
                 if (value == _depthResolution)
                     return;
 
-                ExecuteWithStoppedPipeline(() =>
-                {
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        DeactivateChannelImpl(ChannelNames.ZImage);
-
-                    if (IsChannelActive(ChannelNames.Left))
-                        DeactivateChannelImpl(ChannelNames.Left);
-
-                    if (IsChannelActive(ChannelNames.Right))
-                        DeactivateChannelImpl(ChannelNames.Right);
-
-                    _depthResolution = value;
-
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        ActivateChannelImpl(ChannelNames.ZImage);
-
-                    if (IsChannelActive(ChannelNames.Left))
-                        ActivateChannelImpl(ChannelNames.Left);
-
-                    if (IsChannelActive(ChannelNames.Right))
-                        ActivateChannelImpl(ChannelNames.Right);
-                });
+                TryChangeSetting<Point2i>(
+                    ref _depthResolution,
+                    value,
+                    new string[] { ChannelNames.ZImage, ChannelNames.Left, ChannelNames.Right }
+                );
             }
         }
 
@@ -206,22 +243,24 @@ namespace MetriCam2.Cameras
                 List<Point2i> resolutions = new List<Point2i>();
                 resolutions.Add(new Point2i(640, 480));
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     resolutions = GetSupportedResolutions(SensorNames.Stereo);
                 }
 
                 List<string> allowedValues = new List<string>();
-                foreach(Point2i resolution in resolutions)
+                foreach (Point2i resolution in resolutions)
                 {
                     allowedValues.Add(string.Format("{0}x{1}", resolution.X, resolution.Y));
                 }
 
-                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues);
-                res.Unit = "px";
-                res.Description = "Resolution of the depth sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues)
+                {
+                    Unit = "px",
+                    Description = "Resolution of the depth sensor.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
                 return res;
             }
         }
@@ -235,28 +274,11 @@ namespace MetriCam2.Cameras
                 if (value == _depthFPS)
                     return;
 
-                ExecuteWithStoppedPipeline(() =>
-                {
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        DeactivateChannelImpl(ChannelNames.ZImage);
-
-                    if (IsChannelActive(ChannelNames.Left))
-                        DeactivateChannelImpl(ChannelNames.Left);
-
-                    if (IsChannelActive(ChannelNames.Right))
-                        DeactivateChannelImpl(ChannelNames.Right);
-
-                    _depthFPS = value;
-
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        ActivateChannelImpl(ChannelNames.ZImage);
-
-                    if (IsChannelActive(ChannelNames.Left))
-                        ActivateChannelImpl(ChannelNames.Left);
-
-                    if (IsChannelActive(ChannelNames.Right))
-                        ActivateChannelImpl(ChannelNames.Right);
-                });
+                TryChangeSetting<int>(
+                    ref _depthFPS,
+                    value,
+                    new string[] { ChannelNames.ZImage, ChannelNames.Left, ChannelNames.Right }
+                );
             }
         }
 
@@ -267,22 +289,24 @@ namespace MetriCam2.Cameras
                 List<int> framerates = new List<int>();
                 framerates.Add(30);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     framerates = GetSupportedFramerates(SensorNames.Stereo);
                     framerates.Sort();
                 }
 
-                ListParamDesc<int> res = new ListParamDesc<int>(framerates);
-                res.Unit = "fps";
-                res.Description = "Frames per Second of the depth sensor.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                ListParamDesc<int> res = new ListParamDesc<int>(framerates)
+                {
+                    Unit = "fps",
+                    Description = "Frames per Second of the depth sensor.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
                 return res;
             }
         }
 
-        
+
         public string Firmware
         {
             get
@@ -295,9 +319,11 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<string> res = new ParamDesc<string>();
-                res.Description = "Current Firmware version of the connected camera.";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<string> res = new ParamDesc<string>
+                {
+                    Description = "Current Firmware version of the connected camera.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -351,10 +377,12 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable color backlight compensation";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<bool> res = new ParamDesc<bool>
+                {
+                    Description = "Enable / disable color backlight compensation",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -385,7 +413,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Brightness, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -394,7 +422,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Color image brightness";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -428,7 +456,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Contrast, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -437,7 +465,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Color image contrast";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -471,7 +499,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Exposure, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -480,7 +508,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Controls exposure time of color camera. Setting any value will disable auto exposure";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -510,10 +538,12 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable color image auto-exposure";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<bool> res = new ParamDesc<bool>
+                {
+                    Description = "Enable / disable color image auto-exposure",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -540,10 +570,12 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Limit exposure time when auto-exposure is ON to preserve constant fps rate";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<bool> res = new ParamDesc<bool>
+                {
+                    Description = "Limit exposure time when auto-exposure is ON to preserve constant fps rate",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -577,7 +609,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Exposure, SensorNames.Stereo);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -586,7 +618,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Controls exposure time of depth camera. Setting any value will disable auto exposure";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -616,10 +648,12 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable depth image auto-exposure";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<bool> res = new ParamDesc<bool>
+                {
+                    Description = "Enable / disable depth image auto-exposure",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -649,7 +683,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Gain, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -658,7 +692,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Color image gain";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -691,7 +725,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Gain, SensorNames.Stereo);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -700,7 +734,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Depth image gain";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -733,7 +767,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Gamma, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -742,7 +776,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Color image Gamma";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -775,7 +809,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Hue, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -784,7 +818,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Color image Hue";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -817,7 +851,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Saturation, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -826,7 +860,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Color image Saturation";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -859,7 +893,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Sharpness, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -868,7 +902,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Color image Sharpness";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -907,7 +941,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.WhiteBalance, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -916,7 +950,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Controls white balance of color image.Setting any value will disable auto white balance";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -946,10 +980,12 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable auto-white-balance";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<bool> res = new ParamDesc<bool>
+                {
+                    Description = "Enable / disable auto-white-balance",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -983,7 +1019,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.LaserPower, SensorNames.Stereo);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -1058,7 +1094,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<int> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.FramesQueueSize, SensorNames.Color);
                     res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
@@ -1067,7 +1103,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -1109,7 +1145,7 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<int>(0, 0);
                 }
-                
+
                 res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
@@ -1168,11 +1204,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<float> res = new ParamDesc<float>();
-                res.Unit = "°C";
-                res.Description = "Asic Temperature";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<float> res = new ParamDesc<float>
+                {
+                    Unit = "°C",
+                    Description = "Asic Temperature",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -1200,10 +1238,12 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable polling of camera internal errors";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<bool> res = new ParamDesc<bool>
+                {
+                    Description = "Enable / disable polling of camera internal errors",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -1225,11 +1265,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<float> res = new ParamDesc<float>();
-                res.Unit = "°C";
-                res.Description = "Projector Temperature";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<float> res = new ParamDesc<float>
+                {
+                    Unit = "°C",
+                    Description = "Projector Temperature",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -1257,10 +1299,12 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "Enable / disable trigger to be outputed from the camera to any external device on every depth frame";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                ParamDesc<bool> res = new ParamDesc<bool>
+                {
+                    Description = "Enable / disable trigger to be outputed from the camera to any external device on every depth frame",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -1291,7 +1335,7 @@ namespace MetriCam2.Cameras
             {
                 RangeParamDesc<float> res;
 
-                if(this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.DepthUnits, SensorNames.Stereo);
                     res = new RangeParamDesc<float>(option.Min, option.Max);
@@ -1300,10 +1344,37 @@ namespace MetriCam2.Cameras
                 {
                     res = new RangeParamDesc<float>(0, 0);
                 }
-                
+
                 res.Description = "Number of meters represented by a single depth unit";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
+
+        private AdvancedMode.Preset _preset = AdvancedMode.Preset.UNKNOWN;
+        public AdvancedMode.Preset ConfigPreset
+        {
+            get => _preset;
+            set
+            {
+                if (value == AdvancedMode.Preset.UNKNOWN)
+                    return;
+                LoadCustomConfigInternal(AdvancedMode.GetPreset(value));
+                _preset = value;
+            }
+        }
+
+        ListParamDesc<AdvancedMode.Preset> ConfigPresetDesc
+        {
+            get
+            {
+                ListParamDesc<AdvancedMode.Preset> res = new ListParamDesc<AdvancedMode.Preset>(typeof(AdvancedMode.Preset))
+                {
+                    Description = "Visual Preset",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
                 return res;
             }
         }
@@ -1324,14 +1395,14 @@ namespace MetriCam2.Cameras
             if (IsConnected)
                 DisconnectImpl();
 
-            if(disposing)
+            if (disposing)
             {
                 // dispose managed resources
                 _config.Dispose();
                 _pipeline.Dispose();
                 _context.Dispose();
             }
-            
+
             _disposed = true;
         }
 
@@ -1397,7 +1468,7 @@ namespace MetriCam2.Cameras
 
         private void StopPipeline()
         {
-            if(_pipelineRunning)
+            if (_pipelineRunning)
             {
                 _pipelineProfile = null;
                 _pipelineRunning = false;
@@ -1407,15 +1478,15 @@ namespace MetriCam2.Cameras
 
         private void StartPipeline()
         {
-            
-            if(!_config.CanResolve(_pipeline))
+
+            if (!_config.CanResolve(_pipeline))
             {
-                string msg = $"{Name}: No camera that supports the current configuration detected";
+                string msg = $"{Name}: current combination of settings is not supported";
                 log.Error(msg);
-                throw new InvalidOperationException(msg);
+                throw new SettingsCombinationNotSupportedException(msg);
             }
 
-            if(!_pipelineRunning)
+            if (!_pipelineRunning)
             {
                 _pipelineProfile = _pipeline.Start(_config);
                 _pipelineRunning = true;
@@ -1426,11 +1497,9 @@ namespace MetriCam2.Cameras
         {
             try
             {
-                _intrinsics.Clear();
-                _extrinsics.Clear();
                 StopPipeline();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.Warn(e.Message);
             }
@@ -1489,7 +1558,7 @@ namespace MetriCam2.Cameras
                 return;
             }
 
-            throw new Exception($"{Name}: not all requested frames are part of the retrieved FrameSet");
+            throw new ImageAcquisitionFailedException($"{Name}: not all requested frames are part of the retrieved FrameSet");
         }
 
         private void ExtractFrameSetData(FrameSet data, bool getColor, bool getDepth, bool getLeft, bool getRight,
@@ -1517,7 +1586,7 @@ namespace MetriCam2.Cameras
                     case Stream.Depth:
                         if (getDepth)
                         {
-                            _currentDepthFrame = vframe;
+                            _currentDepthFrame = FilterFrame(vframe);
                             haveDepth = true;
                         }
                         break;
@@ -1546,7 +1615,7 @@ namespace MetriCam2.Cameras
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            switch(channelName)
+            switch (channelName)
             {
                 case ChannelNames.Color:
                     return CalcColor();
@@ -1697,7 +1766,7 @@ namespace MetriCam2.Cameras
                 index = 2;
             }
 
-            
+
             Action disableStream = () => { _config.DisableStream(stream, index); };
 
             if (_pipelineRunning)
@@ -1712,12 +1781,6 @@ namespace MetriCam2.Cameras
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
-            // first check if intrinsics for requested channel have been cached already
-            if (_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
-            {
-                return cachedIntrinsics;
-            }
-
             VideoStreamProfile profile = GetProfileFromSensor(channelName) as VideoStreamProfile;
             Intrinsics intrinsics = profile.GetIntrinsics();
 
@@ -1740,8 +1803,6 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[4],
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3]);
-
-            _intrinsics.Add(channelName, projTrans);
 
             return projTrans;
         }
@@ -1801,13 +1862,6 @@ namespace MetriCam2.Cameras
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
-            // first check if extrinsics for requested channel have been cached already
-            string extrinsicsKey = $"{channelFromName}_{channelToName}";
-            if (_extrinsics.TryGetValue(extrinsicsKey, out RigidBodyTransformation cachedExtrinsics))
-            {
-                return cachedExtrinsics;
-            }
-
             VideoStreamProfile from = GetProfileFromSensor(channelFromName);
             VideoStreamProfile to = GetProfileFromSensor(channelToName);
 
@@ -1823,7 +1877,6 @@ namespace MetriCam2.Cameras
             Point3f trans = new Point3f(extrinsics.translation[0], extrinsics.translation[1], extrinsics.translation[2]);
 
             RigidBodyTransformation rbt = new RigidBodyTransformation(rot, trans);
-            _extrinsics.Add(extrinsicsKey, rbt);
 
             return rbt;
         }
@@ -1888,7 +1941,7 @@ namespace MetriCam2.Cameras
             BitmapData bmpData = bitmap.LockBits(imageRect, ImageLockMode.WriteOnly, bitmap.PixelFormat);
 
             byte* source = (byte*)_currentColorFrame.Data;
-            byte* target = (byte*) (void*)bmpData.Scan0;
+            byte* target = (byte*)(void*)bmpData.Scan0;
             for (int y = 0; y < height; y++)
             {
                 byte* sourceLine = source + y * width * 3;
@@ -1910,12 +1963,13 @@ namespace MetriCam2.Cameras
 
         #endregion
 
-        public void LoadConfigPreset(AdvancedMode.Preset preset)
-        {
-            LoadCustomConfig(AdvancedMode.GetPreset(preset));
-        }
-        
         public void LoadCustomConfig(string json)
+        {
+            LoadCustomConfigInternal(json);
+            _preset = AdvancedMode.Preset.UNKNOWN;
+        }
+
+        private void LoadCustomConfigInternal(string json)
         {
             AdvancedDevice adev = AdvancedDevice.FromDevice(RealSenseDevice);
             adev.JsonConfiguration = json;
@@ -2025,6 +2079,55 @@ namespace MetriCam2.Cameras
         private float GetDepthScale()
         {
             return GetSensor(SensorNames.Stereo).DepthScale;
+        }
+
+        private void TryChangeSetting<T>(ref T property, T newValue, string[] channelNames)
+        {
+            T oldValue = property;
+            bool wasRunning = _pipelineRunning;
+
+            try
+            {
+                StopPipeline();
+                DeactivateChannels(channelNames);
+                property = newValue;
+                ActivateChannels(channelNames);
+            }
+            catch (SettingsCombinationNotSupportedException)
+            {
+                property = oldValue;
+                ActivateChannels(channelNames);
+                throw;
+            }
+            finally
+            {
+                if (wasRunning)
+                {
+                    StartPipeline();
+                }
+            }
+        }
+
+        private void ActivateChannels(string[] channelNames)
+        {
+            foreach (string channel in channelNames)
+            {
+                if (IsChannelActive(channel))
+                {
+                    ActivateChannelImpl(channel);
+                }
+            }
+        }
+
+        private void DeactivateChannels(string[] channelNames)
+        {
+            foreach (string channel in channelNames)
+            {
+                if (IsChannelActive(channel))
+                {
+                    DeactivateChannelImpl(channel);
+                }
+            }
         }
     }
 }
