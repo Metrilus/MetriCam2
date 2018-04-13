@@ -1478,18 +1478,22 @@ namespace MetriCam2.Cameras
 
         private void StartPipeline()
         {
-
-            if (!_config.CanResolve(_pipeline))
-            {
-                string msg = $"{Name}: current combination of settings is not supported";
-                log.Error(msg);
-                throw new SettingsCombinationNotSupportedException(msg);
-            }
+            CheckConfig();
 
             if (!_pipelineRunning)
             {
                 _pipelineProfile = _pipeline.Start(_config);
                 _pipelineRunning = true;
+            }
+        }
+
+        private void CheckConfig()
+        {
+            if (!_config.CanResolve(_pipeline))
+            {
+                string msg = $"{Name}: current combination of settings is not supported";
+                log.Error(msg);
+                throw new SettingsCombinationNotSupportedException(msg);
             }
         }
 
@@ -2092,9 +2096,11 @@ namespace MetriCam2.Cameras
                 DeactivateChannels(channelNames);
                 property = newValue;
                 ActivateChannels(channelNames);
+                CheckConfig();
             }
             catch (SettingsCombinationNotSupportedException)
             {
+                DeactivateChannels(channelNames);
                 property = oldValue;
                 ActivateChannels(channelNames);
                 throw;
