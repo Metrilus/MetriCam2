@@ -1448,8 +1448,8 @@ namespace MetriCam2.Cameras
 
             if (ActiveChannels.Count == 0)
             {
-                ActivateChannel(ChannelNames.Color);
-                ActivateChannel(ChannelNames.ZImage);
+                AddToActiveChannels(ChannelNames.Color);
+                AddToActiveChannels(ChannelNames.ZImage);
             }
 
             StartPipeline();
