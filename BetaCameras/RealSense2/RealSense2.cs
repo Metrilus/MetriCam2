@@ -1672,12 +1672,14 @@ namespace MetriCam2.Cameras
                 if (channelName == ChannelNames.ZImage
                     && _activeChannels.Contains(ChannelNames.Distance))
                 {
+                    _activeChannels.Add(ChannelNames.ZImage);
                     return;
                 }
 
                 if (channelName == ChannelNames.Distance
                     && _activeChannels.Contains(ChannelNames.ZImage))
                 {
+                    _activeChannels.Add(ChannelNames.Distance);
                     return;
                 }
 
@@ -1751,12 +1753,14 @@ namespace MetriCam2.Cameras
                 if (channelName == ChannelNames.ZImage
                     && _activeChannels.Contains(ChannelNames.Distance))
                 {
+                    _activeChannels.Remove(ChannelNames.ZImage);
                     return;
                 }
 
                 if (channelName == ChannelNames.Distance
                     && _activeChannels.Contains(ChannelNames.ZImage))
                 {
+                    _activeChannels.Remove(ChannelNames.Distance);
                     return;
                 }
 
