@@ -30,6 +30,7 @@ namespace MetriCam2.Cameras
         private bool _disposed = false;
         private bool _pipelineRunning = false;
         private float _depthScale = 1.0f;
+        private HashSet<string> _activeChannels = new HashSet<string>();
 
         #region Filter
         public class Filter
@@ -231,7 +232,7 @@ namespace MetriCam2.Cameras
                 TryChangeSetting<Point2i>(
                     ref _depthResolution,
                     value,
-                    new string[] { ChannelNames.ZImage, ChannelNames.Left, ChannelNames.Right }
+                    new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
                 );
             }
         }
@@ -277,7 +278,7 @@ namespace MetriCam2.Cameras
                 TryChangeSetting<int>(
                     ref _depthFPS,
                     value,
-                    new string[] { ChannelNames.ZImage, ChannelNames.Left, ChannelNames.Right }
+                    new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
                 );
             }
         }
@@ -1669,13 +1670,13 @@ namespace MetriCam2.Cameras
                 // and skip activating the DEPTH stream in that case
 
                 if (channelName == ChannelNames.ZImage
-                    && IsChannelActive(ChannelNames.Distance))
+                    && _activeChannels.Contains(ChannelNames.Distance))
                 {
                     return;
                 }
 
                 if (channelName == ChannelNames.Distance
-                    && IsChannelActive(ChannelNames.ZImage))
+                    && _activeChannels.Contains(ChannelNames.ZImage))
                 {
                     return;
                 }
@@ -1726,6 +1727,8 @@ namespace MetriCam2.Cameras
             {
                 enableStream();
             }
+
+            _activeChannels.Add(channelName);
         }
 
         protected override void DeactivateChannelImpl(String channelName)
@@ -1746,13 +1749,13 @@ namespace MetriCam2.Cameras
                 // and skip deactivating the DEPTH stream in that case
 
                 if (channelName == ChannelNames.ZImage
-                    && IsChannelActive(ChannelNames.Distance))
+                    && _activeChannels.Contains(ChannelNames.Distance))
                 {
                     return;
                 }
 
                 if (channelName == ChannelNames.Distance
-                    && IsChannelActive(ChannelNames.ZImage))
+                    && _activeChannels.Contains(ChannelNames.ZImage))
                 {
                     return;
                 }
@@ -1781,6 +1784,8 @@ namespace MetriCam2.Cameras
             {
                 disableStream();
             }
+
+            _activeChannels.Remove(channelName);
         }
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
