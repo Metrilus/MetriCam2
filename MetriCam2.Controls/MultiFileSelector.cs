@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Data;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace MetriCam2.Controls
         /// <summary>
         /// The currently selected file names
         /// </summary>
-        public List<string> SelectedFiles { get; set; }
+        public ObservableCollection<string> SelectedFiles { get; set; }
         #endregion
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace MetriCam2.Controls
 
             if (desc.Value != null)
             {
-                List<string> filenames = (List<string>)desc.Value;
+                ObservableCollection<string> filenames = (ObservableCollection<string>)desc.Value;
                 listBoxSelectedFiles.Items.AddRange(filenames.ToArray());
                 SelectedFiles = filenames;
             }
@@ -62,7 +63,7 @@ namespace MetriCam2.Controls
             {
                 listBoxSelectedFiles.Items.Clear();
                 listBoxSelectedFiles.Items.AddRange(diag.FileNames);
-                SelectedFiles = diag.FileNames.ToList();
+                SelectedFiles = new ObservableCollection<string>(diag.FileNames.ToList());
             }            
         }
     }

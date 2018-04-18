@@ -362,6 +362,10 @@ namespace MetriCam2.Controls
                     {
                         ContainsOneOrMoreWritableParameters = true;
                     }
+                    fileSelector.SelectedFiles.CollectionChanged += (sender, e) =>
+                    {
+                        Camera.SetParameter(paramDesc.Name, new List<string>(fileSelector.SelectedFiles));
+                    };
 
                     continue;
                 }
