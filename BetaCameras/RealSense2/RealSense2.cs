@@ -1380,8 +1380,8 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private string _configFile = "";
-        public string ConfigFile
+        private List<string> _configFile = new List<string>();
+        public List<string> ConfigFile
         {
             get => _configFile;
             set
@@ -1389,7 +1389,7 @@ namespace MetriCam2.Cameras
                 if(value != _configFile)
                 {
                     _configFile = value;
-                    string json = System.IO.File.ReadAllText(value);
+                    string json = System.IO.File.ReadAllText(value[0]);
                     LoadCustomConfigInternal(json);
                 }
             }
