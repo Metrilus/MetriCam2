@@ -21,7 +21,6 @@ namespace MetriCam2
 
 			_currentMasterImage = nullptr;
 			_currentSlaveImage = nullptr;
-			_currentColorImage = nullptr;
 			_currentDepthMappedImage = nullptr;
 			_currentDepthRawImage = nullptr;
 			_currentDistanceImage = nullptr;
@@ -180,7 +179,6 @@ namespace MetriCam2
 				// get color image
 				if (requestBuffer->colorMapped.pData)
 				{
-					_currentColorImage = nullptr;
 					_color->Width = requestBuffer->colorMapped.iWidth;
 					_color->Height = requestBuffer->colorMapped.iHeight;
 					_color->CopyColorData(requestBuffer->colorMapped);
@@ -241,11 +239,7 @@ namespace MetriCam2
 		{
 			if (ChannelNames::Color == channelName)
 			{
-				if (nullptr == _currentColorImage)
-				{
-					_currentColorImage = CalcColorImage(_color);
-				}
-				return gcnew ColorCameraImage(_currentColorImage);
+				return CalcColorImage(_color);
 			}
 			if (ChannelNames::Left == channelName)
 			{
