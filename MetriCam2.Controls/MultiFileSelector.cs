@@ -50,8 +50,8 @@ namespace MetriCam2.Controls
             {
                 if(value != _selectedFiles)
                 {
-                    NotifyPropertyChanged(nameof(SelectedFiles));
                     _selectedFiles = value;
+                    NotifyPropertyChanged(nameof(SelectedFiles));
                 }
             }
         }

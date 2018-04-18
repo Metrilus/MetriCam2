@@ -364,7 +364,7 @@ namespace MetriCam2.Controls
                     }
                     fileSelector.PropertyChanged += (sender, e) =>
                     {
-                        Camera.SetParameter(paramDesc.Name, new List<string>(fileSelector.SelectedFiles));
+                        Camera.SetParameter(paramDesc.Name, fileSelector.SelectedFiles);
                     };
 
                     continue;
