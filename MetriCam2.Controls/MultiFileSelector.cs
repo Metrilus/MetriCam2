@@ -47,7 +47,7 @@ namespace MetriCam2.Controls
 
             if (desc.Value != null)
             {
-                ObservableCollection<string> filenames = (ObservableCollection<string>)desc.Value;
+                ObservableCollection<string> filenames = new ObservableCollection<string>((List<string>)desc.Value);
                 listBoxSelectedFiles.Items.AddRange(filenames.ToArray());
                 SelectedFiles = filenames;
             }
