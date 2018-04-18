@@ -75,7 +75,6 @@ namespace MetriCam2
 			result = MV6D_DeviceListUpdate(_h6D, &deviceCount);
 			CheckResult(result, ConnectionFailedException::typeid, 2);
 			char tmpSerial[128] = { 0 };
-			char* CSerial = GCStrToCStr(this->SerialNumber);
 
 			// find a perception camera that's not in use
 			for (int index = 0; index < deviceCount; ++index)
@@ -86,15 +85,17 @@ namespace MetriCam2
 				
 				if (!inUse && !IsNullOrWhiteSpace(tmpSerial))
 				{
+					char* CSerial = GCStrToCStr(this->SerialNumber);
 					if (IsNullOrWhiteSpace(CSerial) || CSerial == tmpSerial)
 					{
 						this->SerialNumber = gcnew String(tmpSerial);
+						if(!IsNullOrWhiteSpace(CSerial))
+							delete CSerial;
 						break;
 					}
 				}
 			}
 
-			delete CSerial;
 			CheckSerial(tmpSerial);
 
 			// open the device
@@ -305,8 +306,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentDistanceImage)
 				{
-					FloatCameraImage^ fImg = (FloatCameraImage^)CalcChannelImpl(ChannelNames::PointCloud);
-					Point3fCameraImage^ pts3D = CalcPointCloud(fImg);
+					Point3fCameraImage^ pts3D = (Point3fCameraImage^)CalcChannelImpl(ChannelNames::PointCloud);
 					_currentDistanceImage = CalcDistances(pts3D);
 				}
 				return _currentDistanceImage;
