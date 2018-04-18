@@ -16,9 +16,18 @@ namespace MetriCam2.Controls
     /// <summary>
     /// GUI Component for the selection of multiple filenames 
     /// </summary>
-    public partial class MultiFileSelector : UserControl
+    public partial class MultiFileSelector : UserControl, INotifyPropertyChanged
     {
         #region Properties
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged(String propertyName)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
         /// <summary>
         /// Standard height of this component (is needed by the camera settings control to set a reasonable value for the required space for this component)
         /// </summary>
@@ -34,7 +43,18 @@ namespace MetriCam2.Controls
         /// <summary>
         /// The currently selected file names
         /// </summary>
-        public ObservableCollection<string> SelectedFiles { get; set; }
+        private List<string> _selectedFiles = new List<string>();
+        public List<string> SelectedFiles {
+            get => _selectedFiles;
+            set
+            {
+                if(value != _selectedFiles)
+                {
+                    NotifyPropertyChanged(nameof(SelectedFiles));
+                    _selectedFiles = value;
+                }
+            }
+        }
         #endregion
 
         /// <summary>
@@ -47,7 +67,7 @@ namespace MetriCam2.Controls
 
             if (desc.Value != null)
             {
-                ObservableCollection<string> filenames = new ObservableCollection<string>((List<string>)desc.Value);
+                List<string> filenames = (List<string>)desc.Value;
                 listBoxSelectedFiles.Items.AddRange(filenames.ToArray());
                 SelectedFiles = filenames;
             }
@@ -63,7 +83,7 @@ namespace MetriCam2.Controls
             {
                 listBoxSelectedFiles.Items.Clear();
                 listBoxSelectedFiles.Items.AddRange(diag.FileNames);
-                SelectedFiles = new ObservableCollection<string>(diag.FileNames.ToList());
+                SelectedFiles = diag.FileNames.ToList();
             }            
         }
     }
