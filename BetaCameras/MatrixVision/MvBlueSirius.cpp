@@ -317,7 +317,9 @@ namespace MetriCam2
 
 		IProjectiveTransformation^ MvBlueSirius::GetIntrinsics(String^ channelName)
 		{
-			if (MetriCam2::ChannelNames::Distance == channelName || MetriCam2::ChannelNames::Amplitude == channelName)
+			if (MetriCam2::ChannelNames::Distance == channelName
+			||  MetriCam2::ChannelNames::Amplitude == channelName
+			||  CustomChannelNames::DepthRaw == channelName)
 			{
 				return gcnew ProjectiveTransformationZhang(_depthRaw->Width, _depthRaw->Height, FocalLength, FocalLength, _depthRaw->Width / 2.0f, _depthRaw->Height / 2.0f, 0, 0, 0, 0, 0);
 			}
