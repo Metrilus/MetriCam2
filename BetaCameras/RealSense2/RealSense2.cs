@@ -1380,6 +1380,35 @@ namespace MetriCam2.Cameras
             }
         }
 
+        private string _configFile = "";
+        public string ConfigFile
+        {
+            get => _configFile;
+            set
+            {
+                if(value != _configFile)
+                {
+                    _configFile = value;
+                    string json = System.IO.File.ReadAllText(value);
+                    LoadCustomConfigInternal(json);
+                }
+            }
+        }
+
+        MultiFileParamDesc ConfigFileDesc
+        {
+            get
+            {
+                MultiFileParamDesc res = new MultiFileParamDesc()
+                {
+                    Description = "Custom Config File",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+                return res;
+            }
+        }
+
         #endregion
 
         public void Dispose()
