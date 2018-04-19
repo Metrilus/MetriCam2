@@ -258,7 +258,6 @@ namespace MetriCam2
 			MvBlueSirius();
 			~MvBlueSirius();
 
-			static Point3fCameraImage^ DepthImageToPointCloud(FloatCameraImage^ depthImage, float focalLength);
 			virtual IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 
 			property System::String^ Vendor

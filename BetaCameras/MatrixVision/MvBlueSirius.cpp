@@ -5,6 +5,7 @@
 using namespace System;
 using namespace System::Drawing;
 using namespace System::Drawing::Imaging;
+using namespace MetriCam2;
 
 namespace MetriCam2
 {
@@ -112,7 +113,7 @@ namespace MetriCam2
 			CheckResult(result, ConnectionFailedException::typeid, 8);
 
 			// set framerate
-			double framerate = 15.0;
+			double framerate = 25.0;
 			result = MV6D_PropertyWrite(_h6D, framerateProperty, &framerate, sizeof(framerate));
 			CheckResult(result, ConnectionFailedException::typeid, 9);
 
@@ -165,8 +166,8 @@ namespace MetriCam2
 			// request buffer pointer
 			MV6D_RequestBuffer* requestBuffer = nullptr;
 
-			// wait up to two seconds
-			int timeout = 20000;
+			// wait up to 2 seconds
+			int timeout = 2000;
 
 			// dropped frames since last call
 			int dropped = 0;
@@ -232,6 +233,10 @@ namespace MetriCam2
 				// unlock request buffer
 				MV6D_ResultCode result = MV6D_UnlockRequest(_h6D, requestBuffer);
 				CheckResult(result, InvalidOperationException::typeid, 14);
+			}
+			else
+			{
+				throw gcnew MetriCam2::Exceptions::ImageAcquisitionFailedException("No image data received in time");
 			}
 		}
 
@@ -417,20 +422,10 @@ namespace MetriCam2
 		{
 			System::Threading::Monitor::Enter(_updateLock);
 
-			Point3fCameraImage^ PointCloud = DepthImageToPointCloud(depthImage, FocalLength);
-
-			System::Threading::Monitor::Exit(_updateLock);
-
-			return PointCloud;
-		}
-
-
-		Point3fCameraImage^ MvBlueSirius::DepthImageToPointCloud(FloatCameraImage^ depthImage, float focalLength)
-		{
 			int depthWidth = depthImage->Width;
 			int depthHeight = depthImage->Height;
 
-			Point3fCameraImage^ pointCloud = gcnew Point3fCameraImage(depthWidth, depthHeight);
+			Point3fCameraImage^ PointCloud = gcnew Point3fCameraImage(depthWidth, depthHeight);
 
 			int halfWidth = depthWidth / 2;
 			int halfHeight = depthHeight / 2;
@@ -445,13 +440,15 @@ namespace MetriCam2
 						continue;
 					}
 
-					float wx = ((x - halfWidth) / focalLength) * wz;
-					float wy = ((y - halfHeight) / focalLength) * wz;
-					pointCloud[y, x] = Point3f(wx, wy, wz);
+					float wx = ((x - halfWidth) / FocalLength) * wz;
+					float wy = ((y - halfHeight) / FocalLength) * wz;
+					PointCloud[y, x] = Point3f(wx, wy, wz);
 				}
 			}
 
-			return pointCloud;
+			System::Threading::Monitor::Exit(_updateLock);
+
+			return PointCloud;
 		}
 	}
 }
