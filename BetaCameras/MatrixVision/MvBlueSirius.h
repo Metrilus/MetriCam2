@@ -119,7 +119,6 @@ namespace MetriCam2
 
 			FloatCameraImage^ _currentMasterImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentSlaveImage; // caches computed FloatCameraImage
-			ColorCameraImage^ _currentColorImage; // caches computed bitmap
 			FloatCameraImage^ _currentDepthMappedImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentDepthRawImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentDistanceImage; // caches computed FloatCameraImage
@@ -429,7 +428,8 @@ namespace MetriCam2
 		private:
 			// Internal helper functions
 			ColorCameraImage^ CalcColorImage(ImageData^ image);
-			FloatCameraImage^ CalcFloatImage(ImageData^ image);
+			FloatCameraImage^ CalcGreyImage(ImageData^ image);
+			FloatCameraImage^ CalcDepthImage(ImageData^ image);
 			FloatCameraImage^ CalcDistances(Point3fCameraImage^ image);
 			Point3fCameraImage^ CalcPointCloud(FloatCameraImage^ depthImage);
 			inline bool CheckResult(MV6D_ResultCode r, Type^ exceptionType, int exceptionID)

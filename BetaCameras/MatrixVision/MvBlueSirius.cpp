@@ -245,7 +245,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentMasterImage)
 				{
-					_currentMasterImage = CalcFloatImage(_master);
+					_currentMasterImage = CalcGreyImage(_master);
 				}
 				return gcnew FloatCameraImage(_currentMasterImage);
 			}
@@ -253,7 +253,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentSlaveImage)
 				{
-					_currentSlaveImage = CalcFloatImage(_slave);
+					_currentSlaveImage = CalcGreyImage(_slave);
 				}
 				return gcnew FloatCameraImage(_currentSlaveImage);
 			}
@@ -261,7 +261,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentDepthMappedImage)
 				{
-					_currentDepthMappedImage = CalcFloatImage(_depthMapped);
+					_currentDepthMappedImage = CalcDepthImage(_depthMapped);
 				}
 				return gcnew FloatCameraImage(_currentDepthMappedImage);
 			}
@@ -269,7 +269,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentDepthRawImage)
 				{
-					_currentDepthRawImage = CalcFloatImage(_depthRaw);
+					_currentDepthRawImage = CalcDepthImage(_depthRaw);
 				}
 				return gcnew FloatCameraImage(_currentDepthRawImage);
 			}
@@ -355,7 +355,7 @@ namespace MetriCam2
 			return cImage;
 		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcFloatImage(ImageData^ image)
+		FloatCameraImage ^ MvBlueSirius::CalcGreyImage(ImageData^ image)
 		{
 			System::Threading::Monitor::Enter(_updateLock);
 
@@ -366,6 +366,26 @@ namespace MetriCam2
 				for (unsigned int x = 0; x < image->Width; x++)
 				{
 					fImage[y, x] = image->Data[i++];
+				}
+			}
+
+			System::Threading::Monitor::Exit(_updateLock);
+
+			return fImage;
+		}
+
+		FloatCameraImage ^ MvBlueSirius::CalcDepthImage(ImageData^ image)
+		{
+			System::Threading::Monitor::Enter(_updateLock);
+
+			FloatCameraImage^ fImage = gcnew FloatCameraImage(image->Width, image->Height);
+			float* imageData = (float*)image->Data;
+			int i = 0;
+			for (unsigned int y = 0; y < image->Height; y++)
+			{
+				for (unsigned int x = 0; x < image->Width; x++)
+				{
+					fImage[y, x] = imageData[i++];
 				}
 			}
 
