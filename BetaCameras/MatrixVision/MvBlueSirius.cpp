@@ -166,8 +166,8 @@ namespace MetriCam2
 			// request buffer pointer
 			MV6D_RequestBuffer* requestBuffer = nullptr;
 
-			// wait up to 2 seconds
-			int timeout = 2000;
+			// wait up to two seconds
+			int timeout = 20000;
 
 			// dropped frames since last call
 			int dropped = 0;
