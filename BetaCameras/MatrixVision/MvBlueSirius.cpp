@@ -291,8 +291,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentDistanceImageMapped)
 				{
-					FloatCameraImage^ fImg = (FloatCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::PointCloudMapped);
-					Point3fCameraImage^ pts3D = CalcPointCloud(fImg);
+					Point3fCameraImage^ pts3D = (Point3fCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::PointCloudMapped);
 					_currentDistanceImageMapped = CalcDistances(pts3D);
 				}
 				return gcnew FloatCameraImage(_currentDistanceImageMapped);
