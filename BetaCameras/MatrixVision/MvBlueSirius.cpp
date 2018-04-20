@@ -99,7 +99,7 @@ namespace MetriCam2
 			CheckResult(result, ConnectionFailedException::typeid, 5);
 
 			// configure the stereo algorithm
-			int filterSet = fsNone;
+			int filterSet = fsAllround;
 			result = MV6D_SetDepthPreset(_h6D, daFilterSet, filterSet);
 			CheckResult(result, ConnectionFailedException::typeid, 6);
 
