@@ -21,10 +21,10 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("------------------------------------------");
 
             // Create camera object
-            BaslerACE camera;
+            Camera camera;
             try
             {
-                camera = new BaslerACE();
+                camera = new Kinect2();
             }
             catch (Exception e)
             {
