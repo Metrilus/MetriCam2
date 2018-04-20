@@ -134,6 +134,7 @@ namespace MetriCam2
 
 			ActivateChannel(ChannelNames::Color);
 			ActivateChannel(ChannelNames::Distance);
+			ActivateChannel((String^)CustomChannelNames::DistanceMapped);
 			ActivateChannel((String^)CustomChannelNames::DepthMapped);
 			ActivateChannel((String^)CustomChannelNames::DepthRaw);
 			ActivateChannel((String^)CustomChannelNames::DistanceMapped);
