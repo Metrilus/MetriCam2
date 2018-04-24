@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Data;
 using System.Linq;
@@ -15,9 +16,18 @@ namespace MetriCam2.Controls
     /// <summary>
     /// GUI Component for the selection of multiple filenames 
     /// </summary>
-    public partial class MultiFileSelector : UserControl
+    public partial class MultiFileSelector : UserControl, INotifyPropertyChanged
     {
         #region Properties
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged(String propertyName)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
         /// <summary>
         /// Standard height of this component (is needed by the camera settings control to set a reasonable value for the required space for this component)
         /// </summary>
@@ -33,7 +43,18 @@ namespace MetriCam2.Controls
         /// <summary>
         /// The currently selected file names
         /// </summary>
-        public List<string> SelectedFiles { get; set; }
+        private List<string> _selectedFiles = new List<string>();
+        public List<string> SelectedFiles {
+            get => _selectedFiles;
+            set
+            {
+                if(value != _selectedFiles)
+                {
+                    _selectedFiles = value;
+                    NotifyPropertyChanged(nameof(SelectedFiles));
+                }
+            }
+        }
         #endregion
 
         /// <summary>

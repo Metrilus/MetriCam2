@@ -30,6 +30,7 @@ namespace MetriCam2.Cameras
         private bool _disposed = false;
         private bool _pipelineRunning = false;
         private float _depthScale = 1.0f;
+        private HashSet<string> _activeChannels = new HashSet<string>();
 
         #region Filter
         public class Filter
@@ -231,7 +232,7 @@ namespace MetriCam2.Cameras
                 TryChangeSetting<Point2i>(
                     ref _depthResolution,
                     value,
-                    new string[] { ChannelNames.ZImage, ChannelNames.Left, ChannelNames.Right }
+                    new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
                 );
             }
         }
@@ -277,7 +278,7 @@ namespace MetriCam2.Cameras
                 TryChangeSetting<int>(
                     ref _depthFPS,
                     value,
-                    new string[] { ChannelNames.ZImage, ChannelNames.Left, ChannelNames.Right }
+                    new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
                 );
             }
         }
@@ -1379,6 +1380,35 @@ namespace MetriCam2.Cameras
             }
         }
 
+        private List<string> _configFile = new List<string>();
+        public List<string> ConfigFile
+        {
+            get => _configFile;
+            set
+            {
+                if(value != _configFile)
+                {
+                    _configFile = value;
+                    string json = System.IO.File.ReadAllText(value[0]);
+                    LoadCustomConfigInternal(json);
+                }
+            }
+        }
+
+        MultiFileParamDesc ConfigFileDesc
+        {
+            get
+            {
+                MultiFileParamDesc res = new MultiFileParamDesc()
+                {
+                    Description = "Custom Config File",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+                return res;
+            }
+        }
+
         #endregion
 
         public void Dispose()
@@ -1448,8 +1478,8 @@ namespace MetriCam2.Cameras
 
             if (ActiveChannels.Count == 0)
             {
-                ActivateChannel(ChannelNames.Color);
-                ActivateChannel(ChannelNames.ZImage);
+                AddToActiveChannels(ChannelNames.Color);
+                AddToActiveChannels(ChannelNames.ZImage);
             }
 
             StartPipeline();
@@ -1669,14 +1699,16 @@ namespace MetriCam2.Cameras
                 // and skip activating the DEPTH stream in that case
 
                 if (channelName == ChannelNames.ZImage
-                    && IsChannelActive(ChannelNames.Distance))
+                    && _activeChannels.Contains(ChannelNames.Distance))
                 {
+                    _activeChannels.Add(ChannelNames.ZImage);
                     return;
                 }
 
                 if (channelName == ChannelNames.Distance
-                    && IsChannelActive(ChannelNames.ZImage))
+                    && _activeChannels.Contains(ChannelNames.ZImage))
                 {
+                    _activeChannels.Add(ChannelNames.Distance);
                     return;
                 }
 
@@ -1726,6 +1758,8 @@ namespace MetriCam2.Cameras
             {
                 enableStream();
             }
+
+            _activeChannels.Add(channelName);
         }
 
         protected override void DeactivateChannelImpl(String channelName)
@@ -1746,14 +1780,16 @@ namespace MetriCam2.Cameras
                 // and skip deactivating the DEPTH stream in that case
 
                 if (channelName == ChannelNames.ZImage
-                    && IsChannelActive(ChannelNames.Distance))
+                    && _activeChannels.Contains(ChannelNames.Distance))
                 {
+                    _activeChannels.Remove(ChannelNames.ZImage);
                     return;
                 }
 
                 if (channelName == ChannelNames.Distance
-                    && IsChannelActive(ChannelNames.ZImage))
+                    && _activeChannels.Contains(ChannelNames.ZImage))
                 {
+                    _activeChannels.Remove(ChannelNames.Distance);
                     return;
                 }
 
@@ -1781,6 +1817,8 @@ namespace MetriCam2.Cameras
             {
                 disableStream();
             }
+
+            _activeChannels.Remove(channelName);
         }
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)

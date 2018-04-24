@@ -43,8 +43,6 @@ namespace MetriCam2.Controls
             cameraSettingsControl.Camera = camera;
 
             LoadChannels();
-
-            AdjustLayout();
         }
         #endregion
 
@@ -95,55 +93,6 @@ namespace MetriCam2.Controls
         #endregion
 
         #region Private Methods
-        private void AdjustLayout()
-        {
-            this.SuspendLayout();
-            checkedListBoxChannels.Anchor = AnchorStyles.None;
-            labelSettings.Anchor = AnchorStyles.None;
-            cameraSettingsControl.Anchor = AnchorStyles.None;
-            // GUI layout
-            //
-            // labelChannels { top: fixed; height: fixed; anchor: top | left; }
-            // checkedListBoxChannels { top: labelChannels.Top + labelChannels. Height + MarginBelowLabel; height: dynamic(depends on numChannels); anchor: top | left | right; }
-            // labelSettings { top: checkedListBoxChannels.Top + checkedListBoxChannels.Height + MarginBetweenSections; height: fixed; anchor: top | left; }
-            // cameraSettingsControl { top: labelSettings.Top + labelSettings. Height + MarginBelowLabel; height: dynamic(depends on number of parameters); anchor: top | left | right; }
-            // form { height: cameraSettingsControl.Top + cameraSettingsControl.Height + ...
-
-            const int MarginBelowLabel = 2;
-            const int MarginBetweenSections = 20;
-
-            // labelChannels: everything is fixed
-
-            checkedListBoxChannels.Top = labelChannels.Top + labelChannels.Height + MarginBelowLabel;
-            this.checkedListBoxChannels.ClientSize = new Size(
-                checkedListBoxChannels.Width,
-                checkedListBoxChannels.GetItemRectangle(0).Height * checkedListBoxChannels.Items.Count);
-            checkedListBoxChannels.Width = this.ClientSize.Width - (2 * checkedListBoxChannels.Left);
-
-            labelSettings.Top = checkedListBoxChannels.Top + checkedListBoxChannels.Height + MarginBetweenSections;
-
-            cameraSettingsControl.Top = labelSettings.Top + labelSettings.Height + MarginBelowLabel;
-            cameraSettingsControl.Width = this.ClientSize.Width - (2 * cameraSettingsControl.Left);
-
-            this.ClientSize = new Size(
-                this.ClientSize.Width,
-                cameraSettingsControl.Top + cameraSettingsControl.Height + MarginBetweenSections + buttonApply.Height + MarginBetweenSections / 2
-            );           
-            this.MinimumSize = new Size(this.Width, this.Height);
-
-            // Finally: apply anchors
-            checkedListBoxChannels.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            labelSettings.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-            cameraSettingsControl.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-
-            if (!cameraSettingsControl.ContainsOneOrMoreWritableParameters && checkedListBoxChannels.Items.Count == 0)
-            {
-                buttonApply.Visible = false;
-                buttonOK.Visible = false;
-            }
-
-            this.ResumeLayout();
-        }
 
         private void LoadChannels()
         {
@@ -262,7 +211,6 @@ namespace MetriCam2.Controls
             if (camera.Channels.Count != nrChannelsBeforeConfigurationChange)
             {
                 LoadChannels();
-                AdjustLayout();
             }
         }
 
