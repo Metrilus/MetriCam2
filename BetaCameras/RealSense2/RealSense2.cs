@@ -9,6 +9,7 @@ using System.Linq;
 using Intel.RealSense;
 using MetriCam2.Attributes;
 using MetriCam2.Enums;
+using MetriCam2.Exceptions;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -30,10 +31,61 @@ namespace MetriCam2.Cameras
         private VideoFrame _currentRightFrame;
         private long _currentFrameTimestamp = DateTime.UtcNow.Ticks;
         private bool _disposed = false;
-        private Dictionary<string, ProjectiveTransformationZhang> _intrinsics = new Dictionary<string, ProjectiveTransformationZhang>();
-        private Dictionary<string, RigidBodyTransformation> _extrinsics = new Dictionary<string, RigidBodyTransformation>();
         private bool _pipelineRunning = false;
         private float _depthScale = 1.0f;
+        #endregion
+
+        #region Filter
+        public class Filter
+        {
+            private ProcessingBlock _filter;
+
+            public bool Enabled { get; set; }
+            public Sensor.SensorOptions Options { get => _filter.Options; }
+
+            internal Filter(ProcessingBlock filter)
+            {
+                _filter = filter;
+            }
+
+            internal VideoFrame Apply(VideoFrame frame)
+            {
+                if (!this.Enabled)
+                    return frame;
+
+                if (_filter is DecimationFilter df)
+                    return df.ApplyFilter(frame);
+                if (_filter is SpatialFilter sf)
+                    return sf.ApplyFilter(frame);
+                if (_filter is TemporalFilter tf)
+                    return tf.ApplyFilter(frame);
+                if (_filter is DisparityTransform dt)
+                    return dt.ApplyFilter(frame);
+
+                string msg = $"RealSense2: Filter type {_filter.GetType().ToString()} not supported";
+                log.Error(msg);
+                throw new NotImplementedException(msg);
+            }
+        }
+
+        public Filter DecimationFilter { get; } = new Filter(new DecimationFilter());
+        public Filter SpatialFilter { get; } = new Filter(new SpatialFilter());
+        public Filter TemporalFilter { get; } = new Filter(new TemporalFilter());
+        public Filter DepthToDisparityTransform { get; } = new Filter(new DisparityTransform(true));
+        public Filter DisparityToDepthTransform { get; } = new Filter(new DisparityTransform(false));
+
+        private VideoFrame FilterFrame(VideoFrame frame)
+        {
+            VideoFrame filteredFrame = frame;
+
+            filteredFrame = TemporalFilter.Apply(filteredFrame);
+            filteredFrame = SpatialFilter.Apply(filteredFrame);
+            filteredFrame = DecimationFilter.Apply(filteredFrame);
+            filteredFrame = DepthToDisparityTransform.Apply(filteredFrame);
+            filteredFrame = DisparityToDepthTransform.Apply(filteredFrame);
+
+            return filteredFrame;
+        }
         #endregion
 
         #region enums
@@ -154,12 +206,11 @@ namespace MetriCam2.Cameras
                 if (value == _colorResolution)
                     return;
 
-                ExecuteWithStoppedPipeline(() =>
-                {
-                    DeactivateChannelImpl(ChannelNames.Color);
-                    _colorResolution = value;
-                    ActivateChannelImpl(ChannelNames.Color);
-                });
+                TryChangeSetting<Point2i>(
+                    ref _colorResolution,
+                    value,
+                    new string[] { ChannelNames.Color }
+                );
             }
         }
         #endregion
@@ -173,7 +224,7 @@ namespace MetriCam2.Cameras
                 List<int> framerates = new List<int>();
                 framerates.Add(30);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     framerates = GetSupportedFramerates(SensorNames.Color);
                     framerates.Sort();
@@ -196,12 +247,11 @@ namespace MetriCam2.Cameras
                 if (value == _colorFPS)
                     return;
 
-                ExecuteWithStoppedPipeline(() =>
-                {
-                    DeactivateChannelImpl(ChannelNames.Color);
-                    _colorFPS = value;
-                    ActivateChannelImpl(ChannelNames.Color);
-                });
+                TryChangeSetting<int>(
+                    ref _colorFPS,
+                    value,
+                    new string[] { ChannelNames.Color }
+                );
             }
         }
         #endregion
@@ -215,7 +265,7 @@ namespace MetriCam2.Cameras
                 List<Point2i> resolutions = new List<Point2i>();
                 resolutions.Add(new Point2i(640, 480));
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     resolutions = GetSupportedResolutions(SensorNames.Stereo);
                 }
@@ -237,28 +287,11 @@ namespace MetriCam2.Cameras
                 if (value == _depthResolution)
                     return;
 
-                ExecuteWithStoppedPipeline(() =>
-                {
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        DeactivateChannelImpl(ChannelNames.ZImage);
-
-                    if (IsChannelActive(ChannelNames.Left))
-                        DeactivateChannelImpl(ChannelNames.Left);
-
-                    if (IsChannelActive(ChannelNames.Right))
-                        DeactivateChannelImpl(ChannelNames.Right);
-
-                    _depthResolution = value;
-
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        ActivateChannelImpl(ChannelNames.ZImage);
-
-                    if (IsChannelActive(ChannelNames.Left))
-                        ActivateChannelImpl(ChannelNames.Left);
-
-                    if (IsChannelActive(ChannelNames.Right))
-                        ActivateChannelImpl(ChannelNames.Right);
-                });
+                TryChangeSetting<Point2i>(
+                    ref _depthResolution,
+                    value,
+                    new string[] { ChannelNames.ZImage, ChannelNames.Left, ChannelNames.Right }
+                );
             }
         }
         #endregion
@@ -295,28 +328,11 @@ namespace MetriCam2.Cameras
                 if (value == _depthFPS)
                     return;
 
-                ExecuteWithStoppedPipeline(() =>
-                {
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        DeactivateChannelImpl(ChannelNames.ZImage);
-
-                    if (IsChannelActive(ChannelNames.Left))
-                        DeactivateChannelImpl(ChannelNames.Left);
-
-                    if (IsChannelActive(ChannelNames.Right))
-                        DeactivateChannelImpl(ChannelNames.Right);
-
-                    _depthFPS = value;
-
-                    if (IsChannelActive(ChannelNames.ZImage))
-                        ActivateChannelImpl(ChannelNames.ZImage);
-
-                    if (IsChannelActive(ChannelNames.Left))
-                        ActivateChannelImpl(ChannelNames.Left);
-
-                    if (IsChannelActive(ChannelNames.Right))
-                        ActivateChannelImpl(ChannelNames.Right);
-                });
+                TryChangeSetting<int>(
+                    ref _depthFPS,
+                    value,
+                    new string[] { ChannelNames.ZImage, ChannelNames.Left, ChannelNames.Right }
+                );
             }
         }
         #endregion
@@ -388,7 +404,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> range = new Range<int>(0, 1);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Brightness, SensorNames.Color);
                     range = new Range<int>((int)option.Min, (int)option.Max);
@@ -429,7 +445,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> range = new Range<int>(0, 1);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Contrast, SensorNames.Color);
                     range = new Range<int>((int)option.Min, (int)option.Max);
@@ -557,7 +573,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Exposure, SensorNames.Stereo);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -618,7 +634,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Gain, SensorNames.Color);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -657,7 +673,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Gain, SensorNames.Stereo);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -696,7 +712,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Gamma, SensorNames.Color);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -735,7 +751,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Hue, SensorNames.Color);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -774,7 +790,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Saturation, SensorNames.Color);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -813,7 +829,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.Sharpness, SensorNames.Color);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -858,7 +874,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.WhiteBalance, SensorNames.Color);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -924,7 +940,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.LaserPower, SensorNames.Stereo);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -987,7 +1003,7 @@ namespace MetriCam2.Cameras
             {
                 Range<int> res = new Range<int>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.FramesQueueSize, SensorNames.Color);
                     res = new Range<int>((int)option.Min, (int)option.Max);
@@ -1170,7 +1186,7 @@ namespace MetriCam2.Cameras
             {
                 Range<float> res = new Range<float>(0, 0);
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
                     var option = QueryOption(Option.DepthUnits, SensorNames.Stereo);
                     res = new Range<float>(option.Min, option.Max);
@@ -1179,6 +1195,25 @@ namespace MetriCam2.Cameras
             }
         }
         #endregion
+
+        private AdvancedMode.Preset _preset = AdvancedMode.Preset.UNKNOWN;
+
+        [Description("Config Preset", "Visual Preset")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected)]
+        [AllowedValueList(typeof(AdvancedMode.Preset))]
+        public AdvancedMode.Preset ConfigPreset
+        {
+            get => _preset;
+            set
+            {
+                if (value == AdvancedMode.Preset.UNKNOWN)
+                    return;
+                LoadCustomConfigInternal(AdvancedMode.GetPreset(value));
+                _preset = value;
+            }
+        }
 
         #endregion
 
@@ -1281,13 +1316,7 @@ namespace MetriCam2.Cameras
 
         private void StartPipeline()
         {
-
-            if (!_config.CanResolve(_pipeline))
-            {
-                string msg = $"{Name}: No camera that supports the current configuration detected";
-                log.Error(msg);
-                throw new InvalidOperationException(msg);
-            }
+            CheckConfig();
 
             if (!_pipelineRunning)
             {
@@ -1296,12 +1325,20 @@ namespace MetriCam2.Cameras
             }
         }
 
+        private void CheckConfig()
+        {
+            if (!_config.CanResolve(_pipeline))
+            {
+                string msg = $"{Name}: current combination of settings is not supported";
+                log.Error(msg);
+                throw new SettingsCombinationNotSupportedException(msg);
+            }
+        }
+
         protected override void DisconnectImpl()
         {
             try
             {
-                _intrinsics.Clear();
-                _extrinsics.Clear();
                 StopPipeline();
             }
             catch (Exception e)
@@ -1363,7 +1400,7 @@ namespace MetriCam2.Cameras
                 return;
             }
 
-            throw new Exception($"{Name}: not all requested frames are part of the retrieved FrameSet");
+            throw new ImageAcquisitionFailedException($"{Name}: not all requested frames are part of the retrieved FrameSet");
         }
 
         private void ExtractFrameSetData(FrameSet data, bool getColor, bool getDepth, bool getLeft, bool getRight,
@@ -1391,7 +1428,7 @@ namespace MetriCam2.Cameras
                     case Stream.Depth:
                         if (getDepth)
                         {
-                            _currentDepthFrame = vframe;
+                            _currentDepthFrame = FilterFrame(vframe);
                             haveDepth = true;
                         }
                         break;
@@ -1586,12 +1623,6 @@ namespace MetriCam2.Cameras
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
-            // first check if intrinsics for requested channel have been cached already
-            if (_intrinsics.TryGetValue(channelName, out ProjectiveTransformationZhang cachedIntrinsics))
-            {
-                return cachedIntrinsics;
-            }
-
             VideoStreamProfile profile = GetProfileFromSensor(channelName) as VideoStreamProfile;
             Intrinsics intrinsics = profile.GetIntrinsics();
 
@@ -1614,8 +1645,6 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[4],
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3]);
-
-            _intrinsics.Add(channelName, projTrans);
 
             return projTrans;
         }
@@ -1675,13 +1704,6 @@ namespace MetriCam2.Cameras
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
-            // first check if extrinsics for requested channel have been cached already
-            string extrinsicsKey = $"{channelFromName}_{channelToName}";
-            if (_extrinsics.TryGetValue(extrinsicsKey, out RigidBodyTransformation cachedExtrinsics))
-            {
-                return cachedExtrinsics;
-            }
-
             VideoStreamProfile from = GetProfileFromSensor(channelFromName);
             VideoStreamProfile to = GetProfileFromSensor(channelToName);
 
@@ -1697,7 +1719,6 @@ namespace MetriCam2.Cameras
             Point3f trans = new Point3f(extrinsics.translation[0], extrinsics.translation[1], extrinsics.translation[2]);
 
             RigidBodyTransformation rbt = new RigidBodyTransformation(rot, trans);
-            _extrinsics.Add(extrinsicsKey, rbt);
 
             return rbt;
         }
@@ -1785,12 +1806,13 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region advanced config
-        public void LoadConfigPreset(AdvancedMode.Preset preset)
+        public void LoadCustomConfig(string json)
         {
-            LoadCustomConfig(AdvancedMode.GetPreset(preset));
+            LoadCustomConfigInternal(json);
+            _preset = AdvancedMode.Preset.UNKNOWN;
         }
 
-        public void LoadCustomConfig(string json)
+        private void LoadCustomConfigInternal(string json)
         {
             AdvancedDevice adev = AdvancedDevice.FromDevice(RealSenseDevice);
             adev.JsonConfiguration = json;
@@ -1902,6 +1924,57 @@ namespace MetriCam2.Cameras
         {
             return GetSensor(SensorNames.Stereo).DepthScale;
         }
-        #endregion
+        private void TryChangeSetting<T>(ref T property, T newValue, string[] channelNames)
+        {
+            T oldValue = property;
+            bool wasRunning = _pipelineRunning;
+
+            try
+            {
+                StopPipeline();
+                DeactivateChannels(channelNames);
+                property = newValue;
+                ActivateChannels(channelNames);
+                CheckConfig();
+            }
+            catch (SettingsCombinationNotSupportedException)
+            {
+                DeactivateChannels(channelNames);
+                property = oldValue;
+                ActivateChannels(channelNames);
+                throw;
+            }
+            finally
+            {
+                if (wasRunning)
+                {
+                    StartPipeline();
+                }
+            }
+        }
+
+        private void ActivateChannels(string[] channelNames)
+        {
+            foreach (string channel in channelNames)
+            {
+                if (IsChannelActive(channel))
+                {
+                    ActivateChannelImpl(channel);
+                }
+            }
+        }
+
+        private void DeactivateChannels(string[] channelNames)
+        {
+            foreach (string channel in channelNames)
+            {
+                if (IsChannelActive(channel))
+                {
+                    DeactivateChannelImpl(channel);
+                }
+            }
+        }
+    #endregion
     }
 }
+

@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using Metrilus.Util;
+using MetriCam2.Exceptions;
 
 namespace MetriCam2.Controls
 {
@@ -208,7 +209,14 @@ namespace MetriCam2.Controls
                         scrollbarValue.ValueChanged += (sender, e) =>
                         {
                             string parameterValue = scrollbarValue.Value.ToString(CultureInfo.InvariantCulture);
-                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                            try
+                            {
+                                Camera.SetParameter(paramDesc.Name, parameterValue);
+                            }
+                            catch (SettingsCombinationNotSupportedException)
+                            {
+                                ShowMessageBoxCombinationOfSettingsNotSupported();
+                            }
                         };
                     }
                     else if (paramDesc is RangeParamDesc<float>)
@@ -225,7 +233,14 @@ namespace MetriCam2.Controls
                         upDownValue.ValueChanged += (sender, e) =>
                         {
                             string parameterValue = upDownValue.Value.ToString(CultureInfo.InvariantCulture);
-                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                            try
+                            {
+                                Camera.SetParameter(paramDesc.Name, parameterValue);
+                            }
+                            catch (SettingsCombinationNotSupportedException)
+                            {
+                                ShowMessageBoxCombinationOfSettingsNotSupported();
+                            }
                         };
                     }
                     else
@@ -255,8 +270,9 @@ namespace MetriCam2.Controls
                         ContainsOneOrMoreWritableParameters = true;
                     }
 
-                    if(paramDesc is ListParamDesc<Point2i>
-                    || paramDesc is ListParamDesc<int>)
+                    if (paramDesc is ListParamDesc<Point2i>
+                    || paramDesc is ListParamDesc<int>
+                    || (paramDesc as IListParamDesc).GetListType().IsEnum)
                     {
                         comboBoxValue.SelectedValueChanged += (sender, e) =>
                         {
@@ -266,12 +282,23 @@ namespace MetriCam2.Controls
                             {
                                 parameterValue = TypeConversion.ResolutionToPoint2i(comboBoxValue.SelectedItem as string);
                             }
-                            else
+                            else if (paramDesc is ListParamDesc<int>)
                             {
                                 parameterValue = int.Parse(comboBoxValue.SelectedItem as string);
                             }
+                            else // Enum
+                            {
+                                parameterValue = Enum.Parse((paramDesc as IListParamDesc).GetListType(), comboBoxValue.SelectedItem as string);
+                            }
 
-                            Camera.SetParameter(paramDesc.Name, parameterValue);
+                            try
+                            {
+                                Camera.SetParameter(paramDesc.Name, parameterValue);
+                            }
+                            catch (SettingsCombinationNotSupportedException)
+                            {
+                                ShowMessageBoxCombinationOfSettingsNotSupported();
+                            }
                         };
                     }
 
@@ -310,7 +337,15 @@ namespace MetriCam2.Controls
                         string parameterValue = checkBoxValue.Checked.ToString(CultureInfo.InvariantCulture);
                         Dictionary<string, object> keyValues = new Dictionary<string, object>();
                         keyValues.Add(paramDesc.Name, parameterValue);
-                        Camera.SetParameters(keyValues);
+
+                        try
+                        {
+                            Camera.SetParameters(keyValues);
+                        }
+                        catch (SettingsCombinationNotSupportedException)
+                        {
+                            ShowMessageBoxCombinationOfSettingsNotSupported();
+                        }
                     };
 
                     continue;
@@ -557,9 +592,9 @@ namespace MetriCam2.Controls
             {
                 try
                 {
-                    slider.Minimum = (int)paramDesc.Min;
-                    slider.Maximum = (int)paramDesc.Max;
-                    slider.Value = (int)paramDesc.Value;
+                    slider.Minimum = paramDesc.Min;
+                    slider.Maximum = paramDesc.Max;
+                    slider.Value = paramDesc.Value;
                 }
                 catch (Exception ex)
                 {
@@ -600,5 +635,11 @@ namespace MetriCam2.Controls
             return textBoxValue;
         }
         #endregion
+
+        private void ShowMessageBoxCombinationOfSettingsNotSupported()
+        {
+            InitConfigurationParameters(Camera);
+            MessageBox.Show(this, $"The camera {Camera.Name} does not support your selected combination of settings.");
+        }
     }
 }

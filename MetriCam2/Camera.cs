@@ -479,7 +479,7 @@ namespace MetriCam2
                 intrinsicsCache[channelName] = pt;
                 return pt;
             }
-            
+
             throw new FileNotFoundException(
                 String.Format(
                     "{0}: No valid calibration file for channel '{1}' available." + Environment.NewLine
@@ -1316,12 +1316,18 @@ namespace MetriCam2
         private void SetPropertyValue(string name, object value)
         {
             PropertyInfo pi = this.GetType().GetProperty(name);
-            if(pi != null)
+            object myItem = Convert.ChangeType(value, pi.PropertyType, CultureInfo.InvariantCulture);
+
+            try
             {
-                object myItem = Convert.ChangeType(value, pi.PropertyType, CultureInfo.InvariantCulture);
                 pi.SetValue(this, myItem, new object[] { });
-                log.InfoFormat("{0}: {1} <- {2}", this.Name, name, myItem);
             }
+            catch (TargetInvocationException e)
+            {
+                throw e.InnerException;
+            }
+
+            log.InfoFormat("{0}: {1} <- {2}", this.Name, name, myItem);
         }
         #endregion
         #endregion
