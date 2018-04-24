@@ -61,7 +61,7 @@ namespace MetriCam2.Controls
         /// Construct from parameter descriptor.
         /// </summary>
         /// <param name="desc">Parameter descriptor.</param>
-        public MultiFileSelector(Camera.MultiFileParamDesc desc)
+        public MultiFileSelector(MultiFileParamDesc desc)
         {
             InitializeComponent();         
 

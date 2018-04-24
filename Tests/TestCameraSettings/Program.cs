@@ -23,12 +23,12 @@ namespace MetriCam2.Tests.TestCameraSettings
             log.LogLevel = MetriLog.Levels.Info;
 
             cam = new UEyeCamera(); // Change this type if you want to test your camera implementation.
-            List<Camera.ParamDesc> allParameters;
+            List<ParamDesc> allParameters;
 
             log.Info("Testing " + cam.Name);
 
             allParameters = cam.GetParameters();
-            log.InfoFormat("Camera {0} has {1} parameter(s):\n{2}", cam.Name, allParameters.Count, Camera.ParamDesc.ToString(allParameters));
+            log.InfoFormat("Camera {0} has {1} parameter(s):\n{2}", cam.Name, allParameters.Count, ParamDesc.ToString(allParameters));
 
 
             // TEST: setting a writable parameter while disconnected
@@ -45,7 +45,7 @@ namespace MetriCam2.Tests.TestCameraSettings
             log.InfoFormat("Connected {0} camera with S/N \"{1}\".", cam.Name, cam.SerialNumber);
 
             allParameters = cam.GetParameters();
-            log.InfoFormat("Camera {0} has {1} parameter(s):\n{2}", cam.Name, allParameters.Count, Camera.ParamDesc.ToString(allParameters));
+            log.InfoFormat("Camera {0} has {1} parameter(s):\n{2}", cam.Name, allParameters.Count, ParamDesc.ToString(allParameters));
 
             if (cam is UEyeCamera)
             {
@@ -76,8 +76,8 @@ namespace MetriCam2.Tests.TestCameraSettings
                 params1["TriggerMode"] = "FREERUN";
             }
             cam.SetParameters(params1);
-            List<Camera.ParamDesc> allParameters1 = cam.GetParameters();
-            log.InfoFormat("Camera {0} has {1} parameter(s):\n{2}", cam.Name, allParameters1.Count, Camera.ParamDesc.ToString(allParameters1));
+            List<ParamDesc> allParameters1 = cam.GetParameters();
+            log.InfoFormat("Camera {0} has {1} parameter(s):\n{2}", cam.Name, allParameters1.Count, ParamDesc.ToString(allParameters1));
 
             Dictionary<string, object> params2 = new Dictionary<string, object>();
             params2["Gain"] = 40;
@@ -87,8 +87,8 @@ namespace MetriCam2.Tests.TestCameraSettings
                 params2["TriggerMode"] = "FREERUN";
             }
             cam.SetParameters(params2);
-            List<Camera.ParamDesc> allParameters2 = cam.GetParameters();
-            log.InfoFormat("Camera {0} has {1} parameter(s):\n{2}", cam.Name, allParameters2.Count, Camera.ParamDesc.ToString(allParameters2));
+            List<ParamDesc> allParameters2 = cam.GetParameters();
+            log.InfoFormat("Camera {0} has {1} parameter(s):\n{2}", cam.Name, allParameters2.Count, ParamDesc.ToString(allParameters2));
 
             cam.Disconnect();
 
@@ -152,9 +152,9 @@ namespace MetriCam2.Tests.TestCameraSettings
         private static void LogParameterValue(string name)
         {
             log.Info(cam.GetParameter(name));
-            if (Camera.ParamDesc.IsAutoParameterName(name))
+            if (ParamDesc.IsAutoParameterName(name))
             {
-                log.Info(cam.GetParameter(Camera.ParamDesc.GetBaseParameterName(name)));
+                log.Info(cam.GetParameter(ParamDesc.GetBaseParameterName(name)));
             }
         }
     }

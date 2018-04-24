@@ -3,6 +3,9 @@
 
 using Metrilus.Util;
 using System;
+using MetriCam2.Enums;
+using MetriCam2.Attributes;
+using System.Collections.Generic;
 
 namespace MetriCam2.Cameras
 {
@@ -80,23 +83,14 @@ namespace MetriCam2.Cameras
                     __gain_dummy /= 2;
             }
         }
-        private ParamDesc<int> GainDesc
-        {
-            // This implementation is just for DEMO purposes and should be replaced in an actual camera implementation.
-            get
-            {
-                return new RangeParamDesc<int>(0, 100)
-                {
-                    Description = "Gain factor.",
-                    Unit = "%",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
+
         /// <summary>
         /// [DUMMY] Gain in [%].
         /// </summary>
+        [Description("Gain", "Gain Factor")]
+        [Unit(Unit.Percent)]
+        [Range(0, 100)]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public int Gain
         {
             // This implementation is just for DEMO purposes and should be replaced in an actual camera implementation.
@@ -111,21 +105,14 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<TriggerModeDummy> TriggerModeDesc
-        {
-            get
-            {
-                return new ListParamDesc<TriggerModeDummy>(typeof(TriggerModeDummy))
-                {
-                    Description = "Trigger mode.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>
         /// [DUMMY] The currently selected trigger mode.
         /// </summary>
+        [Description("Trigger Mode")]
+        [AllowedValueList(typeof(TriggerModeDummy))]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public TriggerModeDummy TriggerMode
         {
             get { return __trigger_mode_dummy; }
@@ -133,254 +120,116 @@ namespace MetriCam2.Cameras
         }
 
         #region Parameters for Unit Tests
-        private ParamDesc<bool> BoolParamDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "BoolParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+
+        [Description("BoolParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public bool BoolParam { get; set; }
 
-        private ParamDesc<byte> ByteParamDesc
-        {
-            get
-            {
-                return new ParamDesc<byte>()
-                {
-                    Description = "ByteParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("ByteParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public byte ByteParam { get; set; }
 
-        private ParamDesc<short> ShortParamDesc
-        {
-            get
-            {
-                return new ParamDesc<short>()
-                {
-                    Description = "ShortParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("ShortParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public short ShortParam { get; set; }
 
-        private ParamDesc<int> IntParamDesc
-        {
-            get
-            {
-                return new ParamDesc<int>()
-                {
-                    Description = "IntParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("IntParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public int IntParam { get; set; }
 
-        private ParamDesc<long> LongParamDesc
-        {
-            get
-            {
-                return new ParamDesc<long>()
-                {
-                    Description = "LongParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("LongParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public long LongParam { get; set; }
 
-        private ParamDesc<float> FloatParamDesc
-        {
-            get
-            {
-                return new ParamDesc<float>()
-                {
-                    Description = "FloatParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("FloatParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public float FloatParam { get; set; }
 
-        private ListParamDesc<float> FormatedFloatWithAllowedValuesDesc
-        {
-            get
-            {
-                var availableValues = new System.Collections.Generic.List<float>();
-                availableValues.Add(8.3f);
-                availableValues.Add(10.0f);
-                availableValues.Add(15.0f);
-                availableValues.Add(25.1f);
-                return new ListParamDesc<float>(availableValues, "0.0")
-                {
-                    Description = "FloatParam with 1 decimal and a list of allowed values",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("FloatParam", "FloatParam with 1 decimal and a list of allowed values")]
+        [AllowedValueList(new float[] { 8.3f, 10.0f, 15.0f, 25.1f }, "SingleDecimal")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public float FormatedFloatWithAllowedValues { get; set; }
 
-        private ParamDesc<double> DoubleParamDesc
-        {
-            get
-            {
-                return new ParamDesc<double>()
-                {
-                    Description = "DoubleParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("DoubleParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public double DoubleParam { get; set; }
 
-        private RangeParamDesc<byte> ByteRangeParamDesc
-        {
-            get
-            {
-                return new RangeParamDesc<byte>(10, 100)
-                {
-                    Description = "ByteRangeParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("ByteRangeParam")]
+        [Range((byte)10, (byte)100)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public byte ByteRangeParam { get; set; }
 
-        private RangeParamDesc<short> ShortRangeParamDesc
-        {
-            get
-            {
-                return new RangeParamDesc<short>(10, 100)
-                {
-                    Description = "ShortRangeParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("ShortRangeParam")]
+        [Range((short)10, (short)100)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public short ShortRangeParam { get; set; }
 
-        private RangeParamDesc<int> IntRangeParamDesc
-        {
-            get
-            {
-                return new RangeParamDesc<int>(10, 100)
-                {
-                    Description = "IntRangeParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("IntRangeParam")]
+        [Range((int)10, (int)100)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public int IntRangeParam { get; set; }
 
-        private RangeParamDesc<long> LongRangeParamDesc
-        {
-            get
-            {
-                return new RangeParamDesc<long>(10, 100)
-                {
-                    Description = "LongRangeParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("LongRangeParam")]
+        [Range((long)10, (long)100)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public long LongRangeParam { get; set; }
 
-        private RangeParamDesc<float> FloatRangeParamDesc
-        {
-            get
-            {
-                return new RangeParamDesc<float>(10.0f, 100.0f)
-                {
-                    Description = "FloatRangeParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("FloatRangeParam")]
+        [Range(10.0f, 100.0f)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public float FloatRangeParam { get; set; }
 
-        private RangeParamDesc<double> DoubleRangeParamDesc
-        {
-            get
-            {
-                return new RangeParamDesc<double>(10.0, 100.0)
-                {
-                    Description = "DoubleRangeParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("DoubleRangeParam")]
+        [Range(10.0d, 100.0d)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public double DoubleRangeParam { get; set; }
 
-        private ListParamDesc<TriggerModeDummy> EnumListParamDesc
-        {
-            get
-            {
-                return new ListParamDesc<TriggerModeDummy>(typeof(TriggerModeDummy))
-                {
-                    Description = "EnumListParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
+        [Description("EnumListParam")]
+        [AllowedValueList(typeof(TriggerModeDummy))]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public TriggerModeDummy EnumListParam { get; set; }
 
-        private ListParamDesc<float> FloatListParamDesc
-        {
-            get
-            {
-                System.Collections.Generic.List<float> allowedValues = new System.Collections.Generic.List<float>();
-                allowedValues.Add(16f);
-                allowedValues.Add(18.0f);
-                allowedValues.Add(20.5f);
-                allowedValues.Add(24.07f);
-                ListParamDesc<float> res = new ListParamDesc<float>(allowedValues)
-                {
-                    Description = "FloatListParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-                return res;
-            }
-        }
+        [Description("FloatListParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [AllowedValueList(new float[] { 16f, 18f, 20.5f, 24.07f })]
         public float FloatListParam { get; set; }
 
-        private ParamDesc<Point3f> Point3fParamDesc
-        {
-            get
-            {
-                ParamDesc<Point3f> res = new ParamDesc<Point3f>()
-                {
-                    Description = "Point3fParam",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-                return res;
-            }
-        }
+        [Description("Point3fParam")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public Point3f Point3fParam { get; set; }
         #endregion
         #endregion

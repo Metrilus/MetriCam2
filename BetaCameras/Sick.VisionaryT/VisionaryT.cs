@@ -4,6 +4,8 @@
 using Metrilus.Util;
 using System;
 using MetriCam2.Cameras.Internal.Sick;
+using MetriCam2.Enums;
+using MetriCam2.Attributes;
 
 namespace MetriCam2.Cameras
 {
@@ -32,43 +34,23 @@ namespace MetriCam2.Cameras
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.SickIcon; }
 #endif
 
-        private ParamDesc<string> IPAddressDesc
-        {
-            get
-            {
-                return new ParamDesc<string>()
-                {
-                    Description = "IP address of camera.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Disconnected | ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Disconnected
-                };
-            }
-        }
-
         /// <summary>
         /// IP Address of camera. Has to be set before connecting.
         /// </summary>
+        [Description("IP-Address", "IP address of camera.")]
+        [AccessState(readableWhen: ConnectionStates.Disconnected | ConnectionStates.Connected, writeableWhen: ConnectionStates.Disconnected)]
         public string IPAddress
         {
             get { return ipAddress; }
             set { ipAddress = value; }
         }
-        private RangeParamDesc<int> IntegrationTimeDesc
-        {
-            get
-            {
-                return new RangeParamDesc<int>(80, 4000)
-                {
-                    Description = "Integration time of camera in microseconds.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                    Unit = "Microseconds",
-                };
-            }
-        }
+
         /// <summary>
         /// Integration time of ToF-sensor.
         /// </summary>
+        [Description("Integration Time", "Integration time of camera in microseconds.")]
+        [Unit(Unit.Microseconds)]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public int IntegrationTime
         {
             get
@@ -81,43 +63,24 @@ namespace MetriCam2.Cameras
                 device.Control_SetIntegrationTime(value);
             }
         }
-        private ParamDesc<int> WidthDesc
-        {
-            get
-            {
-                return new ParamDesc<int>()
-                {
-                    Description = "Width of images.",
-                    Unit = "px",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected
-                };
-            }
-        }
 
         /// <summary>
         /// Width of images.
         /// </summary>
+        [Description("Width", "Width of images")]
+        [Unit(Unit.Pixel)]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public int Width
         {
             get { return width; }
         }
 
-        private ParamDesc<int> HeightDesc
-        {
-            get
-            {
-                return new ParamDesc<int>()
-                {
-                    Description = "Height of images.",
-                    Unit = "px",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected
-                };
-            }
-        }
-
         /// <summary>
         /// Height of images.
         /// </summary>
+        [Description("Height", "Height of images")]
+        [Unit(Unit.Pixel)]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public int Height
         {
             get { return height; }

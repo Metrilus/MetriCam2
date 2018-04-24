@@ -14,6 +14,8 @@ using namespace System;
 using namespace System::Threading;
 using namespace System::Collections::Generic;
 using namespace MetriCam2;
+using namespace MetriCam2::Enums;
+using namespace MetriCam2::Attributes;
 using namespace Metrilus::Util;
 using namespace System::Collections::Generic;
 using msclr::interop::marshal_as;
@@ -51,10 +53,17 @@ namespace Cameras
 		/*
 		 * Non-configuration parameters!
 		 */
+		[Description("Width", "Width of images")]
+		[AccessState(ConnectionStates::Connected)]
+		[Unit(Unit::Pixel)]
 		property int Width
 		{
 			inline int get() { return m_width; }
 		}
+
+		[Description("Height", "Height of images")]
+		[AccessState(ConnectionStates::Connected)]
+		[Unit(Unit::Pixel)]
 		property int Height
 		{
 			inline int get() { return m_height; }
@@ -102,34 +111,63 @@ namespace Cameras
 		}
 		/*
 		 * Configuration parameters!
-		 * These functions are not save, to use it correctly see the ParamDescs 
+		 * These functions are not save, to use it correctly see the Attributes 
 		 * to know when it should be called and when not.
 		 */
+
+		[Description("Phase Offset Base", "Phase offset for base frequency")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[Range(-2048, 2047)]
 		property int PhaseOffsetBase
 		{
 			inline int get() { return m_phaseOffsetBase; }
 			inline void set(int val) { SetPhaseOffsetBase(val); }
 		}
+
+		[Description("Phase Offset Dealiasing", "Phase offset for dealising frequency")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[Range(-2048, 2047)]
 		property int PhaseOffsetDealiasing
 		{
 			inline int get() { return m_phaseOffsetDealiasing; }
 			inline void set(int val) { SetPhaseOffsetDealiasing(val); }
 		}
+
+		[Description("Amplitude Threshold")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[Range(0u, 4095u)]
 		property uint AmplitudeThreshold
 		{
 			inline uint get() { return m_amplitudeThreshold; }
 			inline void set(uint val) { SetAmplitudeThreshold(val); }
 		}
+
+		[Description("Illumination Power")]
+		[Unit(Unit::Percent)]
+		[AccessState(
+			ConnectionStates::Connected | ConnectionStates::Disconnected,
+			ConnectionStates::Connected | ConnectionStates::Disconnected)]
+		[Range(0u, 100u)]
 		property uint IlluminationPowerPercentage
 		{
 			inline uint get() { return m_illuminationPowerPercentage; }
 			inline void set(uint val) { SetIlluminationPowerPercentage(val); }
 		}
+
+		[Description("Integration Duty Cycle")]
+		[Unit(Unit::Percent)]
+		[AccessState(
+			ConnectionStates::Connected | ConnectionStates::Disconnected,
+			ConnectionStates::Connected | ConnectionStates::Disconnected)]
+		[Range(0u, 20u)] // 20 translates to 31% in voxel viewer, which is the upper limit for laser safety.
 		property uint IntegrationDutyCycle
 		{
 			inline uint get() { return m_integrationDutyCycle; }
 			inline void set(uint val) { SetIntegrationDutyCycle(val); }
 		}
+
+		[Description("Effective Modulation Frequency")]
+		[AccessState(ConnectionStates::Connected)]
 		property int EffectiveModulationFrequency
 		{
 			inline int get()
@@ -154,38 +192,146 @@ namespace Cameras
 				return GCD(BaseModulationFrequency, DealiasingModulationFrequency); 
 			}
 		}
+
+		// ModulationFrequency Values: 14.4, 16.0, 18.0, 20.5, 24.0, 28.8, 36.0, 48.0
+		property List<int>^ BaseModulationFrequencyList
+		{
+			inline List<int>^ get()
+			{
+				List<int>^ allowedValues = gcnew List<int>();
+				allowedValues->Add(14400000);
+				allowedValues->Add(16000000);
+				allowedValues->Add(18000000);
+				allowedValues->Add(20500000);
+				allowedValues->Add(24000000);
+				allowedValues->Add(28800000);
+				allowedValues->Add(36000000);
+				allowedValues->Add(40000000);
+				allowedValues->Add(48000000);
+				allowedValues->Add(60000000);
+				return allowedValues;
+			}
+		}
+
+		[Description("Base Modulation Frequency")]
+		[Unit("Hz")]
+		[AccessState(
+			ConnectionStates::Connected | ConnectionStates::Disconnected,
+			ConnectionStates::Connected | ConnectionStates::Disconnected)]
+		[AllowedValueList("BaseModulationFrequencyList", nullptr)]
 		property int BaseModulationFrequency
 		{
 			inline int get() { return m_baseModulationFrequency; }
 			inline void set(int val) { SetBaseModulationFrequency(val); }
 		}
+
+		// ModulationFrequency Values: 14.4, 16.0, 18.0, 20.5, 24.0, 28.8, 36.0, 48.0
+		property List<int>^ DealiasingModulationFrequencyList
+		{
+			inline List<int>^ get()
+			{
+				List<int>^ allowedValues = gcnew List<int>();
+				allowedValues->Add(14400000);
+				allowedValues->Add(16000000);
+				allowedValues->Add(18000000);
+				allowedValues->Add(20500000);
+				allowedValues->Add(24000000);
+				allowedValues->Add(28800000);
+				allowedValues->Add(36000000);
+				allowedValues->Add(48000000);
+				allowedValues->Add(60000000);
+				allowedValues->Add(80000000);
+				return allowedValues;
+			}
+		}
+
+		[Description("Dealiasing Modulation Frequency")]
+		[Unit("Hz")]
+		[AccessState(
+			ConnectionStates::Connected | ConnectionStates::Disconnected,
+			ConnectionStates::Connected | ConnectionStates::Disconnected)]
+		[AllowedValueList("DealiasingModulationFrequencyList", nullptr)]
 		property int DealiasingModulationFrequency
 		{
 			inline int get() { return m_dealiasingModulationFrequency; }
 			inline void set(int val) { SetDealiasingModulationFrequency(val); }
 		}
+
+		[Description("Enable Dealiasing")]
+		[AccessState(ConnectionStates::Connected)]
 		property bool EnableDealiasing
 		{
 			inline bool get() { return m_enableDealiasing; }
 			inline void set(bool val) { SetEnableDealiasing(val); }
 		}
+
+		property List<int>^ HdrScaleList
+		{
+			inline List<int>^ get()
+			{
+				List<int>^ allowedValues = gcnew List<int>();
+				allowedValues->Add(0);
+				allowedValues->Add(1);
+				allowedValues->Add(2);
+				allowedValues->Add(3);
+				allowedValues->Add(4);
+				return allowedValues;
+			}
+		}
+
+		[Description("HDR Scale")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[AllowedValueList("HdrScaleList", nullptr)]
 		property int HdrScale
 		{
 			inline int get() { return m_hdrScale; }
 			inline void set(int val) { SetHdrScale(val); }
 		}
-
+		
+		[Description("HDR Filter")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
 		property bool HDRFilter
 		{
 			inline bool get() { return (m_hdr_filter_id >= 0); }
 			inline void set(bool val) { SetHDRFilter(val); }
 		}
 
+		property List<int>^ QuadsList
+		{
+			inline List<int>^ get()
+			{
+				List<int>^ allowedValues = gcnew List<int>();
+				allowedValues->Add(4);
+				allowedValues->Add(6);
+				return allowedValues;
+			}
+		}
+
+		[Description("Quads")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[AllowedValueList("QuadsList", nullptr)]
 		property int Quads
 		{
 			inline int get() { return (int)m_quadCntMax; }
 			inline void set(int val) { SetQuads((uint)val); }
 		}
+
+		property List<int>^ SubFramesList
+		{
+			inline List<int>^ get()
+			{
+				List<int>^ allowedValues = gcnew List<int>();
+				allowedValues->Add(1);
+				allowedValues->Add(2);
+				allowedValues->Add(4);
+				return allowedValues;
+			}
+		}
+
+		[Description("Sub Frames")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[Unit("Frames")]
+		[AllowedValueList("SubFramesList", nullptr)]
 		property int SubFrames
 		{
 			inline int get() { return m_subFrames; }
@@ -245,15 +391,25 @@ namespace Cameras
 		/**
 		 * Gets the current sensor temperature.
 		 */
+		[Description("Sensor Temperature")]
+		[Unit(Unit::DegreeCelsius)]
+		[AccessState(ConnectionStates::Connected)]
 		property int SensorTemperature
 		{
 			inline int get() { return GetSensorTemperature(); }
 		}
+
+		[Description("Illumination Temperature")]
+		[Unit(Unit::DegreeCelsius)]
+		[AccessState(ConnectionStates::Connected)]
 		property int IlluminationTemperature
 		{
 			inline int get() { return GetIlluminationTemperature(); }
 		}
 
+		[Description("Camera Profile", "Calibration Profiles")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Disconnected)]
+		[AllowedValueList(Profile::typeid, nullptr)]
 		property Profile CameraProfile
 		{
 			inline Profile get() { return m_CameraProfile; }
@@ -454,262 +610,6 @@ namespace Cameras
 		void SetIndFreqDataSel(bool val);
 		void SetDealiased_ph_mask(int val);
 		void SetHDRFilter(bool val);
-
-
-		
-
-
-		/*
-		 * Misc.
-		 */
-		/*bool UpdateSerialNumber();
-		int GetIdFromSerialNumber(String^ serial);*/
-
-		/*
-		 * Parameter descriptions
-		 */
-		property ParamDesc<int>^ WidthDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				ParamDesc<int> ^res = gcnew ParamDesc<int>();
-				res->Description = "Width of images";
-				res->Unit = "pixels";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<int>^ HeightDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				ParamDesc<int> ^res = gcnew ParamDesc<int>();
-				res->Description = "Height of images";
-				res->Unit = "pixels";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<int>^ SensorTemperatureDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				ParamDesc<int> ^res = gcnew ParamDesc<int>();
-				res->Description = "Sensor Temperature";
-				res->Unit = "C";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<int>^ IlluminationTemperatureDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				ParamDesc<int> ^res = gcnew ParamDesc<int>();
-				res->Description = "Illumination Temperature";
-				res->Unit = "C";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<int>^ PhaseOffsetBaseDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				ParamDesc<int> ^res = ParamDesc::BuildRangeParamDesc(-2048, 2047);
-				res->Description = "Phase offset for base freq.";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<int>^ PhaseOffsetDealiasingDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				ParamDesc<int> ^res = ParamDesc::BuildRangeParamDesc(-2048, 2047);
-				res->Description = "Phase offset for dealising freq.";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<uint>^ AmplitudeThresholdDesc
-		{
-			inline ParamDesc<uint> ^get()
-			{
-				ParamDesc<uint> ^res = ParamDesc::BuildRangeParamDesc(0u, 4095u);
-				res->Description = "Amplitude Threshold";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<uint>^ IlluminationPowerPercentageDesc
-		{
-			inline ParamDesc<uint> ^get()
-			{
-				ParamDesc<uint> ^res = ParamDesc::BuildRangeParamDesc((uint)0, (uint)100);
-				res->Unit = "%";
-				res->Description = "Illumination Power";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				return res;
-			}
-		}
-
-		property ParamDesc<uint>^ IntegrationDutyCycleDesc
-		{
-			inline ParamDesc<uint> ^get()
-			{
-				ParamDesc<uint> ^res = ParamDesc::BuildRangeParamDesc(0u, 20u); // 20 translates to 31% in voxel viewer, which is the upper limit for laser safety.
-				res->Unit = "percent";
-				res->Description = "Integration Duty Cycle";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				return res;
-			}
-		}
-
-		// ModulationFrequency Values: 14.4, 16.0, 18.0, 20.5, 24.0, 28.8, 36.0, 48.0
-		property ParamDesc<int>^ BaseModulationFrequencyDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				List<int> ^allowedValues = gcnew List<int>();// FIXME
-				allowedValues->Add(14400000);
-				allowedValues->Add(16000000);
-				allowedValues->Add(18000000);
-				allowedValues->Add(20500000);
-				allowedValues->Add(24000000);
-				allowedValues->Add(28800000);
-				allowedValues->Add(36000000);
-				allowedValues->Add(40000000);
-				allowedValues->Add(48000000);
-				allowedValues->Add(60000000);
-				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
-				res->Unit = "Hz";
-				res->Description = "Base Modulation Frequency";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				return res;
-			}
-		}
-
-		// ModulationFrequency Values: 14.4, 16.0, 18.0, 20.5, 24.0, 28.8, 36.0, 48.0
-		property ParamDesc<int>^ DealiasingModulationFrequencyDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				List<int> ^allowedValues = gcnew List<int>();// FIXME
-				allowedValues->Add(14400000);
-				allowedValues->Add(16000000);
-				allowedValues->Add(18000000);
-				allowedValues->Add(20500000);
-				allowedValues->Add(24000000);
-				allowedValues->Add(28800000);
-				allowedValues->Add(36000000);
-				allowedValues->Add(48000000);
-				allowedValues->Add(60000000);
-				allowedValues->Add(80000000);
-				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
-				res->Unit = "Hz";
-				res->Description = "Dealiasing Modulation Frequency";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-				return res;
-			}
-		}
-
-		property ParamDesc<int>^ HdrScaleDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				List<int> ^allowedValues = gcnew List<int>();
-				allowedValues->Add(0);
-				allowedValues->Add(1);
-				allowedValues->Add(2);
-				allowedValues->Add(3);
-				allowedValues->Add(4);
-				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
-				res->Unit = "";
-				res->Description = "HDR Scale";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<bool>^ HDRFilterDesc {
-			inline ParamDesc<bool> ^get()
-			{
-				ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-				res->Unit = "";
-				res->Description = "HDR Filter";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<int>^ QuadsDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				List<int> ^allowedValues = gcnew List<int>();
-				allowedValues->Add(4);
-				allowedValues->Add(6);
-				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
-				res->Unit = "";
-				res->Description = "Quads";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-			}
-		}
-
-		property ParamDesc<int>^ SubFramesDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				List<int> ^allowedValues = gcnew List<int>();
-				allowedValues->Add(1);
-				allowedValues->Add(2);
-				allowedValues->Add(4);
-				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
-				res->Unit = "frames";
-				res->Description = "Sub Frames";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-				return res;
-		   }
-		}
-
-		property ParamDesc<int>^ CameraProfileDesc
-		{
-			inline ParamDesc<int> ^get()
-			{
-				List<int> ^allowedValues = gcnew List<int>();
-				allowedValues->Add((int)Profile::LensOnly);
-				allowedValues->Add((int)Profile::ShortRange);
-				allowedValues->Add((int)Profile::LongRange);
-				allowedValues->Add((int)Profile::HighAmbient);
-				allowedValues->Add((int)Profile::NoCalibration);
-				ParamDesc<int> ^res = ParamDesc::BuildListParamDesc(allowedValues, "");
-				res->Unit = "";
-				res->Description = "Calibration Profiles";
-				res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-				res->WritableWhen = ParamDesc::ConnectionStates::Disconnected;
-				return res;
-			}
-		}
 	};
 }
 }

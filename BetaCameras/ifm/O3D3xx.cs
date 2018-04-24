@@ -5,13 +5,14 @@ using CookComputing.XmlRpc;
 using MetriCam2.Cameras.IFM;
 using Metrilus.Util;
 using System;
-using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using MetriCam2.Attributes;
+using MetriCam2.Enums;
 
 namespace MetriCam2.Cameras
 {
@@ -23,7 +24,7 @@ namespace MetriCam2.Cameras
         [DllImport("iphlpapi.dll")]
         public static extern int SendARP(int DestIP, int SrcIP, [Out] byte[] pMacAddr, ref int PhyAddrLen);
 
-        private BackgroundWorker updateWorker;
+        private System.ComponentModel.BackgroundWorker updateWorker;
         private object updateLock = new object();
         private bool frameAvailable = false;
 
@@ -31,6 +32,11 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Frequency channel
         /// </summary>
+        [Description("Frequency Channel")]
+        [Range(0, 3)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public int FrequencyChannel
         {
             get
@@ -43,21 +49,15 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private RangeParamDesc<int> FrequencyChannelDesc
-        {
-            get
-            {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 3);
-                res.Description = "Frequency Channel"; ;
-                res.Unit = "";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                return res;
-            }
-        }
         /// <summary>
         /// The camera framerate.
         /// </summary>
+        [Description("Framerate")]
+        [Range(0, 25)]
+        [Unit(Unit.FPS)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public int Framerate
         {
             get
@@ -69,21 +69,16 @@ namespace MetriCam2.Cameras
                 SetFramerate(value);
             }
         }
-        private RangeParamDesc<int> FramerateDesc
-        {
-            get
-            {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 25);
-                res.Description = "Framerate"; ;
-                res.Unit = "fps";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                return res;
-            }
-        }
+
         /// <summary>
         /// Integration (exposure time)
         /// </summary>
+        [Description("Integration Time")]
+        [Unit(Unit.Microseconds)]
+        [Range(0, 10000)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public int IntegrationTime
         {
             get
@@ -95,64 +90,30 @@ namespace MetriCam2.Cameras
                 SetIntegrationTime(value);
             }
         }
-        private RangeParamDesc<int> IntegrationTimeDesc
-        {
-            get
-            {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 10000);
-                res.Description = "Integration time"; ;
-                res.Unit = "us";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                return res;
-            }
-        }
+
         /// <summary>
         /// IP Address of camera.
         /// </summary>
+        [Description("Camera IP")]
+        [Unit("IPv4")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Disconnected)]
         public string CameraIP { get; set; }
-        private ParamDesc<String> CameraIPDesc
-        {
-            get
-            {
-                ParamDesc<String> res = new ParamDesc<String>();
-                res.Description = "IP address of camera";
-                res.Unit = "IPv4";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Disconnected | ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Disconnected;
-                return res;
-            }
-        }
+
         /// <summary>
         /// XML RPC Port (80).
         /// </summary>
+        [Description("XML-RPC Port")]
+        [AccessState(readableWhen: ConnectionStates.Disconnected | ConnectionStates.Connected)]
         public int XMLRPCPort { get; set; }
-        private ParamDesc<String> XMLRPCPortDesc
-        {
-            get
-            {
-                ParamDesc<String> res = new ParamDesc<String>();
-                res.Description = "XML-RPC port";
-                res.Unit = "";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Disconnected | ParamDesc.ConnectionStates.Connected;
-                return res;
-            }
-        }
+
         /// <summary>
         /// Image output port (50010).
         /// </summary>
+        [Description("Image Output", "Image Output Port")]
+        [AccessState(readableWhen: ConnectionStates.Disconnected | ConnectionStates.Connected)]
         public int ImageOutputPort { get; set; }
-        private ParamDesc<String> ImageOutputPortDesc
-        {
-            get
-            {
-                ParamDesc<String> res = new ParamDesc<String>();
-                res.Description = "Image output port";
-                res.Unit = "";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Disconnected | ParamDesc.ConnectionStates.Connected;
-                return res;
-            }
-        }
 
 #if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.IfmIcon; }
@@ -215,7 +176,7 @@ namespace MetriCam2.Cameras
             editeDevice = XmlRpcProxyGen.Create<IEditDevice>();
             server = XmlRpcProxyGen.Create<IServer>();
             this.applicationId = applicationId;
-            updateWorker = new BackgroundWorker();
+            updateWorker = new System.ComponentModel.BackgroundWorker();
             updateWorker.WorkerSupportsCancellation = true;
             updateWorker.DoWork += UpdateWorker_DoWork;
             updateWorker.RunWorkerCompleted += UpdateWorker_RunWorkerCompleted;
@@ -310,7 +271,7 @@ namespace MetriCam2.Cameras
             updateWorker.RunWorkerAsync();
         }
 
-        private void UpdateWorker_DoWork(object sender, DoWorkEventArgs e)
+        private void UpdateWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
             // All units in mm, thus we need to divide by 1000 to obtain meters
             const float factor = 1.0f / 1000.0f;
@@ -757,7 +718,7 @@ namespace MetriCam2.Cameras
             return macAddress;
         }
 
-        private void UpdateWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void UpdateWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
             clientSocket.Shutdown(SocketShutdown.Both);
             clientSocket.Disconnect(true);

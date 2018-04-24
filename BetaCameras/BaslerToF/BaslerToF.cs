@@ -3,6 +3,8 @@ using System;
 using System.Threading;
 using ToFCameraWrapper;
 using MetriCam2.Exceptions;
+using MetriCam2.Enums;
+using MetriCam2.Attributes;
 
 namespace MetriCam2.Cameras
 {
@@ -39,6 +41,7 @@ namespace MetriCam2.Cameras
         #region Private Constants
         private const float MinExposureMilliseconds = 0.1f;
         private const float MaxExposureMilliseconds = 25.0f;
+        private readonly Range<float> ExposureMilliseconds = new Range<float>(MinExposureMilliseconds, MaxExposureMilliseconds);
         private const ulong TriggerBaseDelay = 250000000;    // 250 ms
         // Readout time. [ns]
         // Though basically a constant inherent to the ToF camera, the exact value may still change in future firmware releases.
@@ -67,31 +70,25 @@ namespace MetriCam2.Cameras
 
         public bool IsMaster { get; private set; }
 
-        private RangeParamDesc<int> DeviceChannelDesc
-        {
-            get
-            {
-                return new RangeParamDesc<int>(0, 3)
-                {
-                    Description = "Device Channel",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-            }
-        }
+        public Range<int> DeviceChannelRange { get; } = new Range<int>(0, 3);
+
         /// <summary>
         /// Gets or sets the device channel.
         /// Use this property to minimize interference between multiple cameras.
         /// </summary>
+        [Description("DeviceChannel", "Device Channel")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(DeviceChannelRange))]
         public int DeviceChannel
         {
             get => int.Parse(camera.GetParameterValue("DeviceChannel"));
             set
             {
-                var desc = DeviceChannelDesc;
-                if (!desc.IsValid(value))
+                if (!DeviceChannelRange.IsValid(value))
                 {
-                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The device channel must be between {0} and {1}.", desc.Min, desc.Max));
+                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The device channel must be between {0} and {1}.", DeviceChannelRange.Minimum, DeviceChannelRange.Maximum));
                     return;
                 }
 
@@ -104,22 +101,15 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private RangeParamDesc<float> ExposureDesc
-        {
-            get
-            {
-                return new RangeParamDesc<float>(MinExposureMilliseconds, MaxExposureMilliseconds)
-                {
-                    Description = "Exposure time",
-                    Unit = "ms",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>
         /// Gets/sets the exposure time in milliseconds.
         /// </summary>
+        [Description("Exposure", "Exposure time")]
+        [Unit(Unit.Milliseconds)]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Range(MinExposureMilliseconds, MaxExposureMilliseconds)]
         public float Exposure
         {
             get
@@ -128,10 +118,9 @@ namespace MetriCam2.Cameras
             }
             set
             {
-                var desc = ExposureDesc;
-                if (!desc.IsValid(value))
+                if (!ExposureMilliseconds.IsValid(value))
                 {
-                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The exposure time must be between {0} and {1} ms.", desc.Min, desc.Max));
+                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The exposure time must be between {0} and {1} ms.", ExposureMilliseconds.Minimum, ExposureMilliseconds.Maximum));
                     return;
                 }
 
@@ -146,22 +135,13 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> TemporalFilterDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "Temporal Filter",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
-
         /// <summary>
         /// Enables/disables the temporal filter.
         /// </summary>
+        [Description("TemporalFilter", "Temporal Filter")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public bool TemporalFilter
         {
             get
@@ -178,23 +158,15 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<int> TemporalFilterStrengthDesc
-        {
-            get
-            {
-                return new RangeParamDesc<int>(50, 240)
-                {
-                    Description = "Temporal Filter Strength",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
-
         /// <summary>
         /// Gets/sets the strength of the temporal filter.
         /// </summary>
         /// <remarks>A higher value means the filter reaches back more frames.</remarks>
+        [Description("TemporalFilterStrength", "Temporal Filter Strength")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Range(50, 240)]
         public int TemporalFilterStrength
         {
             get
@@ -211,22 +183,13 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ParamDesc<bool> SpatialFilterDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "Spatial Filter",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
-
         /// <summary>
         /// Enables/disables the spatial filter.
         /// </summary>
+        [Description("SpatialFilter", "Spatial Filter")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
         public bool SpatialFilter
         {
             get
@@ -250,8 +213,8 @@ namespace MetriCam2.Cameras
                 return new RangeParamDesc<int>(0, 65535)
                 {
                     Description = "Outlier Tolerance",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    ReadableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected,
+                    WritableWhen = ConnectionStates.Connected | ConnectionStates.Disconnected,
                 };
             }
         }
@@ -260,6 +223,11 @@ namespace MetriCam2.Cameras
         /// Gets/sets the outlier tolerance.
         /// </summary>
         /// <remarks>Pixels which deviate from their neighbours more than this value will be set to 0 (distance) / NaN (3-D).</remarks>
+        [Description("OutlierTolerance", "Outlier Tolerance")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [Range(0, 65535)]
         public int OutlierTolerance
         {
             get

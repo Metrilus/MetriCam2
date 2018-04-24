@@ -2,6 +2,8 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using System;
+using System.Collections.Generic;
+using MetriCam2.Enums;
 
 namespace MetriCam2.Attributes
 {
@@ -61,4 +63,331 @@ namespace MetriCam2.Attributes
         /// <param name="refs"></param>
         public NativeDependencies(params string[] refs) { }
     };
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class DescriptionAttribute : Attribute
+    {
+        private string _name;
+        private string _desc;
+
+        private void Init(string propertyName, string propertyDescription)
+        {
+            _name = propertyName;
+            _desc = propertyDescription;
+        }
+
+        public DescriptionAttribute(string propertyName)
+        {
+            Init(propertyName, "No description");
+        }
+
+        public DescriptionAttribute(string propertyName, string propertyDescription)
+        {
+            Init(propertyName, propertyDescription);
+        }
+
+        public string Name { get => _name; }
+        public string Description { get => _desc; }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class AccessStateAttribute : Attribute
+    {
+        private ConnectionStates _readable;
+        private ConnectionStates _writable;
+
+        public ConnectionStates ReadableWhen { get => _readable; }
+        public ConnectionStates WritableWhen { get => _writable; }
+
+        public AccessStateAttribute(ConnectionStates readableWhen)
+        {
+            _readable = readableWhen;
+        }
+
+        public AccessStateAttribute(ConnectionStates readableWhen, ConnectionStates writeableWhen)
+        {
+            _readable = readableWhen;
+            _writable = writeableWhen;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class UnitAttribute : Attribute
+    {
+        public string Unit { get; private set; }
+
+        public UnitAttribute(string unit)
+        {
+            Unit = unit;
+        }
+
+        public UnitAttribute(Unit unit)
+        {
+            switch(unit)
+            {
+                case Enums.Unit.Millimeter:
+                    Unit = "mm";
+                    return;
+
+                case Enums.Unit.Centimeter:
+                    Unit = "cm";
+                    return;
+
+                case Enums.Unit.Meter:
+                    Unit = "m";
+                    return;
+
+                case Enums.Unit.Kilometer:
+                    Unit = "km";
+                    return;
+
+                case Enums.Unit.Pixel:
+                    Unit = "px";
+                    return;
+
+                case Enums.Unit.FPS:
+                    Unit = "fps";
+                    return;
+
+                case Enums.Unit.DegreeCelsius:
+                    Unit = "°C";
+                    return;
+
+                case Enums.Unit.Seconds:
+                    Unit = "s";
+                    return;
+
+                case Enums.Unit.Milliseconds:
+                    Unit = "ms";
+                    return;
+
+                case Enums.Unit.Microseconds:
+                    Unit = "μs";
+                    return;
+
+                case Enums.Unit.Percent:
+                    Unit = "%";
+                    return;
+            }
+        }
+    }
+
+    public class Range<T> where T : IComparable, IConvertible
+    {
+        public T Minimum;
+        public T Maximum;
+
+        public Range(T min, T max)
+        {
+            if (min.CompareTo(min) > 0)
+                throw new ArgumentException("The Maximum needs to exceed the Minimum to be a valid Range");
+
+            Minimum = min;
+            Maximum = max;
+        }
+
+        public bool IsValid(T val)
+        {
+            if (val.CompareTo(Minimum) >= 0 && val.CompareTo(Maximum) <= 0)
+                return true;
+
+            return false;
+        }
+    }
+
+    public class ConstrainAttribute : Attribute
+    {
+        public bool DataIsPropertyName { get; protected set; } = false;
+        public string StringRepresentationFunc { get; protected set; } = null;
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class RangeAttribute : ConstrainAttribute
+    {
+        public object Range { get; private set; }
+
+        public RangeAttribute(float min, float max)
+        {
+            Range = new Range<float>(min, max);
+        }
+
+        public RangeAttribute(Range<float> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(double min, double max)
+        {
+            Range = new Range<double>(min, max);
+        }
+
+        public RangeAttribute(Range<double> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(int min, int max)
+        {
+            Range = new Range<int>(min, max);
+        }
+
+        public RangeAttribute(Range<int> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(byte min, byte max)
+        {
+            Range = new Range<byte>(min, max);
+        }
+
+        public RangeAttribute(Range<byte> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(short min, short max)
+        {
+            Range = new Range<short>(min, max);
+        }
+
+        public RangeAttribute(Range<short> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(long min, long max)
+        {
+            Range = new Range<long>(min, max);
+        }
+
+        public RangeAttribute(Range<long> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(uint min, uint max)
+        {
+            Range = new Range<uint>(min, max);
+        }
+
+        public RangeAttribute(Range<uint> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(ulong min, ulong max)
+        {
+            Range = new Range<ulong>(min, max);
+        }
+
+        public RangeAttribute(Range<ulong> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(ushort min, ushort max)
+        {
+            Range = new Range<ushort>(min, max);
+        }
+
+        public RangeAttribute(Range<ushort> range)
+        {
+            Range = range;
+        }
+
+        public RangeAttribute(string range)
+        {
+            Range = range;
+            DataIsPropertyName = true;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class AllowedValueListAttribute : ConstrainAttribute
+    {
+        public object AllowedValues { get; private set; }
+
+        public AllowedValueListAttribute(float[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<float>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(double[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<double>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(int[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<int>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(string[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<string>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(byte[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<byte>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(short[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<short>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(long[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<long>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(uint[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<uint>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(ulong[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<ulong>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(ushort[] allowedValues, string toStringFunc = null)
+        {
+            AllowedValues = new List<ushort>(allowedValues);
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        public AllowedValueListAttribute(Type enumType, string toStringFunc = null)
+        {
+            if (!enumType.IsEnum)
+                throw new ArgumentException("Type does not represent an enum!");
+
+            AllowedValues = new List<string>(Enum.GetNames(enumType));
+            StringRepresentationFunc = toStringFunc;
+        }
+
+        //public AllowedValueListAttribute(object allowedValues, string toStringFunc = null)
+        //{
+        //    AllowedValues = allowedValues;
+        //    StringRepresentationFunc = toStringFunc;
+        //}
+
+        public AllowedValueListAttribute(string propertyName, string toStringFunc = null)
+        {
+            AllowedValues = propertyName;
+            DataIsPropertyName = true;
+            StringRepresentationFunc = toStringFunc;
+        }
+    }
 }

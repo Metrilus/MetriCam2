@@ -47,6 +47,7 @@
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
@@ -63,6 +64,7 @@
     <Compile Include="CameraManagement.cs" />
     <Compile Include="ChannelNames.cs" />
     <Compile Include="ChannelRegistry.cs" />
+    <Compile Include="Enums.cs" />
     <Compile Include="Exceptions\SettingsCombinationNotSupportedException.cs" />
     <Compile Include="Exceptions\ConnectionFailedException.cs" />
     <Compile Include="Exceptions\ExceptionBuilder.cs" />
@@ -71,18 +73,21 @@
     <Compile Include="Exceptions\MetriCam2Exception.cs" />
     <Compile Include="Exceptions\NativeDependencyMissingException.cs" />
     <Compile Include="Exceptions\ParameterNotSupportedException.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Localization.cs" />
     <Compile Include="MetriCamLocale.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>MetriCamLocale.resx</DependentUpon>
     </Compile>
+    <Compile Include="ParameterDescriptors.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="TypeConversion.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MetriCamLocale.resx">

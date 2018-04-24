@@ -14,6 +14,8 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using MetriCam2.Attributes;
+using MetriCam2.Enums;
 
 namespace MetriCam2
 {
@@ -44,855 +46,6 @@ namespace MetriCam2
         /// <seealso cref="OnDisconnecting"/>
         /// <seealso cref="OnDisconnected"/>
         public delegate void ConnectionHandler(Camera sender);
-        #endregion
-
-        #region Parameter Descriptor Types
-        /// <summary>
-        /// Basic parameter descriptor.
-        /// </summary>
-        /// <seealso cref="ParamDesc&lt;T&gt;"/>
-        /// <seealso cref="ListParamDesc&lt;T&gt;"/>
-        /// <seealso cref="RangeParamDesc&lt;T&gt;"/>
-        /// <seealso cref="GetParameter"/>
-        /// <seealso cref="GetParameters"/>
-        /// <seealso cref="SetParameter"/>
-        /// <seealso cref="SetParameters"/>
-        public abstract class ParamDesc
-        {
-            #region Types
-            /// <summary>
-            /// Possible connection states for a camera.
-            /// </summary>
-            [Flags]
-            public enum ConnectionStates
-            {
-                /// <summary>Camera is connected.</summary>
-                Connected = 0x01,
-                /// <summary>Camera is disconnected.</summary>
-                Disconnected = 0x02,
-            };
-            #endregion
-
-            #region Constants
-            /// <summary>Suffix to identify the property with the parameter descriptor.</summary>
-            public const string DescriptorSuffix = "Desc";
-            /// <summary>Prefix to identify a possible Auto* parameter.</summary>
-            private const string AutoPrefix = "Auto";
-            #endregion
-
-            #region Public Properties
-            /// <summary>
-            /// Type of the parameter.
-            /// </summary>
-            /// <remarks>
-            /// Common types are: bool, int, float, string, enum/list
-            /// </remarks>
-            public Type Type { get; set; }
-            /// <summary>Name of the parameter.</summary>
-            public string Name { get; internal set; }
-            /// <summary>Value of the parameter.</summary>
-            /// <remarks>May be null if the parameter is not readable.</remarks>
-            public object Value { get; set; }
-            /* GUI */
-            /// <summary>Group name.</summary>
-            /// <remarks>Currently unused. May be used by GUI applications to group parameters.</remarks>
-            public string GroupName { get; set; }
-            /// <summary>Description of the parameter.</summary>
-            /// <remarks>May be displayed by GUI applications, e.g. in form of a tool tip, to help users.</remarks>
-            public string Description { get; set; }
-            /// <summary>Unit of the parameter value.</summary>
-            /// <example>For example: "mm", "px", "%", "1/s"</example>
-            public string Unit { get; set; }
-            /* Flags */
-            /// <summary>Indicates if there is a corresponding Auto* parameter.</summary>
-            /// <remarks>
-            /// This property is set internally in <see cref="GetParameter"/>.
-            /// Rename to HasAutoParameter?
-            /// </remarks>
-            public bool SupportsAutoMode { get; internal set; }
-            /// <summary>Indicates if the parameter is currently readable.</summary>
-            /// <remarks>Readability may change due to Connect/Disconnect. The ParamDesc will not be updated.</remarks>
-            public bool IsReadable { get; internal set; }
-            /// <summary>Indicates if the parameter is currently writable.</summary>
-            /// <remarks>Writability may change due to Connect/Disconnect. The ParamDesc will not be updated.</remarks>
-            public bool IsWritable { get; internal set; }
-            /// <summary>Defines when the parameter is readable.</summary>
-            /// <remarks>Will be set only in the camera wrapper implementation.</remarks>
-            public ConnectionStates ReadableWhen { internal get; set; }
-            /// <summary>Defines when the parameter is writable.</summary>
-            /// <remarks>Will be set only in the camera wrapper implementation.</remarks>
-            public ConnectionStates WritableWhen { internal get; set; }
-            /* Dependency resolution */
-            // public Setting dependsOn / overrides
-            // public Setting setAfter
-            #endregion
-
-            #region Constructors
-            /// <summary>
-            /// Default constructor. Does nothing.
-            /// </summary>
-            public ParamDesc() { }
-
-            /// <summary>
-            /// Copy constructor. Copies all properties from <paramref name="other"/>.
-            /// </summary>
-            /// <param name="other">The <see cref="ParamDesc"/> object to be copied.</param>
-            public ParamDesc(ParamDesc other)
-            {
-                this.Type = other.Type;
-                this.Name = other.Name;
-                this.Value = other.Value;
-                /* GUI */
-                this.GroupName = other.GroupName;
-                this.Description = other.Description;
-                this.Unit = other.Unit;
-                /* Flags */
-                this.SupportsAutoMode = other.SupportsAutoMode;
-                this.IsReadable = other.IsReadable;
-                this.IsWritable = other.IsWritable;
-                this.ReadableWhen = other.ReadableWhen;
-                this.WritableWhen = other.WritableWhen;
-            }
-            #endregion
-
-            #region Public Methods
-            /// <summary>
-            /// Decide if the ParamDesc is an Auto*-parameter.
-            /// </summary>
-            /// <returns></returns>
-            /// <remarks>The test is only based on the name.</remarks>
-            public bool IsAutoParameter()
-            {
-                return ParamDesc.IsAutoParameterName(this.Name);
-            }
-            /// <summary>
-            /// Decide if a parameter name is an Auto*-parameter.
-            /// </summary>
-            /// <param name="paramName">The parameter name.</param>
-            /// <returns></returns>
-            /// <remarks>The test is only based on the name.</remarks>
-            public static bool IsAutoParameterName(string paramName)
-            {
-                return paramName.StartsWith(AutoPrefix);
-            }
-
-            /// <summary>
-            /// Get the Auto*-parameter name for a the ParamDesc.
-            /// </summary>
-            /// <returns></returns>
-            /// <remarks>If the ParamDesc is already an Auto*-parameter then its own name is returned.</remarks>
-            public string GetAutoParameterName()
-            {
-                return ParamDesc.GetAutoParameterName(this.Name);
-            }
-            /// <summary>
-            /// Get the Auto*-parameter name for a given base parameter name.
-            /// </summary>
-            /// <param name="paramName">The parameter name.</param>
-            /// <returns></returns>
-            /// <remarks>If <paramref name="paramName"/> is already an Auto*-parameter name the unmodified name is returned.</remarks>
-            public static string GetAutoParameterName(string paramName)
-            {
-                if (IsAutoParameterName(paramName))
-                {
-                    return paramName;
-                }
-                return ParamDesc.AutoPrefix + paramName;
-            }
-
-            /// <summary>
-            /// Get the base parameter name for the ParamDesc.
-            /// </summary>
-            /// <returns></returns>
-            /// <remarks>If the ParamDesc is not an Auto*-parameter then its own name is returned.</remarks>
-            public string GetBaseParameterName()
-            {
-                return ParamDesc.GetBaseParameterName(this.Name);
-            }
-            /// <summary>
-            /// Get the base parameter name for a given Auto*-parameter name.
-            /// </summary>
-            /// <param name="paramName">The parameter name.</param>
-            /// <returns></returns>
-            /// <remarks>If <paramref name="paramName"/> is not an Auto*-parameter name the unmodified name is returned.</remarks>
-            public static string GetBaseParameterName(string paramName)
-            {
-                if (!IsAutoParameterName(paramName))
-                {
-                    return paramName;
-                }
-                return paramName.Substring(ParamDesc.AutoPrefix.Length);
-            }
-            /// <summary>
-            /// Provides a human-readable representation of the parameter descriptor.
-            /// </summary>
-            /// <returns>String representation of the parameter descriptor.</returns>
-            public override string ToString()
-            {
-                object value = (null == this.Value)
-                    ? "n/a"
-                    : this.Value;
-                List<char> flagsList = new List<char>();
-                if (this.SupportsAutoMode)
-                {
-                    flagsList.Add('A');
-                }
-                string flags = flagsList.Count == 0
-                    ? "-"
-                    : string.Join(",", flagsList);
-
-
-                return String.Format("{0,-9} = {1}\t{2,-7}\t[{3}]",
-                    this.Name,
-                    value,
-                    this.Type.Name,
-                    flags
-                    );
-            }
-            /// <summary>
-            /// Provides a human-readable representation of a list of parameter descriptors.
-            /// </summary>
-            /// <returns>String representation of the parameter descriptors.</returns>
-            public static string ToString(List<ParamDesc> list)
-            {
-                /* TODO:
-                 * - sort alphabetically, or by group
-                 * - make tabular layout (find longest string in each column, etc.)
-                 */
-                StringBuilder sb = new StringBuilder();
-                foreach (var item in list)
-                {
-                    sb.AppendLine(item.ToString());
-                }
-                return sb.ToString();
-            }
-            #endregion
-
-            #region Factory Methods to Build Specific Param Descs in C++/CLI
-            /// <summary>
-            /// Create an int range parameter descriptor.
-            /// </summary>
-            /// <param name="min">Minimum value.</param>
-            /// <param name="max">Maximum value.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            /// <returns>Created range parameter descriptor.</returns>
-            public static ParamDesc<int> BuildRangeParamDesc(int min, int max)
-            {
-                return new RangeParamDesc<int>(min, max);
-            }
-
-            /// <summary>
-            /// Get the min and max values of an int range parameter descriptor.
-            /// </summary>
-            /// <param name="min">Minimum value.</param>
-            /// <param name="max">Maximum value.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            public static void GetRangeParamDescMinMax(ParamDesc<int> paramDesc, out int min, out int max)
-            {
-                if (!(paramDesc is RangeParamDesc<int>))
-                {
-                    throw new ArgumentException("Argument paramDesc has the wrong type. Must be RangeParamDesc<int>.");
-                }
-
-                RangeParamDesc<int> rpd = (RangeParamDesc<int>)paramDesc;
-                min = rpd.Min;
-                max = rpd.Max;
-            }
-
-            /// <summary>
-            /// Create a uint range parameter descriptor.
-            /// </summary>
-            /// <param name="min">Minimum value.</param>
-            /// <param name="max">Maximum value.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            /// <returns>Created range parameter descriptor.</returns>
-            public static ParamDesc<uint> BuildRangeParamDesc(uint min, uint max)
-            {
-                return new RangeParamDesc<uint>(min, max);
-            }
-
-            /// <summary>
-            /// Get the min and max values of a uint range parameter descriptor.
-            /// </summary>
-            /// <param name="min">Minimum value.</param>
-            /// <param name="max">Maximum value.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            public static void GetRangeParamDescMinMax(ParamDesc<uint> paramDesc, out uint min, out uint max)
-            {
-                if (!(paramDesc is RangeParamDesc<uint>))
-                {
-                    throw new ArgumentException("Argument paramDesc has the wrong type. Must be RangeParamDesc<uint>.");
-                }
-
-                RangeParamDesc<uint> rpd = (RangeParamDesc<uint>)paramDesc;
-                min = rpd.Min;
-                max = rpd.Max;
-            }
-
-            /// <summary>
-            /// Create a float range parameter descriptor.
-            /// </summary>
-            /// <param name="min">Minimum value.</param>
-            /// <param name="max">Maximum value.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            /// <returns>Created range parameter descriptor.</returns>
-            public static ParamDesc<float> BuildRangeParamDesc(float min, float max)
-            {
-                return new RangeParamDesc<float>(min, max);
-            }
-
-            /// <summary>
-            /// Get the min and max values of a float range parameter descriptor.
-            /// </summary>
-            /// <param name="min">Minimum value.</param>
-            /// <param name="max">Maximum value.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            public static void GetRangeParamDescMinMax(ParamDesc<float> paramDesc, out float min, out float max)
-            {
-                if (!(paramDesc is RangeParamDesc<float>))
-                {
-                    throw new ArgumentException("Argument paramDesc has the wrong type. Must be RangeParamDesc<float>.");
-                }
-
-                RangeParamDesc<float> rpd = (RangeParamDesc<float>)paramDesc;
-                min = rpd.Min;
-                max = rpd.Max;
-            }
-
-            /// <summary>
-            /// Create an int list parameter descriptor.
-            /// </summary>
-            /// <param name="allowedValues">List of allowed values.</param>
-            /// <param name="format">Formatting of the numbers.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            /// <returns>Created list parameter descriptor.</returns>
-            public static ParamDesc<int> BuildListParamDesc(List<int> allowedValues, string format = null)
-            {
-                return new ListParamDesc<int>(allowedValues, format);
-            }
-
-            /// <summary>
-            /// Create a float list parameter descriptor.
-            /// </summary>
-            /// <param name="allowedValues">List of allowed values.</param>
-            /// <param name="format">Formatting of the numbers.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            /// <returns>Created list parameter descriptor.</returns>
-            public static ParamDesc<float> BuildListParamDesc(List<float> allowedValues, string format = null)
-            {
-                return new ListParamDesc<float>(allowedValues, format);
-            }
-
-            /// <summary>
-            /// Create a list parameter descriptor from an enum.
-            /// </summary>
-            /// <param name="enumType">Type parameter.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            /// <returns>Created list parameter descriptor.</returns>
-            public static ParamDesc<string> BuildListParamDesc(Type enumType)
-            {
-                return new ListParamDesc<string>(enumType);
-            }
-
-            /// <summary>
-            /// Create a list parameter descriptor from a list of strings.
-            /// </summary>
-            /// <param name="allowedValues">List of allowed values.</param>
-            /// <remarks>This is a work-around for a compiler bug in VS2012 C++/CLI.</remarks>
-            /// <returns>Created list parameter descriptor.</returns>
-            public static ParamDesc<string> BuildListParamDesc(List<string> allowedValues)
-            {
-                return new ListParamDesc<string>(allowedValues);
-            }
-            #endregion
-        }
-        /// <summary>
-        /// Identifies a parameter descriptor which can validate values.
-        /// </summary>
-        public interface IParamDescWithValidator
-        {
-            /// <summary>
-            /// Validation method for parameter values.
-            /// </summary>
-            /// <param name="value">Parameter value to be tested.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is valid, <c>false</c> otherwise.</returns>
-            bool IsValid(object value);
-        }
-
-        /// <summary>
-        /// Identifies a parameter descriptor which has a list of allowed values.
-        /// </summary>
-        /// <seealso cref="ListParamDesc&lt;T&gt;"/>
-        /// <seealso cref="IRangeParamDesc&lt;T&gt;"/>
-        public interface IListParamDesc : IParamDescWithValidator
-        {
-            /// <summary>List of allowed values for this parameter.</summary>
-            List<string> AllowedValues { get; /*internal set;*/ }
-            /// <summary>
-            /// Validation method for string parameters.
-            /// </summary>
-            /// <param name="value">Parameter value to be tested.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is in AllowedValues, <c>false</c> otherwise.</returns>
-            bool IsValid(string value);
-
-            Type GetListType();
-        }
-
-        /// <summary>
-        /// Identifies a parameter descriptor which has a range of allowed values.
-        /// </summary>
-        /// <remarks>This is just a marker interface used for polymorphism.</remarks>
-        /// <seealso cref="RangeParamDesc&lt;T&gt;"/>
-        /// <seealso cref="IListParamDesc"/>
-        public interface IRangeParamDesc : IParamDescWithValidator { }
-
-        /// <summary>
-        /// Identifies a generic parameter descriptor which has an inclusive range of allowed values.
-        /// </summary>
-        /// <typeparam name="T">The type of the parameter's value.</typeparam>
-        /// <seealso cref="RangeParamDesc&lt;T&gt;"/>
-        /// <seealso cref="IListParamDesc"/>
-        public interface IRangeParamDesc<T> : IRangeParamDesc
-        {
-            /// <summary>Inclusive minimum of the valid range.</summary>
-            T Min { get; /*set;*/ }
-            /// <summary>Inclusive maximum of the valid range.</summary>
-            T Max { get; /*set;*/ }
-            /// <summary>
-            /// Validation method for parameter values.
-            /// </summary>
-            /// <param name="value">Parameter value to be tested.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is valid, <c>false</c> otherwise.</returns>
-            bool IsValid(T value);
-        }
-
-        /// <summary>
-        /// Implementation of a basic generic parameter descriptor.
-        /// </summary>
-        /// <typeparam name="T">The type of the parameter's value.</typeparam>
-        /// <remarks>The only difference to <see cref="ParamDesc"/> is that Value is typed.</remarks>
-        /// <seealso cref="ParamDesc"/>
-        /// <seealso cref="ListParamDesc&lt;T&gt;"/>
-        /// <seealso cref="RangeParamDesc&lt;T&gt;"/>
-        /// <seealso cref="GetParameter"/>
-        /// <seealso cref="GetParameters"/>
-        /// <seealso cref="SetParameter"/>
-        /// <seealso cref="SetParameters"/>
-        public class ParamDesc<T> : ParamDesc
-        {
-            #region Constructors
-            /// <summary>
-            /// Default c'tor.
-            /// 
-            /// Only calls base c'tor.
-            /// </summary>
-            public ParamDesc()
-                : base()
-            { }
-            /// <summary>
-            /// Copy c'tor. Copies all properties from <paramref name="other"/> and sets type according to own type parameter.
-            /// </summary>
-            /// <param name="other">The <see cref="ParamDesc"/> object to be copied.</param>
-            public ParamDesc(ParamDesc other)
-                : base(other)
-            {
-                this.Type = typeof(T);
-            }
-            #endregion
-
-            #region Public Properties
-            /// <summary>Value of the parameter (typed).</summary>
-            /// <remarks>May be null if the parameter is not readable.</remarks>
-            public new T Value
-            {
-                get
-                {
-                    var tmp = base.Value;
-                    return (null == tmp)
-                        ? default(T)
-                        : (T)tmp;
-                }
-                set { base.Value = value; }
-            }
-            #endregion
-        }
-
-        /// <summary>
-        /// A generic parameter descriptor which has a list of allowed values.
-        /// 
-        /// Implementation of IListParamDesc.
-        /// </summary>
-        /// <typeparam name="T">The type of the parameter's value.</typeparam>
-        /// <seealso cref="IListParamDesc"/>
-        /// <seealso cref="ParamDesc"/>
-        /// <seealso cref="ParamDesc&lt;T&gt;"/>
-        /// <seealso cref="RangeParamDesc&lt;T&gt;"/>
-        /// <seealso cref="GetParameter"/>
-        /// <seealso cref="GetParameters"/>
-        /// <seealso cref="SetParameter"/>
-        /// <seealso cref="SetParameters"/>
-        public class ListParamDesc<T> : ParamDesc<T>, IListParamDesc
-        {
-            #region IListParamDesc interface
-            /// <summary>List of allowed values for this parameter.</summary>
-            public List<string> AllowedValues { get; internal set; }
-            /// <summary>
-            /// Validation method for string parameters.
-            /// </summary>
-            /// <param name="value">Parameter value to be tested.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is in AllowedValues, <c>false</c> otherwise.</returns>
-            public bool IsValid(string value)
-            {
-                if (null == AllowedValues || AllowedValues.Count == 0)
-                {
-                    return false;
-                }
-                return AllowedValues.Contains(value);
-            }
-            #endregion
-
-            #region Constructors
-            /// <summary>Default constructor.</summary>
-            /// <remarks>If using C++/CLI and VS2012 or lower, use the proper variant of ParamDesc.BuildListParamDesc to construct the desired object.</remarks>
-            public ListParamDesc() : base() { }
-
-            /// <summary>
-            /// Constructor from Enum type.
-            /// 
-            /// This constructor gets <c>AllowedValues</c> from the passed System.Enum type.
-            /// Use this for restricted parameters (i.e. with underlying enums and the like).
-            /// </summary>
-            /// <param name="enumType">Type parameter.</param>
-            /// <exception cref="ArgumentException">If <paramref name="enumType"/> is not an Enum.</exception>
-            /// <remarks>If using C++/CLI and VS2012 or lower, use <see cref="ParamDesc.BuildListParamDesc(Type)"/> to construct the desired object.</remarks>
-            public ListParamDesc(Type enumType)
-                : base()
-            {
-                if (!enumType.IsEnum)
-                {
-                    throw new ArgumentException();
-                }
-
-                this.AllowedValues = new List<string>(Enum.GetNames(enumType));
-            }
-
-            /// <summary>
-            /// Constructor from list of values.
-            /// 
-            /// This constructor gets <c>AllowedValues</c> as a parameter.
-            /// </summary>
-            /// <param name="allowedValues">List of allowed values.</param>
-            /// <remarks>If using C++/CLI and VS2012 or lower, use <see cref="ParamDesc.BuildListParamDesc(List&lt;string&gt;)"/> to construct the desired object.</remarks>
-            public ListParamDesc(List<string> allowedValues)
-                : base()
-            {
-                this.AllowedValues = new List<string>(allowedValues);
-            }
-
-            /// <summary>
-            /// Constructor from list of values.
-            /// 
-            /// This constructor gets <c>AllowedValues</c> as a parameter.
-            /// </summary>
-            /// <param name="allowedValues">List of allowed values.</param>
-            /// <param name="format">Formatting of the float numbers.</param>
-            /// <remarks>If using C++/CLI and VS2012 or lower, use <see cref="ParamDesc.BuildListParamDesc(List&lt;float&gt;, string)"/> to construct the desired object.</remarks>
-            public ListParamDesc(List<float> allowedValues, string format = null)
-                : base()
-            {
-                this.AllowedValues = new List<string>(allowedValues.Count);
-                if (null == format)
-                {
-                    foreach (var item in allowedValues)
-                    {
-                        AllowedValues.Add(item.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                    }
-                }
-                else
-                {
-                    foreach (var item in allowedValues)
-                    {
-                        AllowedValues.Add(item.ToString(format, System.Globalization.CultureInfo.InvariantCulture));
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Constructor from list of values.
-            /// 
-            /// This constructor gets <c>AllowedValues</c> as a parameter.
-            /// </summary>
-            /// <param name="allowedValues">List of allowed values.</param>
-            /// <param name="format">Formatting of the float numbers.</param>
-            /// <remarks>If using C++/CLI and VS2012 or lower, use <see cref="ParamDesc.BuildListParamDesc(List&lt;int&gt;, string)"/> to construct the desired object.</remarks>
-            public ListParamDesc(List<int> allowedValues, string format = null)
-                : base()
-            {
-                this.AllowedValues = new List<string>(allowedValues.Count);
-                if (null == format)
-                {
-                    foreach (var item in allowedValues)
-                    {
-                        AllowedValues.Add(item.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                    }
-                }
-                else
-                {
-                    foreach (var item in allowedValues)
-                    {
-                        AllowedValues.Add(item.ToString(format, System.Globalization.CultureInfo.InvariantCulture));
-                    }
-                }
-            }
-            #endregion
-
-            #region Public Methods
-            /// <summary>
-            /// Validation method for parameter values.
-            /// </summary>
-            /// <param name="value">Parameter value to be tested.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is valid, <c>false</c> otherwise.</returns>
-            /// <exception cref="InvalidCastException">The parameter type is not compatible with this ParamDesc.</exception>
-            public bool IsValid(object value)
-            {
-                Type valueType = value.GetType();
-
-                // If parameter and value are enum types, then they also must be of the same enum type
-                if (this.Type.IsEnum && valueType.IsEnum)
-                {
-                    return valueType == this.Type;
-                }
-
-                string valueAsString = GetAsGoodString(value);
-                T castedValue = default(T);
-
-                bool isTypeConvertible = false;
-                if (value is string)
-                {
-                    isTypeConvertible = true; // We assume that strings are always convertible
-                }
-                else
-                {
-                    try
-                    {
-                        castedValue = (T)Convert.ChangeType(value, this.Type, CultureInfo.InvariantCulture);
-                        isTypeConvertible = (null != castedValue);
-                    }
-                    catch (ArgumentNullException)
-                    { /* empty */ }
-                    catch (FormatException)
-                    { /* empty */ }
-                    catch (InvalidCastException)
-                    { /* empty */ }
-                    catch (OverflowException)
-                    { /* empty */ }
-                }
-
-                if (!isTypeConvertible)
-                {
-                    throw new InvalidCastException("Cast failed and returned null.");
-                }
-
-                // Compare casted value against all allowed values
-                valueAsString = valueAsString.ToLower();
-                foreach (var item in AllowedValues)
-                {
-                    if (value is string)
-                    {
-                        if (item.ToLower() == valueAsString)
-                        {
-                            return true;
-                        }
-                    }
-                    else
-                    {
-
-
-                        if (this.Type == typeof(Point2i))
-                        {
-                            string[] stringValue = item.Split('x');
-                            Point2i point = new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
-                            if (point.Equals(castedValue))
-                            {
-                                return true;
-                            }
-                        }
-                        else
-                        {
-                            T castedItem = (T)Convert.ChangeType(item, this.Type, CultureInfo.InvariantCulture);
-                            if (castedItem.Equals(castedValue))
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                }
-
-                return false;
-            }
-            /// <summary>
-            /// Provides a human-readable representation of the parameter descriptor.
-            /// </summary>
-            /// <returns>String representation of the parameter descriptor.</returns>
-            public override string ToString()
-            {
-                string allowedValuesAsString;
-
-                if (AllowedValues == null || AllowedValues.Count < 1)
-                {
-                    allowedValuesAsString = "N/A";
-                }
-                else
-                {
-                    allowedValuesAsString = string.Join(",", AllowedValues);
-                }
-
-                return base.ToString() + "\t{" + allowedValuesAsString + "}";
-            }
-
-            public Type GetListType()
-            {
-                return typeof(T);
-            }
-            #endregion
-        }
-
-        /// <summary>
-        /// A generic parameter descriptor which has a range of allowed values.
-        /// 
-        /// Implementation of <see cref="IRangeParamDesc&lt;T&gt;"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of the parameter's value. Must have a default Comparer.</typeparam>
-        /// <seealso cref="IRangeParamDesc&lt;T&gt;"/>
-        /// <seealso cref="ParamDesc"/>
-        /// <seealso cref="ParamDesc&lt;T&gt;"/>
-        /// <seealso cref="ListParamDesc&lt;T&gt;"/>
-        /// <seealso cref="GetParameter"/>
-        /// <seealso cref="GetParameters"/>
-        /// <seealso cref="SetParameter"/>
-        /// <seealso cref="SetParameters"/>
-        public class RangeParamDesc<T> : ParamDesc<T>, IRangeParamDesc<T>
-        {
-            #region IRangeParamDesc interface
-            /// <summary>Inclusive minimum of the valid range.</summary>
-            public T Min { get; internal set; }
-            /// <summary>Inclusive maximum of the valid range.</summary>
-            public T Max { get; internal set; }
-            /// <summary>
-            /// Validation method for parameter values.
-            /// </summary>
-            /// <param name="value">Parameter value to be tested.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is valid, <c>false</c> otherwise.</returns>
-            public bool IsValid(T value)
-            {
-                string msgOutOfRange = String.Format("Value {0} exceeds the parameter's range [{1}-{2}].", value, Min, Max);
-                T castVal = (T)value;
-                Comparer<T> comp = Comparer<T>.Default;
-                if (comp.Compare(castVal, Min) < 0) // x < y
-                {
-                    log.Debug(msgOutOfRange);
-                    return false;
-                }
-                if (comp.Compare(castVal, Max) > 0) // x > y
-                {
-                    log.Debug(msgOutOfRange);
-                    return false;
-                }
-
-                return true;
-            }
-            #endregion
-
-            #region Constructor
-            /// <summary>
-            /// Constructor with min and max parameters.
-            /// </summary>
-            /// <remarks>If using C++/CLI and VS2012 or lower, use ParamDesc.BuildRangeParamDesc of the proper type to construct the desired object.</remarks>
-            public RangeParamDesc(T min, T max)
-                : base()
-            {
-                this.Min = min;
-                this.Max = max;
-            }
-            #endregion
-
-            #region Public Methods
-            /// <summary>
-            /// Validation method for parameter values.
-            /// </summary>
-            /// <param name="value">Parameter value to be tested.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is valid, <c>false</c> otherwise.</returns>
-            public bool IsValid(object value)
-            {
-                return IsValid((T)value);
-            }
-            /// <summary>
-            /// Provides a human-readable representation of the parameter descriptor.
-            /// </summary>
-            /// <returns>String representation of the parameter descriptor.</returns>
-            public override string ToString()
-            {
-                string suffix = "";
-                bool isValid = true;
-                if (Min == null && Max == null)
-                {
-                    isValid = false;
-                }
-                if (Min.Equals(Max))
-                {
-                    isValid = false;
-                }
-
-                suffix = isValid
-                    ? Min + "-" + Max
-                    : "N/A";
-
-                return base.ToString() + "\t[" + suffix + "]"; ;
-            }
-            #endregion
-        }
-
-        /// <summary>
-        /// A parameter descriptor for the specification of multiple filenames.
-        /// </summary>     
-        /// <seealso cref="ParamDesc"/>
-        /// <seealso cref="IParamDescWithValidator"/>
-        /// <seealso cref="GetParameter"/>
-        /// <seealso cref="GetParameters"/>
-        /// <seealso cref="SetParameter"/>
-        /// <seealso cref="SetParameters"/>
-        public class MultiFileParamDesc : ParamDesc, IParamDescWithValidator
-        {
-            #region Constructors
-            /// <summary>Default constructor.</summary>
-            public MultiFileParamDesc() : base() { }
-            #endregion
-
-            #region Public Methods
-            /// <summary>
-            /// Validation method for parameter values.
-            /// </summary>
-            /// <param name="value">Parameter value to be tested.</param>
-            /// <returns><c>true</c> if <paramref name="value"/> is valid, <c>false</c> otherwise.</returns>
-            public bool IsValid(object value)
-            {
-                if (!(value is List<string>))
-                {
-                    return false;
-                }
-
-                foreach (string path in (List<String>)value)
-                {
-                    if (!File.Exists(path))
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-            #endregion
-        }
         #endregion
 
         #region Events
@@ -992,17 +145,6 @@ namespace MetriCam2
             get { return Channels.Count; }
         }
 
-        private ParamDesc<string> NameDesc
-        {
-            get
-            {
-                return new ParamDesc<string>()
-                {
-                    Description = "Camera name.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>Camera name.</summary>
         /// <remarks>By default this is Vendor Model</remarks>
         public virtual string Name
@@ -1010,33 +152,10 @@ namespace MetriCam2
             get { return (Vendor + " " + Model).Trim(); }
         }
 
-        private ParamDesc<string> VendorDesc
-        {
-            get
-            {
-                return new ParamDesc<string>()
-                {
-                    Description = "Camera vendor name.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>Name of camera vendor.</summary>
         public virtual string Vendor
         {
             get { return GetType().Name; }
-        }
-
-        private ParamDesc<string> ModelDesc
-        {
-            get
-            {
-                return new ParamDesc<string>()
-                {
-                    Description = "Camera model name.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
         }
 
         /// <summary>
@@ -1045,18 +164,6 @@ namespace MetriCam2
         /// <remarks>Default is empty string. The actual model will usually be known after <see cref="Connect"/>.</remarks>
         public string Model { get; protected set; }
 
-        private ParamDesc<string> SerialNumberDesc
-        {
-            get
-            {
-                return new ParamDesc<string>()
-                {
-                    Description = "Camera serial number.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>Serial number of the camera.</summary>
         /// <remarks>
         /// If SerialNumber was set while disconnected, <see cref="Connect"/> should try to connect to that camera.
@@ -1076,47 +183,13 @@ namespace MetriCam2
             }
         }
 
-        private ParamDesc<bool> IsConnectedDesc
-        {
-            get
-            {
-                return new ParamDesc<bool>()
-                {
-                    Description = "Connection state of camera.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>Is the camera currently connected?.</summary>
         public virtual bool IsConnected { get; protected set; }
 
-        private ParamDesc<int> FrameNumberDesc
-        {
-            get
-            {
-                return new ParamDesc<int>()
-                {
-                    Description = "Frame number of latest frame.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                };
-            }
-        }
         /// <summary>Number of the current frame.</summary>
         /// <remarks>Starts at 0 at connect and is incremented with each call to <see cref="Update"/>.</remarks>
         public int FrameNumber { get; protected set; }
 
-        private ParamDesc<long> TimeStampDesc
-        {
-            get
-            {
-                return new ParamDesc<long>()
-                {
-                    Description = "Timestamp of latest frame.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    Unit = "ticks",
-                };
-            }
-        }
         /// <summary>TimeStamp of the current frame.</summary>
         /// <remarks>
         /// By default the TimeStamp is set to DateTime.UtcNow.Ticks at the beginning of <see cref="Update"/>.
@@ -1834,42 +907,85 @@ namespace MetriCam2
 
             string msgNotSupported = String.Format("{0} does not support parameter {1}.", Name, name);
             PropertyInfo pi = this.GetType().GetProperty(name);
+            Type propertyType = pi.PropertyType;
+
             if (null == pi)
             {
                 log.DebugFormat("    {0} (property not found)", msgNotSupported);
                 throw new ParameterNotSupportedException(msgNotSupported);
             }
-            ParamDesc desc = GetParameterDescriptor(pi);
-            if (null == desc)
+
+            object propertyValue = pi.GetValue(this, null);
+            ParamDesc desc = null;
+
+            Attribute[] attributes = Attribute.GetCustomAttributes(pi);
+            if (attributes.IsNullOrEmpty())
+                return desc;
+
+            Attributes.DescriptionAttribute description = GetAttribute(attributes, typeof(Attributes.DescriptionAttribute)) as Attributes.DescriptionAttribute;
+            if (null == description)
+                return desc;
+
+            AccessStateAttribute accessState = GetAttribute(attributes, typeof(AccessStateAttribute)) as AccessStateAttribute;
+            UnitAttribute unit = GetAttribute(attributes, typeof(UnitAttribute)) as UnitAttribute;
+
+            if (null != GetAttribute(attributes, typeof(RangeAttribute)))
             {
-                // Test if name is a property of the base Camera class
-                PropertyInfo piBase = typeof(Camera).GetProperty(name);
-                if (null != piBase)
+                RangeAttribute rangeAttr = GetAttribute(attributes, typeof(RangeAttribute)) as RangeAttribute;
+
+                object range = rangeAttr.Range;
+                if(rangeAttr.DataIsPropertyName)
                 {
-                    // this is no error, so do not throw an exception
-                    return null;
+                    PropertyInfo rangeProperty = this.GetType().GetProperty((string)rangeAttr.Range);
+                    range = (object)rangeProperty.GetValue(this, null);
                 }
 
-                // Test if name is a valid Auto* parameter
-                ParamDesc baseDesc;
-                if (!IsAutoParameter(name, out baseDesc))
+                desc = ParamDesc.CreateRange(
+                    propertyType,
+                    range,
+                    name,
+                    description.Description,
+                    GetUnit(unit),
+                    propertyValue,
+                    IsReadable(accessState),
+                    IsWritable(accessState));
+            }
+            else if(null != GetAttribute(attributes, typeof(AllowedValueListAttribute)))
+            {
+                AllowedValueListAttribute listAttr = GetAttribute(attributes, typeof(AllowedValueListAttribute)) as AllowedValueListAttribute;
+
+                object list = listAttr.AllowedValues;
+                if(listAttr.DataIsPropertyName)
                 {
-                    log.DebugFormat("    {0} (ParameterDescriptor not found)", msgNotSupported);
-                    throw new ParameterNotSupportedException(msgNotSupported);
+                    PropertyInfo listProperty = this.GetType().GetProperty((string)listAttr.AllowedValues);
+                    list = (object)listProperty.GetValue(this, null);
                 }
-                // Seems to be a valid Auto* parameter
-                desc = new ParamDesc<bool>(baseDesc); // create a new ParamDesc to get rid of range or list types.
-                desc.Name = name;
-                desc.Description = "Auto mode for " + baseDesc.Name + " parameter.";
-                desc.SupportsAutoMode = false;
-                desc.Unit = null;
-                if (desc.IsReadable)
-                {
-                    desc.Value = GetPropertyValue(name);
-                }
+
+                desc = ParamDesc.CreateList(
+                    propertyType,
+                    list,
+                    name,
+                    description.Description,
+                    GetUnit(unit),
+                    propertyValue,
+                    IsReadable(accessState),
+                    IsWritable(accessState));
+            }
+            else
+            {
+                desc = ParamDesc.Create(
+                    propertyType, 
+                    name, 
+                    description.Description,
+                    GetUnit(unit),
+                    propertyValue,
+                    IsReadable(accessState),
+                    IsWritable(accessState));
             }
 
-            log.DebugFormat("    Found descriptor: {0}", desc.ToString());
+            desc.DisplayName = description.Name;
+            desc.IsReadable = (desc.ReadableWhen & (IsConnected ? ConnectionStates.Connected : ConnectionStates.Disconnected)) > 0;
+            desc.IsWritable = (desc.WritableWhen & (IsConnected ? ConnectionStates.Connected : ConnectionStates.Disconnected)) > 0;
 
             return desc;
         }
@@ -1919,7 +1035,7 @@ namespace MetriCam2
             foreach (var prop in properties)
             {
                 ParamDesc desc = null;
-                //ParamDesc desc = GetParameterDescriptor(prop);
+                
                 try
                 {
                     desc = GetParameter(prop.Name);
@@ -1954,11 +1070,11 @@ namespace MetriCam2
             JsonSerializer serializer = new JsonSerializer();
             serializer.TypeNameHandling = TypeNameHandling.Auto;
 
-            Dictionary<string, Camera.ParamDesc> configX;
+            Dictionary<string, ParamDesc> configX;
             using (StreamReader sr = new StreamReader(filename))
             using (JsonReader reader = new JsonTextReader(sr))
             {
-                configX = serializer.Deserialize<Dictionary<string, Camera.ParamDesc>>(reader);
+                configX = serializer.Deserialize<Dictionary<string, ParamDesc>>(reader);
             }
 
             Dictionary<string, object> config = new Dictionary<string, object>();
@@ -2031,7 +1147,7 @@ namespace MetriCam2
             else
             {
                 // Try some special cases
-                string valueAsString = GetAsGoodString(value, valueType);
+                string valueAsString = TypeConversion.GetAsGoodString(value, valueType);
 
                 if (desc.Type == typeof(byte))
                 {
@@ -2159,32 +1275,6 @@ namespace MetriCam2
             return true;
         }
 
-        private static string GetAsGoodString(object value)
-        {
-            return GetAsGoodString(value, value.GetType());
-        }
-        private static string GetAsGoodString(object value, Type valueType)
-        {
-            string valueAsString;
-            if (valueType == typeof(float))
-            {
-                valueAsString = ((float)value).ToString("R", CultureInfo.InvariantCulture);
-            }
-            else if (valueType == typeof(double))
-            {
-                valueAsString = ((double)value).ToString("R", CultureInfo.InvariantCulture);
-            }
-            else if (valueType == typeof(Point2i))
-            {
-                valueAsString = string.Format("{0}x{1}", ((Point2i)value).X, ((Point2i)value).Y);
-            }
-            else
-            {
-                valueAsString = value.ToString();
-            }
-            return valueAsString;
-        }
-
         // If this is an Auto* parameter without an own Descriptor (the usual case), try to get the underlying parameter's descriptor.
         private bool IsAutoParameter(string name)
         {
@@ -2203,83 +1293,6 @@ namespace MetriCam2
             return baseDesc.SupportsAutoMode;
         }
 
-        /// <summary>
-        /// Find the descriptor for a parameter.
-        /// </summary>
-        /// <param name="parameter">The parameter's PropertyInfo object.</param>
-        /// <returns>The parameter descriptor, if it exists. Null otherwise.</returns>
-        /// <exception cref="ArgumentException">Thrown if a parameter descriptor is publicly visible.</exception>
-        /// <exception cref="InvalidOperationException">Thrown if an exception has been thrown in the parameter descriptor's Getter. See InnerException for details.</exception>
-        private ParamDesc GetParameterDescriptor(PropertyInfo parameter)
-        {
-            if (null == parameter)
-            {
-                return null;
-            }
-
-            PropertyInfo piDesc = this.GetType().GetProperty(parameter.Name + ParamDesc.DescriptorSuffix, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            if (null == piDesc)
-            {
-                // Check if a public parameter descriptor exists
-                PropertyInfo piDescPub = this.GetType().GetProperty(parameter.Name + ParamDesc.DescriptorSuffix, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
-                if (null != piDescPub)
-                {
-                    // Public parameter descriptor exists -> hint to the developer.
-                    string errMsg = string.Format("Camera '{0}': The parameter descriptor for '{1}' is publicly visible." + Environment.NewLine
-                        + "This is discouraged because it clutters IntelliSense. Please make it private.",
-                        this.Name, parameter.Name);
-                    log.Error(errMsg);
-                    throw new ArgumentException(errMsg);
-                }
-
-                // No public parameter descriptor.
-                // Fail silently
-                return null;
-            }
-
-            ParamDesc desc = null;
-            try
-            {
-                desc = (ParamDesc)piDesc.GetValue(this, new object[] { });
-            }
-            catch (TargetInvocationException e)
-            {
-                string errMsg = string.Format("Invalid behaviour of camera '{0}': parameter descriptors must not throw exceptions in their Getter.\n\n"
-                    + "{1} threw an {2} exception: \"{3}\"",
-                    this.Name, parameter.Name + ParamDesc.DescriptorSuffix, e.InnerException.GetType(), e.InnerException.Message);
-                log.Fatal(errMsg);
-                throw new InvalidOperationException(errMsg, e.InnerException);
-            }
-            if (null == desc)
-            {
-                return null;
-            }
-            desc.Name = parameter.Name;
-            desc.Type = parameter.PropertyType;
-            // Accessibility
-            desc.IsReadable = (desc.ReadableWhen & (IsConnected ? ParamDesc.ConnectionStates.Connected : ParamDesc.ConnectionStates.Disconnected)) > 0;
-            desc.IsWritable = (desc.WritableWhen & (IsConnected ? ParamDesc.ConnectionStates.Connected : ParamDesc.ConnectionStates.Disconnected)) > 0;
-            //desc.IsReadable = IsConnected ? desc.IsReadableConnected : desc.IsReadableDisconnected;
-            //desc.IsWritable = IsConnected ? desc.IsWritableConnected : desc.IsWritableDisconnected;
-            if (null == parameter.GetGetMethod())
-            {
-                desc.IsReadable = false;
-            }
-            if (null == parameter.GetSetMethod())
-            {
-                desc.IsWritable = false;
-            }
-            if (desc.IsReadable)
-            {
-                desc.Value = parameter.GetValue(this, new object[] { });
-            }
-            // Find corresponding Auto* property
-            PropertyInfo piAuto = this.GetType().GetProperty(ParamDesc.GetAutoParameterName(parameter.Name));
-            desc.SupportsAutoMode = null != piAuto;
-
-            return desc;
-        }
-
         private void SetAutoParameter(string name, bool value)
         {
             if (!IsAutoParameter(name))
@@ -2293,9 +1306,12 @@ namespace MetriCam2
         private object GetPropertyValue(string name)
         {
             PropertyInfo pi = this.GetType().GetProperty(name);
-            object value = pi.GetValue(this, new object[] { });
-            //log.DebugFormat("{0}: {1} == {2}", this.Name, name, value);
-            return value;
+            if(pi != null)
+            {
+                object value = pi.GetValue(this, new object[] { });
+                return value;
+            }
+            return null;
         }
         private void SetPropertyValue(string name, object value)
         {
@@ -2397,7 +1413,7 @@ namespace MetriCam2
             // Check parameter value (e.g. type, range, list, etc.)
             if (!ValidateParameterValue(desc, ref value))
             {
-                string valueAsString = GetAsGoodString(value);
+                string valueAsString = TypeConversion.GetAsGoodString(value);
                 string msg = String.Format("{0}: Value of {1} is invalid for parameter {2}.", this.Name, valueAsString, name);
                 log.Debug(msg);
                 throw new ArgumentException(msg);
@@ -2846,6 +1862,34 @@ namespace MetriCam2
                 }
             }
             return entryAssembly;
+        }
+
+        private static Attribute GetAttribute(Attribute[] attributes, Type AttributeType)
+        {
+            foreach (Attribute a in attributes)
+            {
+                if (a.GetType() == AttributeType)
+                {
+                    return a;
+                }
+            }
+
+            return null;
+        }
+
+        private static ConnectionStates IsReadable(AccessStateAttribute access)
+        {
+            return access != null ? access.ReadableWhen : Enums.ConnectionStates.None;
+        }
+
+        private static ConnectionStates IsWritable(AccessStateAttribute access)
+        {
+            return access != null ? access.WritableWhen : Enums.ConnectionStates.None;
+        }
+
+        private static string GetUnit(UnitAttribute unit)
+        {
+            return unit != null ? unit.Unit : "";
         }
         #endregion
     }

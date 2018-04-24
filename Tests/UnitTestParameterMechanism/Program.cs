@@ -499,7 +499,7 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
         {
             string paramName = "ByteRangeParam";
             log.Info("Testing a RangeParamDesc<byte>");
-            Camera.IRangeParamDesc<byte> desc = (Camera.IRangeParamDesc<byte>)cam.GetParameter(paramName);
+            IRangeParamDesc<byte> desc = (IRangeParamDesc<byte>)cam.GetParameter(paramName);
             byte min = desc.Min;
             byte max = desc.Max;
             long oobLow = min - 1;
@@ -554,7 +554,7 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
         {
             string paramName = "ShortRangeParam";
             log.Info("Testing a RangeParamDesc<short>");
-            Camera.IRangeParamDesc<short> desc = (Camera.IRangeParamDesc<short>)cam.GetParameter(paramName);
+            IRangeParamDesc<short> desc = (IRangeParamDesc<short>)cam.GetParameter(paramName);
             short min = desc.Min;
             short max = desc.Max;
             long oobLow = min - 1;
@@ -609,7 +609,7 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
         {
             string paramName = "IntRangeParam";
             log.Info("Testing a RangeParamDesc<int>");
-            Camera.IRangeParamDesc<int> desc = (Camera.IRangeParamDesc<int>)cam.GetParameter(paramName);
+            IRangeParamDesc<int> desc = (IRangeParamDesc<int>)cam.GetParameter(paramName);
             int min = desc.Min;
             int max = desc.Max;
             long oobLow = (long)min - 1L;
@@ -668,7 +668,7 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
         {
             string paramName = "LongRangeParam";
             log.Info("Testing a RangeParamDesc<long>");
-            Camera.IRangeParamDesc<long> desc = (Camera.IRangeParamDesc<long>)cam.GetParameter(paramName);
+            IRangeParamDesc<long> desc = (IRangeParamDesc<long>)cam.GetParameter(paramName);
             long min = desc.Min;
             long max = desc.Max;
             long oobLow = (long)min - 1L;
@@ -727,7 +727,7 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
         {
             string paramName = "FloatRangeParam";
             log.Info("Testing a RangeParamDesc<float>");
-            Camera.IRangeParamDesc<float> desc = (Camera.IRangeParamDesc<float>)cam.GetParameter(paramName);
+            IRangeParamDesc<float> desc = (IRangeParamDesc<float>)cam.GetParameter(paramName);
             float min = desc.Min;
             float max = desc.Max;
             float oobLow = min - 0.1f;
@@ -794,7 +794,7 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
         {
             string paramName = "DoubleRangeParam";
             log.Info("Testing a RangeParamDesc<double>");
-            Camera.IRangeParamDesc<double> desc = (Camera.IRangeParamDesc<double>)cam.GetParameter(paramName);
+            IRangeParamDesc<double> desc = (IRangeParamDesc<double>)cam.GetParameter(paramName);
             double min = desc.Min;
             double max = desc.Max;
             double oobLow = min - 0.1;
@@ -963,9 +963,9 @@ namespace MetriCam2.Tests.UnitTestParameterMechanism
         private static void LogParameterValue(string name)
         {
             log.Info(cam.GetParameter(name));
-            if (Camera.ParamDesc.IsAutoParameterName(name))
+            if (ParamDesc.IsAutoParameterName(name))
             {
-                log.Info(cam.GetParameter(Camera.ParamDesc.GetBaseParameterName(name)));
+                log.Info(cam.GetParameter(ParamDesc.GetBaseParameterName(name)));
             }
         }
         #endregion

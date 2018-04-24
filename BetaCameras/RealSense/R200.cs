@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MetriCam2.Exceptions;
 using System.Drawing;
+using MetriCam2.Enums;
 
 namespace MetriCam2.Cameras
 {
@@ -28,8 +29,6 @@ namespace MetriCam2.Cameras
         private List<int> devicesUIDs = new List<int>();
         private Dictionary<string, PXCMCapture.Device.StreamProfile> profiles = new Dictionary<string, PXCMCapture.Device.StreamProfile>();
         private PXCMCapture.Sample sample;
-        private ListParamDesc<string> colorProfiles;
-        private ListParamDesc<string> depthProfiles;
 
         private ColorCameraImage colorImage;
         private FloatCameraImage depthImage;
@@ -50,26 +49,9 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Public Properties
-        private ParamDesc<string> ColorProfileDesc
-        {
-            get
-            {
-                return colorProfiles;
-            }
-        }
-
-        private ParamDesc<string> DepthProfileDesc
-        {
-            get
-            {
-                return depthProfiles;
-            }
-        }
-
 #if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.RealSenseIcon; }
 #endif
-
         #endregion
 
         #region Constructor
@@ -468,16 +450,6 @@ namespace MetriCam2.Cameras
                 }
                 capture.Dispose();
             }
-            colorProfiles = new ListParamDesc<string>(colorStrings)
-            {
-                Description = "Color Profiles",
-                ReadableWhen = ParamDesc.ConnectionStates.Connected,
-            };
-            depthProfiles = new ListParamDesc<string>(depthStrings)
-            {
-                Description = "Depth Profiles",
-                ReadableWhen = ParamDesc.ConnectionStates.Connected,
-            };
         }
 
         private string ProfileToString(PXCMCapture.Device.StreamProfile pinfo)

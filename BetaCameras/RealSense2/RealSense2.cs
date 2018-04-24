@@ -1,4 +1,4 @@
-﻿// Copyright (c) Metrilus GmbH
+// Copyright (c) Metrilus GmbH
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using Metrilus.Util;
@@ -7,6 +7,8 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
 using Intel.RealSense;
+using MetriCam2.Attributes;
+using MetriCam2.Enums;
 using MetriCam2.Exceptions;
 #if NETSTANDARD2_0
 #else
@@ -18,6 +20,7 @@ namespace MetriCam2.Cameras
 {
     public class RealSense2 : Camera, IDisposable
     {
+        #region private members
         private Context _context;
         private Pipeline _pipeline;
         private Config _config;
@@ -31,6 +34,7 @@ namespace MetriCam2.Cameras
         private bool _pipelineRunning = false;
         private float _depthScale = 1.0f;
         private HashSet<string> _activeChannels = new HashSet<string>();
+        #endregion
 
         #region Filter
         public class Filter
@@ -85,6 +89,7 @@ namespace MetriCam2.Cameras
         }
         #endregion
 
+        #region enums
         public enum EmitterMode
         {
             OFF = 0,
@@ -99,13 +104,29 @@ namespace MetriCam2.Cameras
             FREQ_60HZ = 2,
             AUTO = 3
         }
+        #endregion
 
+        #region structs
         public struct SensorNames
         {
             public const string Color = "RGB Camera";
             public const string Stereo = "Stereo Module";
         }
+        #endregion
 
+        #region Device Information
+        public override string Vendor { get => "Intel"; }
+
+        public override string Name { get => Model; }
+
+#if !NETSTANDARD2_0
+        public override System.Drawing.Icon CameraIcon { get => Properties.Resources.RealSense2Icon; }
+#endif
+        #endregion
+
+        #region properties
+
+        #region Device
         private Device RealSenseDevice
         {
             get
@@ -132,211 +153,9 @@ namespace MetriCam2.Cameras
                 throw new ArgumentException(string.Format("Device with S/N {0} could not be found", SerialNumber));
             }
         }
+        #endregion
 
-        private Point2i _colorResolution = new Point2i(640, 480);
-        public Point2i ColorResolution
-        {
-            get { return _colorResolution; }
-            set
-            {
-                if (value == _colorResolution)
-                    return;
-
-                TryChangeSetting<Point2i>(
-                    ref _colorResolution,
-                    value,
-                    new string[] { ChannelNames.Color }
-                );
-            }
-        }
-
-        ListParamDesc<Point2i> ColorResolutionDesc
-        {
-            get
-            {
-                List<Point2i> resolutions = new List<Point2i>();
-                resolutions.Add(new Point2i(640, 480));
-
-                if (IsConnected)
-                {
-                    resolutions = GetSupportedResolutions(SensorNames.Color);
-                }
-
-                List<string> allowedValues = new List<string>();
-                foreach (Point2i resolution in resolutions)
-                {
-                    allowedValues.Add(string.Format("{0}x{1}", resolution.X, resolution.Y));
-                }
-
-                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues)
-                {
-                    Unit = "px",
-                    Description = "Resolution of the color sensor.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
-                };
-                return res;
-            }
-        }
-
-        private int _colorFPS = 30;
-        public int ColorFPS
-        {
-            get { return _colorFPS; }
-            set
-            {
-                if (value == _colorFPS)
-                    return;
-
-                TryChangeSetting<int>(
-                    ref _colorFPS,
-                    value,
-                    new string[] { ChannelNames.Color }
-                );
-            }
-        }
-
-        ListParamDesc<int> ColorFPSDesc
-        {
-            get
-            {
-                List<int> framerates = new List<int>();
-                framerates.Add(30);
-
-                if (IsConnected)
-                {
-                    framerates = GetSupportedFramerates(SensorNames.Color);
-                    framerates.Sort();
-                }
-
-                ListParamDesc<int> res = new ListParamDesc<int>(framerates)
-                {
-                    Unit = "fps",
-                    Description = "Frames per Second of the color sensor.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
-                };
-                return res;
-            }
-        }
-
-        private Point2i _depthResolution = new Point2i(640, 480);
-        public Point2i DepthResolution
-        {
-            get { return _depthResolution; }
-            set
-            {
-                if (value == _depthResolution)
-                    return;
-
-                TryChangeSetting<Point2i>(
-                    ref _depthResolution,
-                    value,
-                    new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
-                );
-            }
-        }
-
-        ListParamDesc<Point2i> DepthResolutionDesc
-        {
-            get
-            {
-                List<Point2i> resolutions = new List<Point2i>();
-                resolutions.Add(new Point2i(640, 480));
-
-                if (IsConnected)
-                {
-                    resolutions = GetSupportedResolutions(SensorNames.Stereo);
-                }
-
-                List<string> allowedValues = new List<string>();
-                foreach (Point2i resolution in resolutions)
-                {
-                    allowedValues.Add(string.Format("{0}x{1}", resolution.X, resolution.Y));
-                }
-
-                ListParamDesc<Point2i> res = new ListParamDesc<Point2i>(allowedValues)
-                {
-                    Unit = "px",
-                    Description = "Resolution of the depth sensor.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
-                };
-                return res;
-            }
-        }
-
-        private int _depthFPS = 30;
-        public int DepthFPS
-        {
-            get { return _depthFPS; }
-            set
-            {
-                if (value == _depthFPS)
-                    return;
-
-                TryChangeSetting<int>(
-                    ref _depthFPS,
-                    value,
-                    new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
-                );
-            }
-        }
-
-        ListParamDesc<int> DepthFPSDesc
-        {
-            get
-            {
-                List<int> framerates = new List<int>();
-                framerates.Add(30);
-
-                if (IsConnected)
-                {
-                    framerates = GetSupportedFramerates(SensorNames.Stereo);
-                    framerates.Sort();
-                }
-
-                ListParamDesc<int> res = new ListParamDesc<int>(framerates)
-                {
-                    Unit = "fps",
-                    Description = "Frames per Second of the depth sensor.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
-                };
-                return res;
-            }
-        }
-
-
-        public string Firmware
-        {
-            get
-            {
-                return RealSenseDevice.Info[CameraInfo.FirmwareVersion];
-            }
-        }
-
-        ParamDesc<string> FirmwareDesc
-        {
-            get
-            {
-                ParamDesc<string> res = new ParamDesc<string>
-                {
-                    Description = "Current Firmware version of the connected camera.",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
-        public override string Vendor { get => "Intel"; }
-
-#if !NETSTANDARD2_0
-        public override Icon CameraIcon { get => Properties.Resources.RealSense2Icon; }
-#endif
-
-        #region RealSense Options
-
+        #region Not implemented Properties
         // Not implemented options (mostly because not supported by D435):
         // - VISUAL_PRESET (functionallity provided by profiles built into metricam)
         // - ACCURACY
@@ -355,841 +174,916 @@ namespace MetriCam2.Cameras
         // - FILTER_MAGNITUDE
         // - FILTER_SMOOTH_ALPHA
         // - FILTER_SMOOTH_DELTA
+        #endregion
 
+        #region Color Resolution
+        private Point2i _colorResolution = new Point2i(640, 480);
+        public List<Point2i> ColorResolutionList
+        {
+            get
+            {
+                List<Point2i> resolutions = new List<Point2i>();
+                resolutions.Add(new Point2i(640, 480));
+
+                if (this.IsConnected)
+                {
+                    resolutions = GetSupportedResolutions(SensorNames.Color);
+                }
+
+                return resolutions;
+            }
+        }
+
+        [Unit(Unit.Pixel)]
+        [Description("Resolution (Color Sensor)", "Resolution of the color images in pixel")]
+        [AllowedValueList(nameof(ColorResolutionList), nameof(TypeConversion.Point2iToResolution))]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        public Point2i ColorResolution
+        {
+            get { return _colorResolution; }
+            set
+            {
+                if (value == _colorResolution)
+                    return;
+
+                TryChangeSetting<Point2i>(
+                    ref _colorResolution,
+                    value,
+                    new string[] { ChannelNames.Color }
+                );
+            }
+        }
+        #endregion
+
+        #region Color FPS
+        private int _colorFPS = 30;
+        public List<int> ColorFPSList
+        {
+            get
+            {
+                List<int> framerates = new List<int>();
+                framerates.Add(30);
+
+                if (IsConnected)
+                {
+                    framerates = GetSupportedFramerates(SensorNames.Color);
+                    framerates.Sort();
+                }
+
+                return framerates;
+            }
+        }
+
+        [Unit(Unit.FPS)]
+        [Description("FPS (Color Sensor)", "Frames per second of the color sensor")]
+        [AllowedValueList(nameof(ColorFPSList))]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        public int ColorFPS
+        {
+            get { return _colorFPS; }
+            set
+            {
+                if (value == _colorFPS)
+                    return;
+
+                TryChangeSetting<int>(
+                    ref _colorFPS,
+                    value,
+                    new string[] { ChannelNames.Color }
+                );
+            }
+        }
+        #endregion
+
+        #region Depth Resolution
+        private Point2i _depthResolution = new Point2i(640, 480);
+        public List<Point2i> DepthResolutionList
+        {
+            get
+            {
+                List<Point2i> resolutions = new List<Point2i>();
+                resolutions.Add(new Point2i(640, 480));
+
+                if (IsConnected)
+                {
+                    resolutions = GetSupportedResolutions(SensorNames.Stereo);
+                }
+
+                return resolutions;
+            }
+        }
+
+        [Unit(Unit.Pixel)]
+        [Description("Resolution (Depth Sensor)", "Resolution of the depth images in pixel")]
+        [AllowedValueList(nameof(DepthResolutionList), nameof(TypeConversion.Point2iToResolution))]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+                    writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        public Point2i DepthResolution
+        {
+            get { return _depthResolution; }
+            set
+            {
+                if (value == _depthResolution)
+                    return;
+
+                TryChangeSetting<Point2i>(
+                    ref _depthResolution,
+                    value,
+                    new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
+                );
+            }
+        }
+        #endregion
+
+        #region Depth FPS
+        private int _depthFPS = 30;
+        public List<int> DepthFPSList
+        {
+            get
+            {
+                List<int> framerates = new List<int>();
+                framerates.Add(30);
+
+                if (this.IsConnected)
+                {
+                    framerates = GetSupportedFramerates(SensorNames.Stereo);
+                    framerates.Sort();
+                }
+
+                return framerates;
+            }
+        }
+
+        [Unit(Unit.FPS)]
+        [Description("FPS (Depth Sensor)", "Currently set frames per second the stereo sensor operates with")]
+        [AccessState(readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+                    writeableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected)]
+        [AllowedValueList(nameof(DepthFPSList))]
+        public int DepthFPS
+        {
+            get { return _depthFPS; }
+            set
+            {
+                if (value == _depthFPS)
+                    return;
+
+                TryChangeSetting<int>(
+                    ref _depthFPS,
+                    value,
+                    new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
+                );
+            }
+        }
+        #endregion
+
+        #region Firmware Version
+        [Description("Firmware", "Version string of the firmware currently operating on the camera")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
+        public string Firmware
+        {
+            get
+            {
+                if (!this.IsConnected)
+                    throw new Exception("Can't read firmware version unless the camera is connected");
+
+                return RealSenseDevice.Info[CameraInfo.FirmwareVersion];
+            }
+        }
+        #endregion
+
+        #region Backlight Compensation
         /// <summary>
         /// Enable / disable color backlight compensation
         /// </summary>
+        [Description("Backlight Compensation", "Enable / disable color backlight compensation")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
         public bool BacklightCompensation
         {
             get
             {
-                CheckOptionSupported(Option.BacklightCompensation, BacklightCompensationDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.BacklightCompensation, nameof(BacklightCompensation), SensorNames.Color);
                 return GetOption(SensorNames.Color, Option.BacklightCompensation) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.BacklightCompensation, BacklightCompensationDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.BacklightCompensation, nameof(BacklightCompensation), SensorNames.Color);
                 SetOption(SensorNames.Color, Option.BacklightCompensation, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> BacklightCompensationDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>
-                {
-                    Description = "Enable / disable color backlight compensation",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
+        #region Brightness
         /// <summary>
         /// Color image brightness
         /// </summary>
+        [Range(nameof(BrightnessRange))]
+        [Description("Brightness (Color Sensor)", "Color image brightness")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public int Brightness
         {
             get
             {
-                CheckOptionSupported(Option.Brightness, BrightnessDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.Brightness, nameof(Brightness), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.Brightness);
             }
 
             set
             {
-                CheckOptionSupported(Option.Brightness, BrightnessDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(BrightnessDesc, value, 0);
+                CheckOptionSupported(Option.Brightness, nameof(Brightness), SensorNames.Color);
+                CheckRangeValid<int>(BrightnessRange, value, 0, nameof(Brightness));
 
                 SetOption(SensorNames.Color, Option.Brightness, (float)value);
             }
         }
 
-        RangeParamDesc<int> BrightnessDesc
+        public Range<int> BrightnessRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> range = new Range<int>(0, 1);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Brightness, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
-                }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
+                    range = new Range<int>((int)option.Min, (int)option.Max);
                 }
 
-                res.Description = "Color image brightness";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
-                return res;
+                return range;
             }
         }
+        #endregion
 
+        #region Contrast
         /// <summary>
         /// Color image contrast
         /// </summary>
+        [Range(nameof(ContrastRange))]
+        [Description("Contrast (Color Sensor)", "Color image contrast")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public int Contrast
         {
             get
             {
-                CheckOptionSupported(Option.Contrast, ContrastDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.Contrast, nameof(Contrast), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.Contrast);
             }
 
             set
             {
-                CheckOptionSupported(Option.Contrast, ContrastDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(ContrastDesc, value, 0);
+                CheckOptionSupported(Option.Contrast, nameof(Contrast), SensorNames.Color);
+                CheckRangeValid<int>(ContrastRange, value, 0, nameof(Contrast));
 
                 SetOption(SensorNames.Color, Option.Contrast, (float)value);
             }
         }
 
-        RangeParamDesc<int> ContrastDesc
+        public Range<int> ContrastRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> range = new Range<int>(0, 1);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Contrast, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
-                }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
+                    range = new Range<int>((int)option.Min, (int)option.Max);
                 }
 
-                res.Description = "Color image contrast";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
-                return res;
+                return range;
             }
         }
+        #endregion
 
+        #region Exposure (Color)
         /// <summary>
         /// Controls exposure time of color camera. Setting any value will disable auto exposure
         /// </summary>
+        [Description("Exposure (Color Sensor)", "Controls exposure time of color camera. Setting any value will disable auto exposure")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(ExposureColorRange))]
         public int ExposureColor
         {
             get
             {
-                CheckOptionSupported(Option.Exposure, ExposureColorDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.Exposure, nameof(ExposureColor), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.Exposure);
             }
 
             set
             {
-                CheckOptionSupported(Option.Exposure, ExposureColorDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(ExposureColorDesc, value, 0);
+                CheckOptionSupported(Option.Exposure, nameof(ExposureColor), SensorNames.Color);
+                CheckRangeValid<int>(ExposureColorRange, value, 0, nameof(ExposureColor));
 
                 SetOption(SensorNames.Color, Option.Exposure, (float)value);
             }
         }
 
-        RangeParamDesc<int> ExposureColorDesc
+        public Range<int> ExposureColorRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
-                if (IsConnected)
+                if (this.IsConnected)
                 {
                     var option = QueryOption(Option.Exposure, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Controls exposure time of color camera. Setting any value will disable auto exposure";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Auto Exposure (Color)
         /// <summary>
         /// Enable / disable color image auto-exposure
         /// </summary>
+        [Description("Auto Exposure (Color Sensor)", "Enable / disable color image auto-exposure")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool AutoExposureColor
         {
             get
             {
-                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureColorDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.EnableAutoExposure, nameof(AutoExposureColor), SensorNames.Color);
                 return GetOption(SensorNames.Color, Option.EnableAutoExposure) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureColorDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.EnableAutoExposure, nameof(AutoExposureColor), SensorNames.Color);
                 SetOption(SensorNames.Color, Option.EnableAutoExposure, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> AutoExposureColorDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>
-                {
-                    Description = "Enable / disable color image auto-exposure",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
+        #region Auto Exposure Priority (Color)
         /// <summary>
         /// Limit exposure time when auto-exposure is ON to preserve constant fps rate
         /// </summary>
+        [Description("Auto Exposure Priority (Color Sensor)", "Limit exposure time when auto-exposure is ON to preserve constant fps rate")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool AutoExposurePriorityColor
         {
             get
             {
-                CheckOptionSupported(Option.AutoExposurePriority, AutoExposurePriorityColorDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.AutoExposurePriority, nameof(AutoExposurePriorityColor), SensorNames.Color);
                 return GetOption(SensorNames.Color, Option.AutoExposurePriority) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.AutoExposurePriority, AutoExposurePriorityColorDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.AutoExposurePriority, nameof(AutoExposurePriorityColor), SensorNames.Color);
                 SetOption(SensorNames.Color, Option.AutoExposurePriority, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> AutoExposurePriorityColorDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>
-                {
-                    Description = "Limit exposure time when auto-exposure is ON to preserve constant fps rate",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
+        #region Exposure (Depth)
         /// <summary>
         /// Controls exposure time of depth camera. Setting any value will disable auto exposure
         /// </summary>
+        [Description("Exposure (Depth Sensor)", "Controls exposure time of depth camera. Setting any value will disable auto exposure")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(ExposureDepthRange))]
         public int ExposureDepth
         {
             get
             {
-                CheckOptionSupported(Option.Exposure, ExposureDepthDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.Exposure, nameof(ExposureDepth), SensorNames.Stereo);
                 return (int)GetOption(SensorNames.Stereo, Option.Exposure);
             }
 
             set
             {
-                CheckOptionSupported(Option.Exposure, ExposureDepthDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.Exposure, nameof(ExposureDepth), SensorNames.Stereo);
                 var option = QueryOption(Option.Exposure, SensorNames.Stereo);
 
                 // step size for depth exposure is 20
                 float adjusted_value = AdjustValue(option.Min, option.Max, value, option.Step);
-                CheckRangeValid<int>(ExposureDepthDesc, value, (int)adjusted_value, true);
+                CheckRangeValid<int>(ExposureDepthRange, value, (int)adjusted_value, nameof(ExposureDepth), true);
                 SetOption(SensorNames.Stereo, Option.Exposure, adjusted_value);
             }
         }
 
-        RangeParamDesc<int> ExposureDepthDesc
+        public Range<int> ExposureDepthRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Exposure, SensorNames.Stereo);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Controls exposure time of depth camera. Setting any value will disable auto exposure";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Auto Exposure (Depth)
         /// <summary>
         /// Enable / disable depth image auto-exposure
         /// </summary>
+        [Description("Auto Exposure (Depth Sensor)", "Enable / disable depth image auto-exposure")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool AutoExposureDepth
         {
             get
             {
-                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureDepthDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.EnableAutoExposure, nameof(AutoExposureDepth), SensorNames.Stereo);
                 return GetOption(SensorNames.Stereo, Option.EnableAutoExposure) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.EnableAutoExposure, AutoExposureDepthDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.EnableAutoExposure, nameof(AutoExposureDepth), SensorNames.Stereo);
                 SetOption(SensorNames.Stereo, Option.EnableAutoExposure, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> AutoExposureDepthDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>
-                {
-                    Description = "Enable / disable depth image auto-exposure",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
+        #region Gain (Color)
         /// <summary>
         /// Color image gain
         /// </summary>
+        [Description("Gain (Color Sensor)", "Color image gain")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(GainColorRange))]
         public int GainColor
         {
             get
             {
-                CheckOptionSupported(Option.Gain, GainColorDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.Gain, nameof(GainColor), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.Gain);
             }
 
             set
             {
-                CheckOptionSupported(Option.Gain, GainColorDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(GainColorDesc, value, 0);
+                CheckOptionSupported(Option.Gain, nameof(GainColor), SensorNames.Color);
+                CheckRangeValid<int>(GainColorRange, value, 0, nameof(GainColor));
                 SetOption(SensorNames.Color, Option.Gain, (float)value);
             }
         }
 
-        RangeParamDesc<int> GainColorDesc
+        public Range<int> GainColorRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Gain, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Color image gain";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Gain (Depth)
         /// <summary>
         /// Depth image gain
         /// </summary>
+        [Description("Gain (Depth Sensor)", "Depth image gain")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(GainDepthRange))]
         public int GainDepth
         {
             get
             {
-                CheckOptionSupported(Option.Gain, GainDepthDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.Gain, nameof(GainDepth), SensorNames.Stereo);
                 return (int)GetOption(SensorNames.Stereo, Option.Gain);
             }
 
             set
             {
-                CheckOptionSupported(Option.Gain, GainDepthDesc.Name, SensorNames.Stereo);
-                CheckRangeValid<int>(GainDepthDesc, value, 0);
+                CheckOptionSupported(Option.Gain, nameof(GainDepth), SensorNames.Stereo);
+                CheckRangeValid<int>(GainDepthRange, value, 0, nameof(GainDepth));
                 SetOption(SensorNames.Stereo, Option.Gain, (float)value);
             }
         }
 
-        RangeParamDesc<int> GainDepthDesc
+        public Range<int> GainDepthRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Gain, SensorNames.Stereo);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Depth image gain";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Gamma
         /// <summary>
         /// Color image Gamma
         /// </summary>
+        [Description("Gamma", "Color image gamma")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(GammaRange))]
         public int Gamma
         {
             get
             {
-                CheckOptionSupported(Option.Gamma, GammaDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.Gamma, nameof(Gamma), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.Gamma);
             }
 
             set
             {
-                CheckOptionSupported(Option.Gamma, GammaDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(GammaDesc, value, 0);
+                CheckOptionSupported(Option.Gamma, nameof(Gamma), SensorNames.Color);
+                CheckRangeValid<int>(GammaRange, value, 0, nameof(Gamma));
                 SetOption(SensorNames.Color, Option.Gamma, (float)value);
             }
         }
 
-        RangeParamDesc<int> GammaDesc
+        public Range<int> GammaRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Gamma, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Color image Gamma";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Hue
         /// <summary>
         /// Color image Hue
         /// </summary>
+        [Description("Hue", "Color image hue")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(HueRange))]
         public int Hue
         {
             get
             {
-                CheckOptionSupported(Option.Hue, HueDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.Hue, nameof(Hue), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.Hue);
             }
 
             set
             {
-                CheckOptionSupported(Option.Hue, HueDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(HueDesc, value, 0);
+                CheckOptionSupported(Option.Hue, nameof(Hue), SensorNames.Color);
+                CheckRangeValid<int>(HueRange, value, 0, nameof(Hue));
                 SetOption(SensorNames.Color, Option.Hue, (float)value);
             }
         }
 
-        RangeParamDesc<int> HueDesc
+        public Range<int> HueRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Hue, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Color image Hue";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Saturation
         /// <summary>
         /// Color image Saturation
         /// </summary>
+        [Description("Saturation", "Color image Saturation")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(SaturationRange))]
         public int Saturation
         {
             get
             {
-                CheckOptionSupported(Option.Saturation, SaturationDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.Saturation, nameof(Saturation), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.Saturation);
             }
 
             set
             {
-                CheckOptionSupported(Option.Saturation, SaturationDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(SaturationDesc, value, 0);
+                CheckOptionSupported(Option.Saturation, nameof(Saturation), SensorNames.Color);
+                CheckRangeValid<int>(SaturationRange, value, 0, nameof(Saturation));
                 SetOption(SensorNames.Color, Option.Saturation, (float)value);
             }
         }
 
-        RangeParamDesc<int> SaturationDesc
+        public Range<int> SaturationRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Saturation, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Color image Saturation";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Sharpness
         /// <summary>
         /// Color image Sharpness
         /// </summary>
+        [Description("Sharpness", "Color image Sharpness")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(SharpnessRange))]
         public int Sharpness
         {
             get
             {
-                CheckOptionSupported(Option.Sharpness, SharpnessDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.Sharpness, nameof(Sharpness), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.Sharpness);
             }
 
             set
             {
-                CheckOptionSupported(Option.Sharpness, SharpnessDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(SharpnessDesc, value, 0);
+                CheckOptionSupported(Option.Sharpness, nameof(Sharpness), SensorNames.Color);
+                CheckRangeValid<int>(SharpnessRange, value, 0, nameof(Sharpness));
                 SetOption(SensorNames.Color, Option.Sharpness, (float)value);
             }
         }
 
-        RangeParamDesc<int> SharpnessDesc
+        public Range<int> SharpnessRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.Sharpness, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Color image Sharpness";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region White Balance
         /// <summary>
-        /// Controls white balance of color image.Setting any value will disable auto white balance
+        /// Controls white balance of color image. Setting any value will disable auto white balance
         /// </summary>
+        [Description("White Balance", "Controls white balance of color image. Setting any value will disable auto white balance.")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(WhiteBalanceRange))]
         public int WhiteBalance
         {
             get
             {
-                CheckOptionSupported(Option.WhiteBalance, WhiteBalanceDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.WhiteBalance, nameof(WhiteBalance), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.WhiteBalance);
             }
 
             set
             {
-                CheckOptionSupported(Option.WhiteBalance, WhiteBalanceDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.WhiteBalance, nameof(WhiteBalance), SensorNames.Color);
                 var option = QueryOption(Option.WhiteBalance, SensorNames.Color);
 
 
                 // step size for depth white balance is 10
                 float adjusted_value = AdjustValue(option.Min, option.Max, value, option.Step);
-                CheckRangeValid<int>(WhiteBalanceDesc, value, (int)adjusted_value, true);
+                CheckRangeValid<int>(WhiteBalanceRange, value, (int)adjusted_value, nameof(WhiteBalance), true);
 
                 SetOption(SensorNames.Color, Option.WhiteBalance, adjusted_value);
             }
         }
 
-        RangeParamDesc<int> WhiteBalanceDesc
+        public Range<int> WhiteBalanceRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.WhiteBalance, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Controls white balance of color image.Setting any value will disable auto white balance";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Auto White Balance
         /// <summary>
         /// Enable / disable auto-white-balance
         /// </summary>
+        [Description("Auto White Balance", "Enable / disable auto-white-balance")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool AutoWhiteBalance
         {
             get
             {
-                CheckOptionSupported(Option.EnableAutoWhiteBalance, AutoWhiteBalanceDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.EnableAutoWhiteBalance, nameof(AutoWhiteBalance), SensorNames.Color);
                 return GetOption(SensorNames.Color, Option.EnableAutoWhiteBalance) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.EnableAutoWhiteBalance, AutoWhiteBalanceDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.EnableAutoWhiteBalance, nameof(AutoWhiteBalance), SensorNames.Color);
                 SetOption(SensorNames.Color, Option.EnableAutoWhiteBalance, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> AutoWhiteBalanceDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>
-                {
-                    Description = "Enable / disable auto-white-balance",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
+        #region Laser Power
         /// <summary>
         /// Manual laser power in mw. applicable only when laser power mode is set to Manual
         /// </summary>
+        [Description("Laser Power", "Manual laser power in mw. applicable only when laser power mode is set to Manual")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Unit("mW")]
+        [Range(nameof(LaserPowerRange))]
         public int LaserPower
         {
             get
             {
-                CheckOptionSupported(Option.LaserPower, LaserPowerDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.LaserPower, nameof(LaserPower), SensorNames.Stereo);
                 return (int)GetOption(SensorNames.Stereo, Option.LaserPower);
             }
 
             set
             {
-                CheckOptionSupported(Option.LaserPower, LaserPowerDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.LaserPower, nameof(LaserPower), SensorNames.Stereo);
                 var option = QueryOption(Option.LaserPower, SensorNames.Stereo);
 
                 // step size for depth laser power is 30
                 float adjusted_value = AdjustValue(option.Min, option.Max, value, option.Step);
-                CheckRangeValid<int>(LaserPowerDesc, value, (int)adjusted_value, true);
+                CheckRangeValid<int>(LaserPowerRange, value, (int)adjusted_value, nameof(LaserPower), true);
                 SetOption(SensorNames.Stereo, Option.LaserPower, adjusted_value);
             }
         }
 
-        RangeParamDesc<int> LaserPowerDesc
+        public Range<int> LaserPowerRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.LaserPower, SensorNames.Stereo);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Manual laser power in mw. applicable only when laser power mode is set to Manual";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Laser Emitter Mode
         /// <summary>
         /// Power of the DS5 projector
         /// </summary>
+        [Description("Laser Mode", "Power of the DS5 projector")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [AllowedValueList(typeof(EmitterMode))]
         public EmitterMode LaserMode
         {
             get
             {
-                CheckOptionSupported(Option.EmitterEnabled, EmmiterModeDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.EmitterEnabled, nameof(LaserMode), SensorNames.Stereo);
                 return (EmitterMode)GetOption(SensorNames.Stereo, Option.EmitterEnabled);
             }
 
             set
             {
-                CheckOptionSupported(Option.EmitterEnabled, EmmiterModeDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.EmitterEnabled, nameof(LaserMode), SensorNames.Stereo);
                 SetOption(SensorNames.Stereo, Option.EmitterEnabled, (float)value);
             }
         }
+        #endregion
 
-        ParamDesc<EmitterMode> EmmiterModeDesc
-        {
-            get
-            {
-                ParamDesc<EmitterMode> res = new ParamDesc<EmitterMode>()
-                {
-                    Description = "Power of the DS5 projector",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-
-                return res;
-            }
-        }
-
+        #region Frame Queue Size (Color)
         /// <summary>
         /// Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa
         /// </summary>
+        [Description("Frame Queue Size (Color Sensor)",
+            "Max number of frames you can hold at a given time.Increasing this number will reduce frame drops but increase latency, and vice versa")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(FrameQueueSizeColorRange))]
         public int FrameQueueSizeColor
         {
             get
             {
-                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeColorDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.FramesQueueSize, nameof(FrameQueueSizeColor), SensorNames.Color);
                 return (int)GetOption(SensorNames.Color, Option.FramesQueueSize);
             }
 
             set
             {
-                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeColorDesc.Name, SensorNames.Color);
-                CheckRangeValid<int>(FrameQueueSizeColorDesc, value, 0);
+                CheckOptionSupported(Option.FramesQueueSize, nameof(FrameQueueSizeColor), SensorNames.Color);
+                CheckRangeValid<int>(FrameQueueSizeColorRange, value, 0, nameof(FrameQueueSizeColor));
                 SetOption(SensorNames.Color, Option.FramesQueueSize, (float)value);
             }
         }
 
-        RangeParamDesc<int> FrameQueueSizeColorDesc
+        public Range<int> FrameQueueSizeColorRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.FramesQueueSize, SensorNames.Color);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Frame Queue Size (Depth)
         /// <summary>
         /// Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa
         /// </summary>
+        [Description("Frame Queue Size (DepthSensor)",
+            "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Range(nameof(FrameQueueSizeDepthRange))]
         public int FrameQueueSizeDepth
         {
             get
             {
-                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeDepthDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.FramesQueueSize, nameof(FrameQueueSizeDepth), SensorNames.Stereo);
                 return (int)GetOption(SensorNames.Stereo, Option.FramesQueueSize);
             }
 
             set
             {
-                CheckOptionSupported(Option.FramesQueueSize, FrameQueueSizeDepthDesc.Name, SensorNames.Stereo);
-                CheckRangeValid<int>(FrameQueueSizeDepthDesc, value, 0);
+                CheckOptionSupported(Option.FramesQueueSize, nameof(FrameQueueSizeDepth), SensorNames.Stereo);
+                CheckRangeValid<int>(FrameQueueSizeDepthRange, value, 0, nameof(FrameQueueSizeDepth));
                 SetOption(SensorNames.Stereo, Option.FramesQueueSize, (float)value);
             }
         }
 
-        RangeParamDesc<int> FrameQueueSizeDepthDesc
+        public Range<int> FrameQueueSizeDepthRange
         {
             get
             {
-                RangeParamDesc<int> res;
+                Range<int> res = new Range<int>(0, 0);
 
                 if (this.IsConnected)
                 {
                     var option = QueryOption(Option.FramesQueueSize, SensorNames.Stereo);
-                    res = new RangeParamDesc<int>((int)option.Min, (int)option.Max);
+                    res = new Range<int>((int)option.Min, (int)option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<int>(0, 0);
-                }
-
-                res.Description = "Max number of frames you can hold at a given time. Increasing this number will reduce frame drops but increase latency, and vice versa";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
+        #region Power Frequency Mode
         /// <summary>
         /// Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto
         /// </summary>
+        [Description("Power Frequency Mode", "Power Line Frequency control for anti-flickering")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [AllowedValueList(typeof(PowerLineMode))]
         public PowerLineMode PowerFrequencyMode
         {
             get
             {
-                CheckOptionSupported(Option.PowerLineFrequency, PowerFrequencyModeDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.PowerLineFrequency, nameof(PowerFrequencyMode), SensorNames.Color);
                 return (PowerLineMode)GetOption(SensorNames.Color, Option.PowerLineFrequency);
             }
 
             set
             {
-                CheckOptionSupported(Option.PowerLineFrequency, PowerFrequencyModeDesc.Name, SensorNames.Color);
+                CheckOptionSupported(Option.PowerLineFrequency, nameof(PowerFrequencyMode), SensorNames.Color);
                 SetOption(SensorNames.Color, Option.PowerLineFrequency, (float)value);
             }
         }
+        #endregion
 
-        ListParamDesc<PowerLineMode> PowerFrequencyModeDesc
-        {
-            get
-            {
-                ListParamDesc<PowerLineMode> res = new ListParamDesc<PowerLineMode>(typeof(PowerLineMode))
-                {
-                    Description = "Power Line Frequency control for anti-flickering Off/50Hz/60Hz/Auto",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-
-                return res;
-            }
-        }
-
+        #region ASIC Temperature
         /// <summary>
         /// Current Asic Temperature
         /// </summary>
+        [Description("Asic Temperature", "Current Asic Temperature")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
+        [Unit(Unit.DegreeCelsius)]
         public float ASICTemp
         {
             get
@@ -1200,59 +1094,37 @@ namespace MetriCam2.Cameras
                 return temp;
             }
         }
+        #endregion
 
-        ParamDesc<float> ASICTempDesc
-        {
-            get
-            {
-                ParamDesc<float> res = new ParamDesc<float>
-                {
-                    Unit = "°C",
-                    Description = "Asic Temperature",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
-
+        #region Error Polling
         /// <summary>
         /// Enable / disable polling of camera internal errors
         /// </summary>
+        [Description("Error Polling", "Enable / disable polling of camera internal errors")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool EnableErrorPolling
         {
             get
             {
-                CheckOptionSupported(Option.ErrorPollingEnabled, EnableErrorPollingDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.ErrorPollingEnabled, nameof(EnableErrorPolling), SensorNames.Stereo);
                 return GetOption(SensorNames.Stereo, Option.ErrorPollingEnabled) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.ErrorPollingEnabled, EnableErrorPollingDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.ErrorPollingEnabled, nameof(EnableErrorPolling), SensorNames.Stereo);
                 SetOption(SensorNames.Stereo, Option.ErrorPollingEnabled, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> EnableErrorPollingDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>
-                {
-                    Description = "Enable / disable polling of camera internal errors",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
-
+        #region Projector Temperature
         /// <summary>
         /// Current Projector Temperature in °C
         /// </summary>
+        [Description("Projector Temperature", "Current Projector Temperature in °C")]
+        [AccessState(readableWhen: ConnectionStates.Connected)]
+        [Unit(Unit.DegreeCelsius)]
         public float ProjectorTemp
         {
             get
@@ -1261,99 +1133,77 @@ namespace MetriCam2.Cameras
                 return GetOption(SensorNames.Stereo, Option.ProjectorTemperature);
             }
         }
+        #endregion
 
-        ParamDesc<float> ProjectorTempDesc
-        {
-            get
-            {
-                ParamDesc<float> res = new ParamDesc<float>
-                {
-                    Unit = "°C",
-                    Description = "Projector Temperature",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
-
+        #region Output Trigger
         /// <summary>
         /// Enable / disable trigger to be outputed from the camera to any external device on every depth frame
         /// </summary>
+        [Description("Output Trigger", "Enable / disable trigger to be outputed from the camera to any external device on every depth frame")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
         public bool OutputTrigger
         {
             get
             {
-                CheckOptionSupported(Option.OutputTriggerEnabled, OutputTriggerDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.OutputTriggerEnabled, nameof(OutputTrigger), SensorNames.Stereo);
                 return GetOption(SensorNames.Stereo, Option.OutputTriggerEnabled) == 1.0f;
             }
 
             set
             {
-                CheckOptionSupported(Option.OutputTriggerEnabled, OutputTriggerDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.OutputTriggerEnabled, nameof(OutputTrigger), SensorNames.Stereo);
                 SetOption(SensorNames.Stereo, Option.OutputTriggerEnabled, value ? 1.0f : 0.0f);
             }
         }
+        #endregion
 
-        ParamDesc<bool> OutputTriggerDesc
-        {
-            get
-            {
-                ParamDesc<bool> res = new ParamDesc<bool>
-                {
-                    Description = "Enable / disable trigger to be outputed from the camera to any external device on every depth frame",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
-            }
-        }
-
-
+        #region Depth Units
         /// <summary>
         /// Number of meters represented by a single depth unit
         /// </summary>
+        [Description("Depth Units", "Number of meters represented by a single depth unit")]
+        [AccessState(readableWhen: ConnectionStates.Connected, writeableWhen: ConnectionStates.Connected)]
+        [Unit(Unit.Meter)]
+        [Range(nameof(DepthUnitsRange))]
         public float DepthUnits
         {
             get
             {
-                CheckOptionSupported(Option.DepthUnits, DepthUnitsDesc.Name, SensorNames.Stereo);
+                CheckOptionSupported(Option.DepthUnits, nameof(DepthUnits), SensorNames.Stereo);
                 return GetOption(SensorNames.Stereo, Option.DepthUnits);
             }
 
             set
             {
-                CheckOptionSupported(Option.DepthUnits, DepthUnitsDesc.Name, SensorNames.Stereo);
-                CheckRangeValid<float>(DepthUnitsDesc, value, 0f);
+                CheckOptionSupported(Option.DepthUnits, nameof(DepthUnits), SensorNames.Stereo);
+                CheckRangeValid<float>(DepthUnitsRange, value, 0f, nameof(DepthUnits));
                 SetOption(SensorNames.Stereo, Option.DepthUnits, value);
             }
         }
 
-        RangeParamDesc<float> DepthUnitsDesc
+        public Range<float> DepthUnitsRange
         {
             get
             {
-                RangeParamDesc<float> res;
+                Range<float> res = new Range<float>(0, 0);
 
                 if (IsConnected)
                 {
                     var option = QueryOption(Option.DepthUnits, SensorNames.Stereo);
-                    res = new RangeParamDesc<float>(option.Min, option.Max);
+                    res = new Range<float>(option.Min, option.Max);
                 }
-                else
-                {
-                    res = new RangeParamDesc<float>(0, 0);
-                }
-
-                res.Description = "Number of meters represented by a single depth unit";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
             }
         }
+        #endregion
 
         private AdvancedMode.Preset _preset = AdvancedMode.Preset.UNKNOWN;
+
+        [Description("Config Preset", "Visual Preset")]
+        [AccessState(
+            readableWhen: ConnectionStates.Connected | ConnectionStates.Disconnected,
+            writeableWhen: ConnectionStates.Connected)]
+        [AllowedValueList(typeof(AdvancedMode.Preset))]
         public AdvancedMode.Preset ConfigPreset
         {
             get => _preset;
@@ -1363,20 +1213,6 @@ namespace MetriCam2.Cameras
                     return;
                 LoadCustomConfigInternal(AdvancedMode.GetPreset(value));
                 _preset = value;
-            }
-        }
-
-        ListParamDesc<AdvancedMode.Preset> ConfigPresetDesc
-        {
-            get
-            {
-                ListParamDesc<AdvancedMode.Preset> res = new ListParamDesc<AdvancedMode.Preset>(typeof(AdvancedMode.Preset))
-                {
-                    Description = "Visual Preset",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected
-                };
-                return res;
             }
         }
 
@@ -1394,23 +1230,9 @@ namespace MetriCam2.Cameras
                 }
             }
         }
-
-        MultiFileParamDesc ConfigFileDesc
-        {
-            get
-            {
-                MultiFileParamDesc res = new MultiFileParamDesc()
-                {
-                    Description = "Custom Config File",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected,
-                };
-                return res;
-            }
-        }
-
         #endregion
 
+        #region IDisposable
         public void Dispose()
         {
             Dispose(true);
@@ -1435,6 +1257,7 @@ namespace MetriCam2.Cameras
 
             _disposed = true;
         }
+        #endregion
 
         #region Constructor
         public RealSense2()
@@ -2005,6 +1828,7 @@ namespace MetriCam2.Cameras
 
         #endregion
 
+        #region advanced config
         public void LoadCustomConfig(string json)
         {
             LoadCustomConfigInternal(json);
@@ -2017,7 +1841,9 @@ namespace MetriCam2.Cameras
             adev.JsonConfiguration = json;
             _depthScale = GetDepthScale();
         }
+        #endregion
 
+        #region private helpers
         private void ExecuteWithStoppedPipeline(Action doStuff)
         {
             bool running = _pipelineRunning;
@@ -2038,7 +1864,6 @@ namespace MetriCam2.Cameras
             {
                 throw new InvalidOperationException(string.Format("The property '{0}' can only be read or written when the camera is connected!", optionName));
             }
-
             if (!GetSensor(sensorName).Options[option].Supported)
             {
                 throw new NotSupportedException(string.Format("Option '{0}' is not supported by the {1} sensor of this camera.", optionName, sensorName));
@@ -2055,20 +1880,20 @@ namespace MetriCam2.Cameras
             GetSensor(sensorName).Options[option].Value = value;
         }
 
-        private void CheckRangeValid<T>(RangeParamDesc<T> desc, T value, T adjustedValue, bool adjusted = false)
+        private void CheckRangeValid<T>(Range<T> range, T value, T adjustedValue, string optionName, bool adjusted = false) where T : IComparable, IConvertible
         {
-            if (desc.IsValid(value))
+            if (range.IsValid(value))
             {
                 return;
             }
 
             if (adjusted)
             {
-                throw new ArgumentOutOfRangeException(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, desc.Name, desc.Min, desc.Max));
+                throw new ArgumentOutOfRangeException(string.Format("Value {0} for '{1}' is outside of the range between {2} and {3}", value, optionName, range.Minimum, range.Maximum));
             }
             else
             {
-                throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, desc.Name, desc.Min, desc.Max));
+                throw new ArgumentOutOfRangeException(string.Format("Value {0} (adjusted to {1} to match stepsize) for '{2}' is outside of the range between {3} and {4}", value, adjustedValue, optionName, range.Minimum, range.Maximum));
             }
         }
 
@@ -2122,7 +1947,6 @@ namespace MetriCam2.Cameras
         {
             return GetSensor(SensorNames.Stereo).DepthScale;
         }
-
         private void TryChangeSetting<T>(ref T property, T newValue, string[] channelNames)
         {
             T oldValue = property;
@@ -2173,5 +1997,7 @@ namespace MetriCam2.Cameras
                 }
             }
         }
+    #endregion
     }
 }
+

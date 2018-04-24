@@ -4,6 +4,8 @@
 
 using namespace MetriCam2;
 using namespace MetriCam2::Exceptions;
+using namespace MetriCam2::Enums;
+using namespace MetriCam2::Attributes;
 using namespace Metrilus::Util;
 using namespace System;
 using namespace System::Runtime::InteropServices;
@@ -127,22 +129,9 @@ namespace MetriCam2
 			Point3fCameraImage^ _currentPointCloud; // caches computed Point3fCameraImage
 			Point3fCameraImage^ _currentPointCloudMapped; // caches computed Point3fCameraImage
 
-			property ParamDesc<bool>^ AutoExposureDesc
+			property Range<float>^ ExposureRange
 			{
-				inline ParamDesc<bool> ^get()
-				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
-					res->Unit = "";
-					res->Description = "Auto Exposure enabled";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
-				}
-			}
-
-			property RangeParamDesc<float>^ ExposureDesc
-			{
-				inline RangeParamDesc<float> ^get()
+				inline Range<float> ^get()
 				{
 					MV6D_Property exposureProperty;
 					MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_EXPOSURE, &exposureProperty);
@@ -165,18 +154,13 @@ namespace MetriCam2
 						throw gcnew Exception("Property Exposure does not have maximum or minimum");
 					}
 
-					RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
-					res->Unit = "";
-					res->Description = "Exposure time in [?]";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
+					return gcnew Range<float>(minimum, maximum);
 				}
 			}
 
-			property RangeParamDesc<float>^ GainDesc
+			property Range<float>^ GainRange
 			{
-				inline RangeParamDesc<float> ^get()
+				inline Range<float> ^get()
 				{
 					MV6D_Property gainProperty;
 					MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN, &gainProperty);
@@ -199,18 +183,13 @@ namespace MetriCam2
 						throw gcnew Exception("Property Gain does not have maximum or minimum");
 					}
 
-					RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
-					res->Unit = "";
-					res->Description = "Gain";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
+					return gcnew Range<float>(minimum, maximum);
 				}
 			}
 
-			property RangeParamDesc<float>^ GainColorDesc
+			property Range<float>^ GainColorRange
 			{
-				inline RangeParamDesc<float> ^get()
+				inline Range<float> ^get()
 				{
 					MV6D_Property gainColorProperty;
 					MV6D_ResultCode	result = MV6D_PropertyGet(_h6D, MV6D_PROPERTY_CAMERA_CONTROL_ANALOG_GAIN_COLOR, &gainColorProperty);
@@ -233,25 +212,7 @@ namespace MetriCam2
 						throw gcnew Exception("Property GainColor does not have maximum or minimum");
 					}
 
-					RangeParamDesc<float> ^res = gcnew RangeParamDesc<float>(minimum, maximum);
-					res->Unit = "";
-					res->Description = "Gain";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-					return res;
-				}
-			}
-
-			property ParamDesc<float>^ FocalLengthDesc
-			{
-				inline ParamDesc<float> ^get()
-				{
-					ParamDesc<float> ^res = gcnew ParamDesc<float>();
-					res->Unit = "";
-					res->Description = "Focal Length";
-					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-					res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
-					return res;
+					return gcnew Range<float>(minimum, maximum);
 				}
 			}
 
@@ -286,6 +247,8 @@ namespace MetriCam2
 		//// CAMERA PARAMETERS
 		////////////////////////////////////////
 
+		[Description("Auto Exposure", "Auto Exposure enabled")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
 		property bool AutoExposure
 		{
 			void set(bool value)
@@ -298,8 +261,11 @@ namespace MetriCam2
 				CheckResult(result, InvalidOperationException::typeid, 1002);
 			}
 		}
-		
-		//! Gets/Sets the exposure time in [?].
+
+		[Description("Exposure", "Exposure time")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[Unit("[?]")]
+		[Range("ExposureRange")]
 		property float Exposure
 		{
 			float get(void)
@@ -328,7 +294,10 @@ namespace MetriCam2
 			}
 		}
 		
-		//! Gets/Sets the gain.
+		
+		[Description("Gain")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[Range("GainRange")]
 		property float Gain
 		{
 			float get(void)
@@ -357,6 +326,9 @@ namespace MetriCam2
 			}
 		}
 		
+		[Description("Color Gain")]
+		[AccessState(ConnectionStates::Connected, ConnectionStates::Connected)]
+		[Range("GainColorRange")]
 		property float GainColor
 		{
 			float get(void)
@@ -385,6 +357,8 @@ namespace MetriCam2
 			}
 		}
 
+		[Description("Focal Length")]
+		[AccessState(ConnectionStates::Connected | ConnectionStates::Disconnected, ConnectionStates::Connected | ConnectionStates::Disconnected)]
 		property float FocalLength
 		{
 			inline float get()
