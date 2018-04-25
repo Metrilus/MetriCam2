@@ -64,6 +64,9 @@ namespace MetriCam2.Cameras
                     string res = _appImager.SetParameter("Resolution", (value ? "1" : "0"));
                     GetResolution();
                 });
+
+                // reset frame available to force a new frame with the correct resolution 
+                _frameAvailable.Reset();
             }
         }
         private ParamDesc<bool> Resolution100kDesc
