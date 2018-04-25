@@ -45,12 +45,11 @@ namespace MetriCam2.Cameras
                 {
                     return -1;
                 }
-                SetConfigurationMode(Mode.Edit);
-                _edit.EditApplication(_applicationId);
 
-                _frequencyChannel = Convert.ToInt32(_appImager.GetParameter("Channel"));
+                DoEdit((_edit) => {
+                    _frequencyChannel = Convert.ToInt32(_appImager.GetParameter("Channel"));
+                });
 
-                SetConfigurationMode(Mode.Run);
                 return _frequencyChannel;
             }
             set
@@ -60,12 +59,10 @@ namespace MetriCam2.Cameras
                 {
                     return;
                 }
-                SetConfigurationMode(Mode.Edit);
-                _edit.EditApplication(_applicationId);
-                _appImager.SetParameter("Channel", value.ToString());
-                _app.Save();
-                _edit.StopEditingApplication();
-                SetConfigurationMode(Mode.Run);
+
+                DoEdit((_edit) => {
+                    _appImager.SetParameter("Channel", value.ToString());
+                });
             }
         }
 
@@ -96,11 +93,11 @@ namespace MetriCam2.Cameras
                 {
                     return -1;
                 }
-                SetConfigurationMode(Mode.Edit);
-                _edit.EditApplication(_applicationId);
-                _framerate = Convert.ToInt32(_appImager.GetParameter("FrameRate"));
-                _edit.StopEditingApplication();
-                SetConfigurationMode(Mode.Run);
+
+                DoEdit((_edit) => {
+                    _framerate = Convert.ToInt32(_appImager.GetParameter("FrameRate"));
+                });
+
                 return _framerate;
             }
             set
@@ -110,12 +107,10 @@ namespace MetriCam2.Cameras
                 {
                     return;
                 }
-                SetConfigurationMode(Mode.Edit);
-                _edit.EditApplication(_applicationId);
-                _appImager.SetParameter("FrameRate", value.ToString());
-                _app.Save();
-                _edit.StopEditingApplication();
-                SetConfigurationMode(Mode.Run);
+
+                DoEdit((_edit) => {
+                    _appImager.SetParameter("FrameRate", value.ToString());
+                });
             }
         }
         private RangeParamDesc<int> FramerateDesc
@@ -145,11 +140,11 @@ namespace MetriCam2.Cameras
                 {
                     return -1;
                 }
-                SetConfigurationMode(Mode.Edit);
-                _edit.EditApplication(_applicationId);
-                _exposureTime = Convert.ToInt32(_appImager.GetParameter("ExposureTime"));
-                _edit.StopEditingApplication();
-                SetConfigurationMode(Mode.Run);
+
+                DoEdit((_edit) => {
+                    _exposureTime = Convert.ToInt32(_appImager.GetParameter("ExposureTime"));
+                });
+
                 return _exposureTime;
             }
             set
@@ -159,12 +154,10 @@ namespace MetriCam2.Cameras
                 {
                     return;
                 }
-                SetConfigurationMode(Mode.Edit);
-                _edit.EditApplication(_applicationId);
-                _appImager.SetParameter("ExposureTime", value.ToString());
-                _app.Save();
-                _edit.StopEditingApplication();
-                SetConfigurationMode(Mode.Run);
+
+                DoEdit((_edit) => {
+                    _appImager.SetParameter("ExposureTime", value.ToString());
+                });
             }
         }
         private RangeParamDesc<int> IntegrationTimeDesc
@@ -185,7 +178,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// IP Address of camera.
         /// </summary>
-        public string CameraIP { get; set; }
+        public string CameraIP { get; set; } = null;
         private ParamDesc<String> CameraIPDesc
         {
             get
@@ -243,7 +236,7 @@ namespace MetriCam2.Cameras
 
         #region Private Fields
         private Thread _updateThread;
-        private bool _cancelUpdateThread = false;
+        private CancellationTokenSource _cancelUpdateThreadSource = new CancellationTokenSource();
         private object _frontLock = new object();
         private object _backLock = new object();
         private AutoResetEvent _frameAvailable = new AutoResetEvent(false);
@@ -280,7 +273,6 @@ namespace MetriCam2.Cameras
         public O3D3xx(int applicationId = -1)
                 : base(modelName: "O3D3xx")
         {
-            CameraIP = "192.168.1.172";
             XMLRPCPort = 80;
             ImageOutputPort = 50010;
             _session = XmlRpcProxyGen.Create<ISession>();
@@ -325,6 +317,11 @@ namespace MetriCam2.Cameras
         /// <seealso cref="Camera.Connect"/>
         protected override void ConnectImpl()
         {
+            if(String.IsNullOrWhiteSpace(CameraIP))
+            {
+                throw new ConnectionFailedException($"{Name}: No camera IP specified");
+            }
+
             SetConfigurationMode(Mode.Edit);
             string protocolVersion = _device.GetParameter("PcicProtocolVersion");
             if (_applicationId == -1)
@@ -384,7 +381,7 @@ namespace MetriCam2.Cameras
 
         private void UpdateLoop()
         {
-            while (!_cancelUpdateThread)
+            while (!_cancelUpdateThreadSource.Token.IsCancellationRequested)
             {
                 byte[] hdrBuffer = new byte[16];
                 Receive(_clientSocket, hdrBuffer, 0, 16, 300000);
@@ -402,7 +399,7 @@ namespace MetriCam2.Cameras
                 }
             } // while
 
-            _cancelUpdateThread = false;
+            _cancelUpdateThreadSource = new CancellationTokenSource();
         }
 
         /// <summary>
@@ -423,7 +420,7 @@ namespace MetriCam2.Cameras
         /// <seealso cref="Camera.Disconnect"/>
         protected override void DisconnectImpl()
         {
-            _cancelUpdateThread = true;
+            _cancelUpdateThreadSource.Cancel();
             _updateThread.Join();
 
             _clientSocket.Shutdown(SocketShutdown.Both);
@@ -555,12 +552,12 @@ namespace MetriCam2.Cameras
             {
                 case Mode.Edit:
                     SetUrls();
-                    res = _session.SetOperatingMode(GetValue(Mode.Edit));
+                    res = _session.SetOperatingMode(((int)Mode.Edit).ToString());
                     break;
 
                 case Mode.Run:
                 default:
-                    res = _session.SetOperatingMode(GetValue(Mode.Run));
+                    res = _session.SetOperatingMode(((int)Mode.Run).ToString());
                     res = _session.CancelSession();
                     break;
             }
@@ -677,11 +674,6 @@ namespace MetriCam2.Cameras
             SendARP(address, 0, mac, ref length);
             string macAddress = BitConverter.ToString(mac, 0, length);
             return macAddress;
-        }
-
-        private string GetValue(Mode mode)
-        {
-            return ((int)mode).ToString();
         }
 
         private FloatCameraImage CalcAmplidueImge()
@@ -823,6 +815,26 @@ namespace MetriCam2.Cameras
             // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
             // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
             return 44 + image * (_height * _width * 2 + 36);
+        }
+
+        private void DoEdit(Action<IEdit> editAction)
+        {
+            if(Mode.Run != _configurationMode)
+            {
+                throw new InvalidOperationException($"{Name}: can't edit settings unless camera is in Run Mode");
+            }
+            SetConfigurationMode(Mode.Edit);
+            try
+            {
+                _edit.EditApplication(_applicationId);
+                editAction(_edit);
+                _app.Save();
+            }
+            finally
+            {
+                _edit.StopEditingApplication();
+                SetConfigurationMode(Mode.Run);
+            }
         }
         #endregion
     }
