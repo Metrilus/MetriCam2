@@ -2,11 +2,6 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using CookComputing.XmlRpc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras.IFM
 {

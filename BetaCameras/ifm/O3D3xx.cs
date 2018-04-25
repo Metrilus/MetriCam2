@@ -32,6 +32,53 @@ namespace MetriCam2.Cameras
 
         #region Public Properties
 
+        #region 100kMode
+        /// <summary>
+        /// Control pixel binning.
+        /// </summary>
+        public bool Resolution100k
+        {
+            get
+            {
+                if (!IsConnected)
+                {
+                    return false;
+                }
+
+                int imageResolution = -1;
+                DoEdit((_edit) => {
+                    imageResolution = Convert.ToInt32(_appImager.GetParameter("Resolution"));
+                });
+
+                // a Resolution value of 1 means binning is disabled (i.e. 100k pixels resolution)
+                return (1 == imageResolution);
+            }
+            set
+            {
+                if (!IsConnected)
+                {
+                    return;
+                }
+
+                DoEdit((_edit) => {
+                    string res = _appImager.SetParameter("Resolution", (value ? "1" : "0"));
+                    GetResolution();
+                });
+            }
+        }
+        private ParamDesc<bool> Resolution100kDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "100k px resolution";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
+        #endregion
+
         #region Frequency Channel
         /// <summary>
         /// Frequency channel
@@ -354,12 +401,7 @@ namespace MetriCam2.Cameras
                 }
             }
 
-            int clippingTop = Convert.ToInt32(_appImager.GetParameter("ClippingTop"));
-            int clippingBottom = Convert.ToInt32(_appImager.GetParameter("ClippingBottom"));
-            int clippingLeft = Convert.ToInt32(_appImager.GetParameter("ClippingLeft"));
-            int clippingRight = Convert.ToInt32(_appImager.GetParameter("ClippingRight"));
-            _width = clippingRight - clippingLeft + 1; // indices are zero based --> +1
-            _height = clippingBottom - clippingTop + 1;
+            GetResolution();
 
             _app.Save();
             _edit.StopEditingApplication();
@@ -835,6 +877,16 @@ namespace MetriCam2.Cameras
                 _edit.StopEditingApplication();
                 SetConfigurationMode(Mode.Run);
             }
+        }
+
+        private void GetResolution()
+        {
+            int clippingTop = Convert.ToInt32(_appImager.GetParameter("ClippingTop"));
+            int clippingBottom = Convert.ToInt32(_appImager.GetParameter("ClippingBottom"));
+            int clippingLeft = Convert.ToInt32(_appImager.GetParameter("ClippingLeft"));
+            int clippingRight = Convert.ToInt32(_appImager.GetParameter("ClippingRight"));
+            _width = clippingRight - clippingLeft + 1; // indices are zero based --> +1
+            _height = clippingBottom - clippingTop + 1;
         }
         #endregion
     }
