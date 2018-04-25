@@ -114,11 +114,12 @@ namespace MetriCam2.Cameras
             _camera.Open();
             _camera.StreamGrabber.Start();
 
-            ActivateChannel(ChannelNames.Color);
+            AddToActiveChannels(ChannelNames.Color);
         }
 
         protected override void DisconnectImpl()
         {
+            _camera.CameraOpened -= Configuration.AcquireSingleFrame;
             _camera.StreamGrabber.Stop();
             _camera.Close();
         }
