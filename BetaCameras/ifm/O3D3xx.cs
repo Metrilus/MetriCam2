@@ -294,7 +294,9 @@ namespace MetriCam2.Cameras
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
         private int _triggeredMode = 1;
-        private int _applicationId;
+        private int _applicationId = -1;
+        private bool _cleanUpApplication = false;
+
         private int _width;
         private int _height;
 
@@ -373,6 +375,7 @@ namespace MetriCam2.Cameras
             string protocolVersion = _device.GetParameter("PcicProtocolVersion");
             if (_applicationId == -1)
             {
+                _cleanUpApplication = true;
                 for (int i = 1; i < 33; i++)
                 {
                     try
@@ -397,6 +400,8 @@ namespace MetriCam2.Cameras
                 }
                 catch (Exception)
                 {
+                    _edit.StopEditingApplication();
+                    SetConfigurationMode(Mode.Run);
                     ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidApplicationId", _applicationId.ToString());
                 }
             }
@@ -467,10 +472,14 @@ namespace MetriCam2.Cameras
 
             _clientSocket.Shutdown(SocketShutdown.Both);
             _clientSocket.Disconnect(true);
-            SetConfigurationMode(Mode.Edit);
-            _edit.DeleteApplication(_applicationId);
-            _device.Save();
-            SetConfigurationMode(Mode.Run);
+
+            if(_cleanUpApplication)
+            {
+                SetConfigurationMode(Mode.Edit);
+                _edit.DeleteApplication(_applicationId);
+                _device.Save();
+                SetConfigurationMode(Mode.Run);
+            }
         }
 
         /// <summary>
