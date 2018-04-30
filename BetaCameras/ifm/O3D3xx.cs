@@ -433,19 +433,26 @@ namespace MetriCam2.Cameras
         {
             while (!_cancelUpdateThreadSource.Token.IsCancellationRequested)
             {
-                byte[] hdrBuffer = new byte[16];
-                Receive(_clientSocket, hdrBuffer, 0, 16, 300000);
-                var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
-                Int32.TryParse(str, out int frameSize);
-
-                lock (_backLock)
+                try
                 {
-                    if (_backBuffer.Length != frameSize)
+                    byte[] hdrBuffer = new byte[16];
+                    Receive(_clientSocket, hdrBuffer, 0, 16, 300000);
+                    var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
+                    Int32.TryParse(str, out int frameSize);
+
+                    lock (_backLock)
                     {
-                        _backBuffer = new byte[frameSize];
+                        if (_backBuffer.Length != frameSize)
+                        {
+                            _backBuffer = new byte[frameSize];
+                        }
+                        Receive(_clientSocket, _backBuffer, 0, frameSize, 300000);
+                        _frameAvailable.Set();
                     }
-                    Receive(_clientSocket, _backBuffer, 0, frameSize, 300000);
-                    _frameAvailable.Set();
+                }
+                catch(SocketException e)
+                {
+                    log.Error($"{Name}: Socket Exception: {e.Message}");
                 }
             } // while
 
@@ -471,6 +478,7 @@ namespace MetriCam2.Cameras
         protected override void DisconnectImpl()
         {
             _cancelUpdateThreadSource.Cancel();
+            _clientSocket.Close();
             _updateThread.Join();
 
             _clientSocket.Shutdown(SocketShutdown.Both);
