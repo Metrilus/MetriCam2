@@ -5,6 +5,12 @@ using CookComputing.XmlRpc;
 
 namespace MetriCam2.Cameras.IFM
 {
+    public struct Application
+    {
+        public int Index;
+        public string Name;
+        public string Description;
+    }
 
     public interface ISession : IXmlRpcProxy
     {
@@ -78,11 +84,17 @@ namespace MetriCam2.Cameras.IFM
     {
         [XmlRpcMethod("setParameter")]
         string SetParameter(string[] param);
+
+        [XmlRpcMethod("reboot")]
+        string Reboot(int mode);
     }
 
     public interface IServer : IXmlRpcProxy
     {
         [XmlRpcMethod("requestSession")]
         string RequestSession(string param0, string param1);
+
+        [XmlRpcMethod("getApplicationList")]
+        Application[] GetApplicationList();
     }
 }
