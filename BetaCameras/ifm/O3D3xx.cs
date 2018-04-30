@@ -460,8 +460,9 @@ namespace MetriCam2.Cameras
 
                     if(consecutiveFailCounter >= _maxConsecutiveReceiveFails)
                     {
-                        log.Error($"{Name}: Receive failt more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.");
-                        DisconnectImpl();
+                        log.Error($"{Name}: Receive failed more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.");
+                        CloseSocket();
+                        CleanUpApplication();
                         break;
                     }
 
@@ -493,19 +494,27 @@ namespace MetriCam2.Cameras
         protected override void DisconnectImpl()
         {
             _cancelUpdateThreadSource.Cancel();
-            _clientSocket.Close();
+            CloseSocket();
             _updateThread.Join();
+            CleanUpApplication();
+        }
 
-            _clientSocket.Shutdown(SocketShutdown.Both);
-            _clientSocket.Disconnect(true);
-
-            if(_cleanUpApplication)
+        private void CleanUpApplication()
+        {
+            if (_cleanUpApplication)
             {
                 SetConfigurationMode(Mode.Edit);
                 _edit.DeleteApplication(_applicationId);
                 _device.Save();
                 SetConfigurationMode(Mode.Run);
             }
+        }
+
+        private void CloseSocket()
+        {
+            _clientSocket.Shutdown(SocketShutdown.Both);
+            _clientSocket.Disconnect(true);
+            _clientSocket.Close();
         }
 
         /// <summary>
@@ -589,6 +598,8 @@ namespace MetriCam2.Cameras
         {
             int startTickCount = Environment.TickCount;
             int received = 0;  // how many bytes is already received
+            //socket.ReceiveTimeout = timeout;
+
             do
             {
                 if (Environment.TickCount > startTickCount + timeout)
@@ -711,6 +722,7 @@ namespace MetriCam2.Cameras
                     }
                 }
             }
+
             return s;
         }
 
