@@ -74,7 +74,7 @@ namespace MetriCam2.Cameras
             get
             {
                 ParamDesc<bool> res = new ParamDesc<bool>();
-                res.Description = "100k px resolution";
+                res.Description = "100k resolution (352x264px)";
                 res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
                 res.WritableWhen = ParamDesc.ConnectionStates.Connected;
                 return res;
@@ -293,6 +293,8 @@ namespace MetriCam2.Cameras
         private byte[] _backBuffer = new byte[0];
         private byte[] _frontBuffer = new byte[0];
         private const float _scalingFactor = 1.0f / 1000.0f; // All units in mm, thus we need to divide by 1000 to obtain meters
+        private const int _maxApplications = 32;
+        private const int _maxConsecutiveReceiveFails = 3;
 
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
@@ -320,7 +322,7 @@ namespace MetriCam2.Cameras
         /// </summary>
         /// <param name="applicationId">
         /// ID of the camera application that will be loaded during connect.
-        /// Warning: Omitting this parameter deletes all applications from the camera and creates a new application with default MetriCam 2 parameter values.
+        /// Warning: Omitting this parameter creates a new application with default MetriCam 2 parameter values.
         /// </param>
         public O3D3xx(int applicationId = -1)
                 : base(modelName: "O3D3xx")
@@ -378,16 +380,15 @@ namespace MetriCam2.Cameras
             string protocolVersion = _device.GetParameter("PcicProtocolVersion");
             if (_applicationId == -1)
             {
-                _cleanUpApplication = true;
-                for (int i = 1; i < 33; i++)
+                Application[] apps = _server.GetApplicationList();
+                if (apps.Length == _maxApplications)
                 {
-                    try
-                    {
-                        _edit.DeleteApplication(i);
-                        log.Debug($"Deleted application: {i}");
-                    }
-                    catch { /* empty */ }
+                    throw new InvalidOperationException(
+                        $"{Name}: Maximum number of applications on the device reached. " +
+                        $"Please either delete one of them or specify one for MetriCam2 to use");
                 }
+
+                _cleanUpApplication = true;
                 _applicationId = _edit.CreateApplication();
                 _edit.EditApplication(_applicationId);
                 _triggeredMode = 1;
@@ -431,6 +432,8 @@ namespace MetriCam2.Cameras
 
         private void UpdateLoop()
         {
+            int consecutiveFailCounter = 0;
+
             while (!_cancelUpdateThreadSource.Token.IsCancellationRequested)
             {
                 try
@@ -452,8 +455,20 @@ namespace MetriCam2.Cameras
                 }
                 catch(SocketException e)
                 {
+                    consecutiveFailCounter++;
                     log.Error($"{Name}: Socket Exception: {e.Message}");
+
+                    if(consecutiveFailCounter >= _maxConsecutiveReceiveFails)
+                    {
+                        log.Error($"{Name}: Receive failt more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.");
+                        DisconnectImpl();
+                        break;
+                    }
+
+                    continue;
                 }
+
+                consecutiveFailCounter = 0;
             } // while
 
             _cancelUpdateThreadSource = new CancellationTokenSource();
