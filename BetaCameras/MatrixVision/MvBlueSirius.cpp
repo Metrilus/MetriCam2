@@ -49,10 +49,10 @@ namespace MetriCam2
 			Channels->Clear();
 			Channels->Add(cr->RegisterChannel(ChannelNames::Color));
 			Channels->Add(cr->RegisterChannel(ChannelNames::Distance));
+			Channels->Add(cr->RegisterChannel(ChannelNames::ZImage));
 			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Left, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Right, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::DepthMapped, FloatCameraImage::typeid));
-			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::DepthRaw, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::DistanceMapped, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::PointCloudMapped, Point3fCameraImage::typeid));
 		}
@@ -134,9 +134,9 @@ namespace MetriCam2
 
 			ActivateChannel(ChannelNames::Color);
 			ActivateChannel(ChannelNames::Distance);
+			ActivateChannel(ChannelNames::ZImage);
 			ActivateChannel((String^)CustomChannelNames::DistanceMapped);
 			ActivateChannel((String^)CustomChannelNames::DepthMapped);
-			ActivateChannel((String^)CustomChannelNames::DepthRaw);
 			ActivateChannel((String^)CustomChannelNames::DistanceMapped);
 			ActivateChannel((String^)CustomChannelNames::PointCloudMapped);
 			ActivateChannel(ChannelNames::Left);
@@ -271,7 +271,7 @@ namespace MetriCam2
 				}
 				return gcnew FloatCameraImage(_currentDepthMappedImage);
 			}
-			if (CustomChannelNames::DepthRaw == channelName)
+			if (ChannelNames::ZImage == channelName)
 			{
 				if (nullptr == _currentDepthRawImage)
 				{

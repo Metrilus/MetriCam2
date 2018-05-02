@@ -31,7 +31,7 @@ namespace MetriCam2
 					// The raw depth buffer is not mapped with the color nor
 					// the flow buffer. Therefore it holds more depth information
 					// as the mapped depth buffer.
-					static const String^ DepthRaw = "DepthRaw";
+					//static const String^ DepthRaw = "DepthRaw"; -> now called ZImage
 
 					// Distance image computed from DepthMapped data
 					static const String^ DistanceMapped = "DistanceMapped";
