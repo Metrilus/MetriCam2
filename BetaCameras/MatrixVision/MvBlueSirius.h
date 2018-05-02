@@ -24,7 +24,7 @@ namespace MetriCam2
 				public:
 					// Depth buffer.
 					// Pixel mapped (color, flow, depth).
-					static const String^ DepthMapped = "DepthMapped";
+					static const String^ ZMapped = "ZMapped";
 
 					// Raw depth buffer.
 					// Not pixel mapped.
