@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using MetriPrimitives.Data;
 
 namespace MetriCam2.Samples.MinimalSample
 {
@@ -22,10 +21,10 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("------------------------------------------");
 
             // Create camera object
-            O3D3xx camera;
+            Camera camera;
             try
             {
-                camera = new O3D3xx();
+                camera = new Kinect2();
             }
             catch (Exception e)
             {
@@ -38,28 +37,34 @@ namespace MetriCam2.Samples.MinimalSample
 
             // Connect, get one frame, disconnect
             Console.WriteLine("Connecting camera");
-            camera.CameraIP = "192.168.1.232";
             camera.Connect();
-            //camera.Resolution100k = true;
 
-            bool breakLoop = false;
+            Console.WriteLine("Fetching one frame");
+            camera.Update();
 
-            while(true)
+            try
             {
-                Console.WriteLine("Fetching one frame");
-                camera.Update();
-                FloatCameraImage fcImg = (FloatCameraImage)camera.CalcChannel(ChannelNames.Distance);
-                FloatImage fImg = new FloatImage(ref fcImg);
-                string res = fImg.ShowInDebug;
-
-                if (breakLoop)
-                    break;
+                Console.WriteLine("Accessing color data");
+                ColorCameraImage img = (ColorCameraImage)camera.CalcChannel(ChannelNames.Color);
+                Bitmap rgbBitmapData = img.ToBitmap();
             }
-            
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(String.Format("Error getting channel {0}: {1}.", ChannelNames.Color, ex.Message));
+            }
 
+            try
+            {
+                Console.WriteLine("Accessing distance data");
+                FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.Distance);
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(String.Format("Error getting channel {0}: {1}.", ChannelNames.Distance, ex.Message));
+            }
 
             Console.WriteLine("Disconnecting camera");
-             camera.Disconnect();
+            camera.Disconnect();
 
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();
