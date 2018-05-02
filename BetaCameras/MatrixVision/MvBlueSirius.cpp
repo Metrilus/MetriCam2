@@ -22,8 +22,8 @@ namespace MetriCam2
 
 			_currentMasterImage = nullptr;
 			_currentSlaveImage = nullptr;
-			_currentDepthMappedImage = nullptr;
-			_currentDepthRawImage = nullptr;
+			_currentZImageMapped = nullptr;
+			_currentZImage = nullptr;
 			_currentDistanceImage = nullptr;
 			_currentDistanceImageMapped = nullptr;
 			_currentPointCloud = nullptr;
@@ -85,8 +85,10 @@ namespace MetriCam2
 					if (IsNullOrWhiteSpace(CSerial) || CSerial == tmpSerial)
 					{
 						this->SerialNumber = gcnew String(tmpSerial);
-						if(!IsNullOrWhiteSpace(CSerial))
+						if (!IsNullOrWhiteSpace(CSerial))
+						{
 							delete CSerial;
+						}
 						break;
 					}
 				}
@@ -135,7 +137,6 @@ namespace MetriCam2
 			ActivateChannel(ChannelNames::Color);
 			ActivateChannel(ChannelNames::Distance);
 			ActivateChannel(ChannelNames::ZImage);
-			ActivateChannel((String^)CustomChannelNames::DistanceMapped);
 			ActivateChannel((String^)CustomChannelNames::ZMapped);
 			ActivateChannel((String^)CustomChannelNames::DistanceMapped);
 			ActivateChannel((String^)CustomChannelNames::PointCloudMapped);
@@ -174,71 +175,69 @@ namespace MetriCam2
 			int dropped = 0;
 
 			// request a new buffer object
-			if (MV6D_DeviceResultWaitFor(_h6D, &requestBuffer, &dropped, timeout) == rcOk)
-			{
-				System::Threading::Monitor::Enter(_updateLock);
-
-				// get color image
-				if (requestBuffer->colorMapped.pData)
-				{
-					_color->Width = requestBuffer->colorMapped.iWidth;
-					_color->Height = requestBuffer->colorMapped.iHeight;
-					_color->CopyColorData(requestBuffer->colorMapped);
-				}
-
-				// get master raw image
-				if (requestBuffer->rawMaster.pData)
-				{
-					_currentMasterImage = nullptr;
-					_master->Width = requestBuffer->rawMaster.iWidth;
-					_master->Height = requestBuffer->rawMaster.iHeight;
-					_master->CopyGrayData(requestBuffer->rawMaster);
-				}
-
-				// get slave raw image
-				if (requestBuffer->rawSlave1.pData)
-				{
-					_currentSlaveImage = nullptr;
-					_slave->Width = requestBuffer->rawSlave1.iWidth;
-					_slave->Height = requestBuffer->rawSlave1.iHeight;
-					_slave->CopyGrayData(requestBuffer->rawSlave1);
-				}
-
-				// get depth mapped image
-				if (requestBuffer->depthMapped.pData)
-				{
-					_currentDepthMappedImage = nullptr;
-					_depthMapped->Width = requestBuffer->depthMapped.iWidth;
-					_depthMapped->Height = requestBuffer->depthMapped.iHeight;
-					_depthMapped->CopyDepthData(requestBuffer->depthMapped);
-				}
-
-				// get depth raw image
-				if (requestBuffer->depthRaw.pData)
-				{
-					_currentDistanceImage = nullptr;
-					_currentDistanceImageMapped = nullptr;
-					_currentPointCloud = nullptr;
-					_currentPointCloudMapped = nullptr;
-					_currentDepthRawImage = nullptr;
-
-					_depthRaw->Width = requestBuffer->depthRaw.iWidth;
-					_depthRaw->Height= requestBuffer->depthRaw.iHeight;
-					_depthRaw->CopyDepthData(requestBuffer->depthRaw);
-				}
-
-				_focalLength = (float)requestBuffer->focalLength;
-
-				System::Threading::Monitor::Exit(_updateLock);
-
-				// unlock request buffer
-				MV6D_ResultCode result = MV6D_UnlockRequest(_h6D, requestBuffer);
-				CheckResult(result, InvalidOperationException::typeid, 14);
-			}
-			else
+			if (MV6D_DeviceResultWaitFor(_h6D, &requestBuffer, &dropped, timeout) != rcOk)
 			{
 				throw gcnew MetriCam2::Exceptions::ImageAcquisitionFailedException("No image data received in time");
 			}
+
+			System::Threading::Monitor::Enter(_updateLock);
+
+			// get color image
+			if (requestBuffer->colorMapped.pData)
+			{
+				_color->Width = requestBuffer->colorMapped.iWidth;
+				_color->Height = requestBuffer->colorMapped.iHeight;
+				_color->CopyColorData(requestBuffer->colorMapped);
+			}
+
+			// get master raw image
+			if (requestBuffer->rawMaster.pData)
+			{
+				_currentMasterImage = nullptr;
+				_master->Width = requestBuffer->rawMaster.iWidth;
+				_master->Height = requestBuffer->rawMaster.iHeight;
+				_master->CopyGrayData(requestBuffer->rawMaster);
+			}
+
+			// get slave raw image
+			if (requestBuffer->rawSlave1.pData)
+			{
+				_currentSlaveImage = nullptr;
+				_slave->Width = requestBuffer->rawSlave1.iWidth;
+				_slave->Height = requestBuffer->rawSlave1.iHeight;
+				_slave->CopyGrayData(requestBuffer->rawSlave1);
+			}
+
+			// get depth mapped image
+			if (requestBuffer->depthMapped.pData)
+			{
+				_currentZImageMapped = nullptr;
+				_depthMapped->Width = requestBuffer->depthMapped.iWidth;
+				_depthMapped->Height = requestBuffer->depthMapped.iHeight;
+				_depthMapped->CopyDepthData(requestBuffer->depthMapped);
+			}
+
+			// get depth raw image
+			if (requestBuffer->depthRaw.pData)
+			{
+				_currentDistanceImage = nullptr;
+				_currentDistanceImageMapped = nullptr;
+				_currentPointCloud = nullptr;
+				_currentPointCloudMapped = nullptr;
+				_currentZImage = nullptr;
+
+				_depthRaw->Width = requestBuffer->depthRaw.iWidth;
+				_depthRaw->Height= requestBuffer->depthRaw.iHeight;
+				_depthRaw->CopyDepthData(requestBuffer->depthRaw);
+			}
+
+			_focalLength = (float)requestBuffer->focalLength;
+
+			System::Threading::Monitor::Exit(_updateLock);
+
+			// unlock request buffer
+			MV6D_ResultCode result = MV6D_UnlockRequest(_h6D, requestBuffer);
+			CheckResult(result, InvalidOperationException::typeid, 14);
 		}
 
 		CameraImage^ MvBlueSirius::CalcChannelImpl(String^ channelName)
@@ -265,26 +264,26 @@ namespace MetriCam2
 			}
 			if (CustomChannelNames::ZMapped == channelName)
 			{
-				if (nullptr == _currentDepthMappedImage)
+				if (nullptr == _currentZImageMapped)
 				{
-					_currentDepthMappedImage = CalcDepthImage(_depthMapped);
+					_currentZImageMapped = CalcDepthImage(_depthMapped);
 				}
-				return gcnew FloatCameraImage(_currentDepthMappedImage);
+				return gcnew FloatCameraImage(_currentZImageMapped);
 			}
 			if (ChannelNames::ZImage == channelName)
 			{
-				if (nullptr == _currentDepthRawImage)
+				if (nullptr == _currentZImage)
 				{
-					_currentDepthRawImage = CalcDepthImage(_depthRaw);
+					_currentZImage = CalcDepthImage(_depthRaw);
 				}
-				return gcnew FloatCameraImage(_currentDepthRawImage);
+				return gcnew FloatCameraImage(_currentZImage);
 			}
 			if (CustomChannelNames::PointCloudMapped == channelName)
 			{
 				if (nullptr == _currentPointCloudMapped)
 				{
-					FloatCameraImage^ depthImg = (FloatCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::ZMapped);
-					_currentPointCloudMapped = CalcPointCloud(depthImg);
+					FloatCameraImage^ zImageMapped = (FloatCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::ZMapped);
+					_currentPointCloudMapped = CalcPointCloud(zImageMapped);
 				}
 				return gcnew Point3fCameraImage(_currentPointCloudMapped);
 			}
@@ -292,8 +291,8 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentDistanceImageMapped)
 				{
-					Point3fCameraImage^ pts3D = (Point3fCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::PointCloudMapped);
-					_currentDistanceImageMapped = CalcDistances(pts3D);
+					Point3fCameraImage^ pts3DMapped = (Point3fCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::PointCloudMapped);
+					_currentDistanceImageMapped = CalcDistances(pts3DMapped);
 				}
 				return gcnew FloatCameraImage(_currentDistanceImageMapped);
 			}
@@ -310,8 +309,8 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentPointCloud)
 				{
-					FloatCameraImage^ depthImg = (FloatCameraImage^)CalcChannelImpl(ChannelNames::ZImage);
-					_currentPointCloud = CalcPointCloud(depthImg);
+					FloatCameraImage^ zImage = (FloatCameraImage^)CalcChannelImpl(ChannelNames::ZImage);
+					_currentPointCloud = CalcPointCloud(zImage);
 				}
 				return gcnew Point3fCameraImage(_currentPointCloud);
 			}
@@ -323,7 +322,7 @@ namespace MetriCam2
 		IProjectiveTransformation^ MvBlueSirius::GetIntrinsics(String^ channelName)
 		{
 			if (MetriCam2::ChannelNames::Distance == channelName
-			|| MetriCam2::ChannelNames::ZImage == channelName)
+				|| MetriCam2::ChannelNames::ZImage == channelName)
 			{
 				return gcnew ProjectiveTransformationZhang(_depthRaw->Width, _depthRaw->Height, FocalLength, FocalLength, _depthRaw->Width / 2.0f, _depthRaw->Height / 2.0f, 0, 0, 0, 0, 0);
 			}

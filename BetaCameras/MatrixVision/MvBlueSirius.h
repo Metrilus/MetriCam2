@@ -26,17 +26,10 @@ namespace MetriCam2
 					// Pixel mapped (color, flow, depth).
 					static const String^ ZMapped = "ZMapped";
 
-					// Raw depth buffer.
-					// Not pixel mapped.
-					// The raw depth buffer is not mapped with the color nor
-					// the flow buffer. Therefore it holds more depth information
-					// as the mapped depth buffer.
-					//static const String^ DepthRaw = "DepthRaw"; -> now called ZImage
-
-					// Distance image computed from DepthMapped data
+					// Distance image computed from ZMapped data
 					static const String^ DistanceMapped = "DistanceMapped";
 
-					// Point cloud computed from DepthMapped data
+					// Point cloud computed from ZMapped data
 					static const String^ PointCloudMapped = "PointCloudMapped";
 			};
 
@@ -119,8 +112,8 @@ namespace MetriCam2
 
 			FloatCameraImage^ _currentMasterImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentSlaveImage; // caches computed FloatCameraImage
-			FloatCameraImage^ _currentDepthMappedImage; // caches computed FloatCameraImage
-			FloatCameraImage^ _currentDepthRawImage; // caches computed FloatCameraImage
+			FloatCameraImage^ _currentZImageMapped; // caches computed FloatCameraImage
+			FloatCameraImage^ _currentZImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentDistanceImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentDistanceImageMapped; // caches computed FloatCameraImage
 			Point3fCameraImage^ _currentPointCloud; // caches computed Point3fCameraImage
