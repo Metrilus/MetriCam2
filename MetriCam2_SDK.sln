@@ -43,7 +43,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F8B72304-05F7-411A-8A32-8D12BB5BA37E}"
 	ProjectSection(SolutionItems) = preProject
 		.licenseheader = .licenseheader
-		Jenkinsfile.groovy = Jenkinsfile.groovy
+		Scripts\Jenkinsfile.groovy = Scripts\Jenkinsfile.groovy
 		MetrilusReferencesVersions.props = MetrilusReferencesVersions.props
 		Scripts\Set Assembly-Info Version.cmd = Scripts\Set Assembly-Info Version.cmd
 		SolutionAssemblyInfo.cs = SolutionAssemblyInfo.cs

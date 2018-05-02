@@ -1,5 +1,9 @@
 #!groovy?
 
+Properties properties = new Properties();
+File propFile = new File('version.properties')
+properties.load(propFile.newDataInputStream())
+
 pipeline {
     agent any
     environment {
@@ -39,10 +43,7 @@ pipeline {
                     %REFERENCE_CHECKER% -j "%JOB_NAME%" "%WORKSPACE%"
                     '''
 
-                bat """
-                    @echo Updating Assembly-Info ...
-                    \"Scripts\\Set Assembly-Info Version.cmd\" \"SolutionAssemblyInfo.cs\" ${releaseVersion}
-                    """
+                bat "\"Scripts\\Set Assembly-Info Version.cmd\" \"SolutionAssemblyInfo.cs\" ${releaseVersion}"
             }
         }
 
@@ -219,7 +220,7 @@ def setBuildStatus(String message, String state, String context, String sha) {
 def getReleaseVersion(String branchName) {
     def releaseRevision = currentBuild.number.toString();
     return "stable" == branchName
-        ? "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_BUILD}.${releaseRevision}"
+        ? "${properties.VERSION_MAJOR}.${properties.VERSION_MINOR}.${properties.VERSION_BUILD}.${releaseRevision}"
         : "0.0.0.${releaseRevision}";
 }
 
