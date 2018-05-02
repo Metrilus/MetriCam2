@@ -66,6 +66,9 @@ namespace MetriCam2.Cameras.IFM
 
     public interface IEdit : IXmlRpcProxy
     {
+        [XmlRpcMethod("setParameter")]
+        string SetParameter(string parameter, string value);
+
         [XmlRpcMethod("editApplication")]
         string EditApplication(int param);
 

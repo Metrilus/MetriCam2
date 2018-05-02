@@ -295,12 +295,12 @@ namespace MetriCam2.Cameras
         private const float _scalingFactor = 1.0f / 1000.0f; // All units in mm, thus we need to divide by 1000 to obtain meters
         private const int _maxApplications = 32;
         private const int _maxConsecutiveReceiveFails = 3;
+        private const string _applicationName = "_MetriCam2";
 
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
         private int _triggeredMode = 1;
         private int _applicationId = -1;
-        private bool _cleanUpApplication = false;
 
         private int _width;
         private int _height;
@@ -381,17 +381,19 @@ namespace MetriCam2.Cameras
             if (_applicationId == -1)
             {
                 Application[] apps = _server.GetApplicationList();
-                if (apps.Length == _maxApplications)
+                int deleted = CleanupApplications(apps);
+                if (apps.Length - deleted == _maxApplications)
                 {
                     throw new InvalidOperationException(
                         $"{Name}: Maximum number of applications on the device reached. " +
                         $"Please either delete one of them or specify one for MetriCam2 to use");
                 }
 
-                _cleanUpApplication = true;
                 _applicationId = _edit.CreateApplication();
                 _edit.EditApplication(_applicationId);
                 _triggeredMode = 1;
+                _app.SetParameter("Name", _applicationName);
+                _app.SetParameter("Description", "MetriCam2 default application.");
                 _app.SetParameter("TriggerMode", _triggeredMode.ToString());
                 _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
                 _appImager.SetParameter("FrameRate", _framerate.ToString());
@@ -430,6 +432,20 @@ namespace MetriCam2.Cameras
             _updateThread.Start();
         }
 
+        private int CleanupApplications(Application[] apps)
+        {
+            int deleted = 0;
+            foreach(Application app in apps)
+            {
+                if(app.Name == _applicationName)
+                {
+                    _edit.DeleteApplication(app.Index);
+                    deleted++;
+                }
+            }
+            return deleted;
+        }
+
         private void UpdateLoop()
         {
             int consecutiveFailCounter = 0;
@@ -462,7 +478,6 @@ namespace MetriCam2.Cameras
                     {
                         log.Error($"{Name}: Receive failed more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.");
                         CloseSocket();
-                        CleanUpApplication();
                         break;
                     }
 
@@ -496,18 +511,6 @@ namespace MetriCam2.Cameras
             _cancelUpdateThreadSource.Cancel();
             CloseSocket();
             _updateThread.Join();
-            CleanUpApplication();
-        }
-
-        private void CleanUpApplication()
-        {
-            if (_cleanUpApplication)
-            {
-                SetConfigurationMode(Mode.Edit);
-                _edit.DeleteApplication(_applicationId);
-                _device.Save();
-                SetConfigurationMode(Mode.Run);
-            }
         }
 
         private void CloseSocket()
@@ -598,7 +601,7 @@ namespace MetriCam2.Cameras
         {
             int startTickCount = Environment.TickCount;
             int received = 0;  // how many bytes is already received
-            //socket.ReceiveTimeout = timeout;
+            socket.ReceiveTimeout = 500;
 
             do
             {

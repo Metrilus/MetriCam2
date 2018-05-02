@@ -62,6 +62,14 @@
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
     </Reference>
+    <Reference Include="MetriPrimitives, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\releases\Metrilus.Framework\nightly\lib\MetriPrimitives.dll</HintPath>
+    </Reference>
+    <Reference Include="MetriPrimitivesNative, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\releases\Metrilus.Framework\nightly\lib\MetriPrimitivesNative.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -79,9 +87,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\Kinect2\Kinect2.csproj">
-      <Project>{03558646-61b1-4f4e-bf70-7a623df27095}</Project>
-      <Name>Kinect2</Name>
+    <ProjectReference Include="..\..\BetaCameras\ifm\ifm.csproj">
+      <Project>{177e27f4-7c6e-4bf7-bde2-97888ee2682c}</Project>
+      <Name>ifm</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
       <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>
