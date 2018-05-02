@@ -32,6 +32,56 @@ namespace MetriCam2.Cameras
 
         #region Public Properties
 
+        #region 100kMode
+        /// <summary>
+        /// Control pixel binning.
+        /// </summary>
+        public bool Resolution100k
+        {
+            get
+            {
+                if (!IsConnected)
+                {
+                    return false;
+                }
+
+                int imageResolution = -1;
+                DoEdit((_edit) => {
+                    imageResolution = Convert.ToInt32(_appImager.GetParameter("Resolution"));
+                });
+
+                // a Resolution value of 1 means binning is disabled (i.e. 100k pixels resolution)
+                return (1 == imageResolution);
+            }
+            set
+            {
+                if (!IsConnected)
+                {
+                    return;
+                }
+
+                DoEdit((_edit) => {
+                    string res = _appImager.SetParameter("Resolution", (value ? "1" : "0"));
+                    GetResolution();
+                });
+
+                // reset frame available to force a new frame with the correct resolution 
+                _frameAvailable.Reset();
+            }
+        }
+        private ParamDesc<bool> Resolution100kDesc
+        {
+            get
+            {
+                ParamDesc<bool> res = new ParamDesc<bool>();
+                res.Description = "100k resolution (352x264px)";
+                res.ReadableWhen = ParamDesc.ConnectionStates.Connected;
+                res.WritableWhen = ParamDesc.ConnectionStates.Connected;
+                return res;
+            }
+        }
+        #endregion
+
         #region Frequency Channel
         /// <summary>
         /// Frequency channel
@@ -243,11 +293,15 @@ namespace MetriCam2.Cameras
         private byte[] _backBuffer = new byte[0];
         private byte[] _frontBuffer = new byte[0];
         private const float _scalingFactor = 1.0f / 1000.0f; // All units in mm, thus we need to divide by 1000 to obtain meters
+        private const int _maxApplications = 32;
+        private const int _maxConsecutiveReceiveFails = 3;
+        private const string _applicationName = "_MetriCam2";
 
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
         private int _triggeredMode = 1;
-        private int _applicationId;
+        private int _applicationId = -1;
+
         private int _width;
         private int _height;
 
@@ -268,7 +322,7 @@ namespace MetriCam2.Cameras
         /// </summary>
         /// <param name="applicationId">
         /// ID of the camera application that will be loaded during connect.
-        /// Warning: Omitting this parameter deletes all applications from the camera and creates a new application with default MetriCam 2 parameter values.
+        /// Warning: Omitting this parameter creates a new application with default MetriCam 2 parameter values.
         /// </param>
         public O3D3xx(int applicationId = -1)
                 : base(modelName: "O3D3xx")
@@ -326,18 +380,20 @@ namespace MetriCam2.Cameras
             string protocolVersion = _device.GetParameter("PcicProtocolVersion");
             if (_applicationId == -1)
             {
-                for (int i = 1; i < 33; i++)
+                Application[] apps = _server.GetApplicationList();
+                int deleted = CleanupApplications(apps);
+                if (apps.Length - deleted == _maxApplications)
                 {
-                    try
-                    {
-                        _edit.DeleteApplication(i);
-                        log.Debug($"Deleted application: {i}");
-                    }
-                    catch { /* empty */ }
+                    throw new InvalidOperationException(
+                        $"{Name}: Maximum number of applications on the device reached. " +
+                        $"Please either delete one of them or specify one for MetriCam2 to use");
                 }
+
                 _applicationId = _edit.CreateApplication();
                 _edit.EditApplication(_applicationId);
                 _triggeredMode = 1;
+                _app.SetParameter("Name", _applicationName);
+                _app.SetParameter("Description", "MetriCam2 default application.");
                 _app.SetParameter("TriggerMode", _triggeredMode.ToString());
                 _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
                 _appImager.SetParameter("FrameRate", _framerate.ToString());
@@ -350,16 +406,13 @@ namespace MetriCam2.Cameras
                 }
                 catch (Exception)
                 {
+                    _edit.StopEditingApplication();
+                    SetConfigurationMode(Mode.Run);
                     ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidApplicationId", _applicationId.ToString());
                 }
             }
 
-            int clippingTop = Convert.ToInt32(_appImager.GetParameter("ClippingTop"));
-            int clippingBottom = Convert.ToInt32(_appImager.GetParameter("ClippingBottom"));
-            int clippingLeft = Convert.ToInt32(_appImager.GetParameter("ClippingLeft"));
-            int clippingRight = Convert.ToInt32(_appImager.GetParameter("ClippingRight"));
-            _width = clippingRight - clippingLeft + 1; // indices are zero based --> +1
-            _height = clippingBottom - clippingTop + 1;
+            GetResolution();
 
             _app.Save();
             _edit.StopEditingApplication();
@@ -379,24 +432,59 @@ namespace MetriCam2.Cameras
             _updateThread.Start();
         }
 
+        private int CleanupApplications(Application[] apps)
+        {
+            int deleted = 0;
+            foreach(Application app in apps)
+            {
+                if(app.Name == _applicationName)
+                {
+                    _edit.DeleteApplication(app.Index);
+                    deleted++;
+                }
+            }
+            return deleted;
+        }
+
         private void UpdateLoop()
         {
+            int consecutiveFailCounter = 0;
+
             while (!_cancelUpdateThreadSource.Token.IsCancellationRequested)
             {
-                byte[] hdrBuffer = new byte[16];
-                Receive(_clientSocket, hdrBuffer, 0, 16, 300000);
-                var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
-                Int32.TryParse(str, out int frameSize);
-
-                lock (_backLock)
+                try
                 {
-                    if (_backBuffer.Length != frameSize)
+                    byte[] hdrBuffer = new byte[16];
+                    Receive(_clientSocket, hdrBuffer, 0, 16, 300000);
+                    var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
+                    Int32.TryParse(str, out int frameSize);
+
+                    lock (_backLock)
                     {
-                        _backBuffer = new byte[frameSize];
+                        if (_backBuffer.Length != frameSize)
+                        {
+                            _backBuffer = new byte[frameSize];
+                        }
+                        Receive(_clientSocket, _backBuffer, 0, frameSize, 300000);
+                        _frameAvailable.Set();
                     }
-                    Receive(_clientSocket, _backBuffer, 0, frameSize, 300000);
-                    _frameAvailable.Set();
                 }
+                catch(SocketException e)
+                {
+                    consecutiveFailCounter++;
+                    log.Error($"{Name}: Socket Exception: {e.Message}");
+
+                    if(consecutiveFailCounter >= _maxConsecutiveReceiveFails)
+                    {
+                        log.Error($"{Name}: Receive failed more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.");
+                        CloseSocket();
+                        break;
+                    }
+
+                    continue;
+                }
+
+                consecutiveFailCounter = 0;
             } // while
 
             _cancelUpdateThreadSource = new CancellationTokenSource();
@@ -421,14 +509,15 @@ namespace MetriCam2.Cameras
         protected override void DisconnectImpl()
         {
             _cancelUpdateThreadSource.Cancel();
+            CloseSocket();
             _updateThread.Join();
+        }
 
+        private void CloseSocket()
+        {
             _clientSocket.Shutdown(SocketShutdown.Both);
             _clientSocket.Disconnect(true);
-            SetConfigurationMode(Mode.Edit);
-            _edit.DeleteApplication(_applicationId);
-            _device.Save();
-            SetConfigurationMode(Mode.Run);
+            _clientSocket.Close();
         }
 
         /// <summary>
@@ -512,6 +601,8 @@ namespace MetriCam2.Cameras
         {
             int startTickCount = Environment.TickCount;
             int received = 0;  // how many bytes is already received
+            socket.ReceiveTimeout = 500;
+
             do
             {
                 if (Environment.TickCount > startTickCount + timeout)
@@ -634,6 +725,7 @@ namespace MetriCam2.Cameras
                     }
                 }
             }
+
             return s;
         }
 
@@ -835,6 +927,16 @@ namespace MetriCam2.Cameras
                 _edit.StopEditingApplication();
                 SetConfigurationMode(Mode.Run);
             }
+        }
+
+        private void GetResolution()
+        {
+            int clippingTop = Convert.ToInt32(_appImager.GetParameter("ClippingTop"));
+            int clippingBottom = Convert.ToInt32(_appImager.GetParameter("ClippingBottom"));
+            int clippingLeft = Convert.ToInt32(_appImager.GetParameter("ClippingLeft"));
+            int clippingRight = Convert.ToInt32(_appImager.GetParameter("ClippingRight"));
+            _width = clippingRight - clippingLeft + 1; // indices are zero based --> +1
+            _height = clippingBottom - clippingTop + 1;
         }
         #endregion
     }
