@@ -310,7 +310,7 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentPointCloud)
 				{
-					FloatCameraImage^ depthImg = (FloatCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::DepthRaw);
+					FloatCameraImage^ depthImg = (FloatCameraImage^)CalcChannelImpl(ChannelNames::ZImage);
 					_currentPointCloud = CalcPointCloud(depthImg);
 				}
 				return gcnew Point3fCameraImage(_currentPointCloud);
@@ -323,7 +323,7 @@ namespace MetriCam2
 		IProjectiveTransformation^ MvBlueSirius::GetIntrinsics(String^ channelName)
 		{
 			if (MetriCam2::ChannelNames::Distance == channelName
-			||  CustomChannelNames::DepthRaw == channelName)
+			|| MetriCam2::ChannelNames::ZImage == channelName)
 			{
 				return gcnew ProjectiveTransformationZhang(_depthRaw->Width, _depthRaw->Height, FocalLength, FocalLength, _depthRaw->Width / 2.0f, _depthRaw->Height / 2.0f, 0, 0, 0, 0, 0);
 			}
