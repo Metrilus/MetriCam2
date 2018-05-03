@@ -50,6 +50,7 @@ namespace MetriCam2
 			Channels->Add(cr->RegisterChannel(ChannelNames::Color));
 			Channels->Add(cr->RegisterChannel(ChannelNames::Distance));
 			Channels->Add(cr->RegisterChannel(ChannelNames::ZImage));
+			Channels->Add(cr->RegisterChannel(ChannelNames::Point3DImage));
 			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Left, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Right, FloatCameraImage::typeid));
 			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::ZMapped, FloatCameraImage::typeid));
@@ -137,6 +138,7 @@ namespace MetriCam2
 			ActivateChannel(ChannelNames::Color);
 			ActivateChannel(ChannelNames::Distance);
 			ActivateChannel(ChannelNames::ZImage);
+			ActivateChannel(ChannelNames::Point3DImage);
 			ActivateChannel((String^)CustomChannelNames::ZMapped);
 			ActivateChannel((String^)CustomChannelNames::DistanceMapped);
 			ActivateChannel((String^)CustomChannelNames::PointCloudMapped);
@@ -300,12 +302,12 @@ namespace MetriCam2
 			{
 				if (nullptr == _currentDistanceImage)
 				{
-					Point3fCameraImage^ pts3D = (Point3fCameraImage^)CalcChannelImpl(ChannelNames::PointCloud);
+					Point3fCameraImage^ pts3D = (Point3fCameraImage^)CalcChannelImpl(ChannelNames::Point3DImage);
 					_currentDistanceImage = CalcDistances(pts3D);
 				}
 				return gcnew FloatCameraImage(_currentDistanceImage);
 			}
-			if (ChannelNames::PointCloud == channelName)
+			if (ChannelNames::Point3DImage == channelName)
 			{
 				if (nullptr == _currentPointCloud)
 				{

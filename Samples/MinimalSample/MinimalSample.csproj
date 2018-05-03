@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\..\MetrilusReferencesVersions.props" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MetriCam2.Samples.MinimalSample</RootNamespace>
     <AssemblyName>MinimalSample</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>..\..\bin\Samples\x64\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
@@ -62,6 +62,14 @@
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
     </Reference>
+    <Reference Include="MetriPrimitives, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\releases\Metrilus.Framework\v.19.2.0.1\lib\MetriPrimitives.dll</HintPath>
+    </Reference>
+    <Reference Include="MetriPrimitivesNative, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\releases\Metrilus.Framework\v.19.2.0.1\lib\MetriPrimitivesNative.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -79,9 +87,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\Kinect2\Kinect2.csproj">
-      <Project>{03558646-61b1-4f4e-bf70-7a623df27095}</Project>
-      <Name>Kinect2</Name>
+    <ProjectReference Include="..\..\BetaCameras\MatrixVision\MatrixVision.vcxproj">
+      <Project>{249420a5-952b-4c58-a35a-377e0cdcc023}</Project>
+      <Name>MatrixVision</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
       <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>
