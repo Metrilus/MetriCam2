@@ -915,6 +915,10 @@ namespace MetriCam2
         /// Cache for extrinsic calibrations.
         /// </summary>
         private Dictionary<string, RigidBodyTransformation> extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
+        /// <summary>
+        /// Cache for calculated images.
+        /// </summary>
+        private Dictionary<string, CameraImage> imageCache = new Dictionary<string, CameraImage>();
 
         private int id;
         private static int lastId = -1;
@@ -1317,6 +1321,7 @@ namespace MetriCam2
                 this.hasUpdateBeenCalled = true;
                 this.FrameNumber++;
                 this.TimeStamp = DateTime.UtcNow.Ticks;
+                this.imageCache.Clear();
 
                 UpdateImpl();
             }
@@ -1555,6 +1560,12 @@ namespace MetriCam2
             //    return calcChannelCache[channelName];
             //}
 
+            if(imageCache.ContainsKey(channelName))
+            {
+                imageCache.TryGetValue(channelName, out CameraImage cachedImage);
+                return cachedImage;
+            }
+
             if (!hasUpdateBeenCalled)
             {
                 ExceptionBuilder.Throw(typeof(InvalidOperationException), this, "error_updateMustBeCalledBeforeCalcChannel");
@@ -1583,6 +1594,7 @@ namespace MetriCam2
                 }
 
                 img = CalcChannelImpl(channelName);
+                imageCache.Add(channelName, img);
             }
 
             if (img != null)
