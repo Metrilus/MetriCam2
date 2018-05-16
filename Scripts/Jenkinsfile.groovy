@@ -1,12 +1,14 @@
 #!groovy?
 
-Properties properties = new Properties();
-File propFile = new File('version.properties')
-properties.load(propFile.newDataInputStream())
-
 pipeline {
     agent any
+
     environment {
+        def versionInfo = readProperties file:'version.properties'
+        def V_MAJOR = "${versionInfo['VERSION_MAJOR']}"
+        def V_MINOR = "${versionInfo['VERSION_MINOR']}"
+        def V_BUILD = "${versionInfo['VERSION_BUILD']}"
+
         def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.BaslerACE MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.MatrixVision MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.TIVoxel MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam'
         def dllsToDeployAnyCPU = 'Intel.RealSense log4net MathNet.Numerics MetriCam2 MetriCam2.Cameras.RealSense2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
         def dllsToDeployNetStandard = 'MetriCam2.NetStandard MetriCam2.Cameras.RealSense2.NetStandard Metrilus.Util.NetStandard'
@@ -15,8 +17,9 @@ pipeline {
         def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
         def solutionFilename = 'MetriCam2_SDK.sln'
 
-        def releaseVersion = getReleaseVersion(currentBranch);
-        def releaseFolder = getReleaseFolder(currentBranch, releaseVersion)
+        def releaseVersion = getReleaseVersion(currentBranch, V_MAJOR, V_MINOR, V_BUILD);
+		def niceVersion = "${releaseVersion}"
+        def releaseFolder = getReleaseFolder(currentBranch, niceVersion)
 
         def releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
         def releaseLibraryDirectory = "${releaseDirectory}\\lib"
@@ -27,6 +30,7 @@ pipeline {
         def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
         def BUILD_URL = "${BUILD_URL}".replace("http://", "https://").replace("-server.metrilus.informatik.uni-erlangen.de:8080", ".metrilus.de")
     }
+
     stages {
         stage('Pre-Build') {
             steps {
@@ -217,10 +221,10 @@ def setBuildStatus(String message, String state, String context, String sha) {
     ]);
 }
 
-def getReleaseVersion(String branchName) {
+def getReleaseVersion(String branchName, String major, String minor, String build) {
     def releaseRevision = currentBuild.number.toString();
     return "stable" == branchName
-        ? "${properties.VERSION_MAJOR}.${properties.VERSION_MINOR}.${properties.VERSION_BUILD}.${releaseRevision}"
+        ? "${major}.${minor}.${build}.${releaseRevision}"
         : "0.0.0.${releaseRevision}";
 }
 
