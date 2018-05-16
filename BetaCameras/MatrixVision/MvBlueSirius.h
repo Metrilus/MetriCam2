@@ -24,19 +24,12 @@ namespace MetriCam2
 				public:
 					// Depth buffer.
 					// Pixel mapped (color, flow, depth).
-					static const String^ DepthMapped = "DepthMapped";
+					static const String^ ZMapped = "ZMapped";
 
-					// Raw depth buffer.
-					// Not pixel mapped.
-					// The raw depth buffer is not mapped with the color nor
-					// the flow buffer. Therefore it holds more depth information
-					// as the mapped depth buffer.
-					static const String^ DepthRaw = "DepthRaw";
-
-					// Distance image computed from DepthMapped data
+					// Distance image computed from ZMapped data
 					static const String^ DistanceMapped = "DistanceMapped";
 
-					// Point cloud computed from DepthMapped data
+					// Point cloud computed from ZMapped data
 					static const String^ PointCloudMapped = "PointCloudMapped";
 			};
 
@@ -119,9 +112,8 @@ namespace MetriCam2
 
 			FloatCameraImage^ _currentMasterImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentSlaveImage; // caches computed FloatCameraImage
-			ColorCameraImage^ _currentColorImage; // caches computed bitmap
-			FloatCameraImage^ _currentDepthMappedImage; // caches computed FloatCameraImage
-			FloatCameraImage^ _currentDepthRawImage; // caches computed FloatCameraImage
+			FloatCameraImage^ _currentZImageMapped; // caches computed FloatCameraImage
+			FloatCameraImage^ _currentZImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentDistanceImage; // caches computed FloatCameraImage
 			FloatCameraImage^ _currentDistanceImageMapped; // caches computed FloatCameraImage
 			Point3fCameraImage^ _currentPointCloud; // caches computed Point3fCameraImage
@@ -259,7 +251,6 @@ namespace MetriCam2
 			MvBlueSirius();
 			~MvBlueSirius();
 
-			static Point3fCameraImage^ DepthImageToPointCloud(FloatCameraImage^ depthImage, float focalLength);
 			virtual IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 
 			property System::String^ Vendor
@@ -429,7 +420,8 @@ namespace MetriCam2
 		private:
 			// Internal helper functions
 			ColorCameraImage^ CalcColorImage(ImageData^ image);
-			FloatCameraImage^ CalcFloatImage(ImageData^ image);
+			FloatCameraImage^ CalcGreyImage(ImageData^ image);
+			FloatCameraImage^ CalcDepthImage(ImageData^ image);
 			FloatCameraImage^ CalcDistances(Point3fCameraImage^ image);
 			Point3fCameraImage^ CalcPointCloud(FloatCameraImage^ depthImage);
 			inline bool CheckResult(MV6D_ResultCode r, Type^ exceptionType, int exceptionID)
