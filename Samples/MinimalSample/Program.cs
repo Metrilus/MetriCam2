@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using MetriPrimitives.Data;
 
 namespace MetriCam2.Samples.MinimalSample
 {
@@ -21,10 +22,10 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("------------------------------------------");
 
             // Create camera object
-            Camera camera;
+            MvBlueSirius camera;
             try
             {
-                camera = new Kinect2();
+                camera = new MvBlueSirius();
             }
             catch (Exception e)
             {
@@ -37,10 +38,18 @@ namespace MetriCam2.Samples.MinimalSample
 
             // Connect, get one frame, disconnect
             Console.WriteLine("Connecting camera");
+            camera.SerialNumber = "GX011847";
             camera.Connect();
 
             Console.WriteLine("Fetching one frame");
             camera.Update();
+            Point3fCameraImage img1 = (Point3fCameraImage)camera.CalcChannel(MvBlueSirius.CustomChannelNames.PointCloudMapped);
+            Point3fCameraImage img2 = (Point3fCameraImage)camera.CalcChannel(ChannelNames.Point3DImage);
+            SaveP3D(img1, @"G:\img1.pointcloud3d");
+            SaveP3D(img2, @"G:\img2.pointcloud3d");
+
+
+
 
             try
             {
@@ -68,6 +77,21 @@ namespace MetriCam2.Samples.MinimalSample
 
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();
+        }
+
+        public static void SaveP3D(Point3fCameraImage img, string path)
+        {
+            var list = new List<Point3f>();
+            for(int y = 0; y < img.Height; y++)
+            {
+                for(int x = 0; x < img.Width; x++)
+                {
+                    list.Add(img[y, x]);
+                }
+            }
+
+            var p3d = new PointCloud3D(list.ToArray());
+            p3d.Save(path);
         }
     }
 }
