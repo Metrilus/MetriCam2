@@ -292,7 +292,10 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// The camera receive timeout.
         /// </summary>
-        private int _receiveTimeout = 500;
+        /// <remarks>
+        /// Will automatically be set to (1 / <see cref="Framerate"/>) + 50 during <see cref="Camera.Connect"/> unless it has been set before.
+        /// </remarks>
+        private int _receiveTimeout = -1;
         public int ReceiveTimeout
         {
             get => _receiveTimeout;
@@ -442,6 +445,13 @@ namespace MetriCam2.Cameras
                     SetConfigurationMode(Mode.Run);
                     ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidApplicationId", _applicationId.ToString());
                 }
+            }
+
+            if (-1 == ReceiveTimeout)
+            {
+                // user has not set a receive timeout before connect
+                float framerate = Convert.ToSingle(_appImager.GetParameter("FrameRate"));
+                ReceiveTimeout = (int)(1000f / framerate) + 50;
             }
 
             GetResolution();
