@@ -136,18 +136,18 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// The camera framerate.
         /// </summary>
-        private int _framerate = 25;
-        public int Framerate
+        private float _framerate = 25f;
+        public float Framerate
         {
             get
             {
                 if (!IsConnected)
                 {
-                    return -1;
+                    return -1f;
                 }
 
                 DoEdit((_edit) => {
-                    _framerate = Convert.ToInt32(_appImager.GetParameter("FrameRate"));
+                    _framerate = Convert.ToSingle(_appImager.GetParameter("FrameRate"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
                 });
 
                 return _framerate;
@@ -161,15 +161,15 @@ namespace MetriCam2.Cameras
                 }
 
                 DoEdit((_edit) => {
-                    _appImager.SetParameter("FrameRate", value.ToString());
+                    _appImager.SetParameter("FrameRate", value.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 });
             }
         }
-        private RangeParamDesc<int> FramerateDesc
+        private RangeParamDesc<float> FramerateDesc
         {
             get
             {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 25)
+                RangeParamDesc<float> res = new RangeParamDesc<float>(0f, 25f)
                 {
                     Description = "Framerate",
                     Unit = "fps",
@@ -951,7 +951,7 @@ namespace MetriCam2.Cameras
 
         private void DoEdit(Action<IEdit> editAction)
         {
-            if(Mode.Run != _configurationMode)
+            if (Mode.Run != _configurationMode)
             {
                 throw new InvalidOperationException($"{Name}: can't edit settings unless camera is in Run Mode");
             }
