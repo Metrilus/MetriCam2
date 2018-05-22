@@ -346,7 +346,7 @@ namespace MetriCam2.Cameras
         private IServer _server;
 
         private string _serverUrl;
-        private ImageAcquisitionFailedException _updateThreadException; // Hand exceptions from update loop thread to application thread
+        private string _updateThreadError = null; // Hand errors from update loop thread to application thread
         #endregion
 
         #region Constructor
@@ -404,7 +404,7 @@ namespace MetriCam2.Cameras
         /// <seealso cref="Camera.Connect"/>
         protected override void ConnectImpl()
         {
-            _updateThreadException = null;
+            _updateThreadError = null;
 
             if (String.IsNullOrWhiteSpace(CameraIP))
             {
@@ -520,7 +520,7 @@ namespace MetriCam2.Cameras
                     {
                         string msg = $"{Name}: Receive failed more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.";
                         log.Error(msg);
-                        _updateThreadException = new ImageAcquisitionFailedException(msg);
+                        _updateThreadError = msg;
                         _frameAvailable.Set();
                         break;
                     }
@@ -574,10 +574,10 @@ namespace MetriCam2.Cameras
         {
             _frameAvailable.WaitOne();
 
-            if (null != _updateThreadException)
+            if (null != _updateThreadError)
             {
                 Disconnect();
-                throw _updateThreadException;
+                throw new ImageAcquisitionFailedException(_updateThreadError);
             }
 
             lock (_backLock)
