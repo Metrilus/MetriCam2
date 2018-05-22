@@ -91,7 +91,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!this.IsConnected)
+                if (!IsConnected)
                 {
                     return -1;
                 }
@@ -105,7 +105,7 @@ namespace MetriCam2.Cameras
             set
             {
                 _frequencyChannel = value;
-                if (!this.IsConnected)
+                if (!IsConnected)
                 {
                     return;
                 }
@@ -120,11 +120,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 3);
-                res.Description = "Frequency Channel"; ;
-                res.Unit = "";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 3)
+                {
+                    Description = "Frequency Channel",
+                    Unit = "",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
                 return res;
             }
         }
@@ -134,18 +136,18 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// The camera framerate.
         /// </summary>
-        private int _framerate = 25;
-        public int Framerate
+        private float _framerate = 25f;
+        public float Framerate
         {
             get
             {
-                if (!this.IsConnected)
+                if (!IsConnected)
                 {
-                    return -1;
+                    return -1f;
                 }
 
                 DoEdit((_edit) => {
-                    _framerate = Convert.ToInt32(_appImager.GetParameter("FrameRate"));
+                    _framerate = Convert.ToSingle(_appImager.GetParameter("FrameRate"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
                 });
 
                 return _framerate;
@@ -159,19 +161,21 @@ namespace MetriCam2.Cameras
                 }
 
                 DoEdit((_edit) => {
-                    _appImager.SetParameter("FrameRate", value.ToString());
+                    _appImager.SetParameter("FrameRate", value.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 });
             }
         }
-        private RangeParamDesc<int> FramerateDesc
+        private RangeParamDesc<float> FramerateDesc
         {
             get
             {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 25);
-                res.Description = "Framerate"; ;
-                res.Unit = "fps";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                RangeParamDesc<float> res = new RangeParamDesc<float>(0f, 25f)
+                {
+                    Description = "Framerate",
+                    Unit = "fps",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
                 return res;
             }
         }
@@ -186,7 +190,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (!this.IsConnected)
+                if (!IsConnected)
                 {
                     return -1;
                 }
@@ -214,11 +218,13 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 10000);
-                res.Description = "Integration time"; ;
-                res.Unit = "us";
-                res.ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
-                res.WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected;
+                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 10000)
+                {
+                    Description = "Integration time",
+                    Unit = "us",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
                 return res;
             }
         }
@@ -282,6 +288,33 @@ namespace MetriCam2.Cameras
 #if !NETSTANDARD2_0
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.IfmIcon; }
 #endif
+
+        /// <summary>
+        /// The camera receive timeout.
+        /// </summary>
+        /// <remarks>
+        /// Will automatically be set to (1 / <see cref="Framerate"/>) + 50 during <see cref="Camera.Connect"/> unless it has been set before.
+        /// </remarks>
+        private int _receiveTimeout = -1;
+        public int ReceiveTimeout
+        {
+            get => _receiveTimeout;
+            set => _receiveTimeout = value;
+        }
+        private ParamDesc<int> ReceiveTimeoutDesc
+        {
+            get
+            {
+                ParamDesc<int> res = new ParamDesc<int>
+                {
+                    Description = "Receive timeout",
+                    Unit = "ms",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
+                return res;
+            }
+        }
         #endregion
 
         #region Private Fields
@@ -296,7 +329,6 @@ namespace MetriCam2.Cameras
         private const int _maxApplications = 32;
         private const int _maxConsecutiveReceiveFails = 3;
         private const string _applicationName = "_MetriCam2";
-
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
         private int _triggeredMode = 1;
@@ -314,6 +346,7 @@ namespace MetriCam2.Cameras
         private IServer _server;
 
         private string _serverUrl;
+        private string _updateThreadError = null; // Hand errors from update loop thread to application thread
         #endregion
 
         #region Constructor
@@ -371,7 +404,9 @@ namespace MetriCam2.Cameras
         /// <seealso cref="Camera.Connect"/>
         protected override void ConnectImpl()
         {
-            if(String.IsNullOrWhiteSpace(CameraIP))
+            _updateThreadError = null;
+
+            if (String.IsNullOrWhiteSpace(CameraIP))
             {
                 throw new ConnectionFailedException($"{Name}: No camera IP specified");
             }
@@ -412,6 +447,13 @@ namespace MetriCam2.Cameras
                 }
             }
 
+            if (-1 == ReceiveTimeout)
+            {
+                // user has not set a receive timeout before connect
+                float framerate = Convert.ToSingle(_appImager.GetParameter("FrameRate"));
+                ReceiveTimeout = (int)(1000f / framerate) + 50;
+            }
+
             GetResolution();
 
             _app.Save();
@@ -449,12 +491,12 @@ namespace MetriCam2.Cameras
         private void UpdateLoop()
         {
             int consecutiveFailCounter = 0;
+            byte[] hdrBuffer = new byte[16];
 
             while (!_cancelUpdateThreadSource.Token.IsCancellationRequested)
             {
                 try
                 {
-                    byte[] hdrBuffer = new byte[16];
                     Receive(_clientSocket, hdrBuffer, 0, 16, 300000);
                     var str = Encoding.Default.GetString(hdrBuffer, 5, 9);
                     Int32.TryParse(str, out int frameSize);
@@ -469,15 +511,17 @@ namespace MetriCam2.Cameras
                         _frameAvailable.Set();
                     }
                 }
-                catch(SocketException e)
+                catch (SocketException e)
                 {
                     consecutiveFailCounter++;
-                    log.Error($"{Name}: Socket Exception: {e.Message}");
+                    log.Warn($"{Name}: SocketException: {e.Message}");
 
-                    if(consecutiveFailCounter >= _maxConsecutiveReceiveFails)
+                    if (consecutiveFailCounter >= _maxConsecutiveReceiveFails)
                     {
-                        log.Error($"{Name}: Receive failed more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.");
-                        CloseSocket();
+                        string msg = $"{Name}: Receive failed more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.";
+                        log.Error(msg);
+                        _updateThreadError = msg;
+                        _frameAvailable.Set();
                         break;
                     }
 
@@ -529,6 +573,12 @@ namespace MetriCam2.Cameras
         protected override void UpdateImpl()
         {
             _frameAvailable.WaitOne();
+
+            if (null != _updateThreadError)
+            {
+                Disconnect();
+                throw new ImageAcquisitionFailedException(_updateThreadError);
+            }
 
             lock (_backLock)
             lock (_frontLock)
@@ -601,7 +651,7 @@ namespace MetriCam2.Cameras
         {
             int startTickCount = Environment.TickCount;
             int received = 0;  // how many bytes is already received
-            socket.ReceiveTimeout = 500;
+            socket.ReceiveTimeout = ReceiveTimeout;
 
             do
             {
@@ -761,7 +811,7 @@ namespace MetriCam2.Cameras
                 strAddress += strTemp;
             }
 
-            int address = int.Parse(strAddress, System.Globalization.NumberStyles.HexNumber); ;
+            int address = int.Parse(strAddress, System.Globalization.NumberStyles.HexNumber);
 
             SendARP(address, 0, mac, ref length);
             string macAddress = BitConverter.ToString(mac, 0, length);
@@ -911,7 +961,7 @@ namespace MetriCam2.Cameras
 
         private void DoEdit(Action<IEdit> editAction)
         {
-            if(Mode.Run != _configurationMode)
+            if (Mode.Run != _configurationMode)
             {
                 throw new InvalidOperationException($"{Name}: can't edit settings unless camera is in Run Mode");
             }
