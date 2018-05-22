@@ -31,6 +31,8 @@ namespace MetriCam2.Cameras
         private bool _pipelineRunning = false;
         private float _depthScale = 1.0f;
         private HashSet<string> _activeChannels = new HashSet<string>();
+        private Dictionary<string, RigidBodyTransformation> extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
+        private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
 
         #region Filter
         public class Filter
@@ -1537,6 +1539,9 @@ namespace MetriCam2.Cameras
             {
                 log.Warn(e.Message);
             }
+
+            intrinsicsCache.Clear();
+            extrinsicsCache.Clear();
         }
 
         protected override void UpdateImpl()
@@ -1823,6 +1828,14 @@ namespace MetriCam2.Cameras
 
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
+            Point2i resolution = GetResolutionFromChannelName(channelName);
+            string keyName = $"{channelName}_{resolution.X}_{resolution.Y}";
+            if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
+            {
+                log.DebugFormat("Found intrinsic calibration for channel {0} in cache.", channelName);
+                return intrinsicsCache[keyName];
+            }
+
             VideoStreamProfile profile = GetProfileFromSensor(channelName) as VideoStreamProfile;
             Intrinsics intrinsics = profile.GetIntrinsics();
 
@@ -1846,7 +1859,29 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3]);
 
+            intrinsicsCache[keyName] = projTrans;
+
             return projTrans;
+        }
+
+        private Point2i GetResolutionFromChannelName(string channelName)
+        {
+            Point2i resolution = new Point2i(640, 480);
+            switch (channelName)
+            {
+                case ChannelNames.Color:
+                    resolution = ColorResolution;
+                    break;
+
+                case ChannelNames.Left:
+                case ChannelNames.Right:
+                case ChannelNames.Distance:
+                case ChannelNames.ZImage:
+                default:
+                    resolution = DepthResolution;
+                    break;
+            }
+            return resolution;
         }
 
         private VideoStreamProfile GetProfileFromSensor(string channelName)
@@ -1904,6 +1939,14 @@ namespace MetriCam2.Cameras
 
         unsafe public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
+
+            string keyName = $"{channelFromName}_{channelToName}";
+            if (extrinsicsCache.ContainsKey(keyName) && extrinsicsCache[keyName] != null)
+            {
+                log.DebugFormat("Found extrinsic for channel {0} to {1} in cache.", channelFromName, channelToName);
+                return extrinsicsCache[keyName];
+            }
+
             VideoStreamProfile from = GetProfileFromSensor(channelFromName);
             VideoStreamProfile to = GetProfileFromSensor(channelToName);
 
@@ -1919,6 +1962,8 @@ namespace MetriCam2.Cameras
             Point3f trans = new Point3f(extrinsics.translation[0], extrinsics.translation[1], extrinsics.translation[2]);
 
             RigidBodyTransformation rbt = new RigidBodyTransformation(rot, trans);
+
+            extrinsicsCache[keyName] = rbt;
 
             return rbt;
         }
