@@ -1473,6 +1473,8 @@ namespace MetriCam2.Cameras
 
         protected override void ConnectImpl()
         {
+            var watch = new System.Diagnostics.Stopwatch();
+            watch.Start();
             bool haveSerial = !string.IsNullOrWhiteSpace(SerialNumber);
 
             if (haveSerial)
@@ -1484,7 +1486,12 @@ namespace MetriCam2.Cameras
                 AddToActiveChannels(ChannelNames.ZImage);
             }
 
+            Console.WriteLine("setup: " + watch.ElapsedMilliseconds);
+
             StartPipeline();
+
+            Console.WriteLine("connect: " + watch.ElapsedMilliseconds);
+
             Model = RealSenseDevice.Info[CameraInfo.Name];
 
             if (!haveSerial)
@@ -1496,6 +1503,8 @@ namespace MetriCam2.Cameras
                 adev.AdvancedModeEnabled = true;
 
             _depthScale = GetDepthScale();
+            Console.WriteLine("metadata: " + watch.ElapsedMilliseconds);
+            watch.Stop();
         }
 
         private void StopPipeline()
