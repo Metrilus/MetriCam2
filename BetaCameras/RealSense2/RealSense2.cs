@@ -1485,6 +1485,7 @@ namespace MetriCam2.Cameras
             }
 
             StartPipeline();
+
             Model = RealSenseDevice.Info[CameraInfo.Name];
 
             if (!haveSerial)
@@ -1678,6 +1679,14 @@ namespace MetriCam2.Cameras
 
         protected override void ActivateChannelImpl(String channelName)
         {
+            if (_activeChannels.Contains(channelName))
+            {
+                // channel is already active
+                // activating again would mean to restart the pipeline
+                // which takes a long time
+                return;
+            }
+
             Stream stream = Stream.Any;
             Format format = Format.Any;
             int res_x = 640;
@@ -1696,7 +1705,7 @@ namespace MetriCam2.Cameras
                 index = -1;
             }
             else if (channelName == ChannelNames.ZImage
-                || channelName == ChannelNames.Distance)
+            || channelName == ChannelNames.Distance)
             {
                 // Distance and ZImage channel access the same data from
                 // the realsense2 device
@@ -1704,14 +1713,14 @@ namespace MetriCam2.Cameras
                 // and skip activating the DEPTH stream in that case
 
                 if (channelName == ChannelNames.ZImage
-                    && _activeChannels.Contains(ChannelNames.Distance))
+                && _activeChannels.Contains(ChannelNames.Distance))
                 {
                     _activeChannels.Add(ChannelNames.ZImage);
                     return;
                 }
 
                 if (channelName == ChannelNames.Distance
-                    && _activeChannels.Contains(ChannelNames.ZImage))
+                && _activeChannels.Contains(ChannelNames.ZImage))
                 {
                     _activeChannels.Add(ChannelNames.Distance);
                     return;
@@ -1769,6 +1778,14 @@ namespace MetriCam2.Cameras
 
         protected override void DeactivateChannelImpl(String channelName)
         {
+            if (!_activeChannels.Contains(channelName))
+            {
+                // channel is not active
+                // deactivating again would mean to restart the pipeline
+                // which takes a long time
+                return;
+            }
+
             Stream stream = Stream.Any;
             int index = -1;
 
