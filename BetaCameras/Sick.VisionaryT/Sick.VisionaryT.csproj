@@ -79,6 +79,8 @@
     <Compile Include="..\..\SolutionAssemblyInfo.cs">
       <Link>SolutionAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="AccessModes.cs" />
+    <Compile Include="Control.cs" />
     <Compile Include="FrameData.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

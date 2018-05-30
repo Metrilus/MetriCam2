@@ -17,6 +17,8 @@ namespace MetriCam2.Cameras
         private string ipAddress;
         // device handle
         private Device device;
+        private Control _control;
+        
         // frame buffer
         private byte[] imageBuffer;
         // image data contains information about the current frame e.g. width and height
@@ -25,6 +27,19 @@ namespace MetriCam2.Cameras
         private int width;
         private int height;
         #endregion
+
+        #region Public Types
+
+        public enum IntegrationTimes
+        {
+            MS_0500 = 0,
+            MS_1000 = 1,
+            MS_1500 = 2,
+            MS_2000 = 3,
+            MS_2500 = 4,
+        }
+
+        #endregion Public Types
 
         #region Public Properties
 
@@ -38,7 +53,7 @@ namespace MetriCam2.Cameras
             {
                 return new ParamDesc<string>()
                 {
-                    Description = "IP address of camera.",
+                    Description = "IP address",
                     ReadableWhen = ParamDesc.ConnectionStates.Disconnected | ParamDesc.ConnectionStates.Connected,
                     WritableWhen = ParamDesc.ConnectionStates.Disconnected
                 };
@@ -50,37 +65,53 @@ namespace MetriCam2.Cameras
         /// </summary>
         public string IPAddress
         {
-            get { return ipAddress; }
-            set { ipAddress = value; }
+            get => ipAddress;
+            set => ipAddress = value;
         }
-        private RangeParamDesc<int> IntegrationTimeDesc
+
+        private ListParamDesc<IntegrationTimes> IntegrationTimeDesc
         {
             get
             {
-                return new RangeParamDesc<int>(80, 4000)
+                return new ListParamDesc<IntegrationTimes>(typeof(IntegrationTimes))
                 {
-                    Description = "Integration time of camera in microseconds.",
+                    Description = "Integration time",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
                     WritableWhen = ParamDesc.ConnectionStates.Connected,
-                    Unit = "Microseconds",
+                    Unit = "ms",
                 };
             }
         }
         /// <summary>
-        /// Integration time of ToF-sensor.
+        /// Integration time of ToF-sensor [ms].
         /// </summary>
-        public int IntegrationTime
+        public IntegrationTimes IntegrationTime
+        {
+            get => _control.GetIntegrationTime();
+            set => _control.SetIntegrationTime(value);
+        }
+
+        private RangeParamDesc<byte> CoexistanceModeDesc
         {
             get
             {
-                return device.Control_GetIntegrationTime();
-            }
-            set
-            {
-                device.Control_SetServiceAccessMode();
-                device.Control_SetIntegrationTime(value);
+                return new RangeParamDesc<byte>(0, 8)
+                {
+                    Description = "Illumination mode (8=auto)",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
             }
         }
+        /// <summary>
+        /// Coexistance mode of ToF-sensor.
+        /// </summary>
+        public byte CoexistanceMode
+        {
+            get => _control.GetCoexistanceMode();
+            set => _control.SetCoexistanceMode(value);
+        }
+
         private ParamDesc<int> WidthDesc
         {
             get
@@ -97,10 +128,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Width of images.
         /// </summary>
-        public int Width
-        {
-            get { return width; }
-        }
+        public int Width => width;
 
         private ParamDesc<int> HeightDesc
         {
@@ -118,10 +146,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Height of images.
         /// </summary>
-        public int Height
-        {
-            get { return height; }
-        }
+        public int Height => height;
         #endregion
 
         #region Constructor
@@ -176,21 +201,22 @@ namespace MetriCam2.Cameras
         /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
         protected override void ConnectImpl()
         {
-            if (ipAddress == null || ipAddress == "")
+            if (string.IsNullOrWhiteSpace(ipAddress))
             {
                 log.Error("IP Address is not set.");
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "IP Address is not set! Set it before connecting!");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "IP Address is not set! Set it before connecting!");
             }
             device = new Device(ipAddress, this, log);
-            device.Connect();
-            device.Control_InitStream();
-            device.Control_StartStream();
+
+            _control = new Control(log, ipAddress);
+            _control.StartStream();
 
             // select intensity channel
             ActivateChannel(ChannelNames.Intensity);
             SelectChannel(ChannelNames.Intensity);
 
-            this.UpdateImpl();
+            // Call update once
+            UpdateImpl();
         }
 
         /// <summary>
@@ -227,7 +253,8 @@ namespace MetriCam2.Cameras
         /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
         protected override void DisconnectImpl()
         {
-            device.Control_StopStream();
+            _control.Close();
+            _control = null;
             device.Disconnect();
             device = null;
         }
