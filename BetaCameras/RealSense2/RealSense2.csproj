@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MetriCam2.Cameras</RootNamespace>
     <AssemblyName>MetriCam2.Cameras.RealSense2</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <BaseIntermediateOutputPath>obj_netFramework\</BaseIntermediateOutputPath>
@@ -38,6 +38,10 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Intel.RealSense, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\external-libraries\Intel\libRealSense2\2.11.1\AnyCPU\net45\Intel.RealSense.dll</HintPath>
+    </Reference>
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
     </Reference>
@@ -62,7 +66,6 @@
     </Compile>
     <Compile Include="RealSense2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RealSense2API.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">

@@ -11,10 +11,6 @@ namespace MetriCam2.Cameras
     {
         public const int DefaultSOPASPort = 2112;
 
-        private const string _vendorName = "SICK";
-        private const string _modelName = "TiM561";
-        private const string _logPrefix = _vendorName + " " + _modelName;
-
         private const int _timeoutMilliseconds = 30000 + 1000;
 
         private bool _disposed;
@@ -41,8 +37,14 @@ namespace MetriCam2.Cameras
         public override Icon CameraIcon => Properties.Resources.SickTiMIcon;
 #endif
 
+        #region Miscellaneous Meta-Data
+
+        public override string Vendor => "SICK";
+
+        #endregion Miscellaneous Meta-Data
+
         public TiM561(IPEndPoint remoteEndPoint)
-            : base(_modelName)
+            : base("TiM561")
         {
             _disposed = false;
             _downstreamTurnstile = new AutoResetEvent(false);
@@ -125,7 +127,7 @@ namespace MetriCam2.Cameras
                 if (null == _client)
                 {
                     _client = CoLaBClient.Connect(_remoteEndPoint);
-                    log.Debug($"{_logPrefix}: connected to {_remoteEndPoint}");
+                    log.Debug($"{Name}: connected to {_remoteEndPoint}");
 
                     try
                     {
@@ -137,11 +139,11 @@ namespace MetriCam2.Cameras
 
                         if (acknowledgement.Data[acknowledgement.Offset] != 0)
                         {
-                            log.Debug($"{_logPrefix}: CoLa (binary) telegram subscription established");
+                            log.Debug($"{Name}: CoLa (binary) telegram subscription established");
                         }
                         else
                         {
-                            ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "CoLa (binary) telegram subscription failed");
+                            ExceptionBuilder.Throw(typeof(ConnectionFailedException), this, "error_connectionFailed", "CoLa (binary) telegram subscription failed");
                         }
                     }
                     catch
@@ -163,7 +165,7 @@ namespace MetriCam2.Cameras
 
                     // Begin receiving telegrams in a background thread
                     _downstreamThread = new Thread(DownstreamThreadProc);
-                    _downstreamThread.Name = _vendorName + " " + _modelName;
+                    _downstreamThread.Name = Name;
                     _downstreamThread.IsBackground = true;
                     _downstreamThread.Start();
                 }
@@ -176,7 +178,7 @@ namespace MetriCam2.Cameras
             catch (Exception foreignException)
             {
                 // Wrap and Throw other exceptions encountered during Connection
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, foreignException);
+                ExceptionBuilder.Throw(typeof(ConnectionFailedException), this, foreignException);
             }
         }
 
@@ -199,7 +201,7 @@ namespace MetriCam2.Cameras
         {
             if ((null == _client) || (!_client.IsConnected) || (null == _downstreamTurnstile))
             {
-                throw new InvalidOperationException($"{_logPrefix} disconnected");
+                throw new InvalidOperationException($"{Name} disconnected");
             }
 
             try
@@ -211,7 +213,7 @@ namespace MetriCam2.Cameras
 
                 // Miscellaneous Metadata
                 UInt16 versionNumber = scanData.ReadUInt16();
-                if (1 != versionNumber) log.Warn($"{_logPrefix}: unexpected version number in telegram: {versionNumber}");
+                if (1 != versionNumber) log.Warn($"{Name}: unexpected version number in telegram: {versionNumber}");
                 scanData.Skip(2);
 
                 UInt32 serialNumber = scanData.ReadUInt32();
@@ -223,7 +225,7 @@ namespace MetriCam2.Cameras
 
                 scanData.Skip(1);
                 byte deviceStatus = scanData.ReadByte();
-                if (0 != deviceStatus) log.Error($"{_logPrefix}: unexpected device status: {deviceStatus}");
+                if (0 != deviceStatus) log.Error($"{Name}: unexpected device status: {deviceStatus}");
 
                 scanData.Skip(2);
                 _scanCounter = scanData.ReadUInt16();
@@ -236,7 +238,7 @@ namespace MetriCam2.Cameras
 
                 // 16-bit Channels                
                 UInt16 channelCount16 = scanData.ReadUInt16();
-                if (1 != channelCount16) log.Error($"{_logPrefix}: unexpected number of 16-bit channels: {channelCount16}");
+                if (1 != channelCount16) log.Error($"{Name}: unexpected number of 16-bit channels: {channelCount16}");
 
                 _channelName = scanData.ReadString(5);
 
@@ -280,7 +282,7 @@ namespace MetriCam2.Cameras
             catch (Exception foreignException)
             {
                 // Wrap and Throw other exceptions encountered during Connection
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ImageAcquisitionFailedException), this, foreignException);
+                ExceptionBuilder.Throw(typeof(ImageAcquisitionFailedException), this, foreignException);
             }
         }
 
@@ -346,8 +348,9 @@ namespace MetriCam2.Cameras
                     return CalcPoint3DImage();
             }
 
-            log.Error("Invalid channelname: " + channelName);
-            return null;
+            string msg = $"{Name}: Invalid channelname: {channelName}";
+            log.Error(msg);
+            throw ExceptionBuilder.Build(typeof(InvalidOperationException), this, msg);
         }
 
         #region Channel Information
@@ -361,11 +364,5 @@ namespace MetriCam2.Cameras
         }
 
         #endregion Channel Information
-
-        #region Miscellaneous Meta-Data
-
-        public override string Vendor => _vendorName;
-
-        #endregion Miscellaneous Meta-Data
     }
 }

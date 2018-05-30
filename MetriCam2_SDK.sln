@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2024
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetriCam2", "MetriCam2\MetriCam2.csproj", "{342F049E-668B-4351-B21D-75E4BEF5A1E4}"
 EndProject
@@ -43,10 +43,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F8B72304-05F7-411A-8A32-8D12BB5BA37E}"
 	ProjectSection(SolutionItems) = preProject
 		.licenseheader = .licenseheader
-		Jenkinsfile.groovy = Jenkinsfile.groovy
+		Scripts\Jenkinsfile.groovy = Scripts\Jenkinsfile.groovy
 		MetrilusReferencesVersions.props = MetrilusReferencesVersions.props
+		Scripts\Set Assembly-Info Version.cmd = Scripts\Set Assembly-Info Version.cmd
 		SolutionAssemblyInfo.cs = SolutionAssemblyInfo.cs
 		SolutionAssemblyInfo.h = SolutionAssemblyInfo.h
+		version.properties = version.properties
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kinect2", "BetaCameras\Kinect2\Kinect2.csproj", "{03558646-61B1-4F4E-BF70-7A623DF27095}"
@@ -61,6 +63,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OrbbecOpenNI", "BetaCameras
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealSense", "BetaCameras\RealSense\RealSense.csproj", "{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MatrixVision", "BetaCameras\MatrixVision\MatrixVision.vcxproj", "{249420A5-952B-4C58-A35A-377E0CDCC023}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIVoxel", "BetaCameras\TIVoxel\TIVoxel.vcxproj", "{ECF2A55A-67D9-48B7-936C-873FC6C07364}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealSense2", "BetaCameras\RealSense2\RealSense2.csproj", "{3032E9B1-F572-4ECB-906A-F7A2B45EF125}"
@@ -72,6 +76,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MetriCam2.NetStandard", "MetriCam2\MetriCam2.NetStandard.csproj", "{4A36576E-E47F-4993-AD94-D09B989B4CE4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RealSense2.NetStandard", "BetaCameras\RealSense2\RealSense2.NetStandard.csproj", "{2E74EB9D-6465-4DEF-9B2C-D13713BA3C4C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaslerToF", "BetaCameras\BaslerToF\BaslerToF.csproj", "{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaslerACE", "BetaCameras\BaslerACE\BaslerACE.csproj", "{474D94F4-857B-4199-97AF-C600AED44406}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -253,6 +261,14 @@ Global
 		{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF}.Release|x64.Build.0 = Release|x64
 		{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF}.Release|x86.ActiveCfg = Release|Any CPU
 		{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF}.Release|x86.Build.0 = Release|Any CPU
+		{249420A5-952B-4C58-A35A-377E0CDCC023}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{249420A5-952B-4C58-A35A-377E0CDCC023}.Debug|x64.ActiveCfg = Debug|x64
+		{249420A5-952B-4C58-A35A-377E0CDCC023}.Debug|x64.Build.0 = Debug|x64
+		{249420A5-952B-4C58-A35A-377E0CDCC023}.Debug|x86.ActiveCfg = Debug|x64
+		{249420A5-952B-4C58-A35A-377E0CDCC023}.Release|Any CPU.ActiveCfg = Release|x64
+		{249420A5-952B-4C58-A35A-377E0CDCC023}.Release|x64.ActiveCfg = Release|x64
+		{249420A5-952B-4C58-A35A-377E0CDCC023}.Release|x64.Build.0 = Release|x64
+		{249420A5-952B-4C58-A35A-377E0CDCC023}.Release|x86.ActiveCfg = Release|x64
 		{ECF2A55A-67D9-48B7-936C-873FC6C07364}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{ECF2A55A-67D9-48B7-936C-873FC6C07364}.Debug|x64.ActiveCfg = Debug|x64
 		{ECF2A55A-67D9-48B7-936C-873FC6C07364}.Debug|x64.Build.0 = Debug|x64
@@ -319,6 +335,24 @@ Global
 		{2E74EB9D-6465-4DEF-9B2C-D13713BA3C4C}.Release|x64.Build.0 = Release|Any CPU
 		{2E74EB9D-6465-4DEF-9B2C-D13713BA3C4C}.Release|x86.ActiveCfg = Release|Any CPU
 		{2E74EB9D-6465-4DEF-9B2C-D13713BA3C4C}.Release|x86.Build.0 = Release|Any CPU
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Debug|x64.ActiveCfg = Debug|x64
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Debug|x64.Build.0 = Debug|x64
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Debug|x86.ActiveCfg = Debug|x86
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Debug|x86.Build.0 = Debug|x86
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Release|Any CPU.ActiveCfg = Release|x86
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Release|x64.ActiveCfg = Release|x64
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Release|x64.Build.0 = Release|x64
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Release|x86.ActiveCfg = Release|x86
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC}.Release|x86.Build.0 = Release|x86
+		{474D94F4-857B-4199-97AF-C600AED44406}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{474D94F4-857B-4199-97AF-C600AED44406}.Debug|x64.ActiveCfg = Debug|x64
+		{474D94F4-857B-4199-97AF-C600AED44406}.Debug|x64.Build.0 = Debug|x64
+		{474D94F4-857B-4199-97AF-C600AED44406}.Debug|x86.ActiveCfg = Debug|x64
+		{474D94F4-857B-4199-97AF-C600AED44406}.Release|Any CPU.ActiveCfg = Release|x64
+		{474D94F4-857B-4199-97AF-C600AED44406}.Release|x64.ActiveCfg = Release|x64
+		{474D94F4-857B-4199-97AF-C600AED44406}.Release|x64.Build.0 = Release|x64
+		{474D94F4-857B-4199-97AF-C600AED44406}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -338,11 +372,14 @@ Global
 		{C0D82A80-70D7-4782-B4B1-4AF4C31ECC73} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{C82202F8-55DB-4511-B006-C88FF3E4427E} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{F37DB33A-3E53-42C9-A6DC-B012A9A09EAF} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
+		{249420A5-952B-4C58-A35A-377E0CDCC023} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{ECF2A55A-67D9-48B7-936C-873FC6C07364} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{3032E9B1-F572-4ECB-906A-F7A2B45EF125} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{7F2939D1-17AB-4B94-8933-09C76DC0C07A} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{41D6E896-FB86-4BA1-BC99-E2FE4AA89E93} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{2E74EB9D-6465-4DEF-9B2C-D13713BA3C4C} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
+		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
+		{474D94F4-857B-4199-97AF-C600AED44406} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E4CD8F0D-A50B-44DC-80D3-0C789213BF2B}

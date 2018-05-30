@@ -87,8 +87,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>voxel.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>Z:\external-libraries\TI\Voxel SDK\Voxel SDK 0.6.3\lib;Z:\external-libraries\TI\Voxel SDK\Voxel SDK 0.6.3\lib\voxel;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <EmbedManagedResourceFile>
-      </EmbedManagedResourceFile>
+      <EmbedManagedResourceFile>TexasInstrumentsIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

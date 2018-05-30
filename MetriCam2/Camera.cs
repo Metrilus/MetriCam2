@@ -434,6 +434,8 @@ namespace MetriCam2
             /// <param name="value">Parameter value to be tested.</param>
             /// <returns><c>true</c> if <paramref name="value"/> is in AllowedValues, <c>false</c> otherwise.</returns>
             bool IsValid(string value);
+
+            Type GetListType();
         }
 
         /// <summary>
@@ -704,13 +706,13 @@ namespace MetriCam2
                     }
                     else
                     {
-                        
-                        
-                        if(this.Type == typeof(Point2i))
+
+
+                        if (this.Type == typeof(Point2i))
                         {
                             string[] stringValue = item.Split('x');
                             Point2i point = new Point2i(int.Parse(stringValue[0]), int.Parse(stringValue[1]));
-                            if(point.Equals(castedValue))
+                            if (point.Equals(castedValue))
                             {
                                 return true;
                             }
@@ -746,6 +748,11 @@ namespace MetriCam2
                 }
 
                 return base.ToString() + "\t{" + allowedValuesAsString + "}";
+            }
+
+            public Type GetListType()
+            {
+                return typeof(T);
             }
             #endregion
         }
@@ -869,7 +876,7 @@ namespace MetriCam2
             /// <returns><c>true</c> if <paramref name="value"/> is valid, <c>false</c> otherwise.</returns>
             public bool IsValid(object value)
             {
-                if(!(value is List<string>))
+                if (!(value is List<string>))
                 {
                     return false;
                 }
@@ -940,11 +947,6 @@ namespace MetriCam2
         /// The logger.
         /// </summary>
         protected static MetriLog log = new MetriLog("MetriCam2.Camera");
-        /// <summary>
-        /// The camera's model name.
-        /// </summary>
-        /// <remarks>Default is empty string. The actual model will usually be known after <see cref="Connect"/>.</remarks>
-        protected string modelName = "";
         /// <summary>
         /// Flag which remembers if <see cref="Update"/> was ever called.
         /// </summary>
@@ -1036,11 +1038,12 @@ namespace MetriCam2
                 };
             }
         }
-        /// <summary>Name of camera model.</summary>
-        public virtual string Model
-        {
-            get { return modelName; }
-        }
+
+        /// <summary>
+        /// The camera's model name.
+        /// </summary>
+        /// <remarks>Default is empty string. The actual model will usually be known after <see cref="Connect"/>.</remarks>
+        public string Model { get; protected set; }
 
         private ParamDesc<string> SerialNumberDesc
         {
@@ -1155,7 +1158,7 @@ namespace MetriCam2
             LoadAllAvailableChannels();
 
             SerialNumber = "";
-            this.modelName = modelName;
+            Model = modelName;
 
             IsConnected = false;
             FrameNumber = 0;
@@ -1403,7 +1406,7 @@ namespace MetriCam2
                 intrinsicsCache[channelName] = pt;
                 return pt;
             }
-            
+
             throw new FileNotFoundException(
                 String.Format(
                     "{0}: No valid calibration file for channel '{1}' available." + Environment.NewLine
@@ -2298,7 +2301,16 @@ namespace MetriCam2
         {
             PropertyInfo pi = this.GetType().GetProperty(name);
             object myItem = Convert.ChangeType(value, pi.PropertyType, CultureInfo.InvariantCulture);
-            pi.SetValue(this, myItem, new object[] { });
+
+            try
+            {
+                pi.SetValue(this, myItem, new object[] { });
+            }
+            catch (TargetInvocationException e)
+            {
+                throw e.InnerException;
+            }
+
             log.InfoFormat("{0}: {1} <- {2}", this.Name, name, myItem);
         }
         #endregion
@@ -2465,19 +2477,19 @@ namespace MetriCam2
         /// Device-specific implementation of <see cref="Connect"/>.
         /// Connects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Connect"/> inside the camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside the camera lock.</remarks>
         protected abstract void ConnectImpl();
         /// <summary>
         /// Device-specific implementation of <see cref="Disconnect"/>.
         /// Disconnects the camera.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Disconnect"/> (usually inside the camera lock).</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> (usually inside the camera lock).</remarks>
         protected abstract void DisconnectImpl();
         /// <summary>
         /// Device-specific implementation of <see cref="Update"/>.
         /// Updates data buffers of all active channels with data of current frame.
         /// </summary>
-        /// <remarks>This method is implicitely called by <see cref="Camera.Update"/> inside the camera lock.</remarks>
+        /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside the camera lock.</remarks>
         protected abstract void UpdateImpl();
         /// <summary>
         /// Device-specific implementation of <see cref="ActivateChannel"/>.
@@ -2486,7 +2498,7 @@ namespace MetriCam2
         /// <param name="channelName">Channel name.</param>
         /// <remarks>
         /// Depending on the underlying camera, the channel stream may be created / registered in this method.
-        /// This method is implicitely called by <see cref="Camera.ActivateChannel"/> inside the camera lock.
+        /// This method is implicitly called by <see cref="Camera.ActivateChannel"/> inside the camera lock.
         /// </remarks>
         protected virtual void ActivateChannelImpl(string channelName)
         {
@@ -2499,7 +2511,7 @@ namespace MetriCam2
         /// <param name="channelName">Channel name.</param>
         /// <remarks>
         /// Depending on the underlying camera, the channel stream may be destroyed / unregistered in this method.
-        /// This method is implicitely called by <see cref="Camera.DeactivateChannel"/> inside the camera lock.
+        /// This method is implicitly called by <see cref="Camera.DeactivateChannel"/> inside the camera lock.
         /// </remarks>
         protected virtual void DeactivateChannelImpl(string channelName)
         {
@@ -2510,7 +2522,7 @@ namespace MetriCam2
         /// <param name="channelName">Channel name.</param>
         /// <returns>(Image) Data.</returns>
         /// <remarks>
-        /// This method is implicitely called by <see cref="Camera.CalcChannel"/>, non-locked.
+        /// This method is implicitly called by <see cref="Camera.CalcChannel"/>, non-locked.
         /// If your implementation needs locking, use <see cref="Camera.cameraLock"/>.
         /// </remarks>
         protected abstract CameraImage CalcChannelImpl(string channelName);
