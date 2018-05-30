@@ -757,6 +757,30 @@ namespace MetriCam2.Cameras
                 return img;
             }
         }
+
+        protected virtual FloatCameraImage CalcAmplitudes()
+        {
+            FloatCameraImage img = new FloatCameraImage(depthWidth, depthHeight);
+
+            lock (this.irFrameData)
+            {
+                lock (cameraLock)
+                {
+                    for (int y = 0; y < this.depthHeight; y++)
+                    {
+                        for (int x = 0; x < this.depthWidth; x++)
+                        {
+                            // mirror image
+                            int idx = y * depthWidth + depthWidthMinusOne - x;
+                            img[y, x] = (float)this.irFrameData[idx];
+                        }
+                    }
+                }
+
+                img.TimeStamp = timestampIR;
+            }
+            return img;
+        }
         #endregion
 
         #region Private Methods
@@ -903,31 +927,7 @@ namespace MetriCam2.Cameras
             }
 
             return result;
-        }
-
-        private FloatCameraImage CalcAmplitudes()
-        {
-            FloatCameraImage img = new FloatCameraImage(depthWidth, depthHeight);
-
-            lock (this.irFrameData)
-            {
-                lock (cameraLock)
-                {
-                    for (int y = 0; y < this.depthHeight; y++)
-                    {
-                        for (int x = 0; x < this.depthWidth; x++)
-                        {
-                            // mirror image
-                            int idx = y * depthWidth + depthWidthMinusOne - x;
-                            img[y, x] = (float)this.irFrameData[idx];
-                        }
-                    }
-                }
-
-                img.TimeStamp = timestampIR;
-            }
-            return img;
-        }
+        }        
 
         private long GetAbsoluteTimeStamp(long relativeTime)
         {
