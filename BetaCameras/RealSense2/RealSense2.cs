@@ -80,10 +80,18 @@ namespace MetriCam2.Cameras
         {
             VideoFrame filteredFrame = frame;
 
-            filteredFrame = TemporalFilter.Apply(filteredFrame);
-            filteredFrame = SpatialFilter.Apply(filteredFrame);
+            // The recommended scheme used in librealsense tools and demos is elaborated below:
+            // Decimation Filter >> 
+            // Depth2Disparity Transform * * >>
+            // Spatial Filter >> 
+            // Temporal Filter >> 
+            // Disparity2Depth Transform * * >>
+            // Hole Filling Filter
+
             filteredFrame = DecimationFilter.Apply(filteredFrame);
             filteredFrame = DepthToDisparityTransform.Apply(filteredFrame);
+            filteredFrame = SpatialFilter.Apply(filteredFrame);
+            filteredFrame = TemporalFilter.Apply(filteredFrame);
             filteredFrame = DisparityToDepthTransform.Apply(filteredFrame);
             filteredFrame = HolesFillFilter.Apply(filteredFrame);
 
