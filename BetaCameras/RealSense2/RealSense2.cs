@@ -1968,7 +1968,6 @@ namespace MetriCam2.Cameras
             string keyName = $"{channelFromName}_{channelToName}";
             if (extrinsicsCache.ContainsKey(keyName) && extrinsicsCache[keyName] != null)
             {
-                log.DebugFormat("Found extrinsic for channel {0} to {1} in cache.", channelFromName, channelToName);
                 return extrinsicsCache[keyName];
             }
 
