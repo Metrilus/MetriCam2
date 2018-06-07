@@ -1858,7 +1858,6 @@ namespace MetriCam2.Cameras
             string keyName = $"{channelName}_{resolution.X}_{resolution.Y}";
             if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
             {
-                log.DebugFormat("Found intrinsic calibration for channel {0} in cache.", channelName);
                 return intrinsicsCache[keyName];
             }
 
