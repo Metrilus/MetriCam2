@@ -117,6 +117,11 @@ namespace MetriCam2.Cameras
                     return _pipelineProfile.Device;
                 }
 
+                if (_context.Devices.Count == 0)
+                {
+                    throw new InvalidOperationException("No RealSense2 Device seems to be connected");
+                }
+
                 if (string.IsNullOrEmpty(SerialNumber))
                 {
                     // No S/N -> return first device
