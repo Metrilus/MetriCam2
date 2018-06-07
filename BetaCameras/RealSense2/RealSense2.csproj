@@ -40,7 +40,7 @@
   <ItemGroup>
     <Reference Include="Intel.RealSense, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Z:\external-libraries\Intel\libRealSense2\2.11.1\AnyCPU\net45\Intel.RealSense.dll</HintPath>
+      <HintPath>Z:\external-libraries\Intel\libRealSense2\2.12.0\AnyCPU\Release\net45\Intel.RealSense.dll</HintPath>
     </Reference>
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
