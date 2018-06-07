@@ -60,6 +60,8 @@ namespace MetriCam2.Cameras
                     return tf.ApplyFilter(frame);
                 if (_filter is DisparityTransform dt)
                     return dt.ApplyFilter(frame);
+                if (_filter is HoleFillingFilter hf)
+                    return hf.ApplyFilter(frame);
 
                 string msg = $"RealSense2: Filter type {_filter.GetType().ToString()} not supported";
                 log.Error(msg);
@@ -70,6 +72,7 @@ namespace MetriCam2.Cameras
         public Filter DecimationFilter { get; } = new Filter(new DecimationFilter());
         public Filter SpatialFilter { get; } = new Filter(new SpatialFilter());
         public Filter TemporalFilter { get; } = new Filter(new TemporalFilter());
+        public Filter HolesFillFilter { get; } = new Filter(new HoleFillingFilter());
         public Filter DepthToDisparityTransform { get; } = new Filter(new DisparityTransform(true));
         public Filter DisparityToDepthTransform { get; } = new Filter(new DisparityTransform(false));
 
@@ -82,6 +85,7 @@ namespace MetriCam2.Cameras
             filteredFrame = DecimationFilter.Apply(filteredFrame);
             filteredFrame = DepthToDisparityTransform.Apply(filteredFrame);
             filteredFrame = DisparityToDepthTransform.Apply(filteredFrame);
+            filteredFrame = HolesFillFilter.Apply(filteredFrame);
 
             return filteredFrame;
         }
