@@ -1845,7 +1845,7 @@ namespace MetriCam2.Cameras
             string keyName = $"{channelName}_{resolution.X}_{resolution.Y}";
             if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
             {
-                return intrinsicsCache[keyName];
+                return RescaleIntrinsics(intrinsicsCache[keyName], channelName);
             }
 
             VideoStreamProfile profile = GetProfileFromSensor(channelName) as VideoStreamProfile;
@@ -1871,14 +1871,22 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3]);
 
-            intrinsicsCache[keyName] = new ProjectiveTransformationZhang(projTrans);
+            intrinsicsCache[keyName] = projTrans;
 
+            return RescaleIntrinsics(projTrans, channelName);
+        }
+
+        private IProjectiveTransformation RescaleIntrinsics(IProjectiveTransformation intrinsics, string channelName)
+        {
             if (DecimationFilter.Enabled && ChannelNameIsDepthChannel(channelName))
             {
-                projTrans.RescaleParameters(_filteredDepthResolution.X, _filteredDepthResolution.Y);
+                ProjectiveTransformationZhang rescaled = new ProjectiveTransformationZhang((ProjectiveTransformationZhang)intrinsics);
+                rescaled.RescaleParameters(_filteredDepthResolution.X, _filteredDepthResolution.Y);
+
+                return rescaled;
             }
 
-            return projTrans;
+            return intrinsics;
         }
 
         private bool ChannelNameIsDepthChannel(string channelName)
