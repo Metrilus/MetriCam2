@@ -16,10 +16,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private bool _enabled = false;
@@ -38,13 +35,15 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
         internal VideoFrame Apply(VideoFrame frame)
         {
-            if (!this.Enabled)
+            if (!Enabled)
+            {
                 return frame;
+            }
 
             return ApplyImpl(frame);
         }
 
-        internal abstract VideoFrame ApplyImpl(VideoFrame frame);
+        protected abstract VideoFrame ApplyImpl(VideoFrame frame);
     }
     #endregion
 
@@ -57,17 +56,17 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
         public Decimation()
         {
-            base.PropertyChanged += Decimation_PropertyChanged;
+            PropertyChanged += Decimation_PropertyChanged;
         }
 
         ~Decimation()
         {
-            base.PropertyChanged -= Decimation_PropertyChanged;
+            PropertyChanged -= Decimation_PropertyChanged;
         }
 
         private void Decimation_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(base.Enabled))
+            if (e.PropertyName == nameof(Enabled))
             {
                 ResolutionChange();
             }
@@ -88,7 +87,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
                     if (value > max || value < min)
                     {
-                        throw new InvalidOperationException(
+                        throw new ArgumentOutOfRangeException(
                             $"Realsense2 Decimationfilter Magnitude: value ouf of bounds - max: {max}, min: {min}");
                     }
 
@@ -98,7 +97,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
             }
         }
 
-        internal override VideoFrame ApplyImpl(VideoFrame frame)
+        protected override VideoFrame ApplyImpl(VideoFrame frame)
         {
             return _filter.ApplyFilter(frame);
         }
@@ -153,7 +152,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
                     if (value > max || value < min)
                     {
-                        throw new InvalidOperationException(
+                        throw new ArgumentOutOfRangeException(
                             $"Realsense2 TemporalFilter SmoothAlpha: value ouf of bounds - max: {max}, min: {min}");
                     }
 
@@ -177,7 +176,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
                     if (value > max || value < min)
                     {
-                        throw new InvalidOperationException(
+                        throw new ArgumentOutOfRangeException(
                             $"Realsense2 TemporalFilter SmoothDelta: value ouf of bounds - max: {max}, min: {min}");
                     }
 
@@ -186,7 +185,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
             }
         }
 
-        internal override VideoFrame ApplyImpl(VideoFrame frame)
+        protected override VideoFrame ApplyImpl(VideoFrame frame)
         {
             return _filter.ApplyFilter(frame);
         }
@@ -223,7 +222,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
                     if (value > max || value < min)
                     {
-                        throw new InvalidOperationException(
+                        throw new ArgumentOutOfRangeException(
                             $"Realsense2 SpatialFilter Magnitude: value ouf of bounds - max: {max}, min: {min}");
                     }
 
@@ -247,7 +246,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
                     if (value > max || value < min)
                     {
-                        throw new InvalidOperationException(
+                        throw new ArgumentOutOfRangeException(
                             $"Realsense2 SpatialFilter SmoothAlpha: value ouf of bounds - max: {max}, min: {min}");
                     }
 
@@ -271,7 +270,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
 
                     if (value > max || value < min)
                     {
-                        throw new InvalidOperationException(
+                        throw new ArgumentOutOfRangeException(
                             $"Realsense2 SpatialFilter SmoothDelta: value ouf of bounds - max: {max}, min: {min}");
                     }
 
@@ -292,7 +291,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
             }
         }
 
-        internal override VideoFrame ApplyImpl(VideoFrame frame)
+        protected override VideoFrame ApplyImpl(VideoFrame frame)
         {
             return _filter.ApplyFilter(frame);
         }
@@ -304,7 +303,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
     {
         private DisparityTransform _filter = new DisparityTransform(true);
 
-        internal override VideoFrame ApplyImpl(VideoFrame frame)
+        protected override VideoFrame ApplyImpl(VideoFrame frame)
         {
             return _filter.ApplyFilter(frame);
         }
@@ -316,7 +315,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
     {
         private DisparityTransform _filter = new DisparityTransform(false);
 
-        internal override VideoFrame ApplyImpl(VideoFrame frame)
+        protected override VideoFrame ApplyImpl(VideoFrame frame)
         {
             return _filter.ApplyFilter(frame);
         }
@@ -347,7 +346,7 @@ namespace MetriCam2.Cameras.RealSense2Filter
             }
         }
 
-        internal override VideoFrame ApplyImpl(VideoFrame frame)
+        protected override VideoFrame ApplyImpl(VideoFrame frame)
         {
             return _filter.ApplyFilter(frame);
         }
