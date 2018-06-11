@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras.RealSense2Filters
 {
-    public class HolesFill : FilterBase
+    public class HoleFillingFilter : FilterBase
     {
-        private readonly HoleFillingFilter _filter = new HoleFillingFilter();
+        private readonly Intel.RealSense.HoleFillingFilter _filter = new Intel.RealSense.HoleFillingFilter();
 
         public enum FillingMode
         {

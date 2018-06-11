@@ -7,31 +7,34 @@ using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras.RealSense2Filters
 {
-    public class Temporal : FilterBase
+    public class SpatialFilter : FilterBase
     {
-        private TemporalFilter _filter = new TemporalFilter();
+        private readonly Intel.RealSense.SpatialFilter _filter = new Intel.RealSense.SpatialFilter();
 
-        public enum PersistencyMode
+        public enum HolesFillingMode
         {
             Disabled = 0,
-            Valid8in8 = 1,
-            Valid2in3 = 2,
-            Valid2in4 = 3,
-            Valid2in8 = 4,
-            Valid1in2 = 5,
-            Valid1in5 = 6,
-            Valid1in8 = 7,
-            AlwaysOn = 8,
+            TwoPixelRadius = 1,
+            FourPixelRadius = 2,
+            EightPixelRadius = 3,
+            SixteenPixelRadius = 4,
+            Unlimited = 5,
         }
 
-        public PersistencyMode Persistency
+        public int Magnitude
         {
-            get => (PersistencyMode)((int)_filter.Options[Option.HolesFill].Value);
+            get => (int)_filter.Options[Option.FilterMagnitude].Value;
             set
             {
-                if (value != Persistency)
+                if (value != Magnitude)
                 {
-                    _filter.Options[Option.HolesFill].Value = (float)value;
+                    if (!CheckMinMax(_filter, Option.FilterMagnitude, value, out int min, out int max))
+                    {
+                        throw new ArgumentOutOfRangeException(
+                            $"Realsense2 SpatialFilter Magnitude: value ouf of bounds - max: {max}, min: {min}");
+                    }
+
+                    _filter.Options[Option.FilterMagnitude].Value = value;
                 }
             }
         }
@@ -46,7 +49,7 @@ namespace MetriCam2.Cameras.RealSense2Filters
                     if (!CheckMinMax(_filter, Option.FilterSmoothAlpha, value, out int min, out int max))
                     {
                         throw new ArgumentOutOfRangeException(
-                            $"Realsense2 TemporalFilter SmoothAlpha: value ouf of bounds - max: {max}, min: {min}");
+                            $"Realsense2 SpatialFilter SmoothAlpha: value ouf of bounds - max: {max}, min: {min}");
                     }
 
                     _filter.Options[Option.FilterSmoothAlpha].Value = value;
@@ -64,12 +67,18 @@ namespace MetriCam2.Cameras.RealSense2Filters
                     if (!CheckMinMax(_filter, Option.FilterSmoothDelta, value, out int min, out int max))
                     {
                         throw new ArgumentOutOfRangeException(
-                            $"Realsense2 TemporalFilter SmoothDelta: value ouf of bounds - max: {max}, min: {min}");
+                            $"Realsense2 SpatialFilter SmoothDelta: value ouf of bounds - max: {max}, min: {min}");
                     }
 
                     _filter.Options[Option.FilterSmoothDelta].Value = value;
                 }
             }
+        }
+
+        public HolesFillingMode HolesFilling
+        {
+            get => (HolesFillingMode)((int)_filter.Options[Option.HolesFill].Value);
+            set =>  _filter.Options[Option.HolesFill].Value = (float)value;
         }
 
         protected override VideoFrame ApplyImpl(VideoFrame frame)

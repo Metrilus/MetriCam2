@@ -8,19 +8,19 @@ using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras.RealSense2Filters
 {
-    public class Decimation : FilterBase
+    public class DecimationFilter : FilterBase
     {
         public delegate void ResolutionChangeEvent();
-        public event ResolutionChangeEvent ResolutionChange;
+        public event ResolutionChangeEvent ResolutionChanged;
 
-        private readonly DecimationFilter _filter = new DecimationFilter();
+        private readonly Intel.RealSense.DecimationFilter _filter = new Intel.RealSense.DecimationFilter();
 
-        public Decimation()
+        public DecimationFilter()
         {
             PropertyChanged += Decimation_PropertyChanged;
         }
 
-        ~Decimation()
+        ~DecimationFilter()
         {
             PropertyChanged -= Decimation_PropertyChanged;
         }
@@ -30,7 +30,7 @@ namespace MetriCam2.Cameras.RealSense2Filters
             // NOTE: why not overwrite property?
             if (e.PropertyName == nameof(Enabled))
             {
-                ResolutionChange();
+                ResolutionChanged();
             }
         }
 
@@ -48,7 +48,7 @@ namespace MetriCam2.Cameras.RealSense2Filters
                     }
 
                     _filter.Options[Option.FilterMagnitude].Value = value;
-                    ResolutionChange();
+                    ResolutionChanged();
                 }
             }
         }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras.RealSense2Filters
 {
-    public class Depth2Disparity : FilterBase
+    public class Depth2DisparityTransform : FilterBase
     {
         private readonly DisparityTransform _filter = new DisparityTransform(transform_to_disparity: true);
 

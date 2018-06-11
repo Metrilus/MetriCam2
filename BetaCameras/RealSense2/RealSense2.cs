@@ -36,12 +36,12 @@ namespace MetriCam2.Cameras
         private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
 
         #region Filter
-        public Decimation DecimationFilter { get; } = new Decimation();
-        public Spatial SpatialFilter { get; } = new Spatial();
-        public Temporal TemporalFilter { get; } = new Temporal();
-        public HolesFill HolesFillFilter { get; } = new HolesFill();
-        public Depth2Disparity DepthToDisparityTransform { get; } = new Depth2Disparity();
-        public Disparity2Depth DisparityToDepthTransform { get; } = new Disparity2Depth();
+        public RealSense2Filters.DecimationFilter DecimationFilter { get; } = new RealSense2Filters.DecimationFilter();
+        public RealSense2Filters.SpatialFilter SpatialFilter { get; } = new RealSense2Filters.SpatialFilter();
+        public RealSense2Filters.TemporalFilter TemporalFilter { get; } = new RealSense2Filters.TemporalFilter();
+        public RealSense2Filters.HoleFillingFilter HolesFillFilter { get; } = new RealSense2Filters.HoleFillingFilter();
+        public Depth2DisparityTransform DepthToDisparityTransform { get; } = new Depth2DisparityTransform();
+        public Disparity2DepthTransform DisparityToDepthTransform { get; } = new Disparity2DepthTransform();
 
         private VideoFrame FilterFrame(VideoFrame frame)
         {
@@ -1492,7 +1492,7 @@ namespace MetriCam2.Cameras
                 adev.AdvancedModeEnabled = true;
 
             _depthScale = GetDepthScale();
-            DecimationFilter.ResolutionChange += UpdateImpl;
+            DecimationFilter.ResolutionChanged += UpdateImpl;
         }
 
         private void StopPipeline()
@@ -1539,7 +1539,7 @@ namespace MetriCam2.Cameras
 
             intrinsicsCache.Clear();
             extrinsicsCache.Clear();
-            DecimationFilter.ResolutionChange -= UpdateImpl;
+            DecimationFilter.ResolutionChanged -= UpdateImpl;
         }
 
         protected override void UpdateImpl()

@@ -59,13 +59,13 @@
       <Link>SolutionAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="ConfigPresets.cs" />
-    <Compile Include="Filters\Decimation.cs" />
-    <Compile Include="Filters\Depth2Disparity.cs" />
-    <Compile Include="Filters\Disparity2Depth.cs" />
+    <Compile Include="Filters\DecimationFilter.cs" />
+    <Compile Include="Filters\Depth2DisparityTransform.cs" />
+    <Compile Include="Filters\Disparity2DepthTransform.cs" />
     <Compile Include="Filters\FilterBase.cs" />
-    <Compile Include="Filters\HolesFill.cs" />
-    <Compile Include="Filters\Spatial.cs" />
-    <Compile Include="Filters\Temporal.cs" />
+    <Compile Include="Filters\HoleFillingFilter.cs" />
+    <Compile Include="Filters\SpatialFilter.cs" />
+    <Compile Include="Filters\TemporalFilter.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
