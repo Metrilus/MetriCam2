@@ -1,13 +1,14 @@
 ﻿// Copyright (c) Metrilus GmbH
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
-using Metrilus.Util;
-using System;
-using System.Drawing;
-using System.Collections.Generic;
-using System.Linq;
 using Intel.RealSense;
 using MetriCam2.Exceptions;
+using MetriCam2.Cameras.RealSense2Filters;
+using Metrilus.Util;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -35,12 +36,12 @@ namespace MetriCam2.Cameras
         private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
 
         #region Filter
-        public RealSense2Filter.Decimation DecimationFilter { get; } = new RealSense2Filter.Decimation();
-        public RealSense2Filter.Spatial SpatialFilter { get; } = new RealSense2Filter.Spatial();
-        public RealSense2Filter.Temporal TemporalFilter { get; } = new RealSense2Filter.Temporal();
-        public RealSense2Filter.HolesFill HolesFillFilter { get; } = new RealSense2Filter.HolesFill();
-        public RealSense2Filter.Depth2Disparity DepthToDisparityTransform { get; } = new RealSense2Filter.Depth2Disparity();
-        public RealSense2Filter.Disparity2Depth DisparityToDepthTransform { get; } = new RealSense2Filter.Disparity2Depth();
+        public Decimation DecimationFilter { get; } = new Decimation();
+        public Spatial SpatialFilter { get; } = new Spatial();
+        public Temporal TemporalFilter { get; } = new Temporal();
+        public HolesFill HolesFillFilter { get; } = new HolesFill();
+        public Depth2Disparity DepthToDisparityTransform { get; } = new Depth2Disparity();
+        public Disparity2Depth DisparityToDepthTransform { get; } = new Disparity2Depth();
 
         private VideoFrame FilterFrame(VideoFrame frame)
         {
