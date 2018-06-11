@@ -26,10 +26,7 @@ namespace MetriCam2.Cameras.RealSense2Filters
 
         public PersistencyMode Persistency
         {
-            get
-            {
-                return (PersistencyMode)((int)_filter.Options[Option.HolesFill].Value);
-            }
+            get => (PersistencyMode)((int)_filter.Options[Option.HolesFill].Value);
             set
             {
                 if (value != Persistency)
@@ -41,18 +38,12 @@ namespace MetriCam2.Cameras.RealSense2Filters
 
         public float SmoothAlpha
         {
-            get
-            {
-                return _filter.Options[Option.FilterSmoothAlpha].Value;
-            }
+            get => _filter.Options[Option.FilterSmoothAlpha].Value;
             set
             {
                 if (value != SmoothAlpha)
                 {
-                    int max = (int)_filter.Options[Option.FilterSmoothAlpha].Max;
-                    int min = (int)_filter.Options[Option.FilterSmoothAlpha].Min;
-
-                    if (value > max || value < min)
+                    if (!CheckMinMax(_filter, Option.FilterSmoothAlpha, value, out int min, out int max))
                     {
                         throw new ArgumentOutOfRangeException(
                             $"Realsense2 TemporalFilter SmoothAlpha: value ouf of bounds - max: {max}, min: {min}");
@@ -65,18 +56,12 @@ namespace MetriCam2.Cameras.RealSense2Filters
 
         public float SmoothDelta
         {
-            get
-            {
-                return _filter.Options[Option.FilterSmoothDelta].Value;
-            }
+            get => _filter.Options[Option.FilterSmoothDelta].Value;
             set
             {
                 if (value != SmoothAlpha)
                 {
-                    int max = (int)_filter.Options[Option.FilterSmoothDelta].Max;
-                    int min = (int)_filter.Options[Option.FilterSmoothDelta].Min;
-
-                    if (value > max || value < min)
+                    if (!CheckMinMax(_filter, Option.FilterSmoothDelta, value, out int min, out int max))
                     {
                         throw new ArgumentOutOfRangeException(
                             $"Realsense2 TemporalFilter SmoothDelta: value ouf of bounds - max: {max}, min: {min}");

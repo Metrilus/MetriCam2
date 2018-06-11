@@ -12,7 +12,8 @@ namespace MetriCam2.Cameras.RealSense2Filters
     {
         public delegate void ResolutionChangeEvent();
         public event ResolutionChangeEvent ResolutionChange;
-        private DecimationFilter _filter = new DecimationFilter();
+
+        private readonly DecimationFilter _filter = new DecimationFilter();
 
         public Decimation()
         {
@@ -26,6 +27,7 @@ namespace MetriCam2.Cameras.RealSense2Filters
 
         private void Decimation_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+            // NOTE: why not overwrite property?
             if (e.PropertyName == nameof(Enabled))
             {
                 ResolutionChange();
@@ -34,18 +36,12 @@ namespace MetriCam2.Cameras.RealSense2Filters
 
         public int Magnitude
         {
-            get
-            {
-                return (int)_filter.Options[Option.FilterMagnitude].Value;
-            }
+            get => (int)_filter.Options[Option.FilterMagnitude].Value;
             set
             {
                 if (value != Magnitude)
                 {
-                    int max = (int)_filter.Options[Option.FilterMagnitude].Max;
-                    int min = (int)_filter.Options[Option.FilterMagnitude].Min;
-
-                    if (value > max || value < min)
+                    if (!CheckMinMax(_filter, Option.FilterMagnitude, value, out int min, out int max))
                     {
                         throw new ArgumentOutOfRangeException(
                             $"Realsense2 Decimationfilter Magnitude: value ouf of bounds - max: {max}, min: {min}");

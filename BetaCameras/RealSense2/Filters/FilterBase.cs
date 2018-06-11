@@ -13,11 +13,6 @@ namespace MetriCam2.Cameras.RealSense2Filters
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         private bool _enabled = false;
         public bool Enabled
         {
@@ -43,5 +38,26 @@ namespace MetriCam2.Cameras.RealSense2Filters
         }
 
         protected abstract VideoFrame ApplyImpl(VideoFrame frame);
+
+        protected static bool CheckMinMax(ProcessingBlock filter, Option option, float value, out int min, out int max)
+        {
+            max = (int)filter.Options[option].Max;
+            min = (int)filter.Options[option].Min;
+
+            return (value <= max && value >= min);
+        }
+
+        protected static bool CheckMinMax(ProcessingBlock filter, Option option, int value, out int min, out int max)
+        {
+            max = (int)filter.Options[option].Max;
+            min = (int)filter.Options[option].Min;
+
+            return (value <= max && value >= min);
+        }
+
+        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

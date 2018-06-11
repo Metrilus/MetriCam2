@@ -9,7 +9,7 @@ namespace MetriCam2.Cameras.RealSense2Filters
 {
     public class HolesFill : FilterBase
     {
-        private HoleFillingFilter _filter = new HoleFillingFilter();
+        private readonly HoleFillingFilter _filter = new HoleFillingFilter();
 
         public enum FillingMode
         {
@@ -20,14 +20,8 @@ namespace MetriCam2.Cameras.RealSense2Filters
 
         public FillingMode Mode
         {
-            get
-            {
-                return (FillingMode)((int)_filter.Options[Option.HolesFill].Value);
-            }
-            set
-            {
-                _filter.Options[Option.HolesFill].Value = (float)value;
-            }
+            get => (FillingMode)((int)_filter.Options[Option.HolesFill].Value);
+            set => _filter.Options[Option.HolesFill].Value = (float)value;
         }
 
         protected override VideoFrame ApplyImpl(VideoFrame frame)

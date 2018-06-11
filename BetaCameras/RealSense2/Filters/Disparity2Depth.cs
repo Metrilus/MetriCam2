@@ -9,7 +9,7 @@ namespace MetriCam2.Cameras.RealSense2Filters
 {
     public class Disparity2Depth : FilterBase
     {
-        private DisparityTransform _filter = new DisparityTransform(false);
+        private readonly DisparityTransform _filter = new DisparityTransform(transform_to_disparity: false);
 
         protected override VideoFrame ApplyImpl(VideoFrame frame)
         {
