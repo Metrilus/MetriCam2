@@ -30,7 +30,13 @@ namespace MetriCam2.Cameras.RealSense2Filters
             // NOTE: why not overwrite property?
             if (e.PropertyName == nameof(Enabled))
             {
-                ResolutionChanged();
+                if(ResolutionChanged == null)
+                {
+                    throw new InvalidOperationException(
+                        "RealSense2 Decimationfilter: only activate the filter after the camera is connected.");
+                }
+
+                ResolutionChanged?.Invoke();
             }
         }
 
