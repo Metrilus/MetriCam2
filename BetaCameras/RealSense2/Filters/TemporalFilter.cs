@@ -59,7 +59,7 @@ namespace MetriCam2.Cameras.RealSense2Filters
             get => _filter.Options[Option.FilterSmoothDelta].Value;
             set
             {
-                if (value != SmoothAlpha)
+                if (value != SmoothDelta)
                 {
                     if (!CheckMinMax(_filter, Option.FilterSmoothDelta, value, out int min, out int max))
                     {
