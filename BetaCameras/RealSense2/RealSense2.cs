@@ -136,8 +136,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                List<Point2i> resolutions = new List<Point2i>();
-                resolutions.Add(new Point2i(640, 480));
+                List<Point2i> resolutions = new List<Point2i> { new Point2i(640, 480) };
 
                 if (IsConnected)
                 {
@@ -176,8 +175,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                List<int> framerates = new List<int>();
-                framerates.Add(30);
+                List<int> framerates = new List<int> { 30 };
 
                 if (IsConnected)
                 {
@@ -198,6 +196,13 @@ namespace MetriCam2.Cameras
 
         private Point2i _filteredDepthResolution = new Point2i(640, 480);
         private Point2i _depthResolution = new Point2i(640, 480);
+        /// <summary>
+        /// The resolution of the z-image, distance, left, and right channels.
+        /// </summary>
+        /// <remarks>
+        /// Setting <see cref="DepthResolution"/> sets the desired resolution of z-image, distance, left, and right channels.
+        /// The getter returns the actual resolution after filtering (may not match left/right).
+        /// </remarks>
         public Point2i DepthResolution
         {
             get
@@ -220,8 +225,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                List<Point2i> resolutions = new List<Point2i>();
-                resolutions.Add(new Point2i(640, 480));
+                List<Point2i> resolutions = new List<Point2i> { new Point2i(640, 480) };
 
                 if (IsConnected)
                 {
@@ -260,8 +264,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                List<int> framerates = new List<int>();
-                framerates.Add(30);
+                List<int> framerates = new List<int> { 30 };
 
                 if (IsConnected)
                 {
@@ -283,10 +286,7 @@ namespace MetriCam2.Cameras
 
         public string Firmware
         {
-            get
-            {
-                return RealSenseDevice.Info[CameraInfo.FirmwareVersion];
-            }
+            get => RealSenseDevice.Info[CameraInfo.FirmwareVersion];
         }
 
         ParamDesc<string> FirmwareDesc
@@ -1817,7 +1817,7 @@ namespace MetriCam2.Cameras
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
             Point2i resolution = GetResolutionFromChannelName(channelName);
-            string keyName = $"{channelName}_{resolution.X}_{resolution.Y}";
+            string keyName = $"{channelName}_{resolution.X}x{resolution.Y}";
             if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
             {
                 return RescaleIntrinsics(intrinsicsCache[keyName], channelName);
@@ -1828,7 +1828,7 @@ namespace MetriCam2.Cameras
 
             if (intrinsics.model != Distortion.BrownConrady)
             {
-                string msg = string.Format("{0}: intrinsics distrotion model {1} does not match Metrilus.Util", Name, intrinsics.model.ToString());
+                string msg = string.Format("{0}: intrinsics distortion model {1} does not match Metrilus.Util", Name, intrinsics.model.ToString());
                 log.Error(msg);
                 throw new Exception(msg);
             }
@@ -1851,29 +1851,30 @@ namespace MetriCam2.Cameras
             return RescaleIntrinsics(projTrans, channelName);
         }
 
+        /// <summary>
+        /// Rescales intrinsics to actual depth resolution (i.e. after filtering), if neccessary.
+        /// </summary>
+        /// <param name="intrinsics"></param>
+        /// <param name="channelName"></param>
+        /// <returns></returns>
         private IProjectiveTransformation RescaleIntrinsics(IProjectiveTransformation intrinsics, string channelName)
         {
-            if (DecimationFilter.Enabled && ChannelNameIsDepthChannel(channelName))
+            if (DecimationFilter.Enabled && IsDepthChannel(channelName))
             {
                 ProjectiveTransformationZhang rescaled = new ProjectiveTransformationZhang((ProjectiveTransformationZhang)intrinsics);
                 rescaled.RescaleParameters(_filteredDepthResolution.X, _filteredDepthResolution.Y);
-
                 return rescaled;
             }
 
             return intrinsics;
         }
 
-        private bool ChannelNameIsDepthChannel(string channelName)
-        {
-            if(channelName == ChannelNames.ZImage
-            || channelName == ChannelNames.Distance)
-            {
-                return true;
-            }
-
-            return false;
-        }
+        /// <summary>
+        /// Checks if a channel is a depth channel (i.e. distance or z-image).
+        /// </summary>
+        /// <param name="channelName"></param>
+        /// <returns></returns>
+        private bool IsDepthChannel(string channelName) => (channelName == ChannelNames.ZImage || channelName == ChannelNames.Distance);
 
         private Point2i GetResolutionFromChannelName(string channelName)
         {
