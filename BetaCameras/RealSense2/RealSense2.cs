@@ -39,7 +39,7 @@ namespace MetriCam2.Cameras
         public RealSense2Filters.DecimationFilter DecimationFilter { get; } = new RealSense2Filters.DecimationFilter();
         public RealSense2Filters.SpatialFilter SpatialFilter { get; } = new RealSense2Filters.SpatialFilter();
         public RealSense2Filters.TemporalFilter TemporalFilter { get; } = new RealSense2Filters.TemporalFilter();
-        public RealSense2Filters.HoleFillingFilter HolesFillFilter { get; } = new RealSense2Filters.HoleFillingFilter();
+        public RealSense2Filters.HoleFillingFilter HoleFillingFilter { get; } = new RealSense2Filters.HoleFillingFilter();
         public Depth2DisparityTransform DepthToDisparityTransform { get; } = new Depth2DisparityTransform();
         public Disparity2DepthTransform DisparityToDepthTransform { get; } = new Disparity2DepthTransform();
 
@@ -60,7 +60,7 @@ namespace MetriCam2.Cameras
             filteredFrame = SpatialFilter.Apply(filteredFrame);
             filteredFrame = TemporalFilter.Apply(filteredFrame);
             filteredFrame = DisparityToDepthTransform.Apply(filteredFrame);
-            filteredFrame = HolesFillFilter.Apply(filteredFrame);
+            filteredFrame = HoleFillingFilter.Apply(filteredFrame);
 
             _filteredDepthResolution = new Point2i(filteredFrame.Width, filteredFrame.Height);
 
