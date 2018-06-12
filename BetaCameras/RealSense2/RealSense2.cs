@@ -249,6 +249,29 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public Point2i IRResolution
+        {
+            get
+            {
+                return _depthResolution;
+            }
+        }
+
+        ParamDesc<Point2i> IRResolutionDesc
+        {
+            get
+            {
+                ParamDesc<Point2i> res = new ParamDesc<Point2i>()
+                {
+                    Unit = "px",
+                    Description = "Resolution of the IR sensor.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
+                return res;
+            }
+        }
+
         private int _depthFPS = 30;
         public int DepthFPS
         {
