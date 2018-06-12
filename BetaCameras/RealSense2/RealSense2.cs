@@ -124,18 +124,12 @@ namespace MetriCam2.Cameras
         private Point2i _colorResolution = new Point2i(640, 480);
         public Point2i ColorResolution
         {
-            get { return _colorResolution; }
-            set
-            {
-                if (value == _colorResolution)
-                    return;
-
-                TryChangeSetting<Point2i>(
+            get => _colorResolution;
+            set => TryChangeSetting<Point2i>(
                     ref _colorResolution,
                     value,
                     new string[] { ChannelNames.Color }
                 );
-            }
         }
 
         ListParamDesc<Point2i> ColorResolutionDesc
@@ -170,18 +164,12 @@ namespace MetriCam2.Cameras
         private int _colorFPS = 30;
         public int ColorFPS
         {
-            get { return _colorFPS; }
-            set
-            {
-                if (value == _colorFPS)
-                    return;
-
-                TryChangeSetting<int>(
+            get => _colorFPS;
+            set => TryChangeSetting<int>(
                     ref _colorFPS,
                     value,
                     new string[] { ChannelNames.Color }
                 );
-            }
         }
 
         ListParamDesc<int> ColorFPSDesc
@@ -221,17 +209,11 @@ namespace MetriCam2.Cameras
 
                 return _depthResolution;
             }
-            set
-            {
-                if (value == _depthResolution)
-                    return;
-
-                TryChangeSetting<Point2i>(
+            set => TryChangeSetting<Point2i>(
                     ref _depthResolution,
                     value,
                     new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
                 );
-            }
         }
 
         ListParamDesc<Point2i> DepthResolutionDesc
@@ -266,18 +248,12 @@ namespace MetriCam2.Cameras
         private int _depthFPS = 30;
         public int DepthFPS
         {
-            get { return _depthFPS; }
-            set
-            {
-                if (value == _depthFPS)
-                    return;
-
-                TryChangeSetting<int>(
+            get => _depthFPS;
+            set => TryChangeSetting<int>(
                     ref _depthFPS,
                     value,
                     new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
                 );
-            }
         }
 
         ListParamDesc<int> DepthFPSDesc
@@ -1699,10 +1675,9 @@ namespace MetriCam2.Cameras
                 res_x = ColorResolution.X;
                 res_y = ColorResolution.Y;
                 fps = ColorFPS;
-                index = -1;
             }
             else if (channelName == ChannelNames.ZImage
-            || channelName == ChannelNames.Distance)
+                || channelName == ChannelNames.Distance)
             {
                 // Distance and ZImage channel access the same data from
                 // the realsense2 device
@@ -1729,7 +1704,6 @@ namespace MetriCam2.Cameras
                 res_x = _depthResolution.X;
                 res_y = _depthResolution.Y;
                 fps = DepthFPS;
-                index = -1;
             }
             else if (channelName == ChannelNames.Left)
             {
@@ -1738,7 +1712,7 @@ namespace MetriCam2.Cameras
 
                 res_x = _depthResolution.X;
                 res_y = _depthResolution.Y;
-                fps = (int)DepthFPS;
+                fps = DepthFPS;
                 index = 1;
             }
             else if (channelName == ChannelNames.Right)
@@ -2207,8 +2181,12 @@ namespace MetriCam2.Cameras
         private void TryChangeSetting<T>(ref T property, T newValue, string[] channelNames)
         {
             T oldValue = property;
-            bool wasRunning = _pipelineRunning;
+            if (oldValue.Equals(newValue))
+            {
+                return;
+            }
 
+            bool wasRunning = _pipelineRunning;
             try
             {
                 StopPipeline();
