@@ -20,22 +20,21 @@ namespace MetriCam2.Cameras.RealSense2Filters
 
         private readonly Intel.RealSense.DecimationFilter _filter = new Intel.RealSense.DecimationFilter();
 
-        private bool _enabled = false;
         public override bool Enabled
         {
-            get => _enabled;
+            get => base.Enabled;
             set
             {
-                if (value != _enabled)
+                if (value != base.Enabled)
                 {
-                    _enabled = value;
+                    base.Enabled = value;
                     if (ResolutionChanged == null)
                     {
                         throw new InvalidOperationException(
                             "RealSense2 Decimationfilter: only activate the filter after the camera is connected.");
                     }
 
-                    ResolutionChanged?.Invoke();
+                    ResolutionChanged();
                 }
             }
         }
@@ -54,7 +53,10 @@ namespace MetriCam2.Cameras.RealSense2Filters
                     }
 
                     _filter.Options[Option.FilterMagnitude].Value = value;
-                    ResolutionChanged();
+                    if (Enabled)
+                    {
+                        ResolutionChanged();
+                    }
                 }
             }
         }
