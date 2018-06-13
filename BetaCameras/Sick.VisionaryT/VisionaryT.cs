@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Metrilus GmbH
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
-using Metrilus.Util;
 using System;
 using MetriCam2.Cameras.Internal.Sick;
+using Metrilus.Util;
 
 namespace MetriCam2.Cameras
 {
@@ -18,7 +18,7 @@ namespace MetriCam2.Cameras
         // device handle
         private Device device;
         private Control _control;
-        
+
         // frame buffer
         private byte[] imageBuffer;
         // image data contains information about the current frame e.g. width and height
@@ -27,19 +27,6 @@ namespace MetriCam2.Cameras
         private int width;
         private int height;
         #endregion
-
-        #region Public Types
-
-        public enum IntegrationTimes
-        {
-            MS_0500 = 0,
-            MS_1000 = 1,
-            MS_1500 = 2,
-            MS_2000 = 3,
-            MS_2500 = 4,
-        }
-
-        #endregion Public Types
 
         #region Public Properties
 
@@ -69,47 +56,48 @@ namespace MetriCam2.Cameras
             set => ipAddress = value;
         }
 
-        private ListParamDesc<IntegrationTimes> IntegrationTimeDesc
+        private ListParamDesc<VisionaryTIntegrationTime> IntegrationTimeDesc
         {
             get
             {
-                return new ListParamDesc<IntegrationTimes>(typeof(IntegrationTimes))
+                return new ListParamDesc<VisionaryTIntegrationTime>(typeof(VisionaryTIntegrationTime))
                 {
                     Description = "Integration time",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
                     WritableWhen = ParamDesc.ConnectionStates.Connected,
-                    Unit = "ms",
+                    Unit = "μs",
                 };
             }
         }
         /// <summary>
         /// Integration time of ToF-sensor [ms].
         /// </summary>
-        public IntegrationTimes IntegrationTime
+        public VisionaryTIntegrationTime IntegrationTime
         {
             get => _control.GetIntegrationTime();
             set => _control.SetIntegrationTime(value);
         }
 
-        private RangeParamDesc<byte> CoexistanceModeDesc
+        private ListParamDesc<VisionaryTCoexistenceMode> CoexistenceModeDesc
         {
             get
             {
-                return new RangeParamDesc<byte>(0, 8)
+                return new ListParamDesc<VisionaryTCoexistenceMode>(typeof(VisionaryTCoexistenceMode))
                 {
-                    Description = "Illumination mode (8=auto)",
+                    Description = "Coexistence mode",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
                     WritableWhen = ParamDesc.ConnectionStates.Connected,
                 };
             }
         }
+
         /// <summary>
-        /// Coexistance mode of ToF-sensor.
+        /// Coexistence mode (modulation frequency) of ToF-sensor.
         /// </summary>
-        public byte CoexistanceMode
+        public VisionaryTCoexistenceMode CoexistenceMode
         {
-            get => _control.GetCoexistanceMode();
-            set => _control.SetCoexistanceMode(value);
+            get => _control.GetCoexistenceMode();
+            set => _control.SetCoexistenceMode(value);
         }
 
         private ParamDesc<int> WidthDesc
@@ -253,16 +241,16 @@ namespace MetriCam2.Cameras
         {
             switch (channelName)
             {
-            case ChannelNames.Intensity:
-                return CalcIntensity();
-            case ChannelNames.Distance:
-                return CalcDistance();
-            case ChannelNames.ConfidenceMap:
-                return CalcConfidenceMap(CalcRawConfidenceMap());
-            case ChannelNames.RawConfidenceMap:
-                return CalcRawConfidenceMap();
-            case ChannelNames.Point3DImage:
-                return Calc3D();
+                case ChannelNames.Intensity:
+                    return CalcIntensity();
+                case ChannelNames.Distance:
+                    return CalcDistance();
+                case ChannelNames.ConfidenceMap:
+                    return CalcConfidenceMap(CalcRawConfidenceMap());
+                case ChannelNames.RawConfidenceMap:
+                    return CalcRawConfidenceMap();
+                case ChannelNames.Point3DImage:
+                    return Calc3D();
             }
             log.Error("Invalid channelname: " + channelName);
             return null;
@@ -342,7 +330,7 @@ namespace MetriCam2.Cameras
                     for (int j = 0; j < imageData.Width; ++j)
                     {
                         // take two bytes and create integer (little endian)
-                        result[i, j] = (ushort) ((ushort)imageBuffer[start + 1] << 8 | (ushort)imageBuffer[start + 0]);
+                        result[i, j] = (ushort)((ushort)imageBuffer[start + 1] << 8 | (ushort)imageBuffer[start + 0]);
                         start += 2;
                     }
                 }
@@ -361,7 +349,7 @@ namespace MetriCam2.Cameras
         {
             int width = rawConfidenceMap.Width;
             int height = rawConfidenceMap.Height;
-            float scaling = 1.0f / (float) ushort.MaxValue;
+            float scaling = 1.0f / (float)ushort.MaxValue;
 
             FloatCameraImage confidenceMap = new FloatCameraImage(width, height);
             for (int y = 0; y < height; y++)
@@ -405,7 +393,7 @@ namespace MetriCam2.Cameras
                         // we map from image coordinates with origin top left and x horizontal (right) and y vertical 
                         // (downwards) to camera coordinates with origin in center and x to the left and y upwards (seen 
                         // from the sensor position)
-                        double xp = (cx - j) / fx; 
+                        double xp = (cx - j) / fx;
                         double yp = (cy - i) / fy;
 
                         // correct the camera distortion
@@ -414,11 +402,11 @@ namespace MetriCam2.Cameras
                         double k = 1 + k1 * r2 + k2 * r4;
                         double xd = xp * k;
                         double yd = yp * k;
-    
-                        double s0 = Math.Sqrt(xd * xd + yd * yd + 1.0); 
-                        double x = xd * depth / s0; 
+
+                        double s0 = Math.Sqrt(xd * xd + yd * yd + 1.0);
+                        double x = xd * depth / s0;
                         double y = yd * depth / s0;
-                        double z =  depth / s0 - f2rc;
+                        double z = depth / s0 - f2rc;
 
                         x /= 1000;
                         y /= 1000;

@@ -1,9 +1,8 @@
-﻿using Metrilus.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using Metrilus.Logging;
 
 namespace MetriCam2.Cameras.Internal.Sick
 {
@@ -168,30 +167,30 @@ namespace MetriCam2.Cameras.Internal.Sick
             log.DebugFormat("Access mode set to {0}", newMode);
         }
 
-        internal void SetIntegrationTime(VisionaryT.IntegrationTimes value)
+        internal void SetIntegrationTime(VisionaryTIntegrationTime value)
         {
             SetAccessMode(AccessModes.Service);
             log.Debug("Setting integration time");
             WriteVariable("integrationTime", (byte)value);
         }
-        internal VisionaryT.IntegrationTimes GetIntegrationTime()
+        internal VisionaryTIntegrationTime GetIntegrationTime()
         {
             log.Debug("Getting integration time");
             byte value = ReadVariableByte("integrationTime");
-            return (VisionaryT.IntegrationTimes)value;
+            return (VisionaryTIntegrationTime)value;
         }
 
-        internal void SetCoexistanceMode(byte value)
+        internal void SetCoexistenceMode(VisionaryTCoexistenceMode value)
         {
             SetAccessMode(AccessModes.AuthorizedClient);
-            log.Debug("Setting coexistance mode / modulation frequency");
+            log.Debug("Setting coexistence mode / modulation frequency");
             WriteVariable("modFreq", (byte)value);
         }
-        internal byte GetCoexistanceMode()
+        internal VisionaryTCoexistenceMode GetCoexistenceMode()
         {
-            log.Debug("Getting coexistance mode / modulation frequency");
+            log.Debug("Getting coexistence mode / modulation frequency");
             byte value = ReadVariableByte("modFreq");
-            return value;
+            return (VisionaryTCoexistenceMode)value;
         }
 
         private void WriteVariable(string name, byte value)
