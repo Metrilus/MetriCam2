@@ -15,28 +15,23 @@ namespace MetriCam2.Cameras.RealSense2Filters
 
         private readonly Intel.RealSense.DecimationFilter _filter = new Intel.RealSense.DecimationFilter();
 
-        public DecimationFilter()
+        private bool _enabled = false;
+        public override bool Enabled
         {
-            PropertyChanged += Decimation_PropertyChanged;
-        }
-
-        ~DecimationFilter()
-        {
-            PropertyChanged -= Decimation_PropertyChanged;
-        }
-
-        private void Decimation_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            // NOTE: why not overwrite property?
-            if (e.PropertyName == nameof(Enabled))
+            get => _enabled;
+            set
             {
-                if(ResolutionChanged == null)
+                if (value != _enabled)
                 {
-                    throw new InvalidOperationException(
-                        "RealSense2 Decimationfilter: only activate the filter after the camera is connected.");
-                }
+                    _enabled = value;
+                    if (ResolutionChanged == null)
+                    {
+                        throw new InvalidOperationException(
+                            "RealSense2 Decimationfilter: only activate the filter after the camera is connected.");
+                    }
 
-                ResolutionChanged?.Invoke();
+                    ResolutionChanged?.Invoke();
+                }
             }
         }
 

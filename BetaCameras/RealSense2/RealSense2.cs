@@ -207,12 +207,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                if (DecimationFilter.Enabled)
-                {
-                    return _filteredDepthResolution;
-                }
-
-                return _depthResolution;
+                return _filteredDepthResolution;
             }
             set => TryChangeSetting<Point2i>(
                     ref _depthResolution,

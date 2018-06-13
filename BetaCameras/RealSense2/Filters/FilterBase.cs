@@ -9,23 +9,9 @@ using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras.RealSense2Filters
 {
-    public abstract class FilterBase : INotifyPropertyChanged
+    public abstract class FilterBase
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private bool _enabled = false;
-        public bool Enabled
-        {
-            get => _enabled;
-            set
-            {
-                if (value != _enabled)
-                {
-                    _enabled = value;
-                    NotifyPropertyChanged();
-                }
-            }
-        }
+        public virtual bool Enabled { get; set; }
 
         internal VideoFrame Apply(VideoFrame frame)
         {
@@ -53,11 +39,6 @@ namespace MetriCam2.Cameras.RealSense2Filters
             min = (int)filter.Options[option].Min;
 
             return (value <= max && value >= min);
-        }
-
-        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
