@@ -765,63 +765,52 @@ namespace MetriCam2.Cameras
 
         private Socket ConnectSocket(string server, int port)
         {
-            Socket s = null;
-            IPHostEntry hostEntry = null;
             Exception caughtException = null;
 
-            // Get host related information.    
-            try
+            // Try to connect to IP first
+            if (IPAddress.TryParse(server, out IPAddress ipAddress))
             {
-                hostEntry = Dns.GetHostEntry(server);
-
-                // Loop through the AddressList to obtain the supported AddressFamily. This is to avoid
-                // an exception that occurs when the host IP Address is not compatible with the address family
-                // (typical in the IPv6 case).
-                foreach (IPAddress address in hostEntry.AddressList)
+                try
                 {
-                    IPEndPoint ipe = new IPEndPoint(address, port);
-                    Socket tempSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                    tempSocket.Connect(ipe);
-
-                    if (tempSocket.Connected)
+                    IPEndPoint ipe = new IPEndPoint(ipAddress, port);
+                    Socket socket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    socket.Connect(ipe);
+                    if (socket.Connected)
                     {
-                        s = tempSocket;
-                        break;
+                        return socket;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                caughtException = ex;
-            }
-
-            if (s == null) // this case will occur if the camera is directly connected to the PC
-            {
-                //Try to connect directly without DNS address resolution
-                IPEndPoint ipe = new IPEndPoint(IPAddress.Parse(server), port);
-                Socket tempSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                tempSocket.Connect(ipe);
-
-                if (tempSocket.Connected)
+                catch (Exception ex)
                 {
-                    s = tempSocket;
-                }
-                else
-                {
-                    if (caughtException != null)
-                    {
-                        throw caughtException;
-                    }
-                    else
-                    {
-                        throw new WebException(String.Format("Could not establish TCP connection to {0}:{1}.", server, port.ToString()));
-                    }
+                    caughtException = ex;
                 }
             }
 
-            return s;
+            // Try to connect to host name
+            IPHostEntry hostEntry = Dns.GetHostEntry(server);
+
+            // Loop through the AddressList to obtain the supported AddressFamily. This is to avoid
+            // an exception that occurs when the host IP Address is not compatible with the address family
+            // (typical in the IPv6 case).
+            foreach (IPAddress address in hostEntry.AddressList)
+            {
+                IPEndPoint ipe = new IPEndPoint(address, port);
+                Socket socket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                socket.Connect(ipe);
+                if (socket.Connected)
+                {
+                    return socket;
+                }
+            }
+
+            if (caughtException != null)
+            {
+                throw caughtException;
+            }
+            else
+            {
+                throw new WebException(String.Format("Could not establish TCP connection to {0}:{1}.", server, port.ToString()));
+            }
         }
 
         private void SetUrls()
