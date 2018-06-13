@@ -282,6 +282,12 @@ namespace MetriCam2
                 return;
             }
 
+            if (!Path.IsPathRooted(filename))
+            {
+                filename = Path.GetFullPath(filename);
+                log.DebugFormat("Updated filename to absolute path: '{0}'.", filename);
+            }
+
             Assembly assembly = null;
 
             try
