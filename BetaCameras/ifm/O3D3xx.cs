@@ -82,6 +82,54 @@ namespace MetriCam2.Cameras
         }
         #endregion
 
+        #region Trigger Mode
+        /// <summary>
+        /// The camera trigger mode.
+        /// </summary>
+        private O3D3xxTriggerMode _triggerMode = O3D3xxTriggerMode.FreeRun;
+        public O3D3xxTriggerMode TriggerMode
+        {
+            get
+            {
+                if (!IsConnected)
+                {
+                    return O3D3xxTriggerMode.FreeRun;
+                }
+
+                DoEdit((_edit) => {
+                    _triggerMode = (O3D3xxTriggerMode)Convert.ToInt32(_app.GetParameter("TriggerMode"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+                });
+
+                return _triggerMode;
+            }
+            set
+            {
+                _triggerMode = value;
+                if (!IsConnected)
+                {
+                    return;
+                }
+
+                DoEdit((_edit) => {
+                    _app.SetParameter("TriggerMode", ((int)value).ToString());
+                });
+            }
+        }
+        private ListParamDesc<O3D3xxTriggerMode> TriggerModeDesc
+        {
+            get
+            {
+                ListParamDesc<O3D3xxTriggerMode> res = new ListParamDesc<O3D3xxTriggerMode>(typeof(O3D3xxTriggerMode))
+                {
+                    Description = "Trigger mode",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
+                return res;
+            }
+        }
+        #endregion
+
         #region Frequency Channel
         /// <summary>
         /// Frequency channel
@@ -289,17 +337,19 @@ namespace MetriCam2.Cameras
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.IfmIcon; }
 #endif
 
+        private const int MininumReceiveTimeout = 500;
+        private int _receiveTimeout = -1;
         /// <summary>
         /// The camera receive timeout.
         /// </summary>
         /// <remarks>
-        /// Will automatically be set to (1 / <see cref="Framerate"/>) + 50 during <see cref="Camera.Connect"/> unless it has been set before.
+        /// * Will automatically be set to (1 / <see cref="Framerate"/>) + 50 during <see cref="Camera.Connect"/> unless it has been set before.
+        /// * Minimum: 500 ms.
         /// </remarks>
-        private int _receiveTimeout = -1;
         public int ReceiveTimeout
         {
             get => _receiveTimeout;
-            set => _receiveTimeout = value;
+            set => _receiveTimeout = Math.Max(MininumReceiveTimeout, value);
         }
         private ParamDesc<int> ReceiveTimeoutDesc
         {
@@ -331,7 +381,6 @@ namespace MetriCam2.Cameras
         private const string _applicationName = "_MetriCam2";
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
-        private int _triggeredMode = 1;
         private int _applicationId = -1;
 
         private int _width;
@@ -375,9 +424,6 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region MetriCam2 Camera Interface
-        #region MetriCam2 Camera Interface Properties
-        #endregion
-
         #region MetriCam2 Camera Interface Methods
         /// <summary>
         /// Resets list of available channels (<see cref="Channels"/>) to union of all cameras supported by the implementing class.
@@ -426,10 +472,9 @@ namespace MetriCam2.Cameras
 
                 _applicationId = _edit.CreateApplication();
                 _edit.EditApplication(_applicationId);
-                _triggeredMode = 1;
                 _app.SetParameter("Name", _applicationName);
                 _app.SetParameter("Description", "MetriCam2 default application.");
-                _app.SetParameter("TriggerMode", _triggeredMode.ToString());
+                TriggerMode = _triggerMode;
                 _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
                 _appImager.SetParameter("FrameRate", _framerate.ToString());
             }
@@ -720,63 +765,52 @@ namespace MetriCam2.Cameras
 
         private Socket ConnectSocket(string server, int port)
         {
-            Socket s = null;
-            IPHostEntry hostEntry = null;
             Exception caughtException = null;
 
-            // Get host related information.    
-            try
+            // Try to connect to IP first
+            if (IPAddress.TryParse(server, out IPAddress ipAddress))
             {
-                hostEntry = Dns.GetHostEntry(server);
-
-                // Loop through the AddressList to obtain the supported AddressFamily. This is to avoid
-                // an exception that occurs when the host IP Address is not compatible with the address family
-                // (typical in the IPv6 case).
-                foreach (IPAddress address in hostEntry.AddressList)
+                try
                 {
-                    IPEndPoint ipe = new IPEndPoint(address, port);
-                    Socket tempSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                    tempSocket.Connect(ipe);
-
-                    if (tempSocket.Connected)
+                    IPEndPoint ipe = new IPEndPoint(ipAddress, port);
+                    Socket socket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    socket.Connect(ipe);
+                    if (socket.Connected)
                     {
-                        s = tempSocket;
-                        break;
+                        return socket;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                caughtException = ex;
-            }
-
-            if (s == null) // this case will occur if the camera is directly connected to the PC
-            {
-                //Try to connect directly without DNS address resolution
-                IPEndPoint ipe = new IPEndPoint(IPAddress.Parse(server), port);
-                Socket tempSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                tempSocket.Connect(ipe);
-
-                if (tempSocket.Connected)
+                catch (Exception ex)
                 {
-                    s = tempSocket;
-                }
-                else
-                {
-                    if (caughtException != null)
-                    {
-                        throw caughtException;
-                    }
-                    else
-                    {
-                        throw new WebException(String.Format("Could not establish TCP connection to {0}:{1}.", server, port.ToString()));
-                    }
+                    caughtException = ex;
                 }
             }
 
-            return s;
+            // Try to connect to host name
+            IPHostEntry hostEntry = Dns.GetHostEntry(server);
+
+            // Loop through the AddressList to obtain the supported AddressFamily. This is to avoid
+            // an exception that occurs when the host IP Address is not compatible with the address family
+            // (typical in the IPv6 case).
+            foreach (IPAddress address in hostEntry.AddressList)
+            {
+                IPEndPoint ipe = new IPEndPoint(address, port);
+                Socket socket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                socket.Connect(ipe);
+                if (socket.Connected)
+                {
+                    return socket;
+                }
+            }
+
+            if (caughtException != null)
+            {
+                throw caughtException;
+            }
+            else
+            {
+                throw new WebException(String.Format("Could not establish TCP connection to {0}:{1}.", server, port.ToString()));
+            }
         }
 
         private void SetUrls()
