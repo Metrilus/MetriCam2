@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Metrilus GmbH
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
-using Metrilus.Util;
 using System;
 using MetriCam2.Cameras.Internal.Sick;
+using Metrilus.Util;
 
 namespace MetriCam2.Cameras
 {
@@ -17,6 +17,8 @@ namespace MetriCam2.Cameras
         private string ipAddress;
         // device handle
         private Device device;
+        private Control _control;
+
         // frame buffer
         private byte[] imageBuffer;
         // image data contains information about the current frame e.g. width and height
@@ -38,7 +40,7 @@ namespace MetriCam2.Cameras
             {
                 return new ParamDesc<string>()
                 {
-                    Description = "IP address of camera.",
+                    Description = "IP address",
                     ReadableWhen = ParamDesc.ConnectionStates.Disconnected | ParamDesc.ConnectionStates.Connected,
                     WritableWhen = ParamDesc.ConnectionStates.Disconnected
                 };
@@ -50,37 +52,54 @@ namespace MetriCam2.Cameras
         /// </summary>
         public string IPAddress
         {
-            get { return ipAddress; }
-            set { ipAddress = value; }
+            get => ipAddress;
+            set => ipAddress = value;
         }
-        private RangeParamDesc<int> IntegrationTimeDesc
+
+        private ListParamDesc<VisionaryTIntegrationTime> IntegrationTimeDesc
         {
             get
             {
-                return new RangeParamDesc<int>(80, 4000)
+                return new ListParamDesc<VisionaryTIntegrationTime>(typeof(VisionaryTIntegrationTime))
                 {
-                    Description = "Integration time of camera in microseconds.",
+                    Description = "Integration time",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
                     WritableWhen = ParamDesc.ConnectionStates.Connected,
-                    Unit = "Microseconds",
+                    Unit = "μs",
                 };
             }
         }
         /// <summary>
-        /// Integration time of ToF-sensor.
+        /// Integration time of ToF-sensor [ms].
         /// </summary>
-        public int IntegrationTime
+        public VisionaryTIntegrationTime IntegrationTime
+        {
+            get => _control.GetIntegrationTime();
+            set => _control.SetIntegrationTime(value);
+        }
+
+        private ListParamDesc<VisionaryTCoexistenceMode> CoexistenceModeDesc
         {
             get
             {
-                return device.Control_GetIntegrationTime();
-            }
-            set
-            {
-                device.Control_SetServiceAccessMode();
-                device.Control_SetIntegrationTime(value);
+                return new ListParamDesc<VisionaryTCoexistenceMode>(typeof(VisionaryTCoexistenceMode))
+                {
+                    Description = "Coexistence mode",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
             }
         }
+
+        /// <summary>
+        /// Coexistence mode (modulation frequency) of ToF-sensor.
+        /// </summary>
+        public VisionaryTCoexistenceMode CoexistenceMode
+        {
+            get => _control.GetCoexistenceMode();
+            set => _control.SetCoexistenceMode(value);
+        }
+
         private ParamDesc<int> WidthDesc
         {
             get
@@ -97,10 +116,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Width of images.
         /// </summary>
-        public int Width
-        {
-            get { return width; }
-        }
+        public int Width => width;
 
         private ParamDesc<int> HeightDesc
         {
@@ -118,10 +134,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Height of images.
         /// </summary>
-        public int Height
-        {
-            get { return height; }
-        }
+        public int Height => height;
         #endregion
 
         #region Constructor
@@ -176,58 +189,32 @@ namespace MetriCam2.Cameras
         /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
         protected override void ConnectImpl()
         {
-            if (ipAddress == null || ipAddress == "")
+            if (string.IsNullOrWhiteSpace(ipAddress))
             {
                 log.Error("IP Address is not set.");
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), this, "error_connectionFailed", "IP Address is not set! Set it before connecting!");
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "IP Address is not set! Set it before connecting!");
             }
             device = new Device(ipAddress, this, log);
-            device.Connect();
-            device.Control_InitStream();
-            device.Control_StartStream();
+
+            _control = new Control(log, ipAddress);
+            _control.StartStream();
 
             // select intensity channel
             ActivateChannel(ChannelNames.Intensity);
             SelectChannel(ChannelNames.Intensity);
 
-            this.UpdateImpl();
+            // Call update once
+            UpdateImpl();
         }
 
-        /// <summary>
-        /// Loads the intrisic parameters from the camera.
-        /// </summary>
-        /// <param name="channelName">Channel for which intrisics are loaded.</param>
-        /// <returns>ProjectiveTransformationZhang object holding the intrinsics.</returns>
-        public override IProjectiveTransformation GetIntrinsics(string channelName)
-        {
-            if (channelName == ChannelNames.Intensity || channelName == ChannelNames.Distance)
-            {
-                ProjectiveTransformationZhang proj;
-                lock (cameraLock)
-                {
-                    proj = new ProjectiveTransformationZhang(imageData.Width,
-                    imageData.Height,
-                    imageData.FX,
-                    imageData.FY,
-                    imageData.CX,
-                    imageData.CY,
-                    imageData.K1,
-                    imageData.K2,
-                    0,
-                    0,
-                    0);
-                }
-                return proj;
-            }
-            throw new ArgumentException(string.Format("Channel {0} intrinsics not supported.", channelName));
-        }
         /// <summary>
         /// Disconnects the camera.
         /// </summary>
         /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
         protected override void DisconnectImpl()
         {
-            device.Control_StopStream();
+            _control.Close();
+            _control = null;
             device.Disconnect();
             device = null;
         }
@@ -254,16 +241,16 @@ namespace MetriCam2.Cameras
         {
             switch (channelName)
             {
-            case ChannelNames.Intensity:
-                return CalcIntensity();
-            case ChannelNames.Distance:
-                return CalcDistance();
-            case ChannelNames.ConfidenceMap:
-                return CalcConfidenceMap(CalcRawConfidenceMap());
-            case ChannelNames.RawConfidenceMap:
-                return CalcRawConfidenceMap();
-            case ChannelNames.Point3DImage:
-                return Calc3D();
+                case ChannelNames.Intensity:
+                    return CalcIntensity();
+                case ChannelNames.Distance:
+                    return CalcDistance();
+                case ChannelNames.ConfidenceMap:
+                    return CalcConfidenceMap(CalcRawConfidenceMap());
+                case ChannelNames.RawConfidenceMap:
+                    return CalcRawConfidenceMap();
+                case ChannelNames.Point3DImage:
+                    return Calc3D();
             }
             log.Error("Invalid channelname: " + channelName);
             return null;
@@ -343,7 +330,7 @@ namespace MetriCam2.Cameras
                     for (int j = 0; j < imageData.Width; ++j)
                     {
                         // take two bytes and create integer (little endian)
-                        result[i, j] = (ushort) ((ushort)imageBuffer[start + 1] << 8 | (ushort)imageBuffer[start + 0]);
+                        result[i, j] = (ushort)((ushort)imageBuffer[start + 1] << 8 | (ushort)imageBuffer[start + 0]);
                         start += 2;
                     }
                 }
@@ -362,7 +349,7 @@ namespace MetriCam2.Cameras
         {
             int width = rawConfidenceMap.Width;
             int height = rawConfidenceMap.Height;
-            float scaling = 1.0f / (float) ushort.MaxValue;
+            float scaling = 1.0f / (float)ushort.MaxValue;
 
             FloatCameraImage confidenceMap = new FloatCameraImage(width, height);
             for (int y = 0; y < height; y++)
@@ -406,7 +393,7 @@ namespace MetriCam2.Cameras
                         // we map from image coordinates with origin top left and x horizontal (right) and y vertical 
                         // (downwards) to camera coordinates with origin in center and x to the left and y upwards (seen 
                         // from the sensor position)
-                        double xp = (cx - j) / fx; 
+                        double xp = (cx - j) / fx;
                         double yp = (cy - i) / fy;
 
                         // correct the camera distortion
@@ -415,11 +402,11 @@ namespace MetriCam2.Cameras
                         double k = 1 + k1 * r2 + k2 * r4;
                         double xd = xp * k;
                         double yd = yp * k;
-    
-                        double s0 = Math.Sqrt(xd * xd + yd * yd + 1.0); 
-                        double x = xd * depth / s0; 
+
+                        double s0 = Math.Sqrt(xd * xd + yd * yd + 1.0);
+                        double x = xd * depth / s0;
                         double y = yd * depth / s0;
-                        double z =  depth / s0 - f2rc;
+                        double z = depth / s0 - f2rc;
 
                         x /= 1000;
                         y /= 1000;
