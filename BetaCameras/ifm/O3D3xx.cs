@@ -82,6 +82,54 @@ namespace MetriCam2.Cameras
         }
         #endregion
 
+        #region Trigger Mode
+        /// <summary>
+        /// The camera trigger mode.
+        /// </summary>
+        private O3D3xxTriggerMode _triggerMode = O3D3xxTriggerMode.FreeRun;
+        public O3D3xxTriggerMode TriggerMode
+        {
+            get
+            {
+                if (!IsConnected)
+                {
+                    return O3D3xxTriggerMode.FreeRun;
+                }
+
+                DoEdit((_edit) => {
+                    _triggerMode = (O3D3xxTriggerMode)Convert.ToInt32(_app.GetParameter("TriggerMode"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+                });
+
+                return _triggerMode;
+            }
+            set
+            {
+                _triggerMode = value;
+                if (!IsConnected)
+                {
+                    return;
+                }
+
+                DoEdit((_edit) => {
+                    _app.SetParameter("TriggerMode", ((int)value).ToString());
+                });
+            }
+        }
+        private ListParamDesc<O3D3xxTriggerMode> TriggerModeDesc
+        {
+            get
+            {
+                ListParamDesc<O3D3xxTriggerMode> res = new ListParamDesc<O3D3xxTriggerMode>(typeof(O3D3xxTriggerMode))
+                {
+                    Description = "Trigger mode",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
+                return res;
+            }
+        }
+        #endregion
+
         #region Frequency Channel
         /// <summary>
         /// Frequency channel
@@ -331,7 +379,6 @@ namespace MetriCam2.Cameras
         private const string _applicationName = "_MetriCam2";
         private Socket _clientSocket;
         private Mode _configurationMode = Mode.Run;
-        private int _triggeredMode = 1;
         private int _applicationId = -1;
 
         private int _width;
@@ -375,9 +422,6 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region MetriCam2 Camera Interface
-        #region MetriCam2 Camera Interface Properties
-        #endregion
-
         #region MetriCam2 Camera Interface Methods
         /// <summary>
         /// Resets list of available channels (<see cref="Channels"/>) to union of all cameras supported by the implementing class.
@@ -426,10 +470,9 @@ namespace MetriCam2.Cameras
 
                 _applicationId = _edit.CreateApplication();
                 _edit.EditApplication(_applicationId);
-                _triggeredMode = 1;
                 _app.SetParameter("Name", _applicationName);
                 _app.SetParameter("Description", "MetriCam2 default application.");
-                _app.SetParameter("TriggerMode", _triggeredMode.ToString());
+                TriggerMode = _triggerMode;
                 _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
                 _appImager.SetParameter("FrameRate", _framerate.ToString());
             }
