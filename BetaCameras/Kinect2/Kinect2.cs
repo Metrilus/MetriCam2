@@ -713,16 +713,13 @@ namespace MetriCam2.Cameras
 
             lock (this.depthFrameData)
             {
-                lock (cameraLock)
+                for (int y = 0; y < depthHeight; y++)
                 {
-                    for (int y = 0; y < depthHeight; y++)
+                    for (int x = 0; x < depthWidth; x++)
                     {
-                        for (int x = 0; x < depthWidth; x++)
-                        {
-                            // mirror image
-                            int idx = y * depthWidth + depthWidthMinusOne - x;
-                            img[y, x] = depthFrameData[idx] * distanceMap[y, depthWidthMinusOne - x] * 0.001f;
-                        }
+                        // mirror image
+                        int idx = y * depthWidth + depthWidthMinusOne - x;
+                        img[y, x] = depthFrameData[idx] * distanceMap[y, depthWidthMinusOne - x] * 0.001f;
                     }
                 }
 
@@ -737,21 +734,17 @@ namespace MetriCam2.Cameras
         /// <returns>Color image.</returns>
         protected virtual unsafe ColorCameraImage CalcColor()
         {
-            Bitmap bmp = null;
-
             lock (this.colorFrameData)
             {
-                lock (cameraLock)
-                {
-                    bmp = new Bitmap(ColorWidth, ColorHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                Bitmap bmp = new Bitmap(ColorWidth, ColorHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-                    BitmapData bData = bmp.LockBits(new Rectangle(new Point(0, 0), new Size(ColorWidth, ColorHeight)), ImageLockMode.WriteOnly, bmp.PixelFormat);
+                BitmapData bData = bmp.LockBits(new Rectangle(new Point(0, 0), new Size(ColorWidth, ColorHeight)), ImageLockMode.WriteOnly, bmp.PixelFormat);
 
-                    System.Runtime.InteropServices.Marshal.Copy(this.colorFrameData, 0, bData.Scan0, bData.Width * bData.Height * this.bytesPerPixel);
+                System.Runtime.InteropServices.Marshal.Copy(this.colorFrameData, 0, bData.Scan0, bData.Width * bData.Height * this.bytesPerPixel);
 
-                    bmp.UnlockBits(bData);
-                    bmp.RotateFlip(RotateFlipType.RotateNoneFlipX); //Kinect images are flipped in x-direction
-                }
+                bmp.UnlockBits(bData);
+                bmp.RotateFlip(RotateFlipType.RotateNoneFlipX); //Kinect images are flipped in x-direction
+
                 ColorCameraImage img = new ColorCameraImage(bmp);
                 img.TimeStamp = timestampColor;
                 return img;
@@ -764,16 +757,13 @@ namespace MetriCam2.Cameras
 
             lock (this.irFrameData)
             {
-                lock (cameraLock)
+                for (int y = 0; y < this.depthHeight; y++)
                 {
-                    for (int y = 0; y < this.depthHeight; y++)
+                    for (int x = 0; x < this.depthWidth; x++)
                     {
-                        for (int x = 0; x < this.depthWidth; x++)
-                        {
-                            // mirror image
-                            int idx = y * depthWidth + depthWidthMinusOne - x;
-                            img[y, x] = (float)this.irFrameData[idx];
-                        }
+                        // mirror image
+                        int idx = y * depthWidth + depthWidthMinusOne - x;
+                        img[y, x] = (float)this.irFrameData[idx];
                     }
                 }
 
@@ -869,10 +859,7 @@ namespace MetriCam2.Cameras
 
             lock (this.depthFrameData)
             {
-                lock (cameraLock)
-                {
-                    coordinateMapper.MapDepthFrameToCameraSpace(depthFrameData, worldPoints);
-                }
+                coordinateMapper.MapDepthFrameToCameraSpace(depthFrameData, worldPoints);
 
                 for (int y = 0; y < depthHeight; y++)
                 {
@@ -893,16 +880,13 @@ namespace MetriCam2.Cameras
         {
             FloatCameraImage result = new FloatCameraImage(depthWidth, depthHeight);
 
-            lock (cameraLock)
+            for (int y = 0; y < this.depthHeight; y++)
             {
-                for (int y = 0; y < this.depthHeight; y++)
+                for (int x = 0; x < this.depthWidth; x++)
                 {
-                    for (int x = 0; x < this.depthWidth; x++)
-                    {
-                        // mirror image
-                        int idx = y * depthWidth + depthWidthMinusOne - x;
-                        result[y, x] = (float)this.bodyIndexData[idx];
-                    }
+                    // mirror image
+                    int idx = y * depthWidth + depthWidthMinusOne - x;
+                    result[y, x] = (float)this.bodyIndexData[idx];
                 }
             }
 
@@ -913,16 +897,13 @@ namespace MetriCam2.Cameras
         {
             FloatCameraImage result = new FloatCameraImage(depthWidth, depthHeight);
 
-            lock (cameraLock)
+            for (int y = 0; y < this.depthHeight; y++)
             {
-                for (int y = 0; y < this.depthHeight; y++)
+                for (int x = 0; x < this.depthWidth; x++)
                 {
-                    for (int x = 0; x < this.depthWidth; x++)
-                    {
-                        // mirror image
-                        int idx = y * depthWidth + depthWidthMinusOne - x;
-                        result[y, x] = (float)this.longExposureIRData[idx];
-                    }
+                    // mirror image
+                    int idx = y * depthWidth + depthWidthMinusOne - x;
+                    result[y, x] = (float)this.longExposureIRData[idx];
                 }
             }
 
