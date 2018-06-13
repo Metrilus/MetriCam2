@@ -22,10 +22,10 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("------------------------------------------");
 
             // Create camera object
-            MvBlueSirius camera;
+            RealSense2 camera;
             try
             {
-                camera = new MvBlueSirius();
+                camera = new RealSense2();
             }
             catch (Exception e)
             {
@@ -38,17 +38,15 @@ namespace MetriCam2.Samples.MinimalSample
 
             // Connect, get one frame, disconnect
             Console.WriteLine("Connecting camera");
-            camera.SerialNumber = "GX011847";
             camera.Connect();
+
+            camera.DecimationFilter.Enabled = true;
+            camera.DecimationFilter.Magnitude = 2;
 
             Console.WriteLine("Fetching one frame");
             camera.Update();
-            Point3fCameraImage img1 = (Point3fCameraImage)camera.CalcChannel(MvBlueSirius.CustomChannelNames.PointCloudMapped);
-            Point3fCameraImage img2 = (Point3fCameraImage)camera.CalcChannel(ChannelNames.Point3DImage);
-            SaveP3D(img1, @"G:\img1.pointcloud3d");
-            SaveP3D(img2, @"G:\img2.pointcloud3d");
 
-
+            ProjectiveTransformationZhang ptrans = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.ZImage);
 
 
             try

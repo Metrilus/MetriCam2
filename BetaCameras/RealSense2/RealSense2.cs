@@ -1,13 +1,14 @@
 ﻿// Copyright (c) Metrilus GmbH
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
-using Metrilus.Util;
-using System;
-using System.Drawing;
-using System.Collections.Generic;
-using System.Linq;
 using Intel.RealSense;
 using MetriCam2.Exceptions;
+using MetriCam2.Cameras.RealSense2Filters;
+using Metrilus.Util;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 #if NETSTANDARD2_0
 #else
 using System.Drawing.Imaging;
@@ -35,46 +36,12 @@ namespace MetriCam2.Cameras
         private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
 
         #region Filter
-        public class Filter
-        {
-            private ProcessingBlock _filter;
-
-            public bool Enabled { get; set; }
-            public Sensor.SensorOptions Options { get => _filter.Options; }
-
-            internal Filter(ProcessingBlock filter)
-            {
-                _filter = filter;
-            }
-
-            internal VideoFrame Apply(VideoFrame frame)
-            {
-                if (!this.Enabled)
-                    return frame;
-
-                if (_filter is DecimationFilter df)
-                    return df.ApplyFilter(frame);
-                if (_filter is SpatialFilter sf)
-                    return sf.ApplyFilter(frame);
-                if (_filter is TemporalFilter tf)
-                    return tf.ApplyFilter(frame);
-                if (_filter is DisparityTransform dt)
-                    return dt.ApplyFilter(frame);
-                if (_filter is HoleFillingFilter hf)
-                    return hf.ApplyFilter(frame);
-
-                string msg = $"RealSense2: Filter type {_filter.GetType().ToString()} not supported";
-                log.Error(msg);
-                throw new NotImplementedException(msg);
-            }
-        }
-
-        public Filter DecimationFilter { get; } = new Filter(new DecimationFilter());
-        public Filter SpatialFilter { get; } = new Filter(new SpatialFilter());
-        public Filter TemporalFilter { get; } = new Filter(new TemporalFilter());
-        public Filter HolesFillFilter { get; } = new Filter(new HoleFillingFilter());
-        public Filter DepthToDisparityTransform { get; } = new Filter(new DisparityTransform(true));
-        public Filter DisparityToDepthTransform { get; } = new Filter(new DisparityTransform(false));
+        public RealSense2Filters.DecimationFilter DecimationFilter { get; } = new RealSense2Filters.DecimationFilter();
+        public RealSense2Filters.SpatialFilter SpatialFilter { get; } = new RealSense2Filters.SpatialFilter();
+        public RealSense2Filters.TemporalFilter TemporalFilter { get; } = new RealSense2Filters.TemporalFilter();
+        public RealSense2Filters.HoleFillingFilter HoleFillingFilter { get; } = new RealSense2Filters.HoleFillingFilter();
+        public Depth2DisparityTransform DepthToDisparityTransform { get; } = new Depth2DisparityTransform();
+        public Disparity2DepthTransform DisparityToDepthTransform { get; } = new Disparity2DepthTransform();
 
         private VideoFrame FilterFrame(VideoFrame frame)
         {
@@ -93,7 +60,9 @@ namespace MetriCam2.Cameras
             filteredFrame = SpatialFilter.Apply(filteredFrame);
             filteredFrame = TemporalFilter.Apply(filteredFrame);
             filteredFrame = DisparityToDepthTransform.Apply(filteredFrame);
-            filteredFrame = HolesFillFilter.Apply(filteredFrame);
+            filteredFrame = HoleFillingFilter.Apply(filteredFrame);
+
+            _filteredDepthResolution = new Point2i(filteredFrame.Width, filteredFrame.Height);
 
             return filteredFrame;
         }
@@ -155,26 +124,19 @@ namespace MetriCam2.Cameras
         private Point2i _colorResolution = new Point2i(640, 480);
         public Point2i ColorResolution
         {
-            get { return _colorResolution; }
-            set
-            {
-                if (value == _colorResolution)
-                    return;
-
-                TryChangeSetting<Point2i>(
+            get => _colorResolution;
+            set => TryChangeSetting<Point2i>(
                     ref _colorResolution,
                     value,
                     new string[] { ChannelNames.Color }
                 );
-            }
         }
 
         ListParamDesc<Point2i> ColorResolutionDesc
         {
             get
             {
-                List<Point2i> resolutions = new List<Point2i>();
-                resolutions.Add(new Point2i(640, 480));
+                List<Point2i> resolutions = new List<Point2i> { new Point2i(640, 480) };
 
                 if (IsConnected)
                 {
@@ -201,26 +163,19 @@ namespace MetriCam2.Cameras
         private int _colorFPS = 30;
         public int ColorFPS
         {
-            get { return _colorFPS; }
-            set
-            {
-                if (value == _colorFPS)
-                    return;
-
-                TryChangeSetting<int>(
+            get => _colorFPS;
+            set => TryChangeSetting<int>(
                     ref _colorFPS,
                     value,
                     new string[] { ChannelNames.Color }
                 );
-            }
         }
 
         ListParamDesc<int> ColorFPSDesc
         {
             get
             {
-                List<int> framerates = new List<int>();
-                framerates.Add(30);
+                List<int> framerates = new List<int> { 30 };
 
                 if (IsConnected)
                 {
@@ -239,29 +194,33 @@ namespace MetriCam2.Cameras
             }
         }
 
+        private Point2i _filteredDepthResolution = new Point2i(640, 480);
         private Point2i _depthResolution = new Point2i(640, 480);
+        /// <summary>
+        /// The resolution of the z-image, distance, left, and right channels.
+        /// </summary>
+        /// <remarks>
+        /// Setting <see cref="DepthResolution"/> sets the desired resolution of z-image, distance, left, and right channels.
+        /// The getter returns the actual resolution after filtering (may not match left/right).
+        /// </remarks>
         public Point2i DepthResolution
         {
-            get { return _depthResolution; }
-            set
+            get
             {
-                if (value == _depthResolution)
-                    return;
-
-                TryChangeSetting<Point2i>(
+                return _filteredDepthResolution;
+            }
+            set => TryChangeSetting<Point2i>(
                     ref _depthResolution,
                     value,
                     new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
                 );
-            }
         }
 
         ListParamDesc<Point2i> DepthResolutionDesc
         {
             get
             {
-                List<Point2i> resolutions = new List<Point2i>();
-                resolutions.Add(new Point2i(640, 480));
+                List<Point2i> resolutions = new List<Point2i> { new Point2i(640, 480) };
 
                 if (IsConnected)
                 {
@@ -285,29 +244,45 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public Point2i IRResolution
+        {
+            get
+            {
+                return _depthResolution;
+            }
+        }
+
+        ParamDesc<Point2i> IRResolutionDesc
+        {
+            get
+            {
+                ParamDesc<Point2i> res = new ParamDesc<Point2i>()
+                {
+                    Unit = "px",
+                    Description = "Resolution of the IR sensor.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                };
+                return res;
+            }
+        }
+
         private int _depthFPS = 30;
         public int DepthFPS
         {
-            get { return _depthFPS; }
-            set
-            {
-                if (value == _depthFPS)
-                    return;
-
-                TryChangeSetting<int>(
+            get => _depthFPS;
+            set => TryChangeSetting<int>(
                     ref _depthFPS,
                     value,
                     new string[] { ChannelNames.ZImage, ChannelNames.Distance, ChannelNames.Left, ChannelNames.Right }
                 );
-            }
         }
 
         ListParamDesc<int> DepthFPSDesc
         {
             get
             {
-                List<int> framerates = new List<int>();
-                framerates.Add(30);
+                List<int> framerates = new List<int> { 30 };
 
                 if (IsConnected)
                 {
@@ -329,10 +304,7 @@ namespace MetriCam2.Cameras
 
         public string Firmware
         {
-            get
-            {
-                return RealSenseDevice.Info[CameraInfo.FirmwareVersion];
-            }
+            get => RealSenseDevice.Info[CameraInfo.FirmwareVersion];
         }
 
         ParamDesc<string> FirmwareDesc
@@ -1514,6 +1486,7 @@ namespace MetriCam2.Cameras
                 adev.AdvancedModeEnabled = true;
 
             _depthScale = GetDepthScale();
+            DecimationFilter.ResolutionChanged += Update;
         }
 
         private void StopPipeline()
@@ -1560,6 +1533,7 @@ namespace MetriCam2.Cameras
 
             intrinsicsCache.Clear();
             extrinsicsCache.Clear();
+            DecimationFilter.ResolutionChanged -= Update;
         }
 
         protected override void UpdateImpl()
@@ -1719,10 +1693,9 @@ namespace MetriCam2.Cameras
                 res_x = ColorResolution.X;
                 res_y = ColorResolution.Y;
                 fps = ColorFPS;
-                index = -1;
             }
             else if (channelName == ChannelNames.ZImage
-            || channelName == ChannelNames.Distance)
+                || channelName == ChannelNames.Distance)
             {
                 // Distance and ZImage channel access the same data from
                 // the realsense2 device
@@ -1746,19 +1719,18 @@ namespace MetriCam2.Cameras
                 stream = Stream.Depth;
                 format = Format.Z16;
 
-                res_x = DepthResolution.X;
-                res_y = DepthResolution.Y;
+                res_x = _depthResolution.X;
+                res_y = _depthResolution.Y;
                 fps = DepthFPS;
-                index = -1;
             }
             else if (channelName == ChannelNames.Left)
             {
                 stream = Stream.Infrared;
                 format = Format.Y8;
 
-                res_x = DepthResolution.X;
-                res_y = DepthResolution.Y;
-                fps = (int)DepthFPS;
+                res_x = _depthResolution.X;
+                res_y = _depthResolution.Y;
+                fps = DepthFPS;
                 index = 1;
             }
             else if (channelName == ChannelNames.Right)
@@ -1766,8 +1738,8 @@ namespace MetriCam2.Cameras
                 stream = Stream.Infrared;
                 format = Format.Y8;
 
-                res_x = DepthResolution.X;
-                res_y = DepthResolution.Y;
+                res_x = _depthResolution.X;
+                res_y = _depthResolution.Y;
                 fps = DepthFPS;
                 index = 2;
             }
@@ -1863,10 +1835,10 @@ namespace MetriCam2.Cameras
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
             Point2i resolution = GetResolutionFromChannelName(channelName);
-            string keyName = $"{channelName}_{resolution.X}_{resolution.Y}";
+            string keyName = $"{channelName}_{resolution.X}x{resolution.Y}";
             if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
             {
-                return intrinsicsCache[keyName];
+                return RescaleIntrinsics(intrinsicsCache[keyName], channelName);
             }
 
             VideoStreamProfile profile = GetProfileFromSensor(channelName) as VideoStreamProfile;
@@ -1874,7 +1846,7 @@ namespace MetriCam2.Cameras
 
             if (intrinsics.model != Distortion.BrownConrady)
             {
-                string msg = string.Format("{0}: intrinsics distrotion model {1} does not match Metrilus.Util", Name, intrinsics.model.ToString());
+                string msg = string.Format("{0}: intrinsics distortion model {1} does not match Metrilus.Util", Name, intrinsics.model.ToString());
                 log.Error(msg);
                 throw new Exception(msg);
             }
@@ -1894,8 +1866,33 @@ namespace MetriCam2.Cameras
 
             intrinsicsCache[keyName] = projTrans;
 
-            return projTrans;
+            return RescaleIntrinsics(projTrans, channelName);
         }
+
+        /// <summary>
+        /// Rescales intrinsics to actual depth resolution (i.e. after filtering), if neccessary.
+        /// </summary>
+        /// <param name="intrinsics"></param>
+        /// <param name="channelName"></param>
+        /// <returns></returns>
+        private IProjectiveTransformation RescaleIntrinsics(IProjectiveTransformation intrinsics, string channelName)
+        {
+            if (DecimationFilter.Enabled && IsDepthChannel(channelName))
+            {
+                ProjectiveTransformationZhang rescaled = new ProjectiveTransformationZhang((ProjectiveTransformationZhang)intrinsics);
+                rescaled.RescaleParameters(_filteredDepthResolution.X, _filteredDepthResolution.Y);
+                return rescaled;
+            }
+
+            return intrinsics;
+        }
+
+        /// <summary>
+        /// Checks if a channel is a depth channel (i.e. distance or z-image).
+        /// </summary>
+        /// <param name="channelName"></param>
+        /// <returns></returns>
+        private bool IsDepthChannel(string channelName) => (channelName == ChannelNames.ZImage || channelName == ChannelNames.Distance);
 
         private Point2i GetResolutionFromChannelName(string channelName)
         {
@@ -1911,7 +1908,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.Distance:
                 case ChannelNames.ZImage:
                 default:
-                    resolution = DepthResolution;
+                    resolution = _depthResolution;
                     break;
             }
             return resolution;
@@ -1937,20 +1934,20 @@ namespace MetriCam2.Cameras
                 case ChannelNames.Distance:
                     sensorName = SensorNames.Stereo;
                     streamType = Stream.Depth;
-                    refResolution = DepthResolution;
+                    refResolution = _depthResolution;
                     refFPS = DepthFPS;
                     break;
                 case ChannelNames.Left:
                     sensorName = SensorNames.Stereo;
                     streamType = Stream.Infrared;
-                    refResolution = DepthResolution;
+                    refResolution = _depthResolution;
                     refFPS = DepthFPS;
                     index = 1;
                     break;
                 case ChannelNames.Right:
                     sensorName = SensorNames.Stereo;
                     streamType = Stream.Infrared;
-                    refResolution = DepthResolution;
+                    refResolution = _depthResolution;
                     refFPS = DepthFPS;
                     index = 2;
                     break;
@@ -2203,8 +2200,12 @@ namespace MetriCam2.Cameras
         private void TryChangeSetting<T>(ref T property, T newValue, string[] channelNames)
         {
             T oldValue = property;
-            bool wasRunning = _pipelineRunning;
+            if (oldValue.Equals(newValue))
+            {
+                return;
+            }
 
+            bool wasRunning = _pipelineRunning;
             try
             {
                 StopPipeline();

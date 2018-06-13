@@ -59,6 +59,10 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Intel.RealSense, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\external-libraries\Intel\libRealSense2\2.12.0\AnyCPU\Release\net45\Intel.RealSense.dll</HintPath>
+    </Reference>
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
     </Reference>
@@ -87,9 +91,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\MatrixVision\MatrixVision.vcxproj">
-      <Project>{249420a5-952b-4c58-a35a-377e0cdcc023}</Project>
-      <Name>MatrixVision</Name>
+    <ProjectReference Include="..\..\BetaCameras\RealSense2\RealSense2.csproj">
+      <Project>{3032e9b1-f572-4ecb-906a-f7a2b45ef125}</Project>
+      <Name>RealSense2</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
       <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>
