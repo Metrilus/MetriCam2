@@ -18,8 +18,8 @@ namespace MetriCam2.Cameras.Internal.Sick
     {
         #region Private Variables
         // camera instance and log
-        private Camera cam;
-        private MetriLog log;
+        private readonly Camera cam;
+        private readonly MetriLog log;
         // image data
         private byte[] imageData;
         // internal definitions
@@ -32,181 +32,74 @@ namespace MetriCam2.Cameras.Internal.Sick
         private uint[] offsets;
         private uint[] changedCounters;
         // camera parameters
-        private int width;
-        private int height;
         private float[] cam2WorldMatrix;
-        private float fx;
-        private float fy;
-        private float cx;
-        private float cy;
-        private float k1;
-        private float k2;
-        private float f2rc;
-        // image properties
-        private int numBytesIntensity;
-        private int numBytesDistance;
-        private int numBytesConfidence;
-        private int numBytesPerIntensityValue;
-        private int numBytesPerDistanceValue;
-        private int numBytesPerConfidenceValue;
-        private int intensityStartOffset;
-        private int distanceStartOffset;
-        private int confidenceStartOffset;
-        private ulong timeStamp;
         #endregion
 
         #region Properties
         /// <summary>
         /// Width of image.
         /// </summary>
-        public int Width
-        {
-            get { return width; }
-        }
+        internal int Width { get; private set; }
 
         /// <summary>
         /// Height of image.
         /// </summary>
-        public int Height
-        {
-            get { return height; }
-        }
+        internal int Height { get; private set; }
 
         /// <summary>
         /// FX.
         /// </summary>
-        public float FX
-        {
-            get { return fx; }
-        }
+        internal float FX { get; private set; }
 
         /// <summary>
         /// FY.
         /// </summary>
-        public float FY
-        {
-            get { return fy; }
-        }
+        internal float FY { get; private set; }
 
         /// <summary>
         /// CX.
         /// </summary>
-        public float CX
-        {
-            get { return cx; }
-        }
+        internal float CX { get; private set; }
 
         /// <summary>
         /// CY.
         /// </summary>
-        public float CY
-        {
-            get { return cy; }
-        }
+        internal float CY { get; private set; }
 
         /// <summary>
         /// K1.
         /// </summary>
-        public float K1
-        {
-            get { return k1; }
-        }
+        internal float K1 { get; private set; }
 
         /// <summary>
         /// K2.
         /// </summary>
-        public float K2
-        {
-            get { return k2; }
-        }
+        internal float K2 { get; private set; }
 
         /// <summary>
         /// Focal to ray cross.
         /// </summary>
-        public float F2RC
-        {
-            get { return f2rc; }
-        }
-
-        /// <summary>
-        /// Total number of bytes for intensity image.
-        /// </summary>
-        public int NumBytesIntensity
-        {
-            get { return numBytesIntensity; }
-        }
-
-        /// <summary>
-        /// How many bytes are used to store one intensity value.
-        /// </summary>
-        public int NumBytesPerIntensityValue
-        {
-            get { return numBytesPerIntensityValue; }
-        }
+        internal float F2RC { get; private set; }
 
         /// <summary>
         /// Where does the intensity data start (relative to start of imageData).
         /// </summary>
-        public int IntensityStartOffset
-        {
-            get { return intensityStartOffset; }
-        }
-
-        /// <summary>
-        /// Total number of bytes for distance image.
-        /// </summary>
-        public int NumBytesDistance
-        {
-            get { return numBytesDistance; }
-        }
-
-        /// <summary>
-        /// How many bytes are used to store one distance value.
-        /// </summary>
-        public int NumBytesPerDistanceValue
-        {
-            get { return numBytesPerIntensityValue; }
-        }
+        internal int IntensityStartOffset { get; private set; }
 
         /// <summary>
         /// Where does the intensity data start (relative to start of imageData).
         /// </summary>
-        public int DistanceStartOffset
-        {
-            get { return distanceStartOffset; }
-        }
-
-        /// <summary>
-        /// Total number of bytes for confidence image.
-        /// </summary>
-        public int NumBytesConfidence
-        {
-            get { return numBytesConfidence; }
-        }
-
-        /// <summary>
-        /// How many bytes are used to store one confidence value.
-        /// </summary>
-        public int NumBytesPerConfidenceValue
-        {
-            get { return numBytesPerConfidenceValue; }
-        }
+        internal int DistanceStartOffset { get; private set; }
 
         /// <summary>
         /// Where does the confidence data start (relative to start of imageData).
         /// </summary>
-        public int ConfidenceStartOffset
-        {
-            get { return confidenceStartOffset; }
-        }
+        internal int ConfidenceStartOffset { get; private set; }
 
         /// <summary>
         /// Time stamp of image.
         /// </summary>
-        public ulong TimeStamp
-        {
-            get { return timeStamp; }
-        }
+        internal ulong TimeStamp { get; private set; }
         #endregion
 
         #region Constructor
@@ -216,20 +109,20 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <param name="data">image data</param>
         /// <param name="cam">camera instance</param>
         /// <param name="log">metri log from camera instance</param>
-        public FrameData(byte[] data, Camera cam, MetriLog log)
+        internal FrameData(byte[] data, Camera cam, MetriLog log)
         {
             imageData = data;
             this.cam  = cam;
             this.log  = log;
-            DefaultValues();
+            SetDefaultValues();
         }
         #endregion
 
-        #region Public Methods
+        #region Internal Methods
         /// <summary>
         /// This methods parses the data provided by constructor and sets the properties accordingly.
         /// </summary>
-        public void Read()
+        internal void Read()
         {
             // first 11 bytes: internal definitions consisting of:
             // 4 bytes STx
@@ -298,25 +191,30 @@ namespace MetriCam2.Cameras.Internal.Sick
 
             // now: XML segment
             string xml = Encoding.ASCII.GetString(imageData, (int)offsets[0], (int)offsets[1] - (int)offsets[0]);
-            ReadXML(xml);
+            ReadXML(xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue);
 
             // calc sizes
-            numBytesIntensity  = width * height * numBytesPerIntensityValue;
-            numBytesDistance   = width * height * numBytesPerDistanceValue;
-            numBytesConfidence = width * height * numBytesPerConfidenceValue;
+            int numBytesIntensity  = Width * Height * numBytesPerIntensityValue;
+            int numBytesDistance   = Width * Height * numBytesPerDistanceValue;
+            int numBytesConfidence = Width * Height * numBytesPerConfidenceValue;
 
             // now: save image data offsets
-            ReadBinary();
+            ReadBinary(numBytesIntensity, numBytesDistance, numBytesConfidence);
         }
         #endregion
 
-        #region Internal Methods
+        #region Private Methods
         /// <summary>
         /// Reads the XML part and saves the image properties (e.g. width/height).
         /// </summary>
         /// <param name="xml">XML string</param>
-        private void ReadXML(string xml)
+        private void ReadXML(string xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue)
         {
+            // set default values to make compiler happy
+            numBytesPerIntensityValue = 2;
+            numBytesPerDistanceValue = 2;
+            numBytesPerConfidenceValue = 2;
+
             XmlDocument doc = new XmlDocument();
             doc.Load(new StringReader(xml));
 
@@ -326,8 +224,8 @@ namespace MetriCam2.Cameras.Internal.Sick
             XmlNode dataStream = formatDescriptionDepthMap["DataStream"];
 
             // get camera/image parameters
-            width  = Convert.ToInt32(dataStream["Width"].InnerText);
-            height = Convert.ToInt32(dataStream["Height"].InnerText);
+            Width  = Convert.ToInt32(dataStream["Width"].InnerText);
+            Height = Convert.ToInt32(dataStream["Height"].InnerText);
 
             XmlNode cameraToWorldTransform = dataStream["CameraToWorldTransform"];
             List<float> cam2WorldList = new List<float>();
@@ -339,16 +237,16 @@ namespace MetriCam2.Cameras.Internal.Sick
             cam2WorldList = null;
 
             XmlNode cameraMatrix = dataStream["CameraMatrix"];
-            fx = float.Parse(cameraMatrix.ChildNodes[0].InnerText, CultureInfo.InvariantCulture.NumberFormat);
-            fy = float.Parse(cameraMatrix.ChildNodes[1].InnerText, CultureInfo.InvariantCulture.NumberFormat);
-            cx = float.Parse(cameraMatrix.ChildNodes[2].InnerText, CultureInfo.InvariantCulture.NumberFormat);
-            cy = float.Parse(cameraMatrix.ChildNodes[3].InnerText, CultureInfo.InvariantCulture.NumberFormat);
+            FX = float.Parse(cameraMatrix.ChildNodes[0].InnerText, CultureInfo.InvariantCulture.NumberFormat);
+            FY = float.Parse(cameraMatrix.ChildNodes[1].InnerText, CultureInfo.InvariantCulture.NumberFormat);
+            CX = float.Parse(cameraMatrix.ChildNodes[2].InnerText, CultureInfo.InvariantCulture.NumberFormat);
+            CY = float.Parse(cameraMatrix.ChildNodes[3].InnerText, CultureInfo.InvariantCulture.NumberFormat);
 
             XmlNode distortionParams = dataStream["CameraDistortionParams"];
-            k1 = float.Parse(distortionParams["K1"].InnerText, CultureInfo.InvariantCulture.NumberFormat);
-            k2 = float.Parse(distortionParams["K2"].InnerText, CultureInfo.InvariantCulture.NumberFormat);
+            K1 = float.Parse(distortionParams["K1"].InnerText, CultureInfo.InvariantCulture.NumberFormat);
+            K2 = float.Parse(distortionParams["K2"].InnerText, CultureInfo.InvariantCulture.NumberFormat);
 
-            f2rc = Convert.ToSingle(dataStream["FocalToRayCross"].InnerText, CultureInfo.InvariantCulture.NumberFormat);
+            F2RC = Convert.ToSingle(dataStream["FocalToRayCross"].InnerText, CultureInfo.InvariantCulture.NumberFormat);
 
             // data types, should always be uint16_t
             if (dataStream["Distance"].InnerText.ToLower() == "uint16")
@@ -383,7 +281,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <summary>
         /// Calculates the offsets where to find the image data for channels.
         /// </summary>
-        private void ReadBinary()
+        private void ReadBinary(int numBytesIntensity, int numBytesDistance, int numBytesConfidence)
         {
             int offset = (int)offsets[1];
             
@@ -393,8 +291,8 @@ namespace MetriCam2.Cameras.Internal.Sick
             offset += 4;
 
             // 8 bytes timestamp
-            timeStamp = BitConverter.ToUInt64(imageData, offset);
-            timeStamp = Utils.ConvertEndiannessUInt64(timeStamp);
+            TimeStamp = BitConverter.ToUInt64(imageData, offset);
+            TimeStamp = Utils.ConvertEndiannessUInt64(TimeStamp);
             offset += 8;
 
             // 2 bytes version
@@ -416,13 +314,13 @@ namespace MetriCam2.Cameras.Internal.Sick
             offset += 1;
 
             // 176 * 144 * 2 bytes distance data
-            distanceStartOffset = offset;
+            DistanceStartOffset = offset;
             offset += numBytesDistance;
             // 176 * 144 * 2 bytes intensity data
-            intensityStartOffset = offset;
+            IntensityStartOffset = offset;
             offset += numBytesIntensity;
             // 176 * 144 * 2 bytes confidence data
-            confidenceStartOffset = offset;
+            ConfidenceStartOffset = offset;
             offset += numBytesConfidence;
 
             // 4 bytes CRC of data
@@ -445,37 +343,34 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <summary>
         /// Setup default values for camera parameters.
         /// </summary>
-        private void DefaultValues()
+        private void SetDefaultValues()
         {
-            width = 176;
-            height = 144;
-            fx = 146.5f;
-            fy = 146.5f;
-            cx = 84.4f;
-            cy = 71.2f;
-            k1 = 0.326442f;
-            k2 = 0.219623f;
-            f2rc = 0.0f;
+            Width = 176;
+            Height = 144;
+            FX = 146.5f;
+            FY = 146.5f;
+            CX = 84.4f;
+            CY = 71.2f;
+            K1 = 0.326442f;
+            K2 = 0.219623f;
+            F2RC = 0.0f;
             cam2WorldMatrix = new float[16];
-            cam2WorldMatrix[0 ] = 1.0f;
-            cam2WorldMatrix[1 ] = 0.0f;
-            cam2WorldMatrix[2 ] = 0.0f;
-            cam2WorldMatrix[3 ] = 0.0f;
-            cam2WorldMatrix[4 ] = 0.0f;
-            cam2WorldMatrix[5 ] = 1.0f;
-            cam2WorldMatrix[6 ] = 0.0f;
-            cam2WorldMatrix[7 ] = 0.0f;
-            cam2WorldMatrix[8 ] = 0.0f;
-            cam2WorldMatrix[9 ] = 0.0f;
+            cam2WorldMatrix[0]  = 1.0f;
+            cam2WorldMatrix[1]  = 0.0f;
+            cam2WorldMatrix[2]  = 0.0f;
+            cam2WorldMatrix[3]  = 0.0f;
+            cam2WorldMatrix[4]  = 0.0f;
+            cam2WorldMatrix[5]  = 1.0f;
+            cam2WorldMatrix[6]  = 0.0f;
+            cam2WorldMatrix[7]  = 0.0f;
+            cam2WorldMatrix[8]  = 0.0f;
+            cam2WorldMatrix[9]  = 0.0f;
             cam2WorldMatrix[10] = 1.0f;
             cam2WorldMatrix[11] = 0.0f;
             cam2WorldMatrix[12] = 0.0f;
             cam2WorldMatrix[13] = 0.0f;
             cam2WorldMatrix[14] = 0.0f;
             cam2WorldMatrix[15] = 1.0f;
-            numBytesPerDistanceValue   = 2;
-            numBytesPerIntensityValue  = 2;
-            numBytesPerConfidenceValue = 2;
         }
         #endregion
     }
