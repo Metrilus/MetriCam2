@@ -337,17 +337,19 @@ namespace MetriCam2.Cameras
         public override System.Drawing.Icon CameraIcon { get => Properties.Resources.IfmIcon; }
 #endif
 
+        private const int MininumReceiveTimeout = 500;
+        private int _receiveTimeout = -1;
         /// <summary>
         /// The camera receive timeout.
         /// </summary>
         /// <remarks>
-        /// Will automatically be set to (1 / <see cref="Framerate"/>) + 50 during <see cref="Camera.Connect"/> unless it has been set before.
+        /// * Will automatically be set to (1 / <see cref="Framerate"/>) + 50 during <see cref="Camera.Connect"/> unless it has been set before.
+        /// * Minimum: 500 ms.
         /// </remarks>
-        private int _receiveTimeout = -1;
         public int ReceiveTimeout
         {
             get => _receiveTimeout;
-            set => _receiveTimeout = value;
+            set => _receiveTimeout = Math.Max(MininumReceiveTimeout, value);
         }
         private ParamDesc<int> ReceiveTimeoutDesc
         {
