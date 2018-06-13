@@ -1486,7 +1486,7 @@ namespace MetriCam2.Cameras
                 adev.AdvancedModeEnabled = true;
 
             _depthScale = GetDepthScale();
-            DecimationFilter.ResolutionChanged += UpdateImpl;
+            DecimationFilter.ResolutionChanged += Update;
         }
 
         private void StopPipeline()
@@ -1533,7 +1533,7 @@ namespace MetriCam2.Cameras
 
             intrinsicsCache.Clear();
             extrinsicsCache.Clear();
-            DecimationFilter.ResolutionChanged -= UpdateImpl;
+            DecimationFilter.ResolutionChanged -= Update;
         }
 
         protected override void UpdateImpl()

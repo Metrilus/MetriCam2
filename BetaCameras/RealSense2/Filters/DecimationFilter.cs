@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace MetriCam2.Cameras.RealSense2Filters
 {
+    /// <summary>
+    /// Decimation filter reduces the resolution of the depth image.
+    /// For this reason en/disabling the filter or changing its magnitude
+    /// will trigger an update of the camera.
+    /// </summary>
     public class DecimationFilter : FilterBase
     {
         public delegate void ResolutionChangeEvent();
