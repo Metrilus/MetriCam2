@@ -558,16 +558,20 @@ namespace MetriCam2.Cameras
                 }
                 catch (SocketException e)
                 {
-                    consecutiveFailCounter++;
-                    log.Warn($"{Name}: SocketException: {e.Message}");
-
-                    if (consecutiveFailCounter >= _maxConsecutiveReceiveFails)
+                    // Ignore timeouts in triggered mode
+                    if (_triggerMode == O3D3xxTriggerMode.FreeRun)
                     {
-                        string msg = $"{Name}: Receive failed more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.";
-                        log.Error(msg);
-                        _updateThreadError = msg;
-                        _frameAvailable.Set();
-                        break;
+                        consecutiveFailCounter++;
+                        log.Warn($"{Name}: SocketException: {e.Message}");
+
+                        if (consecutiveFailCounter >= _maxConsecutiveReceiveFails)
+                        {
+                            string msg = $"{Name}: Receive failed more than {_maxConsecutiveReceiveFails} times in a row. Shutting down update loop.";
+                            log.Error(msg);
+                            _updateThreadError = msg;
+                            _frameAvailable.Set();
+                            break;
+                        }
                     }
 
                     continue;
