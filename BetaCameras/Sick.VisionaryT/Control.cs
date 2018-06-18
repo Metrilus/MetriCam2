@@ -89,7 +89,6 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
         }
 
-
         private AccessModes GetAccessMode()
         {
             SendCommand("sMN GetAccessMode");
@@ -170,8 +169,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         internal string GetSerialNumber()
         {
             log.Debug("Getting serial number");
-            string value = ReadVariableString("SerialNumber");
-            return value;
+            return ReadVariableString("SerialNumber");
         }
 
         internal void SetIntegrationTime(VisionaryTIntegrationTime value)
@@ -183,8 +181,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         internal VisionaryTIntegrationTime GetIntegrationTime()
         {
             log.Debug("Getting integration time");
-            byte value = ReadVariableByte("integrationTime");
-            return (VisionaryTIntegrationTime)value;
+            return (VisionaryTIntegrationTime)ReadVariableByte("integrationTime");
         }
 
         internal void SetCoexistenceMode(VisionaryTCoexistenceMode value)
@@ -196,8 +193,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         internal VisionaryTCoexistenceMode GetCoexistenceMode()
         {
             log.Debug("Getting coexistence mode / modulation frequency");
-            byte value = ReadVariableByte("modFreq");
-            return (VisionaryTCoexistenceMode)value;
+            return (VisionaryTCoexistenceMode)ReadVariableByte("modFreq");
         }
 
         private void WriteVariable(string name, byte value)
