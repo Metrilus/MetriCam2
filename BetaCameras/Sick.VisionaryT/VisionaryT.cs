@@ -198,6 +198,7 @@ namespace MetriCam2.Cameras
 
             _control = new Control(log, ipAddress);
             _control.StartStream();
+            SerialNumber = _control.GetSerialNumber();
 
             // select intensity channel
             ActivateChannel(ChannelNames.Intensity);

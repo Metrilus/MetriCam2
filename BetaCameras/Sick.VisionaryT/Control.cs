@@ -89,7 +89,6 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
         }
 
-
         private AccessModes GetAccessMode()
         {
             SendCommand("sMN GetAccessMode");
@@ -167,6 +166,12 @@ namespace MetriCam2.Cameras.Internal.Sick
             log.DebugFormat("Access mode set to {0}", newMode);
         }
 
+        internal string GetSerialNumber()
+        {
+            log.Debug("Getting serial number");
+            return ReadVariableString("SerialNumber");
+        }
+
         internal void SetIntegrationTime(VisionaryTIntegrationTime value)
         {
             SetAccessMode(AccessModes.Service);
@@ -176,8 +181,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         internal VisionaryTIntegrationTime GetIntegrationTime()
         {
             log.Debug("Getting integration time");
-            byte value = ReadVariableByte("integrationTime");
-            return (VisionaryTIntegrationTime)value;
+            return (VisionaryTIntegrationTime)ReadVariableByte("integrationTime");
         }
 
         internal void SetCoexistenceMode(VisionaryTCoexistenceMode value)
@@ -189,8 +193,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         internal VisionaryTCoexistenceMode GetCoexistenceMode()
         {
             log.Debug("Getting coexistence mode / modulation frequency");
-            byte value = ReadVariableByte("modFreq");
-            return (VisionaryTCoexistenceMode)value;
+            return (VisionaryTCoexistenceMode)ReadVariableByte("modFreq");
         }
 
         private void WriteVariable(string name, byte value)
@@ -202,8 +205,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             {
                 throw new InvalidOperationException($"Failed to write variable {name} (no response).");
             }
-            success = CheckWriteAcknowledge(payload);
-            if (!success)
+            if (!CheckWriteAcknowledge(payload))
             {
                 throw new InvalidOperationException($"Failed to write variable {name} (not successful).");
             }
@@ -218,8 +220,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             {
                 throw new InvalidOperationException($"Failed to write variable {name} (no response).");
             }
-            success = CheckWriteAcknowledge(payload);
-            if (!success)
+            if (!CheckWriteAcknowledge(payload))
             {
                 throw new InvalidOperationException($"Failed to write variable {name} (not successful).");
             }
@@ -239,15 +240,43 @@ namespace MetriCam2.Cameras.Internal.Sick
             return true;
         }
 
-        private int ReadVariableInt32(string name)
+        /// <summary>
+        /// Checks if <paramref name="payload"/> begins with the error marker.
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <returns>True if <paramref name="payload"/> starts with the error marker, false otherwise.</returns>
+        private bool IsErrorResponse(byte[] payload)
+        {
+            byte[] errorResponse = Encoding.ASCII.GetBytes("sFA");
+            for (int i = 0; i < errorResponse.Length; i++)
+            {
+                if (errorResponse[i] != payload[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void ReadVariable(string name, out byte[] payload, out byte checkSum)
         {
             SendCommand("sRN " + name);
 
-            bool success = ReceiveResponse(out byte[] payload, out byte checkSum);
+            bool success = ReceiveResponse(out payload, out checkSum);
             if (!success)
             {
-                throw new InvalidOperationException($"Failed to read variable {name}.");
+                throw new InvalidOperationException($"Failed to read variable {name} (no response).");
             }
+            if (IsErrorResponse(payload))
+            {
+                throw new InvalidOperationException($"Failed to read variable {name} (not successful).");
+            }
+        }
+
+        private int ReadVariableInt32(string name)
+        {
+            ReadVariable(name, out byte[] payload, out byte checkSum);
 
             int l = payload.Length;
             byte[] responseValueBytes = new byte[] { payload[l - 4], payload[l - 3], payload[l - 2], payload[l - 1] };
@@ -258,15 +287,29 @@ namespace MetriCam2.Cameras.Internal.Sick
 
         private byte ReadVariableByte(string name)
         {
-            SendCommand("sRN " + name);
-
-            bool success = ReceiveResponse(out byte[] payload, out byte checkSum);
-            if (!success)
-            {
-                throw new InvalidOperationException($"Failed to read variable {name}.");
-            }
+            ReadVariable(name, out byte[] payload, out byte checkSum);
 
             byte value = payload[payload.Length - 1];
+            log.DebugFormat("Got value: {0}", value);
+            return value;
+        }
+
+        private string ReadVariableString(string name)
+        {
+            ReadVariable(name, out byte[] payload, out byte checkSum);
+
+            string value = Encoding.ASCII.GetString(payload).Remove(0, 4 + name.Length).TrimStart();
+            StringBuilder printable = new StringBuilder();
+            for (int i = 0; i < value.Length; i++)
+            {
+                char c = value[i];
+                if ((byte)c < 32)
+                {
+                    continue;
+                }
+                printable.Append(c);
+            }
+            value = printable.ToString();
             log.DebugFormat("Got value: {0}", value);
             return value;
         }
