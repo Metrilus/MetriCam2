@@ -153,13 +153,7 @@ namespace MetriCam2.Cameras
         #region MetriCam2 Camera Interface
         #region MetriCam2 Camera Interface Properties
         /// <summary>The camera's name.</summary>
-        public new string Name
-        {
-            get
-            {
-                return "Visionary-T";
-            }
-        }
+        public new string Name { get => "Visionary-T"; }
         #endregion
 
         #region MetriCam2 Camera Interface Methods
@@ -188,8 +182,9 @@ namespace MetriCam2.Cameras
         {
             if (string.IsNullOrWhiteSpace(ipAddress))
             {
-                log.Error("IP Address is not set.");
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "IP Address is not set! Set it before connecting!");
+                string msg = string.Format("IP address is not set. It must be set before connecting.");
+                log.Error(msg);
+                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", msg);
             }
             device = new Device(ipAddress, this, log);
 
@@ -224,9 +219,9 @@ namespace MetriCam2.Cameras
         protected override void UpdateImpl()
         {
             byte[] imageBuffer = device.Stream_GetFrame();
-            _frameData   = new FrameData(imageBuffer, this, log);
-            width       = _frameData.Width;
-            height      = _frameData.Height;
+            _frameData = new FrameData(imageBuffer, this, log);
+            width = _frameData.Width;
+            height = _frameData.Height;
         }
 
         /// <summary>Computes (image) data for a given channel.</summary>
@@ -247,7 +242,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.Point3DImage:
                     return Calc3D();
             }
-            log.Error("Invalid channelname: " + channelName);
+            log.Error(Name + ": Invalid channelname: " + channelName);
             return null;
         }
 
