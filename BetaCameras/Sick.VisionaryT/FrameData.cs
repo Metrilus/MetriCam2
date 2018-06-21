@@ -17,25 +17,18 @@ namespace MetriCam2.Cameras.Internal.Sick
     internal class FrameData
     {
         #region Private Variables
-        // camera instance and log
         private readonly Camera cam;
         private readonly MetriLog log;
-        // image data
-        private byte[] imageData;
-        // internal definitions
-        private uint magicWord;
-        private uint pkgLength;
-        private ushort protocolVersion;
-        private byte packetType;
-        // image context
-        private ushort numSegments;
-        private uint[] offsets;
-        private uint[] changedCounters;
         // camera parameters
         private float[] cam2WorldMatrix;
         #endregion
 
         #region Properties
+        /// <summary>
+        /// Image data.
+        /// </summary>
+        internal byte[] ImageBuffer { get; private set; }
+
         /// <summary>
         /// Width of image.
         /// </summary>
@@ -111,22 +104,23 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <param name="log">metri log from camera instance</param>
         internal FrameData(byte[] data, Camera cam, MetriLog log)
         {
-            imageData = data;
+            ImageBuffer = data;
             this.cam  = cam;
             this.log  = log;
             SetDefaultValues();
+            Parse();
         }
         #endregion
 
-        #region Internal Methods
+        #region Private Methods
         /// <summary>
-        /// This methods parses the data provided by constructor and sets the properties accordingly.
+        /// Parses the binary data.
         /// </summary>
-        internal void Read()
+        private void Parse()
         {
             // first 11 bytes: internal definitions consisting of:
             // 4 bytes STx
-            magicWord = BitConverter.ToUInt32(imageData, 0);
+            uint magicWord = BitConverter.ToUInt32(ImageBuffer, 0);
             if (0x02020202 != magicWord)
             {
                 string msg = string.Format("The framing header is not 0x02020202 as expected: {0:X8}", magicWord);
@@ -136,11 +130,11 @@ namespace MetriCam2.Cameras.Internal.Sick
             magicWord = Utils.ConvertEndiannessUInt32(magicWord);
             
             // 4 bytes packet length
-            pkgLength = BitConverter.ToUInt32(imageData, 4);
+            uint pkgLength = BitConverter.ToUInt32(ImageBuffer, 4);
             pkgLength = Utils.ConvertEndiannessUInt32(pkgLength);
             
             // 2 bytes protocol version
-            protocolVersion = BitConverter.ToUInt16(imageData, 8);
+            ushort protocolVersion = BitConverter.ToUInt16(ImageBuffer, 8);
             protocolVersion = Utils.ConvertEndiannessUInt16(protocolVersion);
             if (0x0001 != protocolVersion)
             {
@@ -150,7 +144,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
 
             // 1 byte packet type
-            packetType = imageData[10];
+            byte packetType = ImageBuffer[10];
             if (0x62 != packetType)
             {
                 string msg = string.Format("The packet type is not 0x62 as expected: {0:X2}", packetType);
@@ -159,7 +153,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
 
             // 2 bytes: blob id
-            UInt16 blobId = BitConverter.ToUInt16(imageData, 11);
+            ushort blobId = BitConverter.ToUInt16(ImageBuffer, 11);
             blobId = Utils.ConvertEndiannessUInt16(blobId);
             if (0x0001 == blobId)
             {
@@ -169,7 +163,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
 
             // 2 bytes: number of segments
-            numSegments = BitConverter.ToUInt16(imageData, 13);
+            ushort numSegments = BitConverter.ToUInt16(ImageBuffer, 13);
             numSegments = Utils.ConvertEndiannessUInt16(numSegments);
             if (numSegments != 3)
             {
@@ -179,16 +173,16 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
 
             // Next 8 * numSegments bytes: Offset and change counter for each segment
-            offsets = new uint[numSegments];
-            changedCounters = new uint[numSegments];
+            uint[] offsets = new uint[numSegments];
+            uint[] changedCounters = new uint[numSegments];
             for (int i = 0; i < numSegments; ++i)
             {
                 int index = i * 8 + 15; // 8 bytes per item + 15 bytes header so far
 
-                uint offset = BitConverter.ToUInt32(imageData, index);
+                uint offset = BitConverter.ToUInt32(ImageBuffer, index);
                 offsets[i] = Utils.ConvertEndiannessUInt32(offset);
 
-                uint changedCounter = BitConverter.ToUInt32(imageData, index + 4);
+                uint changedCounter = BitConverter.ToUInt32(ImageBuffer, index + 4);
                 changedCounters[i] = Utils.ConvertEndiannessUInt32(changedCounter);
 
                 // First internal defintions took up 11 bytes
@@ -196,8 +190,8 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
 
             // now: XML segment
-            string xml = Encoding.ASCII.GetString(imageData, (int)offsets[0], (int)offsets[1] - (int)offsets[0]);
-            ReadXML(xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue);
+            string xml = Encoding.ASCII.GetString(ImageBuffer, (int)offsets[0], (int)offsets[1] - (int)offsets[0]);
+            ParseXML(xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue);
 
             // calc sizes
             int numBytesIntensity  = Width * Height * numBytesPerIntensityValue;
@@ -205,16 +199,14 @@ namespace MetriCam2.Cameras.Internal.Sick
             int numBytesConfidence = Width * Height * numBytesPerConfidenceValue;
 
             // now: save image data offsets
-            ReadBinary(numBytesIntensity, numBytesDistance, numBytesConfidence);
+            ParseBinary((int)offsets[1], numBytesIntensity, numBytesDistance, numBytesConfidence);
         }
-        #endregion
 
-        #region Private Methods
         /// <summary>
         /// Reads the XML part and saves the image properties (e.g. width/height).
         /// </summary>
         /// <param name="xml">XML string</param>
-        private void ReadXML(string xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue)
+        private void ParseXML(string xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue)
         {
             // set default values to make compiler happy
             numBytesPerIntensityValue = 2;
@@ -295,36 +287,34 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <summary>
         /// Calculates the offsets where to find the image data for channels.
         /// </summary>
-        private void ReadBinary(int numBytesIntensity, int numBytesDistance, int numBytesConfidence)
+        private void ParseBinary(int offset, int numBytesIntensity, int numBytesDistance, int numBytesConfidence)
         {
-            int offset = (int)offsets[1];
-            
             // 4 bytes length per dataset
-            uint datasetLength = BitConverter.ToUInt32(imageData, offset);
+            uint datasetLength = BitConverter.ToUInt32(ImageBuffer, offset);
             datasetLength = Utils.ConvertEndiannessUInt32(datasetLength);
             offset += 4;
 
             // 8 bytes timestamp
-            TimeStamp = BitConverter.ToUInt64(imageData, offset);
+            TimeStamp = BitConverter.ToUInt64(ImageBuffer, offset);
             TimeStamp = Utils.ConvertEndiannessUInt64(TimeStamp);
             offset += 8;
 
             // 2 bytes version
-            UInt16 version = BitConverter.ToUInt16(imageData, offset);
+            UInt16 version = BitConverter.ToUInt16(ImageBuffer, offset);
             version = Utils.ConvertEndiannessUInt16(version);
             offset += 2;
 
             // 4 bytes frame number
-            uint frameNumber = BitConverter.ToUInt32(imageData, offset);
+            uint frameNumber = BitConverter.ToUInt32(ImageBuffer, offset);
             frameNumber = Utils.ConvertEndiannessUInt32(frameNumber);
             offset += 4;
 
             // 1 byte data quality
-            byte dataQuality = imageData[offset];
+            byte dataQuality = ImageBuffer[offset];
             offset += 1;
 
             // 1 byte device status
-            byte deviceStatus = imageData[offset];
+            byte deviceStatus = ImageBuffer[offset];
             offset += 1;
 
             // 176 * 144 * 2 bytes distance data
@@ -338,12 +328,12 @@ namespace MetriCam2.Cameras.Internal.Sick
             offset += numBytesConfidence;
 
             // 4 bytes CRC of data
-            uint crc = BitConverter.ToUInt32(imageData, offset);
+            uint crc = BitConverter.ToUInt32(ImageBuffer, offset);
             crc = Utils.ConvertEndiannessUInt32(crc);
             offset += 4;
 
             // 4 bytes same length as first value
-            uint datasetLengthAgain = BitConverter.ToUInt32(imageData, offset);
+            uint datasetLengthAgain = BitConverter.ToUInt32(ImageBuffer, offset);
             datasetLengthAgain = Utils.ConvertEndiannessUInt32(datasetLengthAgain);
             offset += 4;
 
