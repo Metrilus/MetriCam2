@@ -19,10 +19,8 @@ namespace MetriCam2.Cameras
         private Device device;
         private Control _control;
 
-        // frame buffer
-        private byte[] imageBuffer;
         // image data contains information about the current frame e.g. width and height
-        private FrameData imageData;
+        private FrameData _frameData;
         // camera properties
         private int width;
         private int height;
@@ -145,9 +143,8 @@ namespace MetriCam2.Cameras
             : base()
         {
             ipAddress   = "";
-            imageBuffer = null;
             device      = null;
-            imageData   = null;
+            _frameData   = null;
             width       = 0;
             height      = 0;
         }
@@ -226,13 +223,10 @@ namespace MetriCam2.Cameras
         /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
         protected override void UpdateImpl()
         {
-            imageBuffer = device.Stream_GetFrame();
-            imageData   = new FrameData(imageBuffer, this, log);
-            width       = imageData.Width;
-            height      = imageData.Height;
-
-            // read data and update properties
-            imageData.Read();
+            byte[] imageBuffer = device.Stream_GetFrame();
+            _frameData   = new FrameData(imageBuffer, this, log);
+            width       = _frameData.Width;
+            height      = _frameData.Height;
         }
 
         /// <summary>Computes (image) data for a given channel.</summary>
@@ -270,15 +264,15 @@ namespace MetriCam2.Cameras
             FloatCameraImage result;
             lock (cameraLock)
             {
-                result = new FloatCameraImage(imageData.Width, imageData.Height);
-                result.TimeStamp = (long)imageData.TimeStamp;
-                int start = imageData.IntensityStartOffset;
-                for (int i = 0; i < imageData.Height; ++i)
+                result = new FloatCameraImage(_frameData.Width, _frameData.Height);
+                result.TimeStamp = (long)_frameData.TimeStamp;
+                int start = _frameData.IntensityStartOffset;
+                for (int i = 0; i < _frameData.Height; ++i)
                 {
-                    for (int j = 0; j < imageData.Width; ++j)
+                    for (int j = 0; j < _frameData.Width; ++j)
                     {
                         // take two bytes and create integer (little endian)
-                        uint value = (uint)imageBuffer[start + 1] << 8 | (uint)imageBuffer[start + 0];
+                        uint value = (uint)_frameData.ImageBuffer[start + 1] << 8 | (uint)_frameData.ImageBuffer[start + 0];
                         result[i, j] = (float)value;
                         start += 2;
                     }
@@ -297,15 +291,15 @@ namespace MetriCam2.Cameras
             // FIXME: distance calculation
             lock (cameraLock)
             {
-                result = new FloatCameraImage(imageData.Width, imageData.Height);
-                result.TimeStamp = (long)imageData.TimeStamp;
-                int start = imageData.DistanceStartOffset;
-                for (int i = 0; i < imageData.Height; ++i)
+                result = new FloatCameraImage(_frameData.Width, _frameData.Height);
+                result.TimeStamp = (long)_frameData.TimeStamp;
+                int start = _frameData.DistanceStartOffset;
+                for (int i = 0; i < _frameData.Height; ++i)
                 {
-                    for (int j = 0; j < imageData.Width; ++j)
+                    for (int j = 0; j < _frameData.Width; ++j)
                     {
                         // take two bytes and create integer (little endian)
-                        uint value = (uint)imageBuffer[start + 1] << 8 | (uint)imageBuffer[start + 0];
+                        uint value = (uint)_frameData.ImageBuffer[start + 1] << 8 | (uint)_frameData.ImageBuffer[start + 0];
                         result[i, j] = (float)value * 0.001f;
                         start += 2;
                     }
@@ -323,15 +317,15 @@ namespace MetriCam2.Cameras
             UShortCameraImage result;
             lock (cameraLock)
             {
-                result = new UShortCameraImage(imageData.Width, imageData.Height);
-                result.TimeStamp = (long)imageData.TimeStamp;
-                int start = imageData.ConfidenceStartOffset;
-                for (int i = 0; i < imageData.Height; ++i)
+                result = new UShortCameraImage(_frameData.Width, _frameData.Height);
+                result.TimeStamp = (long)_frameData.TimeStamp;
+                int start = _frameData.ConfidenceStartOffset;
+                for (int i = 0; i < _frameData.Height; ++i)
                 {
-                    for (int j = 0; j < imageData.Width; ++j)
+                    for (int j = 0; j < _frameData.Width; ++j)
                     {
                         // take two bytes and create integer (little endian)
-                        result[i, j] = (ushort)((ushort)imageBuffer[start + 1] << 8 | (ushort)imageBuffer[start + 0]);
+                        result[i, j] = (ushort)((ushort)_frameData.ImageBuffer[start + 1] << 8 | (ushort)_frameData.ImageBuffer[start + 0]);
                         start += 2;
                     }
                 }
@@ -372,22 +366,22 @@ namespace MetriCam2.Cameras
             Point3fCameraImage result;
             lock (cameraLock)
             {
-                result = new Point3fCameraImage(imageData.Width, imageData.Height);
-                result.TimeStamp = (long)imageData.TimeStamp;
+                result = new Point3fCameraImage(_frameData.Width, _frameData.Height);
+                result.TimeStamp = (long)_frameData.TimeStamp;
 
-                float cx = imageData.CX;
-                float cy = imageData.CY;
-                float fx = imageData.FX;
-                float fy = imageData.FY;
-                float k1 = imageData.K1;
-                float k2 = imageData.K2;
-                float f2rc = imageData.F2RC;
+                float cx = _frameData.CX;
+                float cy = _frameData.CY;
+                float fx = _frameData.FX;
+                float fy = _frameData.FY;
+                float k1 = _frameData.K1;
+                float k2 = _frameData.K2;
+                float f2rc = _frameData.F2RC;
 
                 FloatCameraImage distances = CalcDistance();
 
-                for (int i = 0; i < imageData.Height; ++i)
+                for (int i = 0; i < _frameData.Height; ++i)
                 {
-                    for (int j = 0; j < imageData.Width; ++j)
+                    for (int j = 0; j < _frameData.Width; ++j)
                     {
                         int depth = (int)(distances[i, j] * 1000);
 
