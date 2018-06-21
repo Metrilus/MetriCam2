@@ -17,7 +17,7 @@ namespace MetriCam2.Cameras.Internal.Sick
     internal class FrameData
     {
         #region Private Variables
-        private readonly Camera cam;
+        private readonly VisionaryT cam;
         private readonly MetriLog log;
         // camera parameters
         private float[] cam2WorldMatrix;
@@ -102,7 +102,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <param name="data">image data</param>
         /// <param name="cam">camera instance</param>
         /// <param name="log">metri log from camera instance</param>
-        internal FrameData(byte[] data, Camera cam, MetriLog log)
+        internal FrameData(byte[] data, VisionaryT cam, MetriLog log)
         {
             ImageBuffer = data;
             this.cam  = cam;
@@ -118,6 +118,8 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// </summary>
         private void Parse()
         {
+            // TODO: these checks are redundant. They are performed during receive already in Device.GetFrameData.
+
             // first 11 bytes: internal definitions consisting of:
             // 4 bytes STx
             uint magicWord = BitConverter.ToUInt32(ImageBuffer, 0);

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 using Metrilus.Logging;
+using System.IO;
 
 namespace MetriCam2.Cameras.Internal.Sick
 {
@@ -22,7 +23,6 @@ namespace MetriCam2.Cameras.Internal.Sick
         #endregion
 
         #region Private Variables
-        private readonly string ipAddress;
         private readonly Camera cam;
         private MetriLog log;
         private TcpClient sockData;
@@ -34,12 +34,11 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// Creates a new Device instance which can be used to handle the low level TCP communication
         /// between camera and client.
         /// </summary>
-        /// <param name="ip">IP address of client</param>
+        /// <param name="ipAddress">IP address of client</param>
         /// <param name="cam">MetriCam2 camera object used for exceptions</param>
         /// <param name="log">MetriLog</param>
-        internal Device(string ip, Camera cam, MetriLog log)
+        internal Device(string ipAddress, Camera cam, MetriLog log)
         {
-            ipAddress = ip;
             this.cam  = cam;
             this.log  = log;
 
@@ -50,7 +49,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             catch (Exception ex)
             {
                 log.ErrorFormat("Failed to connect to IP={0}, reasons={1}", ipAddress, ex.Message);
-                ExceptionBuilder.Throw(ex.GetType(), cam, "error_connectionFailed", "Unable to connect to camera.");
+                ExceptionBuilder.Throw(ex.GetType(), cam, ex);
             }
 
             streamData = sockData.GetStream();
@@ -67,17 +66,20 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// </summary>
         /// <remarks>Data is checked for correct protocol version and packet type.</remarks>
         /// <returns>Raw frame</returns>
-        internal byte[] Stream_GetFrame()
+        internal byte[] GetFrameData()
         {
             log.Debug("Start getting frame");
             List<byte> data = new List<byte>();
             byte[] buffer = new byte[FRAGMENT_SIZE];
-            int read = 0;
+            int numBytesRead = 0;
 
             // first read and check header
-            read = streamData.Read(buffer, 0, buffer.Length);
-            if (read < 11)
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_getData", "Not enough bytes received: " + read);
+            numBytesRead = streamData.Read(buffer, 0, buffer.Length);
+            // The header is at least 11 bytes long
+            if (numBytesRead < 11)
+            {
+                ExceptionBuilder.Throw(typeof(IOException), cam, "error_getData", "Not enough bytes received: " + numBytesRead + " (expected 11 or more)");
+            }
 
             // check buffer content
             uint magicWord, pkgLength;
@@ -93,40 +95,45 @@ namespace MetriCam2.Cameras.Internal.Sick
             pkgLength = Utils.ConvertEndiannessUInt32(pkgLength);
             protocolVersion = Utils.ConvertEndiannessUInt16(protocolVersion);
 
-            if (magicWord != 0x02020202)
+            if (0x02020202 != magicWord)
             {
-                log.ErrorFormat("MagicWord is wrong. Got {0}", magicWord);
-                ExceptionBuilder.Throw(typeof(Exception), cam, "error_getData", "MagicWord is wrong.");
+                string msg = string.Format("The framing header is not 0x02020202 as expected: {0:X8}", magicWord);
+                log.Error(msg);
+                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
             }
-            if (protocolVersion != 0x0001)
+            if (0x0001 != protocolVersion)
             {
-                log.ErrorFormat("ProtocolVersion is wrong. Got {0}", protocolVersion);
-                ExceptionBuilder.Throw(typeof(Exception), cam, "error_getData", "ProtocolVersion is wrong.");
+                string msg = string.Format("The protocol version is not 0x0001 as expected: {0:X4}", protocolVersion);
+                log.Error(msg);
+                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
             }
-            if (packetType != 0x62)
+            if (0x62 != packetType)
             {
-                log.ErrorFormat("PacketType is wrong. Got {0}", packetType);
-                ExceptionBuilder.Throw(typeof(Exception), cam, "error_getData", "PacketType is wrong.");
+                string msg = string.Format("The packet type is not 0x62 as expected: {0:X2}", packetType);
+                log.Error(msg);
+                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
             }
 
             // get actual frame data
-            data.AddRange(buffer.Take(read));
+            data.AddRange(buffer.Take(numBytesRead));
             pkgLength++; // checksum byte
-            int alreadyReceived = read - 8;
+            int alreadyReceived = numBytesRead - 8;
+            int bytesRemaining = (int)pkgLength - alreadyReceived;
 
-            while (alreadyReceived < pkgLength)
+            while (bytesRemaining > 0)
             {
-                read = streamData.Read(buffer, 0, (int)Math.Min(FRAGMENT_SIZE, pkgLength - alreadyReceived));
-                if (read == 0)
+                numBytesRead = streamData.Read(buffer, 0, (int)Math.Min(FRAGMENT_SIZE, bytesRemaining));
+                if (0 == numBytesRead)
                 {
-                    log.Error("Failed to receive bytes from camera.");
-                    ExceptionBuilder.Throw(typeof(Exception), cam, "error_getData", "Failed to read Frame.");
+                    string msg = "Failed to read raw frame data from camera.";
+                    log.Error(msg);
+                    ExceptionBuilder.Throw(typeof(IOException), cam, "error_getData", msg);
                 }
-                data.AddRange(buffer.Take(read));
-                alreadyReceived += read;
+                data.AddRange(buffer.Take(numBytesRead));
+                bytesRemaining -= numBytesRead;
             }
 
-            log.Debug("Done: Start getting frame");
+            log.Debug("Done getting frame");
             return data.ToArray();
         }
 
