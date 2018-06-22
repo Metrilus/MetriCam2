@@ -133,6 +133,8 @@ namespace MetriCam2.Cameras
         /// Height of images.
         /// </summary>
         public int Height => height;
+
+        public int NumFrameRetries { get; set; } = 3;
         #endregion
 
         #region Constructor

@@ -23,7 +23,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         #endregion
 
         #region Private Variables
-        private readonly Camera cam;
+        private readonly VisionaryT cam;
         private MetriLog log;
         private TcpClient sockData;
         private NetworkStream streamData;
@@ -37,7 +37,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <param name="ipAddress">IP address of client</param>
         /// <param name="cam">MetriCam2 camera object used for exceptions</param>
         /// <param name="log">MetriLog</param>
-        internal Device(string ipAddress, Camera cam, MetriLog log)
+        internal Device(string ipAddress, VisionaryT cam, MetriLog log)
         {
             this.cam  = cam;
             this.log  = log;
@@ -79,7 +79,7 @@ namespace MetriCam2.Cameras.Internal.Sick
                 catch
                 {
                     consecutiveFailCounter++;
-                    if (consecutiveFailCounter > 3)
+                    if (consecutiveFailCounter > cam.NumFrameRetries)
                     {
                         throw;
                     }
