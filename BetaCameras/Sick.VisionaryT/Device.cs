@@ -61,6 +61,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         #endregion
 
         #region Internal Methods
+
         /// <summary>
         /// Gets the raw frame data from camera.
         /// </summary>
@@ -68,41 +69,42 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <returns>Raw frame</returns>
         internal byte[] GetFrameData()
         {
-            log.Debug("Start getting frame");
-            List<byte> data = new List<byte>();
-            byte[] buffer = new byte[FRAGMENT_SIZE];
-            int numBytesRead = 0;
-
-            // first read and check header
-            numBytesRead = streamData.Read(buffer, 0, buffer.Length);
-            // The header is at least 11 bytes long
-            if (numBytesRead < 11)
+            if (!Utils.SyncCoLa(streamData))
             {
-                string msg = string.Format("{0}: Not enough bytes received: {1} (expected 11 or more)", cam.Name, numBytesRead);
+                string msg = string.Format("{0}: Could not sync to CoLa bus", cam.Name);
+                log.Error(msg);
+                throw new IOException(msg);
+            }
+
+            log.Debug("Start getting frame");
+
+            byte[] buffer = new byte[0];
+            if (!Utils.Receive(streamData, ref buffer, 4))
+            {
+                string msg = string.Format("{0}: Could not read package length", cam.Name);
+                log.Error(msg);
+                throw new IOException(msg);
+            }
+            uint pkgLength = BitConverter.ToUInt32(buffer, 0);
+            pkgLength = Utils.ConvertEndiannessUInt32(pkgLength);
+
+            if (!Utils.Receive(streamData, ref buffer, (int)pkgLength))
+            {
+                string msg = string.Format("{0}: Could not read package payload", cam.Name);
                 log.Error(msg);
                 throw new IOException(msg);
             }
 
             // check buffer content
-            uint magicWord, pkgLength;
-            ushort protocolVersion;
-            byte packetType;
-            magicWord = BitConverter.ToUInt32(buffer, 0);
-            pkgLength = BitConverter.ToUInt32(buffer, 4);
-            protocolVersion = BitConverter.ToUInt16(buffer, 8);
-            packetType = buffer[10];
+            int offset = 0;
 
-            // take care of endianness
-            // magicWord is symmetric wrt. endianess -> no conversion needed
-            pkgLength = Utils.ConvertEndiannessUInt32(pkgLength);
+            ushort protocolVersion = BitConverter.ToUInt16(buffer, offset);
             protocolVersion = Utils.ConvertEndiannessUInt16(protocolVersion);
+            offset += 2;
 
-            if (0x02020202 != magicWord)
-            {
-                string msg = string.Format("{0}: The framing header is not 0x02020202 as expected: {1:X8}", cam.Name, magicWord);
-                log.Error(msg);
-                throw new InvalidDataException(msg);
-            }
+            byte packetType = buffer[offset];
+            offset += 1;
+
             if (0x0001 != protocolVersion)
             {
                 string msg = string.Format("{0}: The protocol version is not 0x0001 as expected: {1:X4}", cam.Name, protocolVersion);
@@ -116,27 +118,7 @@ namespace MetriCam2.Cameras.Internal.Sick
                 throw new InvalidDataException(msg);
             }
 
-            // get actual frame data
-            data.AddRange(buffer.Take(numBytesRead));
-            pkgLength++; // checksum byte
-            int alreadyReceived = numBytesRead - 8;
-            int bytesRemaining = (int)pkgLength - alreadyReceived;
-
-            while (bytesRemaining > 0)
-            {
-                numBytesRead = streamData.Read(buffer, 0, Math.Min(FRAGMENT_SIZE, bytesRemaining));
-                if (0 == numBytesRead)
-                {
-                    string msg = string.Format("{0}: Failed to read raw frame data from camera.", cam.Name);
-                    log.Error(msg);
-                    throw new IOException(msg);
-                }
-                data.AddRange(buffer.Take(numBytesRead));
-                bytesRemaining -= numBytesRead;
-            }
-
-            log.Debug("Done getting frame");
-            return data.ToArray();
+            return buffer.Skip(offset).ToArray();
         }
 
         /// <summary>
@@ -154,6 +136,8 @@ namespace MetriCam2.Cameras.Internal.Sick
                 log.Error("Close on sockets/streams failed: " + ex.Message);
             }
         }
+
         #endregion
+
     }
 }

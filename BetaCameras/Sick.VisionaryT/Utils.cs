@@ -100,5 +100,63 @@ namespace MetriCam2.Cameras.Internal.Sick
             var retValue = new byte[] { byte3, byte2, byte1, byte0 };
             return retValue;
         }
+
+        /// <summary>
+        /// Reads from the network until the Sick header 0x02020202 has been found.
+        /// </summary>
+        internal static bool SyncCoLa(NetworkStream stream)
+        {
+            // Todo: this can be optimized by reading four bytes at once, counting the trailing non-0x02 bytes, etc.
+            uint elements = 0;
+            int buffer;
+
+            while (elements < 4)
+            {
+                buffer = stream.ReadByte();
+                if (-1 == buffer)
+                {
+                    return false;
+                }
+
+                if (0x02 == buffer)
+                {
+                    elements++;
+                }
+                else
+                {
+                    elements = 0;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Receives bytes from a network stream into a buffer.
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="buffer"></param>
+        /// <param name="bytesToReceive"></param>
+        /// <returns></returns>
+        internal static bool Receive(NetworkStream stream, ref byte[] buffer, int bytesToReceive)
+        {
+            Array.Resize(ref buffer, bytesToReceive);
+            int offset = 0;
+
+            int bytesReceived = 0;
+            while (bytesToReceive > 0)
+            {
+                bytesReceived = stream.Read(buffer, offset, bytesToReceive);
+
+                if (0 == bytesReceived)
+                {
+                    return false;
+                }
+                offset += bytesReceived;
+                bytesToReceive -= bytesReceived;
+            }
+            
+            return true;
+        }
     }
 }

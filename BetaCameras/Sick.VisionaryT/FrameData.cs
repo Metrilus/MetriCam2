@@ -118,43 +118,10 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// </summary>
         private void Parse()
         {
-            // TODO: these checks are redundant. They are performed during receive already in Device.GetFrameData.
-
-            // first 11 bytes: internal definitions consisting of:
-            // 4 bytes STx
-            uint magicWord = BitConverter.ToUInt32(ImageBuffer, 0);
-            if (0x02020202 != magicWord)
-            {
-                string msg = string.Format("{0}: The framing header is not 0x02020202 as expected: {1:X8}", cam.Name, magicWord);
-                log.Error(msg);
-                throw new InvalidDataException(msg);
-            }
-            
-            // 4 bytes packet length
-            uint pkgLength = BitConverter.ToUInt32(ImageBuffer, 4);
-            pkgLength = Utils.ConvertEndiannessUInt32(pkgLength);
-            
-            // 2 bytes protocol version
-            ushort protocolVersion = BitConverter.ToUInt16(ImageBuffer, 8);
-            protocolVersion = Utils.ConvertEndiannessUInt16(protocolVersion);
-            if (0x0001 != protocolVersion)
-            {
-                string msg = string.Format("{0}: The protocol version is not 0x0001 as expected: {1:X4}", cam.Name, protocolVersion);
-                log.Error(msg);
-                throw new InvalidDataException(msg);
-            }
-
-            // 1 byte packet type
-            byte packetType = ImageBuffer[10];
-            if (0x62 != packetType)
-            {
-                string msg = string.Format("{0}: The packet type is not 0x62 as expected: {1:X2}", cam.Name, packetType);
-                log.Error(msg);
-                throw new InvalidDataException(msg);
-            }
+            int offset = 0;
 
             // 2 bytes: blob id
-            ushort blobId = BitConverter.ToUInt16(ImageBuffer, 11);
+            ushort blobId = BitConverter.ToUInt16(ImageBuffer, offset);
             blobId = Utils.ConvertEndiannessUInt16(blobId);
             if (0x0001 != blobId)
             {
@@ -162,9 +129,10 @@ namespace MetriCam2.Cameras.Internal.Sick
                 log.Error(msg);
                 throw new InvalidDataException(msg);
             }
+            offset += 2;
 
             // 2 bytes: number of segments
-            ushort numSegments = BitConverter.ToUInt16(ImageBuffer, 13);
+            ushort numSegments = BitConverter.ToUInt16(ImageBuffer, offset);
             numSegments = Utils.ConvertEndiannessUInt16(numSegments);
             if (numSegments != 3)
             {
@@ -172,22 +140,20 @@ namespace MetriCam2.Cameras.Internal.Sick
                 log.Error(msg);
                 throw new InvalidDataException(msg);
             }
+            offset += 2;
 
             // Next 8 * numSegments bytes: Offset and change counter for each segment
             uint[] offsets = new uint[numSegments];
             uint[] changedCounters = new uint[numSegments];
             for (int i = 0; i < numSegments; ++i)
             {
-                int index = i * 8 + 15; // 8 bytes per item + 15 bytes header so far
+                uint dataOffset = BitConverter.ToUInt32(ImageBuffer, offset);
+                offsets[i] = Utils.ConvertEndiannessUInt32(dataOffset);
+                offset += 4;
 
-                uint offset = BitConverter.ToUInt32(ImageBuffer, index);
-                offsets[i] = Utils.ConvertEndiannessUInt32(offset);
-
-                uint changedCounter = BitConverter.ToUInt32(ImageBuffer, index + 4);
+                uint changedCounter = BitConverter.ToUInt32(ImageBuffer, offset);
                 changedCounters[i] = Utils.ConvertEndiannessUInt32(changedCounter);
-
-                // First internal defintions took up 11 bytes
-                offsets[i] += 11;
+                offset += 4;
             }
 
             // now: XML segment
