@@ -17,25 +17,18 @@ namespace MetriCam2.Cameras.Internal.Sick
     internal class FrameData
     {
         #region Private Variables
-        // camera instance and log
-        private readonly Camera cam;
+        private readonly VisionaryT cam;
         private readonly MetriLog log;
-        // image data
-        private byte[] imageData;
-        // internal definitions
-        private uint magicWord;
-        private uint pkgLength;
-        private ushort protocolVersion;
-        private byte packetType;
-        // image context
-        private ushort numSegments;
-        private uint[] offsets;
-        private uint[] changedCounters;
         // camera parameters
         private float[] cam2WorldMatrix;
         #endregion
 
         #region Properties
+        /// <summary>
+        /// Image data.
+        /// </summary>
+        internal byte[] ImageBuffer { get; private set; }
+
         /// <summary>
         /// Width of image.
         /// </summary>
@@ -109,89 +102,63 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <param name="data">image data</param>
         /// <param name="cam">camera instance</param>
         /// <param name="log">metri log from camera instance</param>
-        internal FrameData(byte[] data, Camera cam, MetriLog log)
+        internal FrameData(byte[] data, VisionaryT cam, MetriLog log)
         {
-            imageData = data;
+            ImageBuffer = data;
             this.cam  = cam;
             this.log  = log;
             SetDefaultValues();
+            Parse();
         }
         #endregion
 
-        #region Internal Methods
+        #region Private Methods
         /// <summary>
-        /// This methods parses the data provided by constructor and sets the properties accordingly.
+        /// Parses the binary data.
         /// </summary>
-        internal void Read()
+        private void Parse()
         {
-            // first 11 bytes: internal definitions consisting of:
-            // 4 bytes STx
-            magicWord = BitConverter.ToUInt32(imageData, 0);
-            if (0x02020202 != magicWord)
-            {
-                log.Error("The framing header is not 0x02020202 as expected.");
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_unknown", "The framing header does not have the expected value.");
-            }
-            magicWord = Utils.ConvertEndiannessUInt32(magicWord);
-            
-            // 4 bytes packet length
-            pkgLength = BitConverter.ToUInt32(imageData, 4);
-            pkgLength = Utils.ConvertEndiannessUInt32(pkgLength);
-            
-            // 2 bytes protocol version
-            protocolVersion = BitConverter.ToUInt16(imageData, 8);
-            protocolVersion = Utils.ConvertEndiannessUInt16(protocolVersion);
-            if (0x0001 != protocolVersion)
-            {
-                log.Error("The protocol version is not 0x0001 as expected.");
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_unknown", "Unexpected protocol version");
-            }
+            int offset = 0;
 
-            // 1 byte packet type
-            packetType = imageData[10];
-            if (0x62 != packetType)
-            {
-                log.Error("The packet type is not 0x62 as expected.");
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_unknown", "Unexpected packet type");
-            }
-
-            UInt16 blobId = BitConverter.ToUInt16(imageData, 11);
-            if (0x0001 == blobId)
-            {
-                log.Error("The blob id is not 0x0001 as expected.");
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_unknown", "Unexpected blob id");
-            }
+            // 2 bytes: blob id
+            ushort blobId = BitConverter.ToUInt16(ImageBuffer, offset);
             blobId = Utils.ConvertEndiannessUInt16(blobId);
+            if (0x0001 != blobId)
+            {
+                string msg = string.Format("{0}: The blob id is not 0x0001 as expected: {1:X4}", cam.Name, blobId);
+                log.Error(msg);
+                throw new InvalidDataException(msg);
+            }
+            offset += 2;
 
-            // Next 4 bytes: blob id and number of segments
-            numSegments = BitConverter.ToUInt16(imageData, 13);
+            // 2 bytes: number of segments
+            ushort numSegments = BitConverter.ToUInt16(ImageBuffer, offset);
             numSegments = Utils.ConvertEndiannessUInt16(numSegments);
-
             if (numSegments != 3)
             {
-                log.Error("Number of segments is not three.");
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_unknown", "No segments found.");
+                string msg = string.Format("{0}: The number of segments is not 3 as expected: {1}", cam.Name, numSegments);
+                log.Error(msg);
+                throw new InvalidDataException(msg);
             }
+            offset += 2;
 
             // Next 8 * numSegments bytes: Offset and change counter for each segment
-            offsets = new uint[numSegments];
-            changedCounters = new uint[numSegments];
+            uint[] offsets = new uint[numSegments];
+            uint[] changedCounters = new uint[numSegments];
             for (int i = 0; i < numSegments; ++i)
             {
-                int index = i * 8 + 15; // 8 per item + 15 is offset
-                offsets[i]         = BitConverter.ToUInt32(imageData, index);
-                changedCounters[i] = BitConverter.ToUInt32(imageData, index + 4);
+                uint dataOffset = BitConverter.ToUInt32(ImageBuffer, offset);
+                offsets[i] = Utils.ConvertEndiannessUInt32(dataOffset);
+                offset += 4;
 
-                offsets[i]         = Utils.ConvertEndiannessUInt32(offsets[i]);
-                changedCounters[i] = Utils.ConvertEndiannessUInt32(changedCounters[i]);
-
-                // First internal defintions took up 11 bytes
-                offsets[i] += 11;
+                uint changedCounter = BitConverter.ToUInt32(ImageBuffer, offset);
+                changedCounters[i] = Utils.ConvertEndiannessUInt32(changedCounter);
+                offset += 4;
             }
 
             // now: XML segment
-            string xml = Encoding.ASCII.GetString(imageData, (int)offsets[0], (int)offsets[1] - (int)offsets[0]);
-            ReadXML(xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue);
+            string xml = Encoding.ASCII.GetString(ImageBuffer, (int)offsets[0], (int)offsets[1] - (int)offsets[0]);
+            ParseXML(xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue);
 
             // calc sizes
             int numBytesIntensity  = Width * Height * numBytesPerIntensityValue;
@@ -199,16 +166,15 @@ namespace MetriCam2.Cameras.Internal.Sick
             int numBytesConfidence = Width * Height * numBytesPerConfidenceValue;
 
             // now: save image data offsets
-            ReadBinary(numBytesIntensity, numBytesDistance, numBytesConfidence);
+            uint binarySegmentSize = offsets[2] - offsets[1];
+            ParseBinary((int)offsets[1], binarySegmentSize, numBytesIntensity, numBytesDistance, numBytesConfidence);
         }
-        #endregion
 
-        #region Private Methods
         /// <summary>
         /// Reads the XML part and saves the image properties (e.g. width/height).
         /// </summary>
         /// <param name="xml">XML string</param>
-        private void ReadXML(string xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue)
+        private void ParseXML(string xml, out int numBytesPerIntensityValue, out int numBytesPerDistanceValue, out int numBytesPerConfidenceValue)
         {
             // set default values to make compiler happy
             numBytesPerIntensityValue = 2;
@@ -249,68 +215,76 @@ namespace MetriCam2.Cameras.Internal.Sick
             F2RC = Convert.ToSingle(dataStream["FocalToRayCross"].InnerText, CultureInfo.InvariantCulture.NumberFormat);
 
             // data types, should always be uint16_t
-            if (dataStream["Distance"].InnerText.ToLower() == "uint16")
+            string dataType = dataStream["Distance"].InnerText.ToLower();
+            if (dataType == "uint16")
             {
                 numBytesPerDistanceValue = 2;
             }
             else
             {
-                log.ErrorFormat("Bytes per distance value has unexpected value \"{0}\"", dataStream.ChildNodes[8].InnerText.ToLower());
-                ExceptionBuilder.Throw(typeof(NotImplementedException), cam, "error_unknown", "Bytes per distance value has unexpected value.");
+                string msg = string.Format("{0}: Bytes per distance value has unexpected value \"{1}\"", dataType);
+                log.Error(msg);
+                throw new InvalidDataException(msg);
             }
-            if (dataStream["Intensity"].InnerText.ToLower() == "uint16")
+
+            dataType = dataStream["Intensity"].InnerText.ToLower();
+            if (dataType == "uint16")
             {
                 numBytesPerIntensityValue = 2;
             }
             else
             {
-                log.ErrorFormat("Bytes per intensity value has unexpected value \"{0}\"", dataStream.ChildNodes[8].InnerText.ToLower());
-                ExceptionBuilder.Throw(typeof(NotImplementedException), cam, "error_unknown", "Bytes per intensity value has unexpected value.");
+                string msg = string.Format("{0}: Bytes per intensity value has unexpected value \"{1}\"", dataType);
+                log.Error(msg);
+                throw new InvalidDataException(msg);
             }
-            if (dataStream["Confidence"].InnerText.ToLower() == "uint16")
+
+            dataType = dataStream["Confidence"].InnerText.ToLower();
+            if (dataType == "uint16")
             {
                 numBytesPerConfidenceValue = 2;
             }
             else
             {
-                log.ErrorFormat("Bytes per confidence value has unexpected value \"{0}\"", dataStream.ChildNodes[8].InnerText.ToLower());
-                ExceptionBuilder.Throw(typeof(NotImplementedException), cam, "error_unknown", "Bytes per confidence value has unexpected value.");
+                string msg = string.Format("{0}: Bytes per confidence value has unexpected value \"{1}\"", dataType);
+                log.Error(msg);
+                throw new InvalidDataException(msg);
             }
         }
 
         /// <summary>
         /// Calculates the offsets where to find the image data for channels.
         /// </summary>
-        private void ReadBinary(int numBytesIntensity, int numBytesDistance, int numBytesConfidence)
+        private void ParseBinary(int offset, uint binarySegmentSize, int numBytesIntensity, int numBytesDistance, int numBytesConfidence)
         {
-            int offset = (int)offsets[1];
-            
             // 4 bytes length per dataset
-            uint datasetLength = BitConverter.ToUInt32(imageData, offset);
-            datasetLength = Utils.ConvertEndiannessUInt32(datasetLength);
+            uint datasetLength = BitConverter.ToUInt32(ImageBuffer, offset);
             offset += 4;
+            if (datasetLength > binarySegmentSize)
+            {
+                string msg = string.Format("{0}: Malformed data, length in depth map header ({1}) does not match package size ({2}).", cam.Name, datasetLength, binarySegmentSize);
+                log.Error(msg);
+                throw new InvalidDataException(msg);
+            }
 
             // 8 bytes timestamp
-            TimeStamp = BitConverter.ToUInt64(imageData, offset);
-            TimeStamp = Utils.ConvertEndiannessUInt64(TimeStamp);
+            TimeStamp = BitConverter.ToUInt64(ImageBuffer, offset);
             offset += 8;
 
             // 2 bytes version
-            UInt16 version = BitConverter.ToUInt16(imageData, offset);
-            version = Utils.ConvertEndiannessUInt16(version);
+            UInt16 version = BitConverter.ToUInt16(ImageBuffer, offset);
             offset += 2;
 
             // 4 bytes frame number
-            uint frameNumber = BitConverter.ToUInt32(imageData, offset);
-            frameNumber = Utils.ConvertEndiannessUInt32(frameNumber);
+            uint frameNumber = BitConverter.ToUInt32(ImageBuffer, offset);
             offset += 4;
 
             // 1 byte data quality
-            byte dataQuality = imageData[offset];
+            byte dataQuality = ImageBuffer[offset];
             offset += 1;
 
             // 1 byte device status
-            byte deviceStatus = imageData[offset];
+            byte deviceStatus = ImageBuffer[offset];
             offset += 1;
 
             // 176 * 144 * 2 bytes distance data
@@ -323,20 +297,20 @@ namespace MetriCam2.Cameras.Internal.Sick
             ConfidenceStartOffset = offset;
             offset += numBytesConfidence;
 
-            // 4 bytes CRC of data
-            uint crc = BitConverter.ToUInt32(imageData, offset);
-            crc = Utils.ConvertEndiannessUInt32(crc);
+            // 4 bytes CRC of data (field unused by camera)
+            uint unusedCrc = BitConverter.ToUInt32(ImageBuffer, offset);
+            unusedCrc = Utils.ConvertEndiannessUInt32(unusedCrc);
             offset += 4;
 
             // 4 bytes same length as first value
-            uint datasetLengthAgain = BitConverter.ToUInt32(imageData, offset);
-            datasetLengthAgain = Utils.ConvertEndiannessUInt32(datasetLengthAgain);
+            uint datasetLengthCopy = BitConverter.ToUInt32(ImageBuffer, offset);
             offset += 4;
 
-            if (datasetLength != datasetLengthAgain)
+            if (datasetLength != datasetLengthCopy)
             {
-                log.Error("First and last 4 bytes, which encode the length of the dataset, did not match!");
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), cam, "error_unknown", "Unexpected value in dataset buffer");
+                string msg = string.Format("{0}: First and last 4 bytes -- which encode the length of the dataset -- did not match: {1} and {2}", cam.Name, datasetLength, datasetLengthCopy);
+                log.Error(msg);
+                throw new InvalidDataException(msg);
             }
         }
 
