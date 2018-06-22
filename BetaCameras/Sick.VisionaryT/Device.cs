@@ -78,7 +78,9 @@ namespace MetriCam2.Cameras.Internal.Sick
             // The header is at least 11 bytes long
             if (numBytesRead < 11)
             {
-                ExceptionBuilder.Throw(typeof(IOException), cam, "error_getData", "Not enough bytes received: " + numBytesRead + " (expected 11 or more)");
+                string msg = string.Format("{0}: Not enough bytes received: {1} (expected 11 or more)", cam.Name, numBytesRead);
+                log.Error(msg);
+                throw new IOException(msg);
             }
 
             // check buffer content
@@ -97,21 +99,21 @@ namespace MetriCam2.Cameras.Internal.Sick
 
             if (0x02020202 != magicWord)
             {
-                string msg = string.Format("The framing header is not 0x02020202 as expected: {0:X8}", magicWord);
+                string msg = string.Format("{0}: The framing header is not 0x02020202 as expected: {1:X8}", cam.Name, magicWord);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
             if (0x0001 != protocolVersion)
             {
-                string msg = string.Format("The protocol version is not 0x0001 as expected: {0:X4}", protocolVersion);
+                string msg = string.Format("{0}: The protocol version is not 0x0001 as expected: {1:X4}", cam.Name, protocolVersion);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
             if (0x62 != packetType)
             {
-                string msg = string.Format("The packet type is not 0x62 as expected: {0:X2}", packetType);
+                string msg = string.Format("{0}: The packet type is not 0x62 as expected: {1:X2}", cam.Name, packetType);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
 
             // get actual frame data
@@ -122,12 +124,12 @@ namespace MetriCam2.Cameras.Internal.Sick
 
             while (bytesRemaining > 0)
             {
-                numBytesRead = streamData.Read(buffer, 0, (int)Math.Min(FRAGMENT_SIZE, bytesRemaining));
+                numBytesRead = streamData.Read(buffer, 0, Math.Min(FRAGMENT_SIZE, bytesRemaining));
                 if (0 == numBytesRead)
                 {
-                    string msg = "Failed to read raw frame data from camera.";
+                    string msg = string.Format("{0}: Failed to read raw frame data from camera.", cam.Name);
                     log.Error(msg);
-                    ExceptionBuilder.Throw(typeof(IOException), cam, "error_getData", msg);
+                    throw new IOException(msg);
                 }
                 data.AddRange(buffer.Take(numBytesRead));
                 bytesRemaining -= numBytesRead;

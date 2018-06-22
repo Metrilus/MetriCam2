@@ -125,9 +125,9 @@ namespace MetriCam2.Cameras.Internal.Sick
             uint magicWord = BitConverter.ToUInt32(ImageBuffer, 0);
             if (0x02020202 != magicWord)
             {
-                string msg = string.Format("The framing header is not 0x02020202 as expected: {0:X8}", magicWord);
+                string msg = string.Format("{0}: The framing header is not 0x02020202 as expected: {1:X8}", cam.Name, magicWord);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
             magicWord = Utils.ConvertEndiannessUInt32(magicWord);
             
@@ -140,28 +140,28 @@ namespace MetriCam2.Cameras.Internal.Sick
             protocolVersion = Utils.ConvertEndiannessUInt16(protocolVersion);
             if (0x0001 != protocolVersion)
             {
-                string msg = string.Format("The protocol version is not 0x0001 as expected: {0:X4}", protocolVersion);
+                string msg = string.Format("{0}: The protocol version is not 0x0001 as expected: {1:X4}", cam.Name, protocolVersion);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
 
             // 1 byte packet type
             byte packetType = ImageBuffer[10];
             if (0x62 != packetType)
             {
-                string msg = string.Format("The packet type is not 0x62 as expected: {0:X2}", packetType);
+                string msg = string.Format("{0}: The packet type is not 0x62 as expected: {1:X2}", cam.Name, packetType);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
 
             // 2 bytes: blob id
             ushort blobId = BitConverter.ToUInt16(ImageBuffer, 11);
             blobId = Utils.ConvertEndiannessUInt16(blobId);
-            if (0x0001 == blobId)
+            if (0x0001 != blobId)
             {
-                string msg = string.Format("The blob id is not 0x0001 as expected: {0:X4}", blobId);
+                string msg = string.Format("{0}: The blob id is not 0x0001 as expected: {1:X4}", cam.Name, blobId);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
 
             // 2 bytes: number of segments
@@ -169,9 +169,9 @@ namespace MetriCam2.Cameras.Internal.Sick
             numSegments = Utils.ConvertEndiannessUInt16(numSegments);
             if (numSegments != 3)
             {
-                string msg = string.Format("The number of segments is not 3 as expected: {0}", numSegments);
+                string msg = string.Format("{0}: The number of segments is not 3 as expected: {1}", cam.Name, numSegments);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
 
             // Next 8 * numSegments bytes: Offset and change counter for each segment
@@ -256,9 +256,9 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
             else
             {
-                string msg = string.Format("Bytes per distance value has unexpected value \"{0}\"", dataType);
+                string msg = string.Format("{0}: Bytes per distance value has unexpected value \"{1}\"", dataType);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
 
             dataType = dataStream["Intensity"].InnerText.ToLower();
@@ -268,9 +268,9 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
             else
             {
-                string msg = string.Format("Bytes per intensity value has unexpected value \"{0}\"", dataType);
+                string msg = string.Format("{0}: Bytes per intensity value has unexpected value \"{1}\"", dataType);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
 
             dataType = dataStream["Confidence"].InnerText.ToLower();
@@ -280,9 +280,9 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
             else
             {
-                string msg = string.Format("Bytes per confidence value has unexpected value \"{0}\"", dataType);
+                string msg = string.Format("{0}: Bytes per confidence value has unexpected value \"{1}\"", dataType);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
         }
 
@@ -341,9 +341,9 @@ namespace MetriCam2.Cameras.Internal.Sick
 
             if (datasetLength != datasetLengthAgain)
             {
-                string msg = string.Format("First and last 4 bytes -- which encode the length of the dataset -- did not match: {0} and {1}", datasetLength, datasetLengthAgain);
+                string msg = string.Format("{0}: First and last 4 bytes -- which encode the length of the dataset -- did not match: {1} and {2}", cam.Name, datasetLength, datasetLengthAgain);
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(InvalidDataException), cam, "error_unknown", msg);
+                throw new InvalidDataException(msg);
             }
         }
 
