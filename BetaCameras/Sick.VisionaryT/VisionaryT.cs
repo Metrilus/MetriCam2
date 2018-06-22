@@ -13,6 +13,8 @@ namespace MetriCam2.Cameras
     public class VisionaryT : Camera
     {
         #region Private Variables
+        private const int NumFrameRetries = 3;
+
         // ipAddress to connect to
         private string ipAddress;
         // device handle
@@ -134,7 +136,6 @@ namespace MetriCam2.Cameras
         /// </summary>
         public int Height => height;
 
-        public int NumFrameRetries { get; set; } = 3;
         #endregion
 
         #region Constructor
