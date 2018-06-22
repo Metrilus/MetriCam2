@@ -220,8 +220,25 @@ namespace MetriCam2.Cameras
         /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
         protected override void UpdateImpl()
         {
-            byte[] imageBuffer = device.GetFrameData();
-            _frameData = new FrameData(imageBuffer, this, log);
+            int consecutiveFailCounter = 0;
+            while (true)
+            {
+                try
+                {
+                    byte[] imageBuffer = device.GetFrameData();
+                    _frameData = new FrameData(imageBuffer, this, log);
+                    break;
+                }
+                catch
+                {
+                    consecutiveFailCounter++;
+                    if (consecutiveFailCounter > NumFrameRetries)
+                    {
+                        throw;
+                    }
+                }
+            }
+
             width = _frameData.Width;
             height = _frameData.Height;
         }
