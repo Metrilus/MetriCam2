@@ -200,7 +200,8 @@ namespace MetriCam2.Cameras.Internal.Sick
             int numBytesConfidence = Width * Height * numBytesPerConfidenceValue;
 
             // now: save image data offsets
-            ParseBinary((int)offsets[1], numBytesIntensity, numBytesDistance, numBytesConfidence);
+            uint binarySegmentSize = offsets[2] - offsets[1];
+            ParseBinary((int)offsets[1], binarySegmentSize, numBytesIntensity, numBytesDistance, numBytesConfidence);
         }
 
         /// <summary>
@@ -288,15 +289,20 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <summary>
         /// Calculates the offsets where to find the image data for channels.
         /// </summary>
-        private void ParseBinary(int offset, int numBytesIntensity, int numBytesDistance, int numBytesConfidence)
+        private void ParseBinary(int offset, uint binarySegmentSize, int numBytesIntensity, int numBytesDistance, int numBytesConfidence)
         {
             // 4 bytes length per dataset
             uint datasetLength = BitConverter.ToUInt32(ImageBuffer, offset);
             offset += 4;
+            if (datasetLength > binarySegmentSize)
+            {
+                string msg = string.Format("{0}: Malformed data, length in depth map header ({1}) does not match package size ({2}).", cam.Name, datasetLength, binarySegmentSize);
+                log.Error(msg);
+                throw new InvalidDataException(msg);
+            }
 
             // 8 bytes timestamp
             TimeStamp = BitConverter.ToUInt64(ImageBuffer, offset);
-            //TimeStamp = Utils.ConvertEndiannessUInt64(TimeStamp);
             offset += 8;
 
             // 2 bytes version
@@ -325,18 +331,18 @@ namespace MetriCam2.Cameras.Internal.Sick
             ConfidenceStartOffset = offset;
             offset += numBytesConfidence;
 
-            // 4 bytes CRC of data
-            uint crc = BitConverter.ToUInt32(ImageBuffer, offset);
-            crc = Utils.ConvertEndiannessUInt32(crc);
+            // 4 bytes CRC of data (field unused by camera)
+            uint unusedCrc = BitConverter.ToUInt32(ImageBuffer, offset);
+            unusedCrc = Utils.ConvertEndiannessUInt32(unusedCrc);
             offset += 4;
 
             // 4 bytes same length as first value
-            uint datasetLengthAgain = BitConverter.ToUInt32(ImageBuffer, offset);
+            uint datasetLengthCopy = BitConverter.ToUInt32(ImageBuffer, offset);
             offset += 4;
 
-            if (datasetLength != datasetLengthAgain)
+            if (datasetLength != datasetLengthCopy)
             {
-                string msg = string.Format("{0}: First and last 4 bytes -- which encode the length of the dataset -- did not match: {1} and {2}", cam.Name, datasetLength, datasetLengthAgain);
+                string msg = string.Format("{0}: First and last 4 bytes -- which encode the length of the dataset -- did not match: {1} and {2}", cam.Name, datasetLength, datasetLengthCopy);
                 log.Error(msg);
                 throw new InvalidDataException(msg);
             }
