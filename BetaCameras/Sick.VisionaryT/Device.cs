@@ -93,7 +93,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             packetType = buffer[10];
 
             // take care of endianness
-            magicWord = Utils.ConvertEndiannessUInt32(magicWord);
+            // magicWord is symmetric wrt. endianess -> no conversion needed
             pkgLength = Utils.ConvertEndiannessUInt32(pkgLength);
             protocolVersion = Utils.ConvertEndiannessUInt16(protocolVersion);
 

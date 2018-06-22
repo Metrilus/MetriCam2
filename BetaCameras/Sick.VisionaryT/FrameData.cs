@@ -129,7 +129,6 @@ namespace MetriCam2.Cameras.Internal.Sick
                 log.Error(msg);
                 throw new InvalidDataException(msg);
             }
-            magicWord = Utils.ConvertEndiannessUInt32(magicWord);
             
             // 4 bytes packet length
             uint pkgLength = BitConverter.ToUInt32(ImageBuffer, 4);
@@ -293,22 +292,19 @@ namespace MetriCam2.Cameras.Internal.Sick
         {
             // 4 bytes length per dataset
             uint datasetLength = BitConverter.ToUInt32(ImageBuffer, offset);
-            datasetLength = Utils.ConvertEndiannessUInt32(datasetLength);
             offset += 4;
 
             // 8 bytes timestamp
             TimeStamp = BitConverter.ToUInt64(ImageBuffer, offset);
-            TimeStamp = Utils.ConvertEndiannessUInt64(TimeStamp);
+            //TimeStamp = Utils.ConvertEndiannessUInt64(TimeStamp);
             offset += 8;
 
             // 2 bytes version
             UInt16 version = BitConverter.ToUInt16(ImageBuffer, offset);
-            version = Utils.ConvertEndiannessUInt16(version);
             offset += 2;
 
             // 4 bytes frame number
             uint frameNumber = BitConverter.ToUInt32(ImageBuffer, offset);
-            frameNumber = Utils.ConvertEndiannessUInt32(frameNumber);
             offset += 4;
 
             // 1 byte data quality
@@ -336,7 +332,6 @@ namespace MetriCam2.Cameras.Internal.Sick
 
             // 4 bytes same length as first value
             uint datasetLengthAgain = BitConverter.ToUInt32(ImageBuffer, offset);
-            datasetLengthAgain = Utils.ConvertEndiannessUInt32(datasetLengthAgain);
             offset += 4;
 
             if (datasetLength != datasetLengthAgain)
