@@ -69,6 +69,31 @@ namespace MetriCam2.Cameras.Internal.Sick
         /// <returns>Raw frame</returns>
         internal byte[] GetFrameData()
         {
+            int consecutiveFailCounter = 0;
+            while (true)
+            {
+                try
+                {
+                    return TryGetFrameData();
+                }
+                catch
+                {
+                    consecutiveFailCounter++;
+                    if (consecutiveFailCounter > 3)
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the raw frame data from camera.
+        /// </summary>
+        /// <remarks>Data is checked for correct protocol version and packet type.</remarks>
+        /// <returns>Raw frame</returns>
+        private byte[] TryGetFrameData()
+        {
             if (!Utils.SyncCoLa(streamData))
             {
                 string msg = string.Format("{0}: Could not sync to CoLa bus", cam.Name);
