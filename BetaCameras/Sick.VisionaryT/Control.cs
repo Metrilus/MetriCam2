@@ -172,16 +172,16 @@ namespace MetriCam2.Cameras.Internal.Sick
             return ReadVariableString("SerialNumber");
         }
 
-        internal void SetIntegrationTime(VisionaryTIntegrationTime value)
+        internal void SetIntegrationTime(int value)
         {
             SetAccessMode(AccessModes.Service);
             log.Debug("Setting integration time");
-            WriteVariable("integrationTime", (byte)value);
+            WriteVariable("integrationTimeUs", value);
         }
-        internal VisionaryTIntegrationTime GetIntegrationTime()
+        internal int GetIntegrationTime()
         {
             log.Debug("Getting integration time");
-            return (VisionaryTIntegrationTime)ReadVariableByte("integrationTime");
+            return ReadVariableInt32("integrationTimeUs");
         }
 
         internal void SetCoexistenceMode(VisionaryTCoexistenceMode value)
@@ -279,7 +279,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             ReadVariable(name, out byte[] payload, out byte checkSum);
 
             int l = payload.Length;
-            byte[] responseValueBytes = new byte[] { payload[l - 4], payload[l - 3], payload[l - 2], payload[l - 1] };
+            byte[] responseValueBytes = new byte[] { payload[l - 1], payload[l - 2], payload[l - 3], payload[l - 4] };
             int value = BitConverter.ToInt32(responseValueBytes, 0);
             log.DebugFormat("Got value: {0}", value);
             return value;
