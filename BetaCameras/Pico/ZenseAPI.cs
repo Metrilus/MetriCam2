@@ -5,23 +5,23 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
-namespace Pico.ZenseAPI
+namespace MetriCam2.Cameras.Pico.ZenseAPI
 {
     public class Constants
     {
         public const int OFFSETLEN = 49;
         public const int AUDIOSIZE = 2048 * 4;
     }
-    
 
-    enum DepthRange
+
+    public enum DepthRange
     {
         NearRange = 0,
         MidRange = 1,
         FarRange = 2,
     }
 
-    enum PropertyType
+    public enum PropertyType
     {
         DepthRange_Int32 = 0,
         SN_Str = 5,
@@ -30,7 +30,7 @@ namespace Pico.ZenseAPI
         DataMode_UInt8 = 8
     }
 
-    enum FrameType
+    public enum FrameType
     {
         DepthFrame = 0,
         IRFrame = 1,
@@ -40,13 +40,13 @@ namespace Pico.ZenseAPI
         RGBDepthFrame = 5
     }
 
-    enum SensorType
+    public enum SensorType
     {
         DepthSensor = 0x01,
         RgbSensor = 0x02,
     }
 
-    enum PixelFormat
+    public enum PixelFormat
     {
         DepthMM16,
         Gray16,
@@ -55,7 +55,7 @@ namespace Pico.ZenseAPI
         BGR888
     }
 
-    enum ReturnStatus
+    public enum ReturnStatus
     {
         OK = 0,
         NoDeviceConnected = -1,
@@ -76,7 +76,7 @@ namespace Pico.ZenseAPI
         Unknown = -255,
     }
 
-    enum DataMode
+    public enum DataMode
     {
         Depth_30 = 0,
         IR_30 = 1,
@@ -91,7 +91,7 @@ namespace Pico.ZenseAPI
         DepthAndIR_15 = 10,
     }
 
-    enum CameraParamsEnum
+    public enum CameraParamsEnum
     {
         DepthIntrinsic = 0,
         DepthDistortion,
@@ -103,20 +103,20 @@ namespace Pico.ZenseAPI
         F
     }
 
-    enum DepthMode
+    public enum DepthMode
     {
         Mode0 = 0,
         Mode1 = 1,
         Mode2 = 2,
     }
 
-    enum WorkMode
+    public enum WorkMode
     {
         User = 1,
         Factory = 2,
     }
 
-    enum FactoryPropertyType
+    public enum FactoryPropertyType
     {
         PsFProperty = 0,
         HTP = 1,
@@ -145,7 +145,7 @@ namespace Pico.ZenseAPI
         GyroOffsetTemp = 24,
     }
 
-    enum IMUDataMode
+    public enum IMUDataMode
     {
         RawData = 0,
         StandardData,
@@ -153,21 +153,21 @@ namespace Pico.ZenseAPI
         CorrectFilterData
     }
 
-    enum FilterType
+    public enum FilterType
     {
         ComputeRealDepthFilter = 0,
         SmoothingGDFilter,
         SmoothingExpFilter,
     }
 
-    enum EncodeType
+    public enum EncodeType
     {
         NV12 = 0x01,
         H264 = 0x02,
     }
 
     // Color image pixel type in 24-bit RGB format
-    struct RGB888Pixel
+    public struct RGB888Pixel
     {
         byte r;
         byte g;
@@ -175,14 +175,14 @@ namespace Pico.ZenseAPI
     }
 
     // Color image pixel type in 24-bit BGR format
-    struct BGR888Pixel
+    public struct BGR888Pixel
     {
         byte b;
         byte g;
         byte r;
     }
 
-    struct FrameMode
+    public struct FrameMode
     {
         PixelFormat pixelFormat;
         int resolutionWidth;
@@ -190,28 +190,28 @@ namespace Pico.ZenseAPI
         int fps;
     }
 
-    struct Vector3f
+    public struct Vector3f
     {
         float x;
         float y;
         float z;
     }
 
-    struct DepthVector3
+    public struct DepthVector3
     {
         int depthX;
         int depthY;
         ushort depthZ;
     }
 
-    struct Imu
+    public struct Imu
     {
         Vector3f acc;     //m/s^2
         Vector3f gyro;    //rad/s
         byte frameNo;
     }
 
-    struct ImuWithParams
+    public struct ImuWithParams
     {
         Vector3f acc;     //m/s^2
         Vector3f gyro;    //rad/s
@@ -220,7 +220,7 @@ namespace Pico.ZenseAPI
     }
 
     //Camera Intrinsic and distortion coefficient
-    struct CameraParameters
+    public struct CameraParameters
     {
         double fx;  // Focal length x (pixel)
         double fy;  // Focal length y (pixel)
@@ -233,7 +233,7 @@ namespace Pico.ZenseAPI
         double p2;	// Tangential distortion coefficient
     }
 
-    struct Frame
+    public struct Frame
     {
         FrameType frameType;
         PixelFormat pixelFormat;
@@ -243,7 +243,7 @@ namespace Pico.ZenseAPI
         float exposureTime;	//ms
     }
 
-    struct AudioFrame
+    public struct AudioFrame
     {
         byte audioFormat;    //0:pcm
         byte numChannels;    //1:mono; 2:stereo
@@ -253,20 +253,20 @@ namespace Pico.ZenseAPI
         uint dataLen;
     };
 
-    unsafe struct Distortion
+    public unsafe struct Distortion
     {
         fixed double d[8];
         double reserved;
     }
 
-    unsafe struct Transfer
+    public unsafe struct Transfer
     {
         fixed double t[3];
         fixed double reserved[6];
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    unsafe struct Parameters
+    public unsafe struct Parameters
     {
         //| fx | 0  | cx |
         //| 0  | fy | cy |
@@ -287,13 +287,13 @@ namespace Pico.ZenseAPI
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct CameraParams
+    public struct CameraParams
     {
         CameraParamsEnum type;
         Parameters param;
     }
 
-    struct HTP
+    public struct HTP
     {
         byte depthMode;
         //Near
@@ -319,14 +319,14 @@ namespace Pico.ZenseAPI
         ushort SUB2_Far;
     }
 
-    unsafe struct OFFSET
+    public unsafe struct OFFSET
     {
         byte depthMode;
         byte depthRange;
         fixed short offset[Constants.OFFSETLEN];
     }
 
-    struct MaxDepth
+    public struct MaxDepth
     {
         byte depthMode;
         ushort maxNear;
@@ -334,17 +334,17 @@ namespace Pico.ZenseAPI
         ushort maxFar;
     }
 
-    unsafe struct GMMParams
+    public unsafe struct GMMParams
     {
         fixed ushort param[12];
     }
 
-    unsafe struct IMUSensitivity
+    public unsafe struct IMUSensitivity
     {
         fixed float matrix[9];
     }
 
-    struct IMUOffset
+    public struct IMUOffset
     {
         byte sum; //[1, 10]
         byte index; //[1, 10]
@@ -354,7 +354,7 @@ namespace Pico.ZenseAPI
         float z;
     }
 
-    struct IMUOffsetTemp
+    public struct IMUOffsetTemp
     {
         byte sum; //[1, 10]
         SByte temp1;
@@ -369,7 +369,7 @@ namespace Pico.ZenseAPI
         SByte temp10;
     }
 
-    struct LensConfig
+    public struct LensConfig
     {
         byte type;
         byte state;//0:OFF; 1:ON
@@ -379,7 +379,7 @@ namespace Pico.ZenseAPI
         byte encodeType;
     }
 
-    struct PulseCountConfig
+    public struct PulseCountConfig
     {
         ushort pulseCount;
         byte mode;
@@ -387,7 +387,7 @@ namespace Pico.ZenseAPI
         byte option; // 0:To users, Effective immediately; 1:To factory calib
     }
 
-    struct PulseCountGet
+    public struct PulseCountGet
     {
         ushort Current; //current mode,current range,
         ushort M0_Near;
@@ -408,8 +408,8 @@ namespace Pico.ZenseAPI
         *  @Parameters: None
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus Initialize();
+        [DllImport("picozense_api", EntryPoint = "PsInitialize", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus Initialize();
 
 
         /*
@@ -417,8 +417,8 @@ namespace Pico.ZenseAPI
         *  @Parameters: None
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus Shutdown();
+        [DllImport("picozense_api", EntryPoint = "PsShutdown", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus Shutdown();
 
 
         /*
@@ -427,8 +427,8 @@ namespace Pico.ZenseAPI
         *	pDeviceCount[Out]: pointer to the variable that used to store returned device count, you need to create an int32_t variable and pass its pointer to this api
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetDeviceCount(out int deviceCount);
+        [DllImport("picozense_api", EntryPoint = "PsGetDeviceCount", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetDeviceCount(out int deviceCount);
 
 
         /*
@@ -437,8 +437,8 @@ namespace Pico.ZenseAPI
         *	deviceIndex[In]: the device index, its range is 0 to deviceCount-1
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus OpenDevice(int deviceIndex);
+        [DllImport("picozense_api", EntryPoint = "PsOpenDevice", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus OpenDevice(int deviceIndex);
 
 
         /*
@@ -447,8 +447,8 @@ namespace Pico.ZenseAPI
         *	deviceIndex[In]: the device index, its range is 0 to deviceCount-1
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus CloseDevice(int deviceIndex);
+        [DllImport("picozense_api", EntryPoint = "PsCloseDevice", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus CloseDevice(int deviceIndex);
 
 
         /*
@@ -458,8 +458,8 @@ namespace Pico.ZenseAPI
         *	frameType[In]: frame type, refer to PsFrameType
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus StartFrame(int deviceIndex, FrameType frameType);
+        [DllImport("picozense_api", EntryPoint = "PsStartFrame", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus StartFrame(int deviceIndex, FrameType frameType);
 
 
         /*
@@ -469,8 +469,8 @@ namespace Pico.ZenseAPI
         *	frameType[In]: frame type, refer to PsFrameType
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus StopFrame(int deviceIndex, FrameType frameType);
+        [DllImport("picozense_api", EntryPoint = "PsStopFrame", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus StopFrame(int deviceIndex, FrameType frameType);
 
 
         /*
@@ -479,8 +479,8 @@ namespace Pico.ZenseAPI
         *	deviceIndex[In]: the device index, its range is 0 to deviceCount-1
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus ReadNextFrame(int deviceIndex);
+        [DllImport("picozense_api", EntryPoint = "PsReadNextFrame", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus ReadNextFrame(int deviceIndex);
 
 
         /*
@@ -491,8 +491,8 @@ namespace Pico.ZenseAPI
         *	ppFrame[Out]: pointer of pointer to frame buffer, you need to create a frame pointer variable and pass its pointer to this api 
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetFrame(int deviceIndex, FrameType frameType, out Frame pPsFrame);
+        [DllImport("picozense_api", EntryPoint = "PsGetFrame", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetFrame(int deviceIndex, FrameType frameType, out Frame pPsFrame);
 
 
         /*
@@ -502,8 +502,8 @@ namespace Pico.ZenseAPI
         *	pDepthRange[Out]: pointer to the variable that used to store returned depth range, you need to create a PsDepthRange variable and pass its pointer to this api
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetDepthRange(int deviceIndex, out DepthRange pDepthRange);
+        [DllImport("picozense_api", EntryPoint = "PsGetDepthRange", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetDepthRange(int deviceIndex, out DepthRange pDepthRange);
 
 
         /*
@@ -513,8 +513,8 @@ namespace Pico.ZenseAPI
         *	depthRange[In]: the depth range mode, refer to PsDepthRange
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetDepthRange(int deviceIndex, DepthRange pDepthRange);
+        [DllImport("picozense_api", EntryPoint = "PsSetDepthRange", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetDepthRange(int deviceIndex, DepthRange pDepthRange);
 
 
         /*
@@ -525,8 +525,8 @@ namespace Pico.ZenseAPI
         *	pFrameMode[Out]: pointer to the variable that used to store returned frame mode, you need to create a PsFrameMode variable and pass its pointer to this api
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetFrameMode(int deviceIndex, FrameType frameType, out FrameMode pFrameMode);
+        [DllImport("picozense_api", EntryPoint = "PsGetFrameMode", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetFrameMode(int deviceIndex, FrameType frameType, out FrameMode pFrameMode);
 
 
         /*
@@ -537,8 +537,8 @@ namespace Pico.ZenseAPI
         *	pFrameMode[In]: pointer to the variable that used to store frame mode, you need to create a PsFrameMode variable and pass its pointer to this api
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetFrameMode(int deviceIndex, FrameType frameType, FrameMode* pFrameMode);
+        [DllImport("picozense_api", EntryPoint = "PsSetFrameMode", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetFrameMode(int deviceIndex, FrameType frameType, FrameMode* pFrameMode);
 
 
         /*
@@ -550,8 +550,8 @@ namespace Pico.ZenseAPI
         *	pDataSize[Out]: pointer to the variable that used to store returned size in byte of returned property value, you need to create an int32_t variable and pass its pointer to this api
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetProperty(int deviceIndex, PropertyType propertyType, IntPtr pData, out int pDataSize);
+        [DllImport("picozense_api", EntryPoint = "PsGetProperty", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetProperty(int deviceIndex, PropertyType propertyType, IntPtr pData, int* pDataSize);
 
 
         /*
@@ -563,8 +563,8 @@ namespace Pico.ZenseAPI
         *	dataSize[In]: the property value size in byte
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetProperty(int deviceIndex, PropertyType propertyType, IntPtr pData, int pDataSize);
+        [DllImport("picozense_api", EntryPoint = "PsSetProperty", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetProperty(int deviceIndex, PropertyType propertyType, IntPtr pData, int pDataSize);
 
 
         /*
@@ -578,8 +578,8 @@ namespace Pico.ZenseAPI
         *	pointCount[In]: the point count to be converted
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus ConvertWorldToDepth(int deviceIndex, Vector3f[] pWorldVector, DepthVector3[] pDepthVector, int pointCount);
+        [DllImport("picozense_api", EntryPoint = "PsConvertWorldToDepth", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus ConvertWorldToDepth(int deviceIndex, Vector3f[] pWorldVector, DepthVector3[] pDepthVector, int pointCount);
 
 
         /*
@@ -593,8 +593,8 @@ namespace Pico.ZenseAPI
         *	pointCount[In]: the point count to be converted
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus ConvertWorldToDepth(int deviceIndex, DepthVector3[] pDepthVector, Vector3f[] pWorldVector, int pointCount);
+        [DllImport("picozense_api", EntryPoint = "PsConvertWorldToDepth", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus ConvertWorldToDepth(int deviceIndex, DepthVector3[] pDepthVector, Vector3f[] pWorldVector, int pointCount);
 
 
         /*
@@ -604,8 +604,8 @@ namespace Pico.ZenseAPI
         *	bEnabled [In]: true to enable the feature, false to disable the feature
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetRealDepthCorrectionEnabled(int deviceIndex, bool bEnabled);
+        [DllImport("picozense_api", EntryPoint = "PsSetRealDepthCorrectionEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetRealDepthCorrectionEnabled(int deviceIndex, bool bEnabled);
 
 
         /*  Set the threshold value
@@ -614,8 +614,8 @@ namespace Pico.ZenseAPI
         *	threshold[In]: the threshold value
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetThreshold(int deviceIndex, ushort threshold);
+        [DllImport("picozense_api", EntryPoint = "PsSetThreshold", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetThreshold(int deviceIndex, ushort threshold);
 
 
         /*  Get the threshold value
@@ -624,8 +624,8 @@ namespace Pico.ZenseAPI
         *	pThreshold[Out]: the threshold value
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetThreshold(int deviceIndex, out ushort threshold);
+        [DllImport("picozense_api", EntryPoint = "PsGetThreshold", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetThreshold(int deviceIndex, out ushort threshold);
 
 
         /*
@@ -635,8 +635,8 @@ namespace Pico.ZenseAPI
         *	pPulseCount[out]: pointer to the variable that used to store returned pulse count
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetPulseCount(int deviceIndex, out ushort pPulseCount);
+        [DllImport("picozense_api", EntryPoint = "PsGetPulseCount", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetPulseCount(int deviceIndex, out ushort pPulseCount);
 
 
         /*
@@ -646,16 +646,16 @@ namespace Pico.ZenseAPI
         *	imuV[out]: reference to the variable that used to store imu data
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetImu(int deviceIndex, out Imu imu);
+        [DllImport("picozense_api", EntryPoint = "PsGetImu", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetImu(int deviceIndex, out Imu imu);
 
 
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetImuWithParams(int deviceIndex, out ImuWithParams imu);
+        [DllImport("picozense_api", EntryPoint = "PsGetImuWithParams", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetImuWithParams(int deviceIndex, out ImuWithParams imu);
 
 
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetColorPixelFormat(int deviceIndex, PixelFormat pixelFormat);
+        [DllImport("picozense_api", EntryPoint = "PsSetColorPixelFormat", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetColorPixelFormat(int deviceIndex, PixelFormat pixelFormat);
 
 
         /*
@@ -666,8 +666,8 @@ namespace Pico.ZenseAPI
         *	pCameraParameters[out]: pointer to the PsCameraParameters structure variable that used to store returned camera parameters
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetCameraParameters(int deviceIndex, SensorType sensorType, out CameraParameters pCameraParameters);
+        [DllImport("picozense_api", EntryPoint = "PsGetCameraParameters", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetCameraParameters(int deviceIndex, SensorType sensorType, out CameraParameters pCameraParameters);
 
 
         /*
@@ -679,8 +679,8 @@ namespace Pico.ZenseAPI
         *	regNum[In]: register number
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetRegVal(int deviceIndex, ushort[] addr, ushort[] val, byte regNum);
+        [DllImport("picozense_api", EntryPoint = "PsSetRegVal", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetRegVal(int deviceIndex, ushort[] addr, ushort[] val, byte regNum);
 
 
         /*
@@ -692,8 +692,8 @@ namespace Pico.ZenseAPI
         *	regNum[In]: register number
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetRegVal(int deviceIndex, ushort[] addr, ushort[] val, byte regNum);
+        [DllImport("picozense_api", EntryPoint = "PsGetRegVal", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetRegVal(int deviceIndex, ushort[] addr, ushort[] val, byte regNum);
 
 
         /*
@@ -704,8 +704,8 @@ namespace Pico.ZenseAPI
         *	bEnabled [In]: true to enable the feature, false to disable the feature
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetFilter(int deviceIndex, FilterType filterType, bool bEnabled);
+        [DllImport("picozense_api", EntryPoint = "PsSetFilter", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetFilter(int deviceIndex, FilterType filterType, bool bEnabled);
 
 
         /*
@@ -715,12 +715,12 @@ namespace Pico.ZenseAPI
         *	bEnabled [In]: true to enable the feature, false to disable the feature
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetAudioRecordEnabled(int deviceIndex, bool bEnabled);
+        [DllImport("picozense_api", EntryPoint = "PsSetAudioRecordEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetAudioRecordEnabled(int deviceIndex, bool bEnabled);
 
 
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus GetAudio(int deviceIndex, out AudioFrame audio);
+        [DllImport("picozense_api", EntryPoint = "PsGetAudio", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetAudio(int deviceIndex, out AudioFrame audio);
 
 
         /*
@@ -730,8 +730,8 @@ namespace Pico.ZenseAPI
         *	bEnabled [In]: true to enable the feature, false to disable the feature
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetDepthDistortionEnabled(int deviceIndex, bool bEnabled);
+        [DllImport("picozense_api", EntryPoint = "PsSetDepthDistortionEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetDepthDistortionEnabled(int deviceIndex, bool bEnabled);
 
 
         /*
@@ -741,8 +741,8 @@ namespace Pico.ZenseAPI
         *	bEnabled [In]: true to enable the feature, false to disable the feature
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus PsSetIrDistortionEnabled(int deviceIndex, bool bEnabled);
+        [DllImport("picozense_api", EntryPoint = "PsPsSetIrDistortionEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus PsSetIrDistortionEnabled(int deviceIndex, bool bEnabled);
 
 
         /*
@@ -752,8 +752,8 @@ namespace Pico.ZenseAPI
         *	bEnabled [In]: true to enable the feature, false to disable the feature
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetRGBDistortionEnabled(int deviceIndex, bool bEnabled);
+        [DllImport("picozense_api", EntryPoint = "PsSetRGBDistortionEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetRGBDistortionEnabled(int deviceIndex, bool bEnabled);
 
 
         /*
@@ -763,8 +763,8 @@ namespace Pico.ZenseAPI
         *	bEnabled [In]: true to enable the feature, false to disable the feature
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private unsafe extern static ReturnStatus SetMapperEnabled(int deviceIndex, bool bEnabled);
+        [DllImport("picozense_api", EntryPoint = "PsSetMapperEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetMapperEnabled(int deviceIndex, bool bEnabled);
     }
     
 }
