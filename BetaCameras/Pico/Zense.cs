@@ -9,8 +9,10 @@ using MetriCam2.Cameras.Pico.ZenseAPI;
 
 namespace MetriCam2.Cameras
 {
-    public class Zense : Camera
+    public class Zense : Camera, IDisposable
     {
+        private bool _disposed = false;
+
         public int DeviceCount
         {
             get
@@ -26,6 +28,28 @@ namespace MetriCam2.Cameras
         public Zense() : base()
         {
             CheckReturnStatus(Methods.Initialize());
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (IsConnected)
+                DisconnectImpl();
+
+            if (disposing)
+            {
+                // dispose managed resources
+            }
+
+            _disposed = true;
         }
 
         protected override void LoadAllAvailableChannels()
@@ -54,17 +78,45 @@ namespace MetriCam2.Cameras
 
         protected override void DisconnectImpl()
         {
-            
+            CheckReturnStatus(Methods.CloseDevice(DeviceIndex));
+            CheckReturnStatus(Methods.Shutdown());
         }
 
         protected override void UpdateImpl()
         {
-            
+            CheckReturnStatus(Methods.ReadNextFrame(DeviceIndex));
         }
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
             throw new NotImplementedException();
+        }
+
+        protected override void ActivateChannelImpl(String channelName)
+        {
+            FrameType type = GetFrameTypeFromChannelName(channelName);
+            CheckReturnStatus(Methods.StartFrame(DeviceIndex, type));
+        }
+
+        protected override void DeactivateChannelImpl(String channelName)
+        {
+            FrameType type = GetFrameTypeFromChannelName(channelName);
+            CheckReturnStatus(Methods.StopFrame(DeviceIndex, type));
+        }
+
+        private FrameType GetFrameTypeFromChannelName(string channelName)
+        {
+            switch (channelName)
+            {
+                case ChannelNames.Color:
+                    return FrameType.RGBFrame;
+                case ChannelNames.ZImage:
+                    return FrameType.DepthFrame;
+                case ChannelNames.Intensity:
+                    return FrameType.IRFrame;
+                default:
+                    throw new Exception("asdfsaf");
+            }
         }
 
         private void CheckReturnStatus(ReturnStatus status)
