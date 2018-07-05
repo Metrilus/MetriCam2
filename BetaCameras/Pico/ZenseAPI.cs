@@ -169,88 +169,89 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
     // Color image pixel type in 24-bit RGB format
     public struct RGB888Pixel
     {
-        byte r;
-        byte g;
-        byte b;
+        public byte r;
+        public byte g;
+        public byte b;
     }
 
     // Color image pixel type in 24-bit BGR format
     public struct BGR888Pixel
     {
-        byte b;
-        byte g;
-        byte r;
+        public byte b;
+        public byte g;
+        public byte r;
     }
 
     public struct FrameMode
     {
-        PixelFormat pixelFormat;
-        int resolutionWidth;
-        int resolutionHeight;
-        int fps;
+        public PixelFormat pixelFormat;
+        public int resolutionWidth;
+        public int resolutionHeight;
+        public int fps;
     }
 
     public struct Vector3f
     {
-        float x;
-        float y;
-        float z;
+        public float x;
+        public float y;
+        public float z;
     }
 
     public struct DepthVector3
     {
-        int depthX;
-        int depthY;
-        ushort depthZ;
+        public int depthX;
+        public int depthY;
+        public ushort depthZ;
     }
 
     public struct Imu
     {
-        Vector3f acc;     //m/s^2
-        Vector3f gyro;    //rad/s
-        byte frameNo;
+        public Vector3f acc;     //m/s^2
+        public Vector3f gyro;    //rad/s
+        public byte frameNo;
     }
 
     public struct ImuWithParams
     {
-        Vector3f acc;     //m/s^2
-        Vector3f gyro;    //rad/s
-        float temp;       //Celsius temperature scale
-        byte frameNo;
+        public Vector3f acc;     //m/s^2
+        public Vector3f gyro;    //rad/s
+        public float temp;       //Celsius temperature scale
+        public byte frameNo;
     }
 
     //Camera Intrinsic and distortion coefficient
     public struct CameraParameters
     {
-        double fx;  // Focal length x (pixel)
-        double fy;  // Focal length y (pixel)
-        double cx;  // Principal point x (pixel)
-        double cy;  // Principal point y (pixel)
-        double k1;  // Radial distortion coefficient, 1st-order
-        double k2;  // Radial distortion coefficient, 2nd-order
-        double k3;  // Radial distortion coefficient, 3rd-order
-        double p1;  // Tangential distortion coefficient
-        double p2;	// Tangential distortion coefficient
+        public double fx;  // Focal length x (pixel)
+        public double fy;  // Focal length y (pixel)
+        public double cx;  // Principal point x (pixel)
+        public double cy;  // Principal point y (pixel)
+        public double k1;  // Radial distortion coefficient, 1st-order
+        public double k2;  // Radial distortion coefficient, 2nd-order
+        public double k3;  // Radial distortion coefficient, 3rd-order
+        public double p1;  // Tangential distortion coefficient
+        public double p2;	// Tangential distortion coefficient
     }
 
-    public struct Frame
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public unsafe struct Frame
     {
-        FrameType frameType;
-        PixelFormat pixelFormat;
-        byte imuFrameNo;     //Used to synchronize with imu
-        IntPtr pFrameData;
-        uint dataLen;
-        float exposureTime;	//ms
+        public byte frameType;
+        public byte pixelFormat;
+        public byte imuFrameNo;     //Used to synchronize with imu
+        public IntPtr pFrameData;
+        public uint dataLen;
+        public float exposureTime;	//ms
     }
 
     public struct AudioFrame
     {
-        byte audioFormat;    //0:pcm
-        byte numChannels;    //1:mono; 2:stereo
-        byte bitsPerSample;  //16bit
-        uint sampleRate;        //16Khz	
-        IntPtr pData;
-        uint dataLen;
+        public byte audioFormat;    //0:pcm
+        public byte numChannels;    //1:mono; 2:stereo
+        public byte bitsPerSample;  //16bit
+        public uint sampleRate;        //16Khz	
+        public IntPtr pData;
+        public uint dataLen;
     };
 
     public unsafe struct Distortion
@@ -261,8 +262,8 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
 
     public unsafe struct Transfer
     {
-        fixed double t[3];
-        fixed double reserved[6];
+        public fixed double t[3];
+        public fixed double reserved[6];
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -272,133 +273,133 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         //| 0  | fy | cy |
         //| 0  | 0  | 1  |
         [FieldOffset(0)]
-        fixed double intrinsic[9];
+        public fixed double intrinsic[9];
         [FieldOffset(0)]
-        fixed double rotation[9];
+        public fixed double rotation[9];
         [FieldOffset(0)]
-        fixed double e[9];
+        public fixed double e[9];
         [FieldOffset(0)]
-        fixed double f[9];
+        public fixed double f[9];
 
         [FieldOffset(0)]
-        Distortion distortion;
+        public Distortion distortion;
         [FieldOffset(0)]
-        Transfer transfer;
+        public Transfer transfer;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct CameraParams
     {
-        CameraParamsEnum type;
-        Parameters param;
+        public CameraParamsEnum type;
+        public Parameters param;
     }
 
     public struct HTP
     {
-        byte depthMode;
+        public byte depthMode;
         //Near
-        ushort LD0_Near;
-        ushort LD1_Near;
-        ushort LD2_Near;
-        ushort SUB0_Near;
-        ushort SUB1_Near;
-        ushort SUB2_Near;
+        public ushort LD0_Near;
+        public ushort LD1_Near;
+        public ushort LD2_Near;
+        public ushort SUB0_Near;
+        public ushort SUB1_Near;
+        public ushort SUB2_Near;
         //Mid
-        ushort LD0_Mid;
-        ushort LD1_Mid;
-        ushort LD2_Mid;
-        ushort SUB0_Mid;
-        ushort SUB1_Mid;
-        ushort SUB2_Mid;
+        public ushort LD0_Mid;
+        public ushort LD1_Mid;
+        public ushort LD2_Mid;
+        public ushort SUB0_Mid;
+        public ushort SUB1_Mid;
+        public ushort SUB2_Mid;
         //Far
-        ushort LD0_Far;
-        ushort LD1_Far;
-        ushort LD2_Far;
-        ushort SUB0_Far;
-        ushort SUB1_Far;
-        ushort SUB2_Far;
+        public ushort LD0_Far;
+        public ushort LD1_Far;
+        public ushort LD2_Far;
+        public ushort SUB0_Far;
+        public ushort SUB1_Far;
+        public ushort SUB2_Far;
     }
 
     public unsafe struct OFFSET
     {
-        byte depthMode;
-        byte depthRange;
-        fixed short offset[Constants.OFFSETLEN];
+        public byte depthMode;
+        public byte depthRange;
+        public fixed short offset[Constants.OFFSETLEN];
     }
 
     public struct MaxDepth
     {
-        byte depthMode;
-        ushort maxNear;
-        ushort maxMid;
-        ushort maxFar;
+        public byte depthMode;
+        public ushort maxNear;
+        public ushort maxMid;
+        public ushort maxFar;
     }
 
     public unsafe struct GMMParams
     {
-        fixed ushort param[12];
+        public fixed ushort param[12];
     }
 
     public unsafe struct IMUSensitivity
     {
-        fixed float matrix[9];
+        public fixed float matrix[9];
     }
 
     public struct IMUOffset
     {
-        byte sum; //[1, 10]
-        byte index; //[1, 10]
-        SByte temp;
-        float x;
-        float y;
-        float z;
+        public byte sum; //[1, 10]
+        public byte index; //[1, 10]
+        public SByte temp;
+        public float x;
+        public float y;
+        public float z;
     }
 
     public struct IMUOffsetTemp
     {
-        byte sum; //[1, 10]
-        SByte temp1;
-        SByte temp2;
-        SByte temp3;
-        SByte temp4;
-        SByte temp5;
-        SByte temp6;
-        SByte temp7;
-        SByte temp8;
-        SByte temp9;
-        SByte temp10;
+        public byte sum; //[1, 10]
+        public SByte temp1;
+        public SByte temp2;
+        public SByte temp3;
+        public SByte temp4;
+        public SByte temp5;
+        public SByte temp6;
+        public SByte temp7;
+        public SByte temp8;
+        public SByte temp9;
+        public SByte temp10;
     }
 
     public struct LensConfig
     {
-        byte type;
-        byte state;//0:OFF; 1:ON
-        ushort width;
-        ushort height;
-        byte fps;
-        byte encodeType;
+        public byte type;
+        public byte state;//0:OFF; 1:ON
+        public ushort width;
+        public ushort height;
+        public byte fps;
+        public byte encodeType;
     }
 
     public struct PulseCountConfig
     {
-        ushort pulseCount;
-        byte mode;
-        byte range;
-        byte option; // 0:To users, Effective immediately; 1:To factory calib
+        public ushort pulseCount;
+        public byte mode;
+        public byte range;
+        public byte option; // 0:To users, Effective immediately; 1:To factory calib
     }
 
     public struct PulseCountGet
     {
-        ushort Current; //current mode,current range,
-        ushort M0_Near;
-        ushort M0_Mid;
-        ushort M0_Far;
-        ushort M1_Near;
-        ushort M1_Mid;
-        ushort M1_Far;
-        ushort M2_Near;
-        ushort M2_Mid;
-        ushort M2_Far;
+        public ushort Current; //current mode,current range,
+        public ushort M0_Near;
+        public ushort M0_Mid;
+        public ushort M0_Far;
+        public ushort M1_Near;
+        public ushort M1_Mid;
+        public ushort M1_Far;
+        public ushort M2_Near;
+        public ushort M2_Mid;
+        public ushort M2_Far;
     }
 
     public class Methods

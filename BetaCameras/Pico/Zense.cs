@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using Metrilus.Util;
 using MetriCam2.Cameras.Pico.ZenseAPI;
@@ -74,6 +76,13 @@ namespace MetriCam2.Cameras
             {
                 GetDeviceIndexFromSerial(SerialNumber);
             }
+
+            if (ActiveChannels.Count == 0)
+            {
+                AddToActiveChannels(ChannelNames.Color);
+                AddToActiveChannels(ChannelNames.Intensity);
+                AddToActiveChannels(ChannelNames.ZImage);
+            }
         }
 
         protected override void DisconnectImpl()
@@ -89,19 +98,103 @@ namespace MetriCam2.Cameras
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            throw new NotImplementedException();
+            FrameType type = GetFrameTypeFromChannelName(channelName);
+            CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, type, out FrameMode mode));
+            CheckReturnStatus(Methods.GetFrame(DeviceIndex, type, out Frame frame));
+
+            switch(type)
+            {
+                case FrameType.IRFrame:
+                    return CalcIRImage(mode.resolutionWidth, mode.resolutionHeight, frame);
+                case FrameType.RGBFrame:
+                    return CalcColor(mode.resolutionWidth, mode.resolutionHeight, frame);
+                case FrameType.DepthFrame:
+                    return CalcZImage(mode.resolutionWidth, mode.resolutionHeight, frame);
+            }
+
+            throw new Exception("asdfas");
+        }
+
+        unsafe private FloatCameraImage CalcIRImage(int width, int height, Frame frame)
+        {
+            FloatCameraImage IRData = new FloatCameraImage(width, height);
+            IRData.TimeStamp = this.TimeStamp;
+            ushort* source = (ushort*)frame.pFrameData;
+
+            for (int y = 0; y < height; y++)
+            {
+                ushort* sourceLine = source + y * width;
+                for (int x = 0; x < width; x++)
+                {
+                    IRData[y, x] = *sourceLine++;
+                }
+            }
+
+            return IRData;
+        }
+
+        unsafe private FloatCameraImage CalcZImage(int width, int height, Frame frame)
+        {
+            FloatCameraImage depthData = new FloatCameraImage(width, height);
+            depthData.TimeStamp = this.TimeStamp;
+            ushort* source = (ushort*)frame.pFrameData;
+
+            for (int y = 0; y < height; y++)
+            {
+                ushort* sourceLine = source + y * width;
+                for (int x = 0; x < width; x++)
+                {
+                    depthData[y, x] = ((float)(*sourceLine++)) / 1000; // mm -> m
+                }
+            }
+
+            return depthData;
+        }
+
+        unsafe private ColorCameraImage CalcColor(int width, int height, Frame frame)
+        {
+
+            Bitmap bitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            Rectangle imageRect = new Rectangle(0, 0, width, height);
+            BitmapData bmpData = bitmap.LockBits(imageRect, ImageLockMode.WriteOnly, bitmap.PixelFormat);
+
+            byte* source = (byte*)frame.pFrameData;
+            byte* target = (byte*)(void*)bmpData.Scan0;
+            for (int y = 0; y < height; y++)
+            {
+                byte* sourceLine = source + y * width * 3;
+                for (int x = 0; x < width; x++)
+                {
+                    target[2] = *sourceLine++;
+                    target[1] = *sourceLine++;
+                    target[0] = *sourceLine++;
+                    target += 3;
+                }
+            }
+
+            bitmap.UnlockBits(bmpData);
+            ColorCameraImage image = new ColorCameraImage(bitmap);
+            image.TimeStamp = this.TimeStamp;
+
+            return image;
         }
 
         protected override void ActivateChannelImpl(String channelName)
         {
-            FrameType type = GetFrameTypeFromChannelName(channelName);
-            CheckReturnStatus(Methods.StartFrame(DeviceIndex, type));
+            if(IsConnected)
+            {
+                FrameType type = GetFrameTypeFromChannelName(channelName);
+                CheckReturnStatus(Methods.StartFrame(DeviceIndex, type));
+            }
         }
 
         protected override void DeactivateChannelImpl(String channelName)
         {
-            FrameType type = GetFrameTypeFromChannelName(channelName);
-            CheckReturnStatus(Methods.StopFrame(DeviceIndex, type));
+            if(IsConnected)
+            {
+                FrameType type = GetFrameTypeFromChannelName(channelName);
+                CheckReturnStatus(Methods.StopFrame(DeviceIndex, type));
+            }
         }
 
         private FrameType GetFrameTypeFromChannelName(string channelName)
