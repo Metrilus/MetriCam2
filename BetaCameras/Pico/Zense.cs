@@ -14,6 +14,7 @@ namespace MetriCam2.Cameras
     public class Zense : Camera, IDisposable
     {
         private bool _disposed = false;
+        private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
 
         public int DeviceCount
         {
@@ -21,6 +22,19 @@ namespace MetriCam2.Cameras
             {
                 CheckReturnStatus(Methods.GetDeviceCount(out int count));
                 return count;
+            }
+        }
+
+        public DepthRange Range
+        {
+            get
+            {
+                CheckReturnStatus(Methods.GetDepthRange(DeviceIndex, out DepthRange range));
+                return range;
+            }
+            set
+            {
+                CheckReturnStatus(Methods.SetDepthRange(DeviceIndex, value));
             }
         }
 
@@ -195,6 +209,43 @@ namespace MetriCam2.Cameras
                 FrameType type = GetFrameTypeFromChannelName(channelName);
                 CheckReturnStatus(Methods.StopFrame(DeviceIndex, type));
             }
+        }
+
+        unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
+        {
+            FrameType frameType = GetFrameTypeFromChannelName(channelName);
+            CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, frameType, out FrameMode mode));
+            string keyName = $"{channelName}_{mode.resolutionWidth}x{mode.resolutionHeight}";
+            if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
+            {
+                return intrinsicsCache[keyName];
+            }
+
+
+            SensorType sensorType = SensorType.DepthSensor;
+            if(channelName == ChannelNames.Color)
+            {
+                sensorType = SensorType.RgbSensor;
+            }
+            CheckReturnStatus(Methods.GetCameraParameters(DeviceIndex, sensorType, out CameraParameters intrinsics));
+            
+
+            var projTrans = new ProjectiveTransformationZhang(
+                mode.resolutionWidth,
+                mode.resolutionHeight,
+                (float)intrinsics.fx,
+                (float)intrinsics.fy,
+                (float)intrinsics.cx,
+                (float)intrinsics.cy,
+                (float)intrinsics.k1,
+                (float)intrinsics.k2,
+                (float)intrinsics.k3,
+                (float)intrinsics.p1,
+                (float)intrinsics.p2);
+
+            intrinsicsCache[keyName] = projTrans;
+
+            return projTrans;
         }
 
         private FrameType GetFrameTypeFromChannelName(string channelName)
