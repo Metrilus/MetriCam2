@@ -15,6 +15,7 @@ namespace MetriCam2.Cameras
     {
         private bool _disposed = false;
         private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private static bool _isInitialized = false;
 
         public int DeviceCount
         {
@@ -47,7 +48,7 @@ namespace MetriCam2.Cameras
 
         public Zense() : base()
         {
-            CheckReturnStatus(Methods.Initialize());
+            
         }
 
         public void Dispose()
@@ -84,6 +85,13 @@ namespace MetriCam2.Cameras
 
         protected unsafe override void ConnectImpl()
         {
+            // check if SDK is initialized
+            if (!_isInitialized)
+            {
+                CheckReturnStatus(Methods.Initialize());
+                _isInitialized = true;
+            }
+
             if(String.IsNullOrEmpty(SerialNumber))
             {
                 DeviceIndex = 0;
