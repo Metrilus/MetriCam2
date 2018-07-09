@@ -74,7 +74,7 @@ namespace MetriCam2.Cameras
             Channels.Clear();
 
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
-            Channels.Add(cr.RegisterChannel(ChannelNames.Color));
+            //Channels.Add(cr.RegisterChannel(ChannelNames.Color));
             Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
         }
 
@@ -93,7 +93,7 @@ namespace MetriCam2.Cameras
 
             if (ActiveChannels.Count == 0)
             {
-                AddToActiveChannels(ChannelNames.Color);
+                //AddToActiveChannels(ChannelNames.Color);
                 AddToActiveChannels(ChannelNames.Intensity);
                 AddToActiveChannels(ChannelNames.ZImage);
             }
