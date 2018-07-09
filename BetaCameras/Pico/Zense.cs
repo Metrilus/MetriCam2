@@ -40,6 +40,10 @@ namespace MetriCam2.Cameras
 
         private int DeviceIndex { set; get; }
 
+#if !NETSTANDARD2_0
+        public override Icon CameraIcon { get => Properties.Resources.Pico; }
+#endif
+
 
         public Zense() : base()
         {
