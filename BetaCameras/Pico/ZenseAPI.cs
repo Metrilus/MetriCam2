@@ -20,6 +20,12 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         R1080P,
     }
 
+    public enum FrameRate
+    {
+        FPS30,
+        FPS60,
+    }
+
 
     public enum DepthRange
     {

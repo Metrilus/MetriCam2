@@ -105,6 +105,54 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public unsafe FrameRate FrameRate
+        {
+            get
+            {
+                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.DepthFrame, out FrameMode mode));
+
+                switch (mode.fps)
+                {
+                    case 30:
+                        return FrameRate.FPS30;
+
+                    case 60:
+                        return FrameRate.FPS60;
+                }
+
+                throw new Exception("adsfasdf");
+            }
+
+            set
+            {
+                if (IsChannelActive(ChannelNames.ZImage))
+                {
+                    switch(value)
+                    {
+                        case FrameRate.FPS30:
+                            SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.Depth_30);
+                            break;
+                        case FrameRate.FPS60:
+                            SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.Depth_60);
+                            break;
+                    }
+                }
+                else if (IsChannelActive(ChannelNames.Intensity))
+                {
+                    switch (value)
+                    {
+                        case FrameRate.FPS30:
+                            SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.IR_30);
+                            break;
+                        case FrameRate.FPS60:
+                            SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.IR_60);
+                            break;
+                    }
+                }
+                
+            }
+        }
+
         private int DeviceIndex { set; get; }
 
 #if !NETSTANDARD2_0
