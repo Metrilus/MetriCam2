@@ -15,6 +15,13 @@ namespace MetriCam2.Cameras
     {
         private bool _disposed = false;
         private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private Frame _currentDepthFrame = new Frame();
+        private Frame _currentColorFrame = new Frame();
+        private Frame _currentIRFrame = new Frame();
+        private FrameMode _currentDepthMode = new FrameMode();
+        private FrameMode _currentColorMode = new FrameMode();
+        private FrameMode _currentIRMode = new FrameMode();
+        private int _maxUpdate = 8;
         private static bool _isInitialized = false;
 
         public int DeviceCount
@@ -118,23 +125,49 @@ namespace MetriCam2.Cameras
 
         protected override void UpdateImpl()
         {
-            CheckReturnStatus(Methods.ReadNextFrame(DeviceIndex));
+            for (int i = 0; i < _maxUpdate; i ++)
+            {
+                CheckReturnStatus(Methods.ReadNextFrame(DeviceIndex));
+
+                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.RGBFrame, out _currentColorMode));
+                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.DepthFrame, out _currentDepthMode));
+                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.IRFrame, out _currentIRMode));
+
+                if (IsChannelActive(ChannelNames.Color)
+                && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.RGBFrame, out _currentColorFrame))
+                {
+                    continue;
+                }
+
+                if (IsChannelActive(ChannelNames.ZImage)
+                && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.DepthFrame, out _currentDepthFrame))
+                {
+                    continue;
+                }
+
+                if (IsChannelActive(ChannelNames.Intensity)
+                && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.IRFrame, out _currentIRFrame))
+                {
+                    continue;
+                }
+
+                // success
+                return;
+            }
+
+            throw new Exception("update failed");
         }
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            FrameType type = GetFrameTypeFromChannelName(channelName);
-            CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, type, out FrameMode mode));
-            CheckReturnStatus(Methods.GetFrame(DeviceIndex, type, out Frame frame));
-
-            switch(type)
+            switch(channelName)
             {
-                case FrameType.IRFrame:
-                    return CalcIRImage(mode.resolutionWidth, mode.resolutionHeight, frame);
-                case FrameType.RGBFrame:
-                    return CalcColor(mode.resolutionWidth, mode.resolutionHeight, frame);
-                case FrameType.DepthFrame:
-                    return CalcZImage(mode.resolutionWidth, mode.resolutionHeight, frame);
+                case ChannelNames.Intensity:
+                    return CalcIRImage(_currentIRMode.resolutionWidth, _currentIRMode.resolutionHeight, _currentIRFrame);
+                case ChannelNames.Color:
+                    return CalcColor(_currentColorMode.resolutionWidth, _currentColorMode.resolutionHeight, _currentColorFrame);
+                case ChannelNames.ZImage:
+                    return CalcZImage(_currentDepthMode.resolutionWidth, _currentDepthMode.resolutionHeight, _currentDepthFrame);
             }
 
             throw new Exception("asdfas");
