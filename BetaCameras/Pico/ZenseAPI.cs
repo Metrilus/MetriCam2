@@ -13,6 +13,13 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         public const int AUDIOSIZE = 2048 * 4;
     }
 
+    public enum Resolution
+    {
+        R360P,
+        R720P,
+        R1080P,
+    }
+
 
     public enum DepthRange
     {

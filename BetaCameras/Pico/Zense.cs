@@ -46,6 +46,65 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public unsafe Resolution Resolution
+        {
+            get
+            {
+                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.RGBFrame, out FrameMode mode));
+
+                switch(mode.resolutionHeight)
+                {
+                    case 360:
+                        if (640 == mode.resolutionWidth)
+                        {
+                            return Resolution.R360P;
+                        }
+                        break;
+
+                    case 720:
+                        if (1280 == mode.resolutionWidth)
+                        {
+                            return Resolution.R720P;
+                        }
+                        break;
+
+                    case 1080:
+                        if (1920 == mode.resolutionWidth)
+                        {
+                            return Resolution.R1080P;
+                        }
+                        break;
+                }
+
+                throw new Exception("adsfasdf");
+            }
+
+            set
+            {
+                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.RGBFrame, out FrameMode mode));
+
+                switch (value)
+                {
+                    case Resolution.R360P:
+                        mode.resolutionHeight = 360;
+                        mode.resolutionWidth = 640;
+                        break;
+
+                    case Resolution.R720P:
+                        mode.resolutionHeight = 720;
+                        mode.resolutionWidth = 1280;
+                        break;
+
+                    case Resolution.R1080P:
+                        mode.resolutionHeight = 1080;
+                        mode.resolutionWidth = 1920;
+                        break;
+                }
+
+                CheckReturnStatus(Methods.SetFrameMode(DeviceIndex, FrameType.RGBFrame, &mode));
+            }
+        }
+
         private int DeviceIndex { set; get; }
 
 #if !NETSTANDARD2_0
