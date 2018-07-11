@@ -283,6 +283,7 @@ namespace MetriCam2.Samples.MinimalSample
             }
             #endregion
 
+<<<<<<< HEAD
             #region Test IR Gain
             using (camera = CreateCamera())
             {
@@ -292,6 +293,13 @@ namespace MetriCam2.Samples.MinimalSample
                 camera.DeactivateChannel(ChannelNames.Point3DImage);
                 camera.ActivateChannel(ChannelNames.Intensity);
                 string channelName = ChannelNames.Intensity;
+=======
+            int count = camera.DeviceCount;
+            camera.SerialNumber = "PD7110CGC5080061W";
+            camera.ActivateChannel(ChannelNames.Intensity);
+            camera.ActivateChannel(ChannelNames.Color);
+            //camera.ActivateChannel(ChannelNames.ZImage);
+>>>>>>> lots and lots of workarounds
 
                 // warm-up
                 for (int i = 0; i < 10; i++)

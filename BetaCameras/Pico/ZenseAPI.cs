@@ -76,7 +76,7 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         Unknown = -255,
     }
 
-    public enum DataMode
+    public enum DataMode : byte
     {
         Depth_30 = 0,
         IR_30 = 1,
@@ -230,7 +230,7 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         public double k2;  // Radial distortion coefficient, 2nd-order
         public double k3;  // Radial distortion coefficient, 3rd-order
         public double p1;  // Tangential distortion coefficient
-        public double p2;	// Tangential distortion coefficient
+        public double p2;  // Tangential distortion coefficient
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -743,7 +743,7 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
         [DllImport("picozense_api", EntryPoint = "PsPsSetIrDistortionEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        public unsafe extern static ReturnStatus PsSetIrDistortionEnabled(int deviceIndex, bool bEnabled);
+        public unsafe extern static ReturnStatus SetIrDistortionEnabled(int deviceIndex, bool bEnabled);
 
 
         /*

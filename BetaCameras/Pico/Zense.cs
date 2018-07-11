@@ -79,7 +79,7 @@ namespace MetriCam2.Cameras
             Channels.Clear();
 
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
-            //Channels.Add(cr.RegisterChannel(ChannelNames.Color));
+            Channels.Add(cr.RegisterChannel(ChannelNames.Color));
             Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
         }
 
@@ -105,8 +105,7 @@ namespace MetriCam2.Cameras
 
             if (ActiveChannels.Count == 0)
             {
-                //AddToActiveChannels(ChannelNames.Color);
-                AddToActiveChannels(ChannelNames.Intensity);
+                AddToActiveChannels(ChannelNames.Color);
                 AddToActiveChannels(ChannelNames.ZImage);
             }
         }
@@ -210,7 +209,33 @@ namespace MetriCam2.Cameras
             if(IsConnected)
             {
                 FrameType type = GetFrameTypeFromChannelName(channelName);
-                CheckReturnStatus(Methods.StartFrame(DeviceIndex, type));
+                switch(type)
+                {
+                    // WORKAROUND
+                    // StartFrame throws an error for RGBFrame
+                    // that should be ignored (pico support)
+                    case FrameType.RGBFrame:
+                        Methods.StartFrame(DeviceIndex, type);
+                        break;
+
+                    case FrameType.IRFrame:
+                        if(this.IsChannelActive(ChannelNames.ZImage))
+                        {
+                            throw new Exception("Can't have it all. Either depth or ir.");
+                        }
+                        SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.IR_30);
+                        CheckReturnStatus(Methods.StartFrame(DeviceIndex, type));
+                        break;
+
+                    case FrameType.DepthFrame:
+                        if (this.IsChannelActive(ChannelNames.Intensity))
+                        {
+                            throw new Exception("Can't have it all. Either depth or ir.");
+                        }
+                        SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.Depth_30);
+                        CheckReturnStatus(Methods.StartFrame(DeviceIndex, type));
+                        break;
+                }
             }
         }
 
@@ -346,11 +371,32 @@ namespace MetriCam2.Cameras
             char[] serial = new char[size];
             fixed (char* s = serial)
             {
-                CheckReturnStatus(Methods.GetProperty(deviceIndex, PropertyType.SN_Str, (IntPtr)s, &size));
+                CheckReturnStatus(Methods.GetProperty(deviceIndex, type, (IntPtr)s, &size));
                 return Marshal.PtrToStringAnsi((IntPtr)s);
             }
 
             throw new Exception("Failed to receive property: " + type.ToString());
+        }
+
+        private unsafe int GetInt32Property(int deviceIndex, PropertyType type)
+        {
+            int i = -1;
+            int size = sizeof(int);
+            CheckReturnStatus(Methods.GetProperty(deviceIndex, type, (IntPtr)(&i), &size));
+            return i;
+        }
+
+        private unsafe byte GetUint8Property(int deviceIndex, PropertyType type)
+        {
+            byte b = 1;
+            int size = sizeof(byte);
+            CheckReturnStatus(Methods.GetProperty(deviceIndex, type, (IntPtr)(&b), &size));
+            return b;
+        }
+
+        private unsafe void SetUint8Property(int deviceIndex, PropertyType type, byte value)
+        {
+            CheckReturnStatus(Methods.SetProperty(deviceIndex, type, (IntPtr)(&value), sizeof(byte)));
         }
     }
 }
