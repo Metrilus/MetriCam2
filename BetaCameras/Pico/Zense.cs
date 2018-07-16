@@ -8,6 +8,7 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using Metrilus.Util;
 using MetriCam2.Cameras.Pico.ZenseAPI;
+using MetriCam2.Exceptions;
 
 namespace MetriCam2.Cameras
 {
@@ -23,6 +24,8 @@ namespace MetriCam2.Cameras
         private FrameMode _currentIRMode = new FrameMode();
         private int _maxUpdate = 8;
         private static bool _isInitialized = false;
+
+        public override string Vendor { get => "Pico"; }
 
         public int DeviceCount
         {
@@ -160,7 +163,7 @@ namespace MetriCam2.Cameras
 #endif
 
 
-        public Zense() : base()
+        public Zense() : base(modelName: "Zense")
         {
             
         }
@@ -199,28 +202,35 @@ namespace MetriCam2.Cameras
 
         protected unsafe override void ConnectImpl()
         {
-            // check if SDK is initialized
-            if (!_isInitialized)
+            try
             {
-                CheckReturnStatus(Methods.Initialize());
-                _isInitialized = true;
-            }
+                // check if SDK is initialized
+                if (!_isInitialized)
+                {
+                    CheckReturnStatus(Methods.Initialize());
+                    _isInitialized = true;
+                }
 
-            if(String.IsNullOrEmpty(SerialNumber))
-            {
-                DeviceIndex = 0;
-                CheckReturnStatus(Methods.OpenDevice(DeviceIndex));
-                SerialNumber = GetStringProperty(DeviceIndex, PropertyType.SN_Str);
-            }
-            else
-            {
-                GetDeviceIndexFromSerial(SerialNumber);
-            }
+                if (String.IsNullOrEmpty(SerialNumber))
+                {
+                    DeviceIndex = 0;
+                    CheckReturnStatus(Methods.OpenDevice(DeviceIndex));
+                    SerialNumber = GetStringProperty(DeviceIndex, PropertyType.SN_Str);
+                }
+                else
+                {
+                    GetDeviceIndexFromSerial(SerialNumber);
+                }
 
-            if (ActiveChannels.Count == 0)
+                if (ActiveChannels.Count == 0)
+                {
+                    AddToActiveChannels(ChannelNames.Color);
+                    AddToActiveChannels(ChannelNames.ZImage);
+                }
+            }
+            catch(Exception e)
             {
-                AddToActiveChannels(ChannelNames.Color);
-                AddToActiveChannels(ChannelNames.ZImage);
+                throw new ConnectionFailedException($"Connecting to {Name} failed", e);
             }
         }
 
@@ -232,37 +242,42 @@ namespace MetriCam2.Cameras
 
         protected override void UpdateImpl()
         {
-            for (int i = 0; i < _maxUpdate; i ++)
+            try
             {
-                CheckReturnStatus(Methods.ReadNextFrame(DeviceIndex));
-
-                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.RGBFrame, out _currentColorMode));
-                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.DepthFrame, out _currentDepthMode));
-                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.IRFrame, out _currentIRMode));
-
-                if (IsChannelActive(ChannelNames.Color)
-                && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.RGBFrame, out _currentColorFrame))
+                for (int i = 0; i < _maxUpdate; i++)
                 {
-                    continue;
-                }
+                    CheckReturnStatus(Methods.ReadNextFrame(DeviceIndex));
 
-                if (IsChannelActive(ChannelNames.ZImage)
-                && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.DepthFrame, out _currentDepthFrame))
-                {
-                    continue;
-                }
+                    CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.RGBFrame, out _currentColorMode));
+                    CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.DepthFrame, out _currentDepthMode));
+                    CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.IRFrame, out _currentIRMode));
 
-                if (IsChannelActive(ChannelNames.Intensity)
-                && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.IRFrame, out _currentIRFrame))
-                {
-                    continue;
-                }
+                    if (IsChannelActive(ChannelNames.Color)
+                    && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.RGBFrame, out _currentColorFrame))
+                    {
+                        continue;
+                    }
 
-                // success
-                return;
+                    if (IsChannelActive(ChannelNames.ZImage)
+                    && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.DepthFrame, out _currentDepthFrame))
+                    {
+                        continue;
+                    }
+
+                    if (IsChannelActive(ChannelNames.Intensity)
+                    && ReturnStatus.OK != Methods.GetFrame(DeviceIndex, FrameType.IRFrame, out _currentIRFrame))
+                    {
+                        continue;
+                    }
+
+                    // success
+                    return;
+                }
             }
-
-            throw new Exception("update failed");
+            catch(Exception e)
+            {
+                throw new ImageAcquisitionFailedException($"{Name}: update failed", e);
+            }
         }
 
         protected override CameraImage CalcChannelImpl(string channelName)
@@ -277,7 +292,7 @@ namespace MetriCam2.Cameras
                     return CalcZImage(_currentDepthMode.resolutionWidth, _currentDepthMode.resolutionHeight, _currentDepthFrame);
             }
 
-            throw new Exception("asdfas");
+            throw new ImageAcquisitionFailedException($"{Name}: No valid channel name");
         }
 
         unsafe private FloatCameraImage CalcIRImage(int width, int height, Frame frame)
@@ -361,7 +376,7 @@ namespace MetriCam2.Cameras
                     case FrameType.IRFrame:
                         if(this.IsChannelActive(ChannelNames.ZImage))
                         {
-                            throw new Exception("Can't have it all. Either depth or ir.");
+                            throw new SettingsCombinationNotSupportedException("Intensity is not supported while ZImage is still active.");
                         }
                         SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.IR_30);
                         CheckReturnStatus(Methods.StartFrame(DeviceIndex, type));
@@ -370,7 +385,7 @@ namespace MetriCam2.Cameras
                     case FrameType.DepthFrame:
                         if (this.IsChannelActive(ChannelNames.Intensity))
                         {
-                            throw new Exception("Can't have it all. Either depth or ir.");
+                            throw new SettingsCombinationNotSupportedException("ZImage is not supported while Intensity is still active.");
                         }
                         SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.Depth_30);
                         CheckReturnStatus(Methods.StartFrame(DeviceIndex, type));
@@ -436,7 +451,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.Intensity:
                     return FrameType.IRFrame;
                 default:
-                    throw new Exception("asdfsaf");
+                    throw new ArgumentException($"{Name}: Invalid channel name.");
             }
         }
 
@@ -502,7 +517,7 @@ namespace MetriCam2.Cameras
                 CheckReturnStatus(Methods.CloseDevice(i));
             }
 
-            throw new Exception(String.Format("Camera with S/N '{0}' not found.", serial));
+            throw new MetriCam2Exception($"Camera with S/N '{serial}' not found.");
         }
 
         private unsafe string GetStringProperty(int deviceIndex, PropertyType type)
@@ -515,7 +530,7 @@ namespace MetriCam2.Cameras
                 return Marshal.PtrToStringAnsi((IntPtr)s);
             }
 
-            throw new Exception("Failed to receive property: " + type.ToString());
+            throw new MetriCam2Exception("Failed to receive property: " + type.ToString());
         }
 
         private unsafe int GetInt32Property(int deviceIndex, PropertyType type)
