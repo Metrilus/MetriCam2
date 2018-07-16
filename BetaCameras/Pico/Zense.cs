@@ -36,6 +36,21 @@ namespace MetriCam2.Cameras
             }
         }
 
+        ParamDesc<DepthRange> RangeDesc
+        {
+            get
+            {
+                ParamDesc<DepthRange> res = new ParamDesc<DepthRange>()
+                {
+                    Description = "Operation range setting of the camera",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+
+                return res;
+            }
+        }
+
         public DepthRange Range
         {
             get
@@ -46,6 +61,21 @@ namespace MetriCam2.Cameras
             set
             {
                 CheckReturnStatus(Methods.SetDepthRange(DeviceIndex, value));
+            }
+        }
+
+        ParamDesc<Resolution> ResolutionDesc
+        {
+            get
+            {
+                ParamDesc<Resolution> res = new ParamDesc<Resolution>()
+                {
+                    Description = "Resolution of the color sensor.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+
+                return res;
             }
         }
 
@@ -79,32 +109,54 @@ namespace MetriCam2.Cameras
                         break;
                 }
 
-                throw new Exception("adsfasdf");
+                throw new InvalidOperationException($"{Name}: Invalid Resolution.");
             }
 
             set
             {
-                CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.RGBFrame, out FrameMode mode));
-
-                switch (value)
+                try
                 {
-                    case Resolution.R360P:
-                        mode.resolutionHeight = 360;
-                        mode.resolutionWidth = 640;
-                        break;
+                    CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.RGBFrame, out FrameMode mode));
 
-                    case Resolution.R720P:
-                        mode.resolutionHeight = 720;
-                        mode.resolutionWidth = 1280;
-                        break;
+                    switch (value)
+                    {
+                        case Resolution.R360P:
+                            mode.resolutionHeight = 360;
+                            mode.resolutionWidth = 640;
+                            break;
 
-                    case Resolution.R1080P:
-                        mode.resolutionHeight = 1080;
-                        mode.resolutionWidth = 1920;
-                        break;
+                        case Resolution.R720P:
+                            mode.resolutionHeight = 720;
+                            mode.resolutionWidth = 1280;
+                            break;
+
+                        case Resolution.R1080P:
+                            mode.resolutionHeight = 1080;
+                            mode.resolutionWidth = 1920;
+                            break;
+                    }
+
+                    CheckReturnStatus(Methods.SetFrameMode(DeviceIndex, FrameType.RGBFrame, &mode));
                 }
+                catch(Exception e)
+                {
+                    throw new ArgumentException($"{Name}: Error setting resolution", e);
+                }
+            }
+        }
 
-                CheckReturnStatus(Methods.SetFrameMode(DeviceIndex, FrameType.RGBFrame, &mode));
+        ParamDesc<FrameRate> FrameRateDesc
+        {
+            get
+            {
+                ParamDesc<FrameRate> res = new ParamDesc<FrameRate>()
+                {
+                    Description = "FPS of the depth sensor.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+
+                return res;
             }
         }
 
@@ -123,36 +175,42 @@ namespace MetriCam2.Cameras
                         return FrameRate.FPS60;
                 }
 
-                throw new Exception("adsfasdf");
+                throw new InvalidOperationException($"{Name}: Invalid framerate.");
             }
 
             set
             {
-                if (IsChannelActive(ChannelNames.ZImage))
+                try
                 {
-                    switch(value)
+                    if (IsChannelActive(ChannelNames.ZImage))
                     {
-                        case FrameRate.FPS30:
-                            SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.Depth_30);
-                            break;
-                        case FrameRate.FPS60:
-                            SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.Depth_60);
-                            break;
+                        switch (value)
+                        {
+                            case FrameRate.FPS30:
+                                SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.Depth_30);
+                                break;
+                            case FrameRate.FPS60:
+                                SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.Depth_60);
+                                break;
+                        }
+                    }
+                    else if (IsChannelActive(ChannelNames.Intensity))
+                    {
+                        switch (value)
+                        {
+                            case FrameRate.FPS30:
+                                SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.IR_30);
+                                break;
+                            case FrameRate.FPS60:
+                                SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.IR_60);
+                                break;
+                        }
                     }
                 }
-                else if (IsChannelActive(ChannelNames.Intensity))
+                catch(Exception e)
                 {
-                    switch (value)
-                    {
-                        case FrameRate.FPS30:
-                            SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.IR_30);
-                            break;
-                        case FrameRate.FPS60:
-                            SetUint8Property(DeviceIndex, PropertyType.DataMode_UInt8, (byte)DataMode.IR_60);
-                            break;
-                    }
+                    throw new ArgumentException($"{Name}: Error setting FPS.", e);
                 }
-                
             }
         }
 
