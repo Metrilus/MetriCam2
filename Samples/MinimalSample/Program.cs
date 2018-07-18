@@ -40,9 +40,6 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("Connecting camera");
             camera.Connect();
 
-            camera.DecimationFilter.Enabled = true;
-            camera.DecimationFilter.Magnitude = 2;
-
             Console.WriteLine("Fetching one frame");
             camera.Update();
 
@@ -63,11 +60,11 @@ namespace MetriCam2.Samples.MinimalSample
             try
             {
                 Console.WriteLine("Accessing distance data");
-                FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.Distance);
+                FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
             }
             catch (ArgumentException ex)
             {
-                Console.WriteLine(String.Format("Error getting channel {0}: {1}.", ChannelNames.Distance, ex.Message));
+                Console.WriteLine(String.Format("Error getting channel {0}: {1}.", ChannelNames.ZImage, ex.Message));
             }
 
             Console.WriteLine("Disconnecting camera");
@@ -75,21 +72,6 @@ namespace MetriCam2.Samples.MinimalSample
 
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();
-        }
-
-        public static void SaveP3D(Point3fCameraImage img, string path)
-        {
-            var list = new List<Point3f>();
-            for(int y = 0; y < img.Height; y++)
-            {
-                for(int x = 0; x < img.Width; x++)
-                {
-                    list.Add(img[y, x]);
-                }
-            }
-
-            var p3d = new PointCloud3D(list.ToArray());
-            p3d.Save(path);
         }
     }
 }
