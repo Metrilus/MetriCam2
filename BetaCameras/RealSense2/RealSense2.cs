@@ -1560,6 +1560,7 @@ namespace MetriCam2.Cameras
 
             // otherwise wait until a new frameset is available
             data = _pipeline.WaitForFrames(5000);
+
             ExtractFrameSetData(data, getColor, getDepth, getLeft, getRight, ref haveColor, ref haveDepth, ref haveLeft, ref haveRight);
             data.Dispose();
 
