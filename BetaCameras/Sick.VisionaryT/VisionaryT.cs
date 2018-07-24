@@ -2,8 +2,10 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using System;
+using System.Threading;
 using MetriCam2.Cameras.Internal.Sick;
 using Metrilus.Util;
+using MetriCam2.Exceptions;
 
 namespace MetriCam2.Cameras
 {
@@ -14,6 +16,12 @@ namespace MetriCam2.Cameras
     {
         #region Private Variables
         private const int NumFrameRetries = 3;
+        private Thread _updateThread;
+        private CancellationTokenSource _cancelUpdateThreadSource = new CancellationTokenSource();
+        private AutoResetEvent _frameAvailable = new AutoResetEvent(false);
+        private object _frontLock = new object();
+        private object _backLock = new object();
+        private string _updateThreadError = null; // Hand errors from update loop thread to application thread
 
         // ipAddress to connect to
         private string ipAddress;
@@ -22,7 +30,8 @@ namespace MetriCam2.Cameras
         private Control _control;
 
         // image data contains information about the current frame e.g. width and height
-        private FrameData _frameData;
+        private FrameData _frontFrameData;
+        private FrameData _backFrameData;
         // camera properties
         private int width;
         private int height;
@@ -145,11 +154,13 @@ namespace MetriCam2.Cameras
         public VisionaryT()
             : base()
         {
-            ipAddress   = "";
-            device      = null;
-            _frameData   = null;
-            width       = 0;
-            height      = 0;
+            ipAddress       = "";
+            device          = null;
+            _frontFrameData = null;
+            _backFrameData  = null;
+            _updateThread   = new Thread(new ThreadStart(UpdateLoop));
+            width           = 0;
+            height          = 0;
         }
         #endregion
 
@@ -183,6 +194,8 @@ namespace MetriCam2.Cameras
         /// <remarks>This method is implicitly called by <see cref="Camera.Connect"/> inside a camera lock.</remarks>
         protected override void ConnectImpl()
         {
+            _updateThreadError = null;
+
             if (string.IsNullOrWhiteSpace(ipAddress))
             {
                 string msg = string.Format("IP address is not set. It must be set before connecting.");
@@ -199,8 +212,7 @@ namespace MetriCam2.Cameras
             ActivateChannel(ChannelNames.Intensity);
             SelectChannel(ChannelNames.Intensity);
 
-            // Call update once
-            UpdateImpl();
+            _updateThread.Start();
         }
 
         /// <summary>
@@ -209,6 +221,8 @@ namespace MetriCam2.Cameras
         /// <remarks>This method is implicitly called by <see cref="Camera.Disconnect"/> inside a camera lock.</remarks>
         protected override void DisconnectImpl()
         {
+            _cancelUpdateThreadSource.Cancel();
+            _updateThread.Join();
             _control.Close();
             _control = null;
             device.Disconnect();
@@ -221,27 +235,24 @@ namespace MetriCam2.Cameras
         /// <remarks>This method is implicitly called by <see cref="Camera.Update"/> inside a camera lock.</remarks>
         protected override void UpdateImpl()
         {
-            int consecutiveFailCounter = 0;
-            while (true)
+            _frameAvailable.WaitOne();
+
+            if (null != _updateThreadError)
             {
-                try
-                {
-                    byte[] imageBuffer = device.GetFrameData();
-                    _frameData = new FrameData(imageBuffer, this, log);
-                    break;
-                }
-                catch
-                {
-                    consecutiveFailCounter++;
-                    if (consecutiveFailCounter > NumFrameRetries)
-                    {
-                        throw;
-                    }
-                }
+                Disconnect();
+                throw new ImageAcquisitionFailedException(_updateThreadError);
             }
 
-            width = _frameData.Width;
-            height = _frameData.Height;
+            lock (_backLock)
+            lock (_frontLock)
+            {
+                _frontFrameData = _backFrameData;
+                _backFrameData = null;
+                _frameAvailable.Reset();
+            }
+
+            width = _frontFrameData.Width;
+            height = _frontFrameData.Height;
         }
 
         /// <summary>Computes (image) data for a given channel.</summary>
@@ -270,6 +281,41 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Internal Methods
+        private void UpdateLoop()
+        {
+            int consecutiveFailCounter = 0;
+            while (!_cancelUpdateThreadSource.Token.IsCancellationRequested)
+            {
+                try
+                {
+                    lock (_backLock)
+                    {
+                        byte[] imageBuffer = device.GetFrameData();
+                        _backFrameData = new FrameData(imageBuffer, this, log);
+                        _frameAvailable.Set();
+                    }
+                }
+                catch
+                {
+                    consecutiveFailCounter++;
+                    if (consecutiveFailCounter > NumFrameRetries)
+                    {
+                        string msg = $"{Name}: Receive failed more than {NumFrameRetries} times in a row. Shutting down update loop.";
+                        log.Error(msg);
+                        _updateThreadError = msg;
+                        _frameAvailable.Set();
+                        break;
+                    }
+                }
+
+                // reset counter after sucessfull fetch
+                consecutiveFailCounter = 0;
+            } // while
+
+            _cancelUpdateThreadSource = new CancellationTokenSource();
+        }
+
+
         /// <summary>
         /// Calculates the intensity channel.
         /// </summary>
@@ -277,17 +323,17 @@ namespace MetriCam2.Cameras
         private FloatCameraImage CalcIntensity()
         {
             FloatCameraImage result;
-            lock (cameraLock)
+            lock (_frontLock)
             {
-                result = new FloatCameraImage(_frameData.Width, _frameData.Height);
-                result.TimeStamp = (long)_frameData.TimeStamp;
-                int start = _frameData.IntensityStartOffset;
-                for (int i = 0; i < _frameData.Height; ++i)
+                result = new FloatCameraImage(_frontFrameData.Width, _frontFrameData.Height);
+                result.TimeStamp = (long)_frontFrameData.TimeStamp;
+                int start = _frontFrameData.IntensityStartOffset;
+                for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
-                    for (int j = 0; j < _frameData.Width; ++j)
+                    for (int j = 0; j < _frontFrameData.Width; ++j)
                     {
                         // take two bytes and create integer (little endian)
-                        uint value = (uint)_frameData.ImageBuffer[start + 1] << 8 | (uint)_frameData.ImageBuffer[start + 0];
+                        uint value = (uint)_frontFrameData.ImageBuffer[start + 1] << 8 | (uint)_frontFrameData.ImageBuffer[start + 0];
                         result[i, j] = (float)value;
                         start += 2;
                     }
@@ -304,17 +350,17 @@ namespace MetriCam2.Cameras
         {
             FloatCameraImage result;
             // FIXME: distance calculation
-            lock (cameraLock)
+            lock (_frontLock)
             {
-                result = new FloatCameraImage(_frameData.Width, _frameData.Height);
-                result.TimeStamp = (long)_frameData.TimeStamp;
-                int start = _frameData.DistanceStartOffset;
-                for (int i = 0; i < _frameData.Height; ++i)
+                result = new FloatCameraImage(_frontFrameData.Width, _frontFrameData.Height);
+                result.TimeStamp = (long)_frontFrameData.TimeStamp;
+                int start = _frontFrameData.DistanceStartOffset;
+                for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
-                    for (int j = 0; j < _frameData.Width; ++j)
+                    for (int j = 0; j < _frontFrameData.Width; ++j)
                     {
                         // take two bytes and create integer (little endian)
-                        uint value = (uint)_frameData.ImageBuffer[start + 1] << 8 | (uint)_frameData.ImageBuffer[start + 0];
+                        uint value = (uint)_frontFrameData.ImageBuffer[start + 1] << 8 | (uint)_frontFrameData.ImageBuffer[start + 0];
                         result[i, j] = (float)value * 0.001f;
                         start += 2;
                     }
@@ -330,17 +376,17 @@ namespace MetriCam2.Cameras
         private UShortCameraImage CalcRawConfidenceMap()
         {
             UShortCameraImage result;
-            lock (cameraLock)
+            lock (_frontLock)
             {
-                result = new UShortCameraImage(_frameData.Width, _frameData.Height);
-                result.TimeStamp = (long)_frameData.TimeStamp;
-                int start = _frameData.ConfidenceStartOffset;
-                for (int i = 0; i < _frameData.Height; ++i)
+                result = new UShortCameraImage(_frontFrameData.Width, _frontFrameData.Height);
+                result.TimeStamp = (long)_frontFrameData.TimeStamp;
+                int start = _frontFrameData.ConfidenceStartOffset;
+                for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
-                    for (int j = 0; j < _frameData.Width; ++j)
+                    for (int j = 0; j < _frontFrameData.Width; ++j)
                     {
                         // take two bytes and create integer (little endian)
-                        result[i, j] = (ushort)((ushort)_frameData.ImageBuffer[start + 1] << 8 | (ushort)_frameData.ImageBuffer[start + 0]);
+                        result[i, j] = (ushort)((ushort)_frontFrameData.ImageBuffer[start + 1] << 8 | (ushort)_frontFrameData.ImageBuffer[start + 0]);
                         start += 2;
                     }
                 }
@@ -379,24 +425,24 @@ namespace MetriCam2.Cameras
         private Point3fCameraImage Calc3D()
         {
             Point3fCameraImage result;
-            lock (cameraLock)
+            lock (_frontLock)
             {
-                result = new Point3fCameraImage(_frameData.Width, _frameData.Height);
-                result.TimeStamp = (long)_frameData.TimeStamp;
+                result = new Point3fCameraImage(_frontFrameData.Width, _frontFrameData.Height);
+                result.TimeStamp = (long)_frontFrameData.TimeStamp;
 
-                float cx = _frameData.CX;
-                float cy = _frameData.CY;
-                float fx = _frameData.FX;
-                float fy = _frameData.FY;
-                float k1 = _frameData.K1;
-                float k2 = _frameData.K2;
-                float f2rc = _frameData.F2RC;
+                float cx = _frontFrameData.CX;
+                float cy = _frontFrameData.CY;
+                float fx = _frontFrameData.FX;
+                float fy = _frontFrameData.FY;
+                float k1 = _frontFrameData.K1;
+                float k2 = _frontFrameData.K2;
+                float f2rc = _frontFrameData.F2RC;
 
                 FloatCameraImage distances = CalcDistance();
 
-                for (int i = 0; i < _frameData.Height; ++i)
+                for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
-                    for (int j = 0; j < _frameData.Width; ++j)
+                    for (int j = 0; j < _frontFrameData.Width; ++j)
                     {
                         int depth = (int)(distances[i, j] * 1000);
 
