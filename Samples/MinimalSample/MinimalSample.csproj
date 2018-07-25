@@ -87,9 +87,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\RealSense2\RealSense2.csproj">
-      <Project>{3032e9b1-f572-4ecb-906a-f7a2b45ef125}</Project>
-      <Name>RealSense2</Name>
+    <ProjectReference Include="..\..\BetaCameras\Sick.VisionaryT\Sick.VisionaryT.csproj">
+      <Project>{de18d143-c624-4941-b8a1-0f91262d3350}</Project>
+      <Name>Sick.VisionaryT</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
       <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>

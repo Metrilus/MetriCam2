@@ -22,10 +22,10 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("------------------------------------------");
 
             // Create camera object
-            RealSense2 camera;
+            VisionaryT camera;
             try
             {
-                camera = new RealSense2();
+                camera = new VisionaryT();
             }
             catch (Exception e)
             {
@@ -36,36 +36,36 @@ namespace MetriCam2.Samples.MinimalSample
                 return;
             }
 
+            camera.IPAddress = "192.168.1.10";
+
             // Connect, get one frame, disconnect
             Console.WriteLine("Connecting camera");
             camera.Connect();
 
+            //while (true) { }
+
             Console.WriteLine("Fetching one frame");
-            camera.Update();
-
-            ProjectiveTransformationZhang ptrans = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.ZImage);
-
-
-            try
+            for(int i = 0; i < 100; i++)
             {
-                Console.WriteLine("Accessing color data");
-                ColorCameraImage img = (ColorCameraImage)camera.CalcChannel(ChannelNames.Color);
-                Bitmap rgbBitmapData = img.ToBitmap();
-            }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine(String.Format("Error getting channel {0}: {1}.", ChannelNames.Color, ex.Message));
-            }
+                camera.Update();
 
-            try
-            {
-                Console.WriteLine("Accessing distance data");
-                FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
+                try
+                {
+                    Console.WriteLine("Accessing distance data");
+                    FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.Intensity);
+                    FloatImage fImg = new FloatImage(ref distancesData);
+                    string tmp = fImg.ShowInDebug;
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine(String.Format("Error getting channel {0}: {1}.", ChannelNames.ZImage, ex.Message));
+                }
             }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine(String.Format("Error getting channel {0}: {1}.", ChannelNames.ZImage, ex.Message));
-            }
+            
+
+
+
+            
 
             Console.WriteLine("Disconnecting camera");
             camera.Disconnect();
