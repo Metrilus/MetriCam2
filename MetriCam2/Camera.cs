@@ -20,7 +20,7 @@ namespace MetriCam2
     /// <summary>
     /// Camera base class.
     /// </summary>
-    /// <remarks>
+    /// <remarks> 
     /// <list>
     /// <item>Implements basic camera properties and methods.</item>
     /// <item>Provides convenience around camera methods.</item>
