@@ -48,8 +48,9 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
             catch (Exception ex)
             {
-                log.ErrorFormat("Failed to connect to IP={0}, reasons={1}", ipAddress, ex.Message);
-                ExceptionBuilder.Throw(ex.GetType(), cam, ex);
+                string msg = string.Format("{0}: Failed to connect to IP {1}{2}Reason: {3}", cam.Name, ipAddress, Environment.NewLine, ex.Message);
+                log.Error(msg);
+                throw new Exceptions.ConnectionFailedException(msg, ex);
             }
 
             streamData = sockData.GetStream();
