@@ -222,7 +222,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
             else
             {
-                string msg = string.Format("{0}: Bytes per distance value has unexpected value \"{1}\"", dataType);
+                string msg = string.Format("{0}: Bytes per distance value has unexpected value \"{1}\"", cam.Name, dataType);
                 log.Error(msg);
                 throw new InvalidDataException(msg);
             }
@@ -234,7 +234,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
             else
             {
-                string msg = string.Format("{0}: Bytes per intensity value has unexpected value \"{1}\"", dataType);
+                string msg = string.Format("{0}: Bytes per intensity value has unexpected value \"{1}\"", cam.Name, dataType);
                 log.Error(msg);
                 throw new InvalidDataException(msg);
             }
@@ -246,7 +246,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             }
             else
             {
-                string msg = string.Format("{0}: Bytes per confidence value has unexpected value \"{1}\"", dataType);
+                string msg = string.Format("{0}: Bytes per confidence value has unexpected value \"{1}\"", cam.Name, dataType);
                 log.Error(msg);
                 throw new InvalidDataException(msg);
             }
