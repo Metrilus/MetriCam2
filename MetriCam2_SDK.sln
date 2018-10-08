@@ -83,6 +83,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaslerACE", "BetaCameras\Ba
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pico", "BetaCameras\Pico\Pico.csproj", "{1FAD1F90-D37E-40CA-BBF0-6A33E82F8812}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sick.VisionaryT.Pro", "BetaCameras\Sick.VisionaryT.Pro\Sick.VisionaryT.Pro.csproj", "{D01829D2-B553-4C4B-B392-2437E6A130B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -555,6 +557,22 @@ Global
 		{1FAD1F90-D37E-40CA-BBF0-6A33E82F8812}.ReleaseStrongName|Any CPU.ActiveCfg = Release|Any CPU
 		{1FAD1F90-D37E-40CA-BBF0-6A33E82F8812}.ReleaseStrongName|x64.ActiveCfg = Release|Any CPU
 		{1FAD1F90-D37E-40CA-BBF0-6A33E82F8812}.ReleaseStrongName|x86.ActiveCfg = Release|Any CPU
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.Debug|x64.ActiveCfg = Debug|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.Debug|x64.Build.0 = Debug|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.Debug|x86.ActiveCfg = Debug|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.DebugStrongName|Any CPU.ActiveCfg = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.DebugStrongName|Any CPU.Build.0 = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.DebugStrongName|x64.ActiveCfg = Debug|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.DebugStrongName|x86.ActiveCfg = DebugStrongName|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.Release|Any CPU.ActiveCfg = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.Release|x64.ActiveCfg = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.Release|x64.Build.0 = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.Release|x86.ActiveCfg = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.ReleaseStrongName|Any CPU.ActiveCfg = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.ReleaseStrongName|Any CPU.Build.0 = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.ReleaseStrongName|x64.ActiveCfg = Release|x64
+		{D01829D2-B553-4C4B-B392-2437E6A130B5}.ReleaseStrongName|x86.ActiveCfg = ReleaseStrongName|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -583,6 +601,7 @@ Global
 		{9CBCE2AB-4E19-4344-B3CF-67D07CC9C8FC} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{474D94F4-857B-4199-97AF-C600AED44406} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{1FAD1F90-D37E-40CA-BBF0-6A33E82F8812} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
+		{D01829D2-B553-4C4B-B392-2437E6A130B5} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E4CD8F0D-A50B-44DC-80D3-0C789213BF2B}
