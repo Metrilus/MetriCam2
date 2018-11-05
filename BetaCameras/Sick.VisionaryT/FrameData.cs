@@ -297,9 +297,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             ConfidenceStartOffset = offset;
             offset += numBytesConfidence;
 
-            // 4 bytes CRC of data (field unused by camera)
-            uint unusedCrc = BitConverter.ToUInt32(ImageBuffer, offset);
-            unusedCrc = Utils.ConvertEndiannessUInt32(unusedCrc);
+            // Skip 4 bytes CRC of data (field unused by camera)
             offset += 4;
 
             // 4 bytes same length as first value
