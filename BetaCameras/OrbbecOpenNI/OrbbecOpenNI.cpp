@@ -126,7 +126,7 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 
 	if (devicesCount >= MAX_DEVICES)
 	{
-		log->Error("The number of supported devices is limited.");
+		log->ErrorFormat("The number of devices ({0}) exceeds the number supported by MetriCam 2 ({1}).", devicesCount, MAX_DEVICES);
 		OpenNIShutdown();
 		return nullptr;
 	}
@@ -141,14 +141,14 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 		rc = device->open(deviceUris[i]);
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't open device : ", deviceUris[i]);
-			System::Diagnostics::Debug::WriteLine("GetSerialNumberOfAttachedCameras: cannot open device");
+			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't open device {0}", gcnew String(deviceUris[i]));
 			continue;
 		}
 
 		rc = depthStreams[i].create(*device, openni::SENSOR_DEPTH);
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't create stream on device : ", deviceUris[i]);
-			System::Diagnostics::Debug::WriteLine("GetSerialNumberOfAttachedCameras: cannot create device");
+			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't create depth stream on device {0}", gcnew String(deviceUris[i]));
 			continue;
 		}
 
@@ -159,15 +159,14 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 		rc = depthStreams[i].start();
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't create stream on device : ", serialNumbers[i]);
-			System::Diagnostics::Debug::WriteLine("GetSerialNumberOfAttachedCameras: cannot start depth stream");
+			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't start depth stream on device {0}", gcnew String(serialNumbers[i]));
 			continue;
 		}
 
 		if (!depthStreams[i].isValid())
 		{
 			// printf("SimpleViewer: No valid streams. Exiting\n");
-			System::Diagnostics::Debug::WriteLine("GetSerialNumberOfAttachedCameras: depth stream not valid");
-			openni::OpenNI::shutdown();
+			log->WarnFormat("GetSerialNumberOfAttachedCameras: No valid depth stream");
 			continue;
 		}
 
@@ -222,7 +221,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	int rc = _pCamData->openNICam->init(deviceURI);
 	if (rc != openni::Status::STATUS_OK)
 	{
-		auto msg = String::Format("Could not init connection to device {0}.", SerialNumber);
+		auto msg = String::Format("{0}: Could not init connection to device {1}.", Name, SerialNumber);
 		log->Warn(msg);
 		throw gcnew MetriCam2::Exceptions::ConnectionFailedException(msg);
 	}
