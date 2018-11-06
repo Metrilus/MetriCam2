@@ -43,11 +43,12 @@ namespace MetriCam2
 			int colorHeight;
 		};
 
-		public ref class AstraOpenNI : Camera
+		public ref class AstraOpenNI : Camera, IDisposable
 		{
 		public:
 			AstraOpenNI();
 			~AstraOpenNI();
+			!AstraOpenNI();
 
 			property int ProductID;
 			property int VendorID;
@@ -241,6 +242,7 @@ namespace MetriCam2
 			static void LogOpenNIError(String^ status);
 			static int _openNIInitCounter = 0;
 
+			bool _isDisposed = false;
 			int _irGain = 0;
 
 			void InitDepthStream();

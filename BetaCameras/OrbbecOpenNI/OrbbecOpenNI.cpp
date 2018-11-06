@@ -15,13 +15,36 @@
 
 MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 {
+	bool initSucceeded = OpenNIInit();
+	if (!initSucceeded)
+	{
+		log->Error("Could not initialize OpenNI");
+	}
+
 	// Init to most reasonable values; update during ConnectImpl
 	_emitterEnabled = true;
 	_irFlooderEnabled = false;
 }
 
+// In C++/CLI, a Dispose() method is automatically created when implementing the deterministic destructor.
 MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
 {
+	if (_isDisposed)
+	{
+		return;
+	}
+
+	// dispose managed data
+	// ...
+
+	// call finalizer
+	this->!AstraOpenNI();
+	_isDisposed = true;
+}
+
+// Finalizer
+MetriCam2::Cameras::AstraOpenNI::!AstraOpenNI() {
+	// free unmanaged data
 	try
 	{
 		if (IsConnected)
@@ -30,6 +53,7 @@ MetriCam2::Cameras::AstraOpenNI::~AstraOpenNI()
 		}
 	}
 	catch (...) {}
+	OpenNIShutdown();
 }
 
 void MetriCam2::Cameras::AstraOpenNI::LogOpenNIError(String^ status) 
@@ -40,6 +64,7 @@ void MetriCam2::Cameras::AstraOpenNI::LogOpenNIError(String^ status)
 bool MetriCam2::Cameras::AstraOpenNI::OpenNIInit() 
 {
 	int counter = System::Threading::Interlocked::Increment(_openNIInitCounter);
+	log->DebugFormat("OpenNIInit - counter incremented to {0}.", counter);
 	if (counter > 1) {
 		// OpenNI is already intialized
 		return true;
@@ -50,6 +75,7 @@ bool MetriCam2::Cameras::AstraOpenNI::OpenNIInit()
 	rc = openni::OpenNI::initialize();
 	if (openni::Status::STATUS_OK != rc) 
 	{
+		System::Threading::Interlocked::Decrement(_openNIInitCounter);
 		LogOpenNIError("Initialization of OpenNI failed.");
 		return false;
 	}
@@ -60,6 +86,7 @@ bool MetriCam2::Cameras::AstraOpenNI::OpenNIInit()
 bool MetriCam2::Cameras::AstraOpenNI::OpenNIShutdown() 
 {
 	int counter = System::Threading::Interlocked::Decrement(_openNIInitCounter);
+	log->DebugFormat("OpenNIShutdown - counter decremented to {0}.", counter);
 
 	if (0 != counter) 
 	{
@@ -80,7 +107,7 @@ bool MetriCam2::Cameras::AstraOpenNI::OpenNIShutdown()
 System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::AstraOpenNI::GetSerialToUriMappingOfAttachedCameras()
 {
 	bool initSucceeded = OpenNIInit();
-	if (!initSucceeded) 
+	if (!initSucceeded)
 	{
 		// Error already logged
 		return nullptr;
@@ -148,10 +175,12 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 		depthStreams[i].stop();
 		depthStreams[i].destroy();
 		device->close();
+		delete device;
 
 		serialToURI[gcnew String(serialNumbers[i])] = gcnew String(deviceUris[i]);
 	}
 
+	OpenNIShutdown();
 	return serialToURI;
 }
 
@@ -176,13 +205,6 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	_pCamData->depth = new openni::VideoStream();
 	_pCamData->ir = new openni::VideoStream();
 	_pCamData->color = new openni::VideoStream();
-
-	bool initSucceeded = OpenNIInit();
-	if (!initSucceeded) 
-	{
-		// Error already logged
-		return;
-	}
 
 	const char* deviceURI = openni::ANY_DEVICE;
 	if (!String::IsNullOrWhiteSpace(SerialNumber))
@@ -432,8 +454,6 @@ void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
 	delete _pCamData->color;
 	delete _pCamData->openNICam;
 	delete _pCamData;
-
-	OpenNIShutdown();
 }
 
 void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
@@ -525,7 +545,9 @@ void MetriCam2::Cameras::AstraOpenNI::InitDepthStream()
 	_pCamData->depth->setMirroringEnabled(false);
 	if (openni::STATUS_OK != rc)
 	{
-		throw gcnew Exception("Couldn't find depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
+		String^ msg = "Couldn't create depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError());
+		log->Error(msg);
+		throw gcnew Exception(msg);
 	}
 }
 
@@ -536,8 +558,7 @@ void MetriCam2::Cameras::AstraOpenNI::InitIRStream()
 	_pCamData->ir->setMirroringEnabled(false);
 	if (openni::STATUS_OK != rc)
 	{
-		log->Error("Couldn't find IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-		openni::OpenNI::shutdown();
+		log->Error("Couldn't create IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
 		return;
 	}
 }
@@ -549,8 +570,7 @@ void MetriCam2::Cameras::AstraOpenNI::InitColorStream()
 	_pCamData->color->setMirroringEnabled(false);
 	if (openni::STATUS_OK != rc)
 	{
-		log->Error("Couldn't find color stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
-		openni::OpenNI::shutdown();
+		log->Error("Couldn't create color stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
 		return;
 	}
 }
@@ -580,14 +600,12 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		{
 			log->Error("Couldn't start depth stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
 			_pCamData->depth->destroy();
-			openni::OpenNI::shutdown();
 			return;
 		}
 
 		if (!_pCamData->depth->isValid())
 		{
 			log->Error("No valid depth stream. Exiting\n");
-			openni::OpenNI::shutdown();
 			return;
 		}
 
@@ -622,14 +640,12 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		{
 			log->Error("Couldn't start IR stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
 			_pCamData->ir->destroy();
-			openni::OpenNI::shutdown();
 			return;
 		}
 
 		if (!_pCamData->ir->isValid())
 		{
 			log->Error("No valid IR stream. Exiting\n");
-			openni::OpenNI::shutdown();
 			return;
 		}
 
@@ -656,14 +672,12 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		{
 			log->Error("Couldn't start color stream:\n" + gcnew String(openni::OpenNI::getExtendedError()));
 			_pCamData->color->destroy();
-			openni::OpenNI::shutdown();
 			return;
 		}
 
 		if (!_pCamData->color->isValid())
 		{
 			log->Error("No valid color stream. Exiting\n");
-			openni::OpenNI::shutdown();
 			return;
 		}
 
