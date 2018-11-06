@@ -9,23 +9,28 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using MetriPrimitives.Data;
+using Metrilus.Logging;
 
 namespace MetriCam2.Samples.MinimalSample
 {
     class Program
     {
+        static MetriLog _log = new MetriLog();
+
         static void Main(string[] args)
         {
+            _log.LogLevel = MetriLog.Levels.All;
+
             Console.WriteLine("------------------------------------------");
             Console.WriteLine("MetriCam 2 Minimal Sample.");
             Console.WriteLine("Get MetriCam 2 at http://www.metricam.net/");
             Console.WriteLine("------------------------------------------");
 
             // Create camera object
-            VisionaryT camera;
+            AstraOpenNI camera;
             try
             {
-                camera = new VisionaryT();
+                camera = new AstraOpenNI();
             }
             catch (Exception e)
             {
@@ -36,39 +41,70 @@ namespace MetriCam2.Samples.MinimalSample
                 return;
             }
 
-            camera.IPAddress = "192.168.1.10";
+            camera.SerialNumber = "18042730138"; // 18042730138 18042730319
 
-            // Connect, get one frame, disconnect
-            Console.WriteLine("Connecting camera");
+            #region Connect and Disconnect
             camera.Connect();
+            Console.WriteLine($"Vendor = {camera.Vendor}");
+            Console.WriteLine($"Model  = {camera.Model}");
+            Console.WriteLine($"SerialNumber = {camera.SerialNumber}");
+            camera.Disconnect();
+            #endregion
 
-            //while (true) { }
+            #region Get intrinsics and extrinsics
+            camera.Connect();
+            camera.Update();
+            // ZImage == Intensity
+            ProjectiveTransformationZhang intrinsics_Intensity = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Intensity);
+            ProjectiveTransformationZhang intrinsics_Color = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Color);
+            RigidBodyTransformation depthToColor = camera.GetExtrinsics(ChannelNames.ZImage, ChannelNames.Color);
+            camera.Disconnect();
+            #endregion
 
-            Console.WriteLine("Fetching one frame");
-            for(int i = 0; i < 100; i++)
+            #region Activate and deactivate channels
+            camera.Connect();
+            // This should work
+            camera.ActivateChannel(ChannelNames.Color);
+            // This should throw
+            try
+            {
+                camera.ActivateChannel(ChannelNames.Intensity);
+            }
+            catch { }
+            // This should work
+            camera.DeactivateChannel(ChannelNames.Color);
+            camera.DeactivateChannel(ChannelNames.ZImage);
+            camera.DeactivateChannel(ChannelNames.Point3DImage);
+            camera.ActivateChannel(ChannelNames.Intensity);
+            camera.Disconnect();
+            #endregion
+
+            #region Fetching frames
+            Console.WriteLine("Fetching frames");
+            camera.Connect();
+            camera.DeactivateChannel(ChannelNames.Intensity);
+            camera.ActivateChannel(ChannelNames.ZImage);
+
+            string channelName = ChannelNames.ZImage;
+            for (int i = 0; i < 10; i++)
             {
                 camera.Update();
-
                 try
                 {
-                    Console.WriteLine("Accessing distance data");
-                    FloatCameraImage distancesData = (FloatCameraImage)camera.CalcChannel(ChannelNames.Intensity);
-                    FloatImage fImg = new FloatImage(ref distancesData);
+                    Console.Write($"Accessing {channelName} data");
+                    FloatCameraImage ampData = (FloatCameraImage)camera.CalcChannel(channelName);
+                    FloatImage fImg = new FloatImage(ref ampData);
                     string tmp = fImg.ShowInDebug;
+                    Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
                 }
                 catch (ArgumentException ex)
                 {
-                    Console.WriteLine(String.Format("Error getting channel {0}: {1}.", ChannelNames.ZImage, ex.Message));
+                    Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
                 }
             }
-            
 
-
-
-            
-
-            Console.WriteLine("Disconnecting camera");
             camera.Disconnect();
+            #endregion
 
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();

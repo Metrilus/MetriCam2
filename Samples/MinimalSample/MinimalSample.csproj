@@ -10,9 +10,24 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MetriCam2.Samples.MinimalSample</RootNamespace>
     <AssemblyName>MinimalSample</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -64,11 +79,11 @@
     </Reference>
     <Reference Include="MetriPrimitives, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Z:\releases\Metrilus.Framework\v.19.2.0.1\lib\MetriPrimitives.dll</HintPath>
+      <HintPath>Z:\releases\Metrilus.Framework\v.19.4.0.42\lib\MetriPrimitives.dll</HintPath>
     </Reference>
     <Reference Include="MetriPrimitivesNative, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Z:\releases\Metrilus.Framework\v.19.2.0.1\lib\MetriPrimitivesNative.dll</HintPath>
+      <HintPath>Z:\releases\Metrilus.Framework\v.19.4.0.42\lib\MetriPrimitivesNative.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -87,6 +102,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\BetaCameras\OrbbecOpenNI\OrbbecOpenNI.vcxproj">
+      <Project>{c82202f8-55db-4511-b006-c88ff3e4427e}</Project>
+      <Name>OrbbecOpenNI</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\BetaCameras\Sick.VisionaryT\Sick.VisionaryT.csproj">
       <Project>{de18d143-c624-4941-b8a1-0f91262d3350}</Project>
       <Name>Sick.VisionaryT</Name>
@@ -101,6 +120,13 @@
       <Link>.licenseheader</Link>
     </None>
     <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
