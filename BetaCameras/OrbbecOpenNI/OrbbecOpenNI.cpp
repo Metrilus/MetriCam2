@@ -125,17 +125,16 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 		// Open device by Uri
 		openni::Device* device = new openni::Device;
 		deviceUri = deviceList[i].getUri();
-
 		rc = device->open(deviceUri);
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't open device : ", deviceUris[i]);
-			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't open device {0}", gcnew String(deviceUri));
+			log->WarnFormat("GetSerialToUriMappingOfAttachedCameras: Couldn't open device {0}", gcnew String(deviceUri));
 			continue;
 		}
 
 		// Read serial number
 		int data_size = sizeof(serialNumber);
-		device->getProperty((int)ONI_DEVICE_PROPERTY_SERIAL_NUMBER, (void *)serialNumber, &data_size);
+		device->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serialNumber, &data_size);
 
 		// Close device
 		device->close();
@@ -188,12 +187,13 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	// Read serial number
 	char serialNumber[12];
 	int data_size = sizeof(serialNumber);
-	Device.getProperty((int)ONI_DEVICE_PROPERTY_SERIAL_NUMBER, (void *)serialNumber, &data_size);
+	Device.getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serialNumber, &data_size);
 	SerialNumber = gcnew String(serialNumber);
 
 	VendorID = _pCamData->openNICam->m_vid;
 	ProductID = _pCamData->openNICam->m_pid;
-	//_pCamData->openNICam->ldp_set(true); //Ensure eye-safety by turning on the proximity sensor
+
+	SetProximitySensorStatus(true); // Ensure eye-safety by turning on the proximity sensor
 
 	// Start depth stream
 	Device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
@@ -214,111 +214,72 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		}
 	}
 
-	_irGain = GetIRGain();
 	// Turn Emitter on if any depth channel is active.
 	// (querying from device here would return wrong value)
 	// (do not use properties as they check against their current value which might be wrong)
-	//_emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
-	//SetEmitterStatus(_emitterEnabled);
-	_irFlooderEnabled = false; // Default to IR flooder off.
-	SetIRFlooderStatus(_irFlooderEnabled);
+	bool emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
+	SetEmitterStatus(emitterEnabled);
+	bool irFlooderEnabled = false; // Default to IR flooder off.
+	SetIRFlooderStatus(irFlooderEnabled);
+}
+
+bool MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
+{
+	// Reading the emitter status does not work yet. Check in future version of experimental SDK.
+	return _emitterEnabled;
+	//int laser_en = 0;
+	//int size = 4;
+	//Device.getProperty(openni::OBEXTENSION_ID_LASER_EN, (uint8_t*)&laser_en, &size);
+	//return (bool)laser_en;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
 {
-	if (_pCamData->openNICam->m_vid != 0x1d27) //Check if our device is not an Asus-Carmine device
-	{
-		if (_pCamData->openNICam->ldp_set(on) != openni::STATUS_OK)
-		{
-			LogOpenNIError("LDP set failed");
-		}
-		System::Threading::Thread::Sleep(100); //Is required, otherwise turning off the emitter did not work in some cases, also not when just waiting 50ms
-	}
-
-	// Try to activate next code block in future version of experimental SDK (class "cmd"). Currently, the LDP status is alwas unknown
-	//LDPStatus status;
-	//LDPStatus statusToSet = on ? LDPStatus::LDP_ON : LDPStatus::LDP_OFF;
-	////We need to be sure that the proximity sensor status was set properly
-	//do
-	//{
-	//	camData->openNICam->ldp_get(status);
-	//	System::Threading::Thread::Sleep(1);
-	//}
-	//while (status != statusToSet);
-
-	if (_pCamData->openNICam->emitter_set(on) != openni::STATUS_OK)
-	{
-		LogOpenNIError("Emitter set failed");
-	}
+	const int laser_en = on ? 0x01 : 0x00;
+	Device.setProperty(openni::OBEXTENSION_ID_LASER_EN, (uint8_t*)&laser_en, 4);
+	_emitterEnabled = on;
+	log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
 }
 
-String^ MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
+bool MetriCam2::Cameras::AstraOpenNI::GetProximitySensorStatus()
 {
-	LaserStatus status;
-	if (_pCamData->openNICam->emitter_get(status) != openni::STATUS_OK)
-	{
-		LogOpenNIError("Emitter get failed");
-	}
-	String^ statusString = "Unknown";
-	if (status == LaserStatus::LASER_OFF)
-	{
-		statusString = "Off";
-	}
-	else if (status == LaserStatus::LASER_ON)
-	{
-		statusString = "On";
-	}
-	log->DebugFormat("Emitter status is: {0}", statusString);
-	return statusString;
+	int ldp_en = 0;
+	int size = 4;
+	Device.getProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, &size);
+	return (bool)ldp_en;
+}
+
+void MetriCam2::Cameras::AstraOpenNI::SetProximitySensorStatus(bool on)
+{
+	const int ldp_en = on ? 0x01 : 0x00;
+	Device.setProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, 4);
+	log->DebugFormat("Proximity sensor state set to: {0}", on.ToString());
+}
+
+bool MetriCam2::Cameras::AstraOpenNI::GetIRFlooderStatus()
+{
+	// Reading the IrFlood status does not work yet. Check in future version of experimental SDK.
+	return _irFlooderEnabled;
+	//int status = 0;
+	//int size = 4;
+	//Device.getProperty(XN_MODULE_PROPERTY_IRFLOOD_STATE, &status, &size);
+	//return (bool)status;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetIRFlooderStatus(bool on)
 {
-	// Try to activate next code block in future version of experimental SDK (class "cmd"). Currently, the IrFloodLedStatus status is alwas unknown
-	//IrFloodLedStatus statusToSet = on ? IrFloodLedStatus::IR_LED_ON : IrFloodLedStatus::IR_LED_OFF;
-	//camData->openNICam->ir_flood_set(statusToSet);
-	////We need to be sure that the proximity sensor status was set properly
-	//IrFloodLedStatus status;
-	//do
-	//{
-	//	camData->openNICam->ir_flood_get(status);
-	//	System::Threading::Thread::Sleep(1);
-	//}
-	//while (status != statusToSet);
-
-	if (_pCamData->openNICam->ir_flood_set(on) != openni::STATUS_OK)
-	{
-		LogOpenNIError("ir flooder set failed");
-	}
+	const int status = on ? 0x01 : 0x00;
+	Device.setProperty(XN_MODULE_PROPERTY_IRFLOOD_STATE, status);
+	_irFlooderEnabled = on;
+	log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
 }
 
-String^ MetriCam2::Cameras::AstraOpenNI::GetIRFlooderStatus()
+int MetriCam2::Cameras::AstraOpenNI::GetIRGain()
 {
-	IrFloodLedStatus status;
-	if (_pCamData->openNICam->ir_flood_get(status) != openni::STATUS_OK)
-	{
-		LogOpenNIError("ir_flood_get failed");
-	}
-	String^ statusString = "Unknown";
-	if (status == IrFloodLedStatus::IR_LED_OFF)
-	{
-		statusString = "Off";
-	}
-	else if (status == IrFloodLedStatus::IR_LED_ON)
-	{
-		statusString = "On";
-	}
-	log->DebugFormat("IR flooder status is: {0}", statusString);
-	return statusString;
-}
-
-template<typename ... Args>
-string string_format(const std::string& format, Args ... args)
-{
-	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
-	unique_ptr<char[]> buf(new char[size]);
-	snprintf(buf.get(), size, format.c_str(), args ...);
-	return string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+	int gain = 0;
+	int size = 4;
+	Device.getProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, &size);
+	return gain;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetIRGain(int value)
@@ -331,82 +292,32 @@ void MetriCam2::Cameras::AstraOpenNI::SetIRGain(int value)
 	{
 		value = IR_Gain_MAX;
 	}
-
-	string buf = string_format("0x%x", value);
-	if (!_pCamData->openNICam->ir_gain_set(buf.c_str()))
-	{
-		LogOpenNIError("Set IR gain failed");
-	}
-	else
-	{
-		log->DebugFormat("IR gain is set to: {0}", gcnew String(buf.c_str()));
-	}
+	int gain = value;
+	int size = 4;
+	Device.setProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, size);
 }
 
-unsigned short MetriCam2::Cameras::AstraOpenNI::GetIRGain()
+int MetriCam2::Cameras::AstraOpenNI::GetIRExposure()
 {
-	_pCamData->openNICam->ir_gain_get();
-	return _pCamData->openNICam->m_I2CReg;
+	int exposure = 0;
+	int size = 4;
+	Device.getProperty(openni::OBEXTENSION_ID_IR_EXP, (uint8_t*)&exposure, &size);
+	return exposure;
 }
 
-void MetriCam2::Cameras::AstraOpenNI::SetIRExposure(unsigned int value)
+void MetriCam2::Cameras::AstraOpenNI::SetIRExposure(int value)
 {
-	unsigned int irExposure;
 	if (value < IR_Exposure_MIN)
 	{
-		irExposure = IR_Exposure_MIN;
+		value = IR_Exposure_MIN;
 	}
 	else if (value > IR_Exposure_MAX)
 	{
-		irExposure = IR_Exposure_MAX;
+		value = IR_Exposure_MAX;
 	}
-	else
-	{
-		irExposure = value;
-	}
-
-	if (_pCamData->openNICam->ir_exposure_set(irExposure) != openni::STATUS_OK)
-	{
-		LogOpenNIError("Set IR exposure failed");
-	}
-	else
-	{
-		log->DebugFormat("IR exposure is set to: {0}", irExposure.ToString());
-	}
-	//camData->depth.stop();
-	if (!IsChannelActive(ChannelNames::Intensity))
-	{
-		IrStream.start();
-		if (IrStream.isValid())
-		{
-			VideoMode videomode = IrStream.getVideoMode();
-			videomode.setPixelFormat(openni::PIXEL_FORMAT_GRAY16);
-			videomode.setResolution(640, 480);
-			IrStream.setVideoMode(videomode);
-		}
-		IrStream.stop();
-	}
-	if (!IsChannelActive(ChannelNames::ZImage))
-	{
-		DepthStream.start();
-		if (DepthStream.isValid())
-		{
-			VideoMode videoMode = DepthStream.getVideoMode();
-			videoMode.setResolution(640, 480);
-			DepthStream.setVideoMode(videoMode);
-		}
-		DepthStream.stop();
-	}
-}
-
-unsigned int MetriCam2::Cameras::AstraOpenNI::GetIRExposure()
-{
-	unsigned int exposure;
-	if (_pCamData->openNICam->ir_exposure_get(exposure) != openni::STATUS_OK)
-	{
-		LogOpenNIError("Get IR exposure failed");
-	}
-	return exposure;
+	int exposure = value;
+	int size = 4;
+	Device.setProperty(openni::OBEXTENSION_ID_IR_EXP, (uint8_t*)&exposure, size);
 }
 
 void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
@@ -543,7 +454,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 			throw gcnew Exception("IR and depth are not allowed to be active at the same time. Please deactivate channel \"Intensity\" before activating channel \"ZImage\" or \"Point3DImage\"");
 		}
 
-		auto irGainBefore = _irGain;
+		auto irGainBefore = GetIRGain();
 
 		openni::VideoMode depthVideoMode = DepthStream.getVideoMode();
 		depthVideoMode.setResolution(640, 480);

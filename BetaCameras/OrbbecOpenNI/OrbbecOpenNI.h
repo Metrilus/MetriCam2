@@ -7,11 +7,10 @@
 #include "cmd.h"
 
 //Adpated from SimpleViewer of experimental interface
-#define IR_Exposure_MAX 4096
-#define IR_Exposure_MIN 0
-#define IR_Exposure_SCALE 256
-#define IR_Gain_MIN 8
-#define IR_Gain_MAX 96
+const int IR_Exposure_MAX = 1 << 14;
+const int IR_Exposure_MIN = 0;
+const int IR_Gain_MIN = 8;
+const int IR_Gain_MAX = 256;
 
 using namespace System;
 using namespace System::ComponentModel;
@@ -84,65 +83,32 @@ namespace MetriCam2
 
 			property bool EmitterEnabled
 			{
-				bool get()
+				bool get() { return GetEmitterStatus(); }
+				void set(bool value) { SetEmitterStatus(value); }
+			}
+
+			property unsigned int IRExposure
+			{
+				unsigned int get() { return GetIRExposure(); }
+				void set(unsigned int value)
 				{
-					// Reading the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
-					return _emitterEnabled;
-				}
-				void set(bool value)
-				{
-					_emitterEnabled = value;
-					SetEmitterStatus(_emitterEnabled);
-					log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
+					auto irGainBefore = GetIRGain();
+					SetIRExposure(value);
+					// Set IRExposure resets the gain to its default value (96 for Astra and 8 for AstraS). We have to set the gain to the memorized value (member irGain).
+					SetIRGain(irGainBefore);
 				}
 			}
 
 			property bool IRFlooderEnabled
 			{
-				bool get()
-				{
-					// Reading the IrFlood status via the "cmd" class does not yet work. Check in future version of experimental SDK.
-					return _irFlooderEnabled;
-				}
-				void set(bool value)
-				{
-					_irFlooderEnabled = value;
-					SetIRFlooderStatus(_irFlooderEnabled);
-					log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
-				}
+				bool get() { return GetIRFlooderStatus(); }
+				void set(bool value) { SetIRFlooderStatus(value); }
 			}
 
 			property int IRGain
 			{
-				int get()
-				{
-					return _irGain;
-				}
-				void set(int value)
-				{
-					if (value != _irGain)
-					{
-						_irGain = value;
-						SetIRGain(_irGain);
-					}
-				}
-			}
-
-			// Implementation in experimental interface seems to be buggy, changing the value destroys the distance image
-			property unsigned int IRExposure
-			{
-				unsigned int get()
-				{
-					//ir_exposure_get in cmd class not yet functional and can destroy the current state of the camera
-					throw gcnew NotImplementedException();
-					//return GetIRExposure();
-				}
-				void set(unsigned int value)
-				{
-					SetIRExposure(value);
-					// Set IRExposure resets the gain to its default value (96 for Astra and 8 for AstraS). We have to set the gain to the memorized value (member irGain).
-					SetIRGain(_irGain);
-				}
+				int get() { return GetIRGain(); }
+				void set(int value) { SetIRGain(value); }
 			}
 
 			static System::Collections::Generic::Dictionary<String^, String^>^ GetSerialToUriMappingOfAttachedCameras();
@@ -250,6 +216,19 @@ namespace MetriCam2
 				}
 			}
 
+			property ParamDesc<int>^ IRExposureDesc
+			{
+				inline ParamDesc<int>^ get()
+				{
+					ParamDesc<int>^ res = ParamDesc::BuildRangeParamDesc(IR_Exposure_MIN, IR_Exposure_MAX);
+					res->Unit = "";
+					res->Description = "IR exposure";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
 			property ParamDesc<bool>^ IRFlooderEnabledDesc
 			{
 				inline ParamDesc<bool>^ get()
@@ -262,20 +241,6 @@ namespace MetriCam2
 					return res;
 				}
 			}
-
-			// Disabled while the IRExposure getter is not implemented
-			//property ParamDesc<unsigned int>^ IRExposureDesc
-			//{
-			//	inline ParamDesc<unsigned int>^ get()
-			//	{
-			//		ParamDesc<unsigned int>^ res = gcnew ParamDesc<unsigned int>();
-			//		res->Unit = "";
-			//		res->Description = "IR exposure";
-			//		res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-			//		res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-			//		return res;
-			//	}
-			//}
 
 			property ParamDesc<int>^ IRGainDesc
 			{
@@ -301,26 +266,28 @@ namespace MetriCam2
 			static int _openNIInitCounter = 0;
 
 			bool _isDisposed = false;
-			int _irGain = 0;
 
 			void InitDepthStream();
 			void InitIRStream();
 			void InitColorStream();
 
-			String^ GetIRFlooderStatus();
+			bool _irFlooderEnabled;
+			bool GetIRFlooderStatus();
 			void SetIRFlooderStatus(bool on);
 
-			String^ GetEmitterStatus();
+			bool _emitterEnabled;
+			bool GetEmitterStatus();
 			void SetEmitterStatus(bool on);
 
+			bool GetProximitySensorStatus();
+			void SetProximitySensorStatus(bool on);
+
+			int GetIRGain();
 			void SetIRGain(int value);
-			unsigned short GetIRGain();
 
-			void SetIRExposure(unsigned int value);
-			unsigned int GetIRExposure();
+			int GetIRExposure();
+			void SetIRExposure(int value);
 
-			bool _emitterEnabled;
-			bool _irFlooderEnabled;
 			OrbbecNativeCameraData* _pCamData;
 			int _vid;
 			int _pid;
