@@ -25,20 +25,32 @@ namespace MetriCam2
 {
 	namespace Cameras 
 	{
-
 		struct OrbbecNativeCameraData
 		{
+			OrbbecNativeCameraData()
+			{
+				openNICam = new cmd();
+			}
+			~OrbbecNativeCameraData()
+			{
+				if (openNICam != nullptr)
+				{
+					delete openNICam;
+				}
+				openNICam = nullptr;
+			}
+
 			cmd* openNICam;
 
-			openni::VideoStream* depth;
+			openni::VideoStream depth;
 			int depthWidth;
 			int depthHeight;
 
-			openni::VideoStream* ir;
+			openni::VideoStream ir;
 			int irWidth;
 			int irHeight;
 
-			openni::VideoStream* color;
+			openni::VideoStream color;
 			int colorWidth;
 			int colorHeight;
 		};
@@ -179,6 +191,35 @@ namespace MetriCam2
 			virtual void DeactivateChannelImpl(String^ channelName) override;
 			
 		private:
+			property openni::Device& Device
+			{
+				openni::Device& get(void)
+				{
+					return _pCamData->openNICam->device;
+				}
+			}
+			property openni::VideoStream& DepthStream
+			{
+				openni::VideoStream& get(void)
+				{
+					return _pCamData->depth;
+				}
+			}
+			property openni::VideoStream& IrStream
+			{
+				openni::VideoStream& get(void)
+				{
+					return _pCamData->ir;
+				}
+			}
+			property openni::VideoStream& ColorStream
+			{
+				openni::VideoStream& get(void)
+				{
+					return _pCamData->color;
+				}
+			}
+
 			property ParamDesc<bool>^ EmitterEnabledDesc
 			{
 				inline ParamDesc<bool> ^get()
