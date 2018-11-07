@@ -1,15 +1,15 @@
-﻿using MetriCam2;
-using MetriCam2.Cameras;
+﻿using Metrilus.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MetriCam2.CameraTests
 {
     public static class CamerasHelper
     {
+        private static MetriLog _log = new MetriLog();
+        private static List<Camera> _connectableCameras = null;
+
         /// <summary>
         /// Returns an instance of each camera type.
         /// </summary>
@@ -22,9 +22,18 @@ namespace MetriCam2.CameraTests
         {
             get
             {
-                CameraManagement.ScanForCameraDLLs = true;
-                var cameras = CameraManagement.GetConnectableCameras();
-                foreach (var item in cameras)
+                if (null == _connectableCameras)
+                {
+                    _connectableCameras = new List<Camera>();
+                    CameraManagement.ScanForCameraDLLs = true;
+                    _connectableCameras = CameraManagement.GetConnectableCameras().Where(c => "CameraTemplate" != c.Name).ToList();
+                    if (0 == _connectableCameras.Count)
+                    {
+                        _log.Info("No connectable cameras found");
+                    }
+                }
+
+                foreach (var item in _connectableCameras)
                 {
                     yield return item;
                 }
