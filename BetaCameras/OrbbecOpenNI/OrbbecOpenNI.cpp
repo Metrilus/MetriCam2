@@ -114,12 +114,9 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 	}
 
 	openni::Status rc = openni::STATUS_OK;
+	const char* deviceUris[MAX_DEVICES];
+	char serialNumbers[MAX_DEVICES][12]; // Astra serial number has 12 numbers
 
-	openni::VideoStream    depthStreams[MAX_DEVICES];
-	const char*            deviceUris[MAX_DEVICES];
-	char                   serialNumbers[MAX_DEVICES][12]; // Astra serial number has 12 numbers
-
-														   // Enumerate devices
 	openni::Array<openni::DeviceInfo> deviceList;
 	openni::OpenNI::enumerateDevices(&deviceList);
 	int devicesCount = deviceList.getSize();
@@ -145,34 +142,11 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 			continue;
 		}
 
-		rc = depthStreams[i].create(*device, openni::SENSOR_DEPTH);
-		if (openni::Status::STATUS_OK != rc) {
-			// CheckOpenNIError(rc, "Couldn't create stream on device : ", deviceUris[i]);
-			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't create depth stream on device {0}", gcnew String(deviceUris[i]));
-			continue;
-		}
-
 		// Read serial number
 		int data_size = sizeof(serialNumbers[i]);
 		device->getProperty((int)ONI_DEVICE_PROPERTY_SERIAL_NUMBER, (void *)serialNumbers[i], &data_size);
 
-		rc = depthStreams[i].start();
-		if (openni::Status::STATUS_OK != rc) {
-			// CheckOpenNIError(rc, "Couldn't create stream on device : ", serialNumbers[i]);
-			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't start depth stream on device {0}", gcnew String(serialNumbers[i]));
-			continue;
-		}
-
-		if (!depthStreams[i].isValid())
-		{
-			// printf("SimpleViewer: No valid streams. Exiting\n");
-			log->WarnFormat("GetSerialNumberOfAttachedCameras: No valid depth stream");
-			continue;
-		}
-
-		// Close depth stream and device
-		depthStreams[i].stop();
-		depthStreams[i].destroy();
+		// Close device
 		device->close();
 		delete device;
 
