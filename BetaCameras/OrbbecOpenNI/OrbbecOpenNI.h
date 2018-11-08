@@ -117,6 +117,12 @@ namespace MetriCam2
 				void set(int value) { SetIRGain(value); }
 			}
 
+			property bool ProximitySensorEnabled
+			{
+				bool get() { return GetProximitySensorStatus(); }
+				void set(bool value) { SetProximitySensorStatus(value); }
+			}
+
 			static System::Collections::Generic::Dictionary<String^, String^>^ GetSerialToUriMappingOfAttachedCameras();
 
 			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
@@ -255,6 +261,19 @@ namespace MetriCam2
 					ParamDesc<int>^ res = ParamDesc::BuildRangeParamDesc(IR_Gain_MIN, IR_Gain_MAX);
 					res->Unit = "";
 					res->Description = "IR gain";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property ParamDesc<bool>^ ProximitySensorEnabledDesc
+			{
+				inline ParamDesc<bool>^ get()
+				{
+					ParamDesc<bool>^ res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "Proximity sensor is enabled";
 					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
 					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
 					return res;
