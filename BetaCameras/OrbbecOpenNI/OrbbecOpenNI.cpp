@@ -675,7 +675,7 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 	}
 
 	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
-	int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+	const int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
 	FloatCameraImage^ depthDataMeters = gcnew FloatCameraImage(depthFrame.getWidth(), depthFrame.getHeight());
 	depthDataMeters->ChannelName = ChannelNames::ZImage;
 
@@ -708,9 +708,7 @@ ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 	}
 
 	Bitmap^ bitmap = gcnew Bitmap(_pCamData->colorWidth, _pCamData->colorHeight, System::Drawing::Imaging::PixelFormat::Format24bppRgb);
-
 	System::Drawing::Rectangle^ imageRect = gcnew System::Drawing::Rectangle(0, 0, _pCamData->colorWidth, _pCamData->colorHeight);
-
 	System::Drawing::Imaging::BitmapData^ bmpData = bitmap->LockBits(*imageRect, System::Drawing::Imaging::ImageLockMode::WriteOnly, bitmap->PixelFormat);
 
 	const unsigned char* source = (unsigned char*)colorFrame.getData();
@@ -751,7 +749,7 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 	}
 
 	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
-	int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
+	const int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
 	Point3fCameraImage^ pointsImage = gcnew Point3fCameraImage(depthFrame.getWidth(), depthFrame.getHeight());
 	pointsImage->ChannelName = ChannelNames::Point3DImage;
 
@@ -789,13 +787,13 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 	}
 
 	const openni::Grayscale16Pixel* pIRRow = (const openni::Grayscale16Pixel*)irFrame.getData();
-	int rowSize = irFrame.getStrideInBytes() / sizeof(openni::Grayscale16Pixel);
+	const int rowSize = irFrame.getStrideInBytes() / sizeof(openni::Grayscale16Pixel);
 	FloatCameraImage^ irData = gcnew FloatCameraImage(irFrame.getWidth(), irFrame.getHeight(), 0.0f);
 	irData->ChannelName = ChannelNames::Intensity;
 
-	// Compensate for offset bug: Translate infrared frame by 8 pixels in vertical direction to match infrared with depth image.
-	// Leave first 8 rows black. Constructor of FloatCameraImage assigns zero to every pixel as initial value by default.
-	int yTranslation = 8;
+	// Compensate for offset bug: Translate infrared frame by 16 pixels in vertical direction to match infrared with depth image.
+	// Leave first 16 rows black. Constructor of FloatCameraImage assigns zero to every pixel as initial value by default.
+	const int yTranslation = 16;
 
 	for (int y = 0; y < irFrame.getHeight() - yTranslation; ++y)
 	{
