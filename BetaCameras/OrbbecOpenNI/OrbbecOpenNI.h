@@ -3,6 +3,7 @@
 
 #pragma once
 #include <msclr/marshal.h>
+#include <PS1080.h>
 #include <OpenNI.h>
 #include "cmd.h"
 
@@ -26,20 +27,7 @@ namespace MetriCam2
 	{
 		struct OrbbecNativeCameraData
 		{
-			OrbbecNativeCameraData()
-			{
-				openNICam = new cmd();
-			}
-			~OrbbecNativeCameraData()
-			{
-				if (openNICam != nullptr)
-				{
-					delete openNICam;
-				}
-				openNICam = nullptr;
-			}
-
-			cmd* openNICam;
+			openni::Device device;
 
 			openni::VideoStream depth;
 			int depthWidth;
@@ -190,7 +178,7 @@ namespace MetriCam2
 			{
 				openni::Device& get()
 				{
-					return _pCamData->openNICam->device;
+					return _pCamData->device;
 				}
 			}
 			property openni::VideoStream& DepthStream

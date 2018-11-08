@@ -177,7 +177,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		deviceURI = marshalContext.marshal_as<const char*>(serialsToUris[SerialNumber]);
 	}
 
-	int rc = _pCamData->openNICam->init(deviceURI);
+	int rc = _pCamData->device.open(deviceURI);
 	if (rc != openni::Status::STATUS_OK)
 	{
 		auto msg = String::Format("{0}: Could not init connection to device {1}.", Name, SerialNumber);
@@ -190,8 +190,9 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	Device.getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serialNumber, &data_size);
 	SerialNumber = gcnew String(serialNumber);
 
-	VendorID = _pCamData->openNICam->m_vid;
-	ProductID = _pCamData->openNICam->m_pid;
+	openni::DeviceInfo dInfo = Device.getDeviceInfo();
+	VendorID = dInfo.getUsbVendorId();
+	ProductID = dInfo.getUsbProductId();
 
 	char deviceType[32] = { 0 };
 	int size = 32;
