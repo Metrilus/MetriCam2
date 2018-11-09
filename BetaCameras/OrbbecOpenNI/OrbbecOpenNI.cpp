@@ -7,8 +7,6 @@
 
 #include "OrbbecOpenNI.h"
 
-#define MAX_DEVICES 20  // There is no limitations, we choose 20 as "reasonable" value in real use case.
-
 // TODO:
 // * support different resolutions (not only VGA) for channels ZImage and Intensity and check whether IR gain/exposure set feature is still working.
 // * At least the mode 1280x1024 seems to be not compatible with the IR exposure set feature. For QVGA there seem to be problems to set the exposure when the Intensity channel is activated.
@@ -114,43 +112,35 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 	}
 
 	openni::Status rc = openni::STATUS_OK;
-	const char* deviceUris[MAX_DEVICES];
-	char serialNumbers[MAX_DEVICES][12]; // Astra serial number has 12 numbers
+	const char* deviceUri;
+	char serialNumber[12]; // Astra serial number has 12 characters
+	System::Collections::Generic::Dictionary<String^, String^>^ serialToURI = gcnew System::Collections::Generic::Dictionary<String^, String^>();
 
 	openni::Array<openni::DeviceInfo> deviceList;
 	openni::OpenNI::enumerateDevices(&deviceList);
 	int devicesCount = deviceList.getSize();
 
-	if (devicesCount >= MAX_DEVICES)
-	{
-		log->ErrorFormat("The number of devices ({0}) exceeds the number supported by MetriCam 2 ({1}).", devicesCount, MAX_DEVICES);
-		OpenNIShutdown();
-		return nullptr;
-	}
-
-	System::Collections::Generic::Dictionary<String^, String^>^ serialToURI = gcnew System::Collections::Generic::Dictionary<String^, String^>();
-
 	for (int i = 0; i < devicesCount; i++) {
 		// Open device by Uri
 		openni::Device* device = new openni::Device;
-		deviceUris[i] = deviceList[i].getUri();
+		deviceUri = deviceList[i].getUri();
 
-		rc = device->open(deviceUris[i]);
+		rc = device->open(deviceUri);
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't open device : ", deviceUris[i]);
-			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't open device {0}", gcnew String(deviceUris[i]));
+			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't open device {0}", gcnew String(deviceUri));
 			continue;
 		}
 
 		// Read serial number
-		int data_size = sizeof(serialNumbers[i]);
-		device->getProperty((int)ONI_DEVICE_PROPERTY_SERIAL_NUMBER, (void *)serialNumbers[i], &data_size);
+		int data_size = sizeof(serialNumber);
+		device->getProperty((int)ONI_DEVICE_PROPERTY_SERIAL_NUMBER, (void *)serialNumber, &data_size);
 
 		// Close device
 		device->close();
 		delete device;
 
-		serialToURI[gcnew String(serialNumbers[i])] = gcnew String(deviceUris[i]);
+		serialToURI[gcnew String(serialNumber)] = gcnew String(deviceUri);
 	}
 
 	OpenNIShutdown();
