@@ -193,6 +193,15 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	VendorID = _pCamData->openNICam->m_vid;
 	ProductID = _pCamData->openNICam->m_pid;
 
+	char deviceType[32] = { 0 };
+	int size = 32;
+	Device.getProperty(openni::OBEXTENSION_ID_DEVICETYPE, deviceType, &size);
+	DeviceType = gcnew String(deviceType);
+	if (DeviceType->StartsWith("Orbbec "))
+	{
+		Model = DeviceType->Substring(7);
+	}
+
 	SetProximitySensorStatus(true); // Ensure eye-safety by turning on the proximity sensor
 
 	// Start depth stream

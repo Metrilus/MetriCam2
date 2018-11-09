@@ -80,6 +80,12 @@ namespace MetriCam2
 			private:
 				void set(int value) { _vid = value; }
 			}
+			property String^ DeviceType
+			{
+				String^ get() { return _deviceType; }
+			private:
+				void set(String^ value) { _deviceType = value; }
+			}
 
 			property bool EmitterEnabled
 			{
@@ -291,6 +297,7 @@ namespace MetriCam2
 			OrbbecNativeCameraData* _pCamData;
 			int _vid;
 			int _pid;
+			String^ _deviceType;
 
 			msclr::interop::marshal_context marshalContext;
 		};

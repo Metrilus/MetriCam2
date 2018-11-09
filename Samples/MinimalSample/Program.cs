@@ -47,6 +47,7 @@ namespace MetriCam2.Samples.MinimalSample
             camera.Connect();
             Console.WriteLine($"Vendor = {camera.Vendor}");
             Console.WriteLine($"Model  = {camera.Model}");
+            Console.WriteLine($"DeviceType = {camera.DeviceType}");
             Console.WriteLine($"SerialNumber = {camera.SerialNumber}");
             camera.Disconnect();
             #endregion
