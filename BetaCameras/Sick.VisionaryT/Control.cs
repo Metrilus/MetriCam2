@@ -172,16 +172,16 @@ namespace MetriCam2.Cameras.Internal.Sick
             return ReadVariableString("SerialNumber");
         }
 
-        internal void SetIntegrationTime(VisionaryTIntegrationTime value)
+        internal void SetIntegrationTime(int value)
         {
             SetAccessMode(AccessModes.Service);
             log.Debug("Setting integration time");
-            WriteVariable("integrationTime", (byte)value);
+            WriteVariable("integrationTimeUs", value);
         }
-        internal VisionaryTIntegrationTime GetIntegrationTime()
+        internal int GetIntegrationTime()
         {
             log.Debug("Getting integration time");
-            return (VisionaryTIntegrationTime)ReadVariableByte("integrationTime");
+            return ReadVariableInt32("integrationTimeUs");
         }
 
         internal void SetCoexistenceMode(VisionaryTCoexistenceMode value)
@@ -277,10 +277,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         private int ReadVariableInt32(string name)
         {
             ReadVariable(name, out byte[] payload, out byte checkSum);
-
-            int l = payload.Length;
-            byte[] responseValueBytes = new byte[] { payload[l - 4], payload[l - 3], payload[l - 2], payload[l - 1] };
-            int value = BitConverter.ToInt32(responseValueBytes, 0);
+            Int32 value = Utils.FromBigEndianInt32(payload, payload.Length - 4);
             log.DebugFormat("Got value: {0}", value);
             return value;
         }
@@ -288,7 +285,6 @@ namespace MetriCam2.Cameras.Internal.Sick
         private byte ReadVariableByte(string name)
         {
             ReadVariable(name, out byte[] payload, out byte checkSum);
-
             byte value = payload[payload.Length - 1];
             log.DebugFormat("Got value: {0}", value);
             return value;
@@ -327,11 +323,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             // calculate sizes and prepare message
             int msgSize = bytes.Length + START_STX.Length + 1 + 4; // +1 for checksum, +4 for size of payload
             uint payloadSize = (uint)bytes.Length;
-            byte[] payloadSizeBytes = BitConverter.GetBytes(payloadSize);
-            if (BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(payloadSizeBytes);
-            }
+            byte[] payloadSizeBytes = Utils.ToBigEndian(payloadSize);
             byte[] message = new byte[msgSize];
             byte checksum = ChkSumCola(bytes);
 
@@ -396,11 +388,7 @@ namespace MetriCam2.Cameras.Internal.Sick
         private void SendCommand(string command, int value)
         {
             List<byte> bytes = new List<byte>(Encoding.ASCII.GetBytes(command + " "));
-            byte[] valueBytes = BitConverter.GetBytes(value);
-            if (BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(valueBytes);
-            }
+            byte[] valueBytes = Utils.ToBigEndian(value);
             bytes.AddRange(valueBytes);
             SendCommand(bytes.ToArray());
         }
@@ -427,9 +415,7 @@ namespace MetriCam2.Cameras.Internal.Sick
                 }
             }
 
-            // Remark: On big endian machines this won't work:
-            byte[] payloadLengthBytes = new byte[] { receiveHeader[7], receiveHeader[6], receiveHeader[5], receiveHeader[4] };
-            int payloadLength = BitConverter.ToInt32(payloadLengthBytes, 0);
+            Int32 payloadLength = Utils.FromBigEndianInt32(receiveHeader, 4);
 
             byte[] receivePayload = new byte[payloadLength + 1]; // 1 Byte for checksum
             streamControl.Read(receivePayload, 0, receivePayload.Length);

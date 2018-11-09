@@ -65,11 +65,11 @@ namespace MetriCam2.Cameras
             set => ipAddress = value;
         }
 
-        private ListParamDesc<VisionaryTIntegrationTime> IntegrationTimeDesc
+        private RangeParamDesc<int> IntegrationTimeDesc
         {
             get
             {
-                return new ListParamDesc<VisionaryTIntegrationTime>(typeof(VisionaryTIntegrationTime))
+                return new RangeParamDesc<int>(80, 4000)
                 {
                     Description = "Integration time",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
@@ -79,9 +79,9 @@ namespace MetriCam2.Cameras
             }
         }
         /// <summary>
-        /// Integration time of ToF-sensor [ms].
+        /// Integration time of ToF-sensor [us].
         /// </summary>
-        public VisionaryTIntegrationTime IntegrationTime
+        public int IntegrationTime
         {
             get => _control.GetIntegrationTime();
             set => _control.SetIntegrationTime(value);

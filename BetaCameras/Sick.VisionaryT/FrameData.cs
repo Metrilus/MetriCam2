@@ -121,8 +121,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             int offset = 0;
 
             // 2 bytes: blob id
-            ushort blobId = BitConverter.ToUInt16(ImageBuffer, offset);
-            blobId = Utils.ConvertEndiannessUInt16(blobId);
+            ushort blobId = Utils.FromBigEndianUInt16(ImageBuffer, offset);
             if (0x0001 != blobId)
             {
                 string msg = string.Format("{0}: The blob id is not 0x0001 as expected: {1:X4}", cam.Name, blobId);
@@ -132,8 +131,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             offset += 2;
 
             // 2 bytes: number of segments
-            ushort numSegments = BitConverter.ToUInt16(ImageBuffer, offset);
-            numSegments = Utils.ConvertEndiannessUInt16(numSegments);
+            ushort numSegments = Utils.FromBigEndianUInt16(ImageBuffer, offset);
             if (numSegments != 3)
             {
                 string msg = string.Format("{0}: The number of segments is not 3 as expected: {1}", cam.Name, numSegments);
@@ -147,12 +145,10 @@ namespace MetriCam2.Cameras.Internal.Sick
             uint[] changedCounters = new uint[numSegments];
             for (int i = 0; i < numSegments; ++i)
             {
-                uint dataOffset = BitConverter.ToUInt32(ImageBuffer, offset);
-                offsets[i] = Utils.ConvertEndiannessUInt32(dataOffset);
+                offsets[i] = Utils.FromBigEndianUInt32(ImageBuffer, offset);
                 offset += 4;
 
-                uint changedCounter = BitConverter.ToUInt32(ImageBuffer, offset);
-                changedCounters[i] = Utils.ConvertEndiannessUInt32(changedCounter);
+                changedCounters[i] = Utils.FromBigEndianUInt32(ImageBuffer, offset);
                 offset += 4;
             }
 
@@ -297,9 +293,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             ConfidenceStartOffset = offset;
             offset += numBytesConfidence;
 
-            // 4 bytes CRC of data (field unused by camera)
-            uint unusedCrc = BitConverter.ToUInt32(ImageBuffer, offset);
-            unusedCrc = Utils.ConvertEndiannessUInt32(unusedCrc);
+            // Skip 4 bytes CRC of data (field unused by camera)
             offset += 4;
 
             // 4 bytes same length as first value

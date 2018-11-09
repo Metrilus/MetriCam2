@@ -86,8 +86,7 @@ namespace MetriCam2.Cameras.Internal.Sick
                 log.Error(msg);
                 throw new IOException(msg);
             }
-            uint pkgLength = BitConverter.ToUInt32(buffer, 0);
-            pkgLength = Utils.ConvertEndiannessUInt32(pkgLength);
+            uint pkgLength = Utils.FromBigEndianUInt32(buffer, 0);
 
             if (!Utils.Receive(streamData, ref buffer, (int)pkgLength))
             {
@@ -99,8 +98,7 @@ namespace MetriCam2.Cameras.Internal.Sick
             // check buffer content
             int offset = 0;
 
-            ushort protocolVersion = BitConverter.ToUInt16(buffer, offset);
-            protocolVersion = Utils.ConvertEndiannessUInt16(protocolVersion);
+            ushort protocolVersion = Utils.FromBigEndianUInt16(buffer, offset);
             offset += 2;
 
             byte packetType = buffer[offset];
