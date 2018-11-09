@@ -184,6 +184,12 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		log->Warn(msg);
 		throw gcnew MetriCam2::Exceptions::ConnectionFailedException(msg);
 	}
+	// Read serial number
+	char serialNumber[12];
+	int data_size = sizeof(serialNumber);
+	Device.getProperty((int)ONI_DEVICE_PROPERTY_SERIAL_NUMBER, (void *)serialNumber, &data_size);
+	SerialNumber = gcnew String(serialNumber);
+
 	VendorID = _pCamData->openNICam->m_vid;
 	ProductID = _pCamData->openNICam->m_pid;
 	_pCamData->openNICam->ldp_set(true); //Ensure eye-safety by turning on the proximity sensor
