@@ -62,12 +62,29 @@ namespace MetriCam2
 			~AstraOpenNI();
 			!AstraOpenNI();
 
-			property int ProductID;
-			property int VendorID;
+			virtual property String^ Vendor
+			{
+				String^ get() override
+				{
+					return "Orbbec";
+				}
+			}
+			property int ProductID
+			{
+				int get() { return _pid; }
+			private:
+				void set(int value) { _pid = value; }
+			}
+			property int VendorID
+			{
+				int get() { return _vid; }
+			private:
+				void set(int value) { _vid = value; }
+			}
 
 			property bool EmitterEnabled
 			{
-				bool get(void)
+				bool get()
 				{
 					// Reading the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
 					return _emitterEnabled;
@@ -82,7 +99,7 @@ namespace MetriCam2
 
 			property bool IRFlooderEnabled
 			{
-				bool get(void)
+				bool get()
 				{
 					// Reading the IrFlood status via the "cmd" class does not yet work. Check in future version of experimental SDK.
 					return _irFlooderEnabled;
@@ -97,7 +114,7 @@ namespace MetriCam2
 
 			property int IRGain
 			{
-				int get(void)
+				int get()
 				{
 					return _irGain;
 				}
@@ -114,7 +131,7 @@ namespace MetriCam2
 			// Implementation in experimental interface seems to be buggy, changing the value destroys the distance image
 			property unsigned int IRExposure
 			{
-				unsigned int get(void)
+				unsigned int get()
 				{
 					//ir_exposure_get in cmd class not yet functional and can destroy the current state of the camera
 					throw gcnew NotImplementedException();
@@ -193,28 +210,28 @@ namespace MetriCam2
 		private:
 			property openni::Device& Device
 			{
-				openni::Device& get(void)
+				openni::Device& get()
 				{
 					return _pCamData->openNICam->device;
 				}
 			}
 			property openni::VideoStream& DepthStream
 			{
-				openni::VideoStream& get(void)
+				openni::VideoStream& get()
 				{
 					return _pCamData->depth;
 				}
 			}
 			property openni::VideoStream& IrStream
 			{
-				openni::VideoStream& get(void)
+				openni::VideoStream& get()
 				{
 					return _pCamData->ir;
 				}
 			}
 			property openni::VideoStream& ColorStream
 			{
-				openni::VideoStream& get(void)
+				openni::VideoStream& get()
 				{
 					return _pCamData->color;
 				}
@@ -222,9 +239,9 @@ namespace MetriCam2
 
 			property ParamDesc<bool>^ EmitterEnabledDesc
 			{
-				inline ParamDesc<bool> ^get()
+				inline ParamDesc<bool>^ get()
 				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					ParamDesc<bool>^ res = gcnew ParamDesc<bool>();
 					res->Unit = "";
 					res->Description = "Emitter is enabled";
 					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
@@ -235,9 +252,9 @@ namespace MetriCam2
 
 			property ParamDesc<bool>^ IRFlooderEnabledDesc
 			{
-				inline ParamDesc<bool> ^get()
+				inline ParamDesc<bool>^ get()
 				{
-					ParamDesc<bool> ^res = gcnew ParamDesc<bool>();
+					ParamDesc<bool>^ res = gcnew ParamDesc<bool>();
 					res->Unit = "";
 					res->Description = "IR flooder is enabled";
 					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
@@ -249,9 +266,9 @@ namespace MetriCam2
 			// Disabled while the IRExposure getter is not implemented
 			//property ParamDesc<unsigned int>^ IRExposureDesc
 			//{
-			//	inline ParamDesc<unsigned int> ^get()
+			//	inline ParamDesc<unsigned int>^ get()
 			//	{
-			//		ParamDesc<unsigned int> ^res = gcnew ParamDesc<unsigned int>();
+			//		ParamDesc<unsigned int>^ res = gcnew ParamDesc<unsigned int>();
 			//		res->Unit = "";
 			//		res->Description = "IR exposure";
 			//		res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
@@ -262,9 +279,9 @@ namespace MetriCam2
 
 			property ParamDesc<int>^ IRGainDesc
 			{
-				inline ParamDesc<int> ^get()
+				inline ParamDesc<int>^ get()
 				{
-					ParamDesc<int> ^res = ParamDesc::BuildRangeParamDesc(IR_Gain_MIN, IR_Gain_MAX);
+					ParamDesc<int>^ res = ParamDesc::BuildRangeParamDesc(IR_Gain_MIN, IR_Gain_MAX);
 					res->Unit = "";
 					res->Description = "IR gain";
 					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
@@ -305,6 +322,8 @@ namespace MetriCam2
 			bool _emitterEnabled;
 			bool _irFlooderEnabled;
 			OrbbecNativeCameraData* _pCamData;
+			int _vid;
+			int _pid;
 
 			msclr::interop::marshal_context marshalContext;
 		};
