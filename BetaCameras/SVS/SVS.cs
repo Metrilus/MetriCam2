@@ -132,7 +132,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_getAcquisitionMode(hCamera, ref value);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameter", "AcquisitionMode: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameter", "AcquisitionMode: " + error.ToString());
                 }
                 return value;
             }
@@ -144,7 +144,7 @@ namespace MetriCam2.Cameras
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
                     log.ErrorFormat("{0}: Could not set AcquisitionMode to {1}. {2}", Name, value.ToString(), error.ToString());
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "AcquisitionMode: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "AcquisitionMode: " + error.ToString());
                 }
 
                 if (GigeApi.ACQUISITION_MODE.ACQUISITION_MODE_EXT_TRIGGER_EXT_EXPOSURE == value
@@ -181,7 +181,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_getAutoGainEnabled(hCamera, ref value);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameter", "AutoGainEnabled: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameter", "AutoGainEnabled: " + error.ToString());
                 }
                 return value;
             }
@@ -191,7 +191,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_setAutoGainEnabled(hCamera, value);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "AutoGainEnabled: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "AutoGainEnabled: " + error.ToString());
                 }
             }
         }
@@ -264,17 +264,17 @@ namespace MetriCam2.Cameras
                     error = gigeApi.Gige_Camera_getExposureTimeMin(hCamera, ref min);
                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                     {
-                        ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameterValues", "ExposureTime.Min: " + error.ToString());
+                        throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameterValues", "ExposureTime.Min: " + error.ToString());
                     }
                     error = gigeApi.Gige_Camera_getExposureTimeMax(hCamera, ref max);
                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                     {
-                        ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameterValues", "ExposureTime.Max: " + error.ToString());
+                        throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameterValues", "ExposureTime.Max: " + error.ToString());
                     }
                     error = gigeApi.Gige_Camera_getExposureTimeIncrement(hCamera, ref increment);
                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                     {
-                        ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameterValues", "ExposureTime.Increment: " + error.ToString());
+                        throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameterValues", "ExposureTime.Increment: " + error.ToString());
                     }
                 }
 
@@ -300,7 +300,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_getExposureTime(hCamera, ref value);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameter", "ExposureTime: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameter", "ExposureTime: " + error.ToString());
                 }
                 return value * 0.001f;
             }
@@ -311,12 +311,12 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_setAutoExposureLimits(hCamera, value_ms, value_ms);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "AutoExposureLimits: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "AutoExposureLimits: " + error.ToString());
                 }
                 error = gigeApi.Gige_Camera_setExposureTime(hCamera, value_ms);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "ExposureTime: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "ExposureTime: " + error.ToString());
                 }
             }
         }
@@ -335,12 +335,12 @@ namespace MetriCam2.Cameras
                     error = gigeApi.Gige_Camera_getFrameRateRange(hCamera, ref min, ref max);
                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                     {
-                        ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameterValues", "FrameRate.Range: " + error.ToString());
+                        throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameterValues", "FrameRate.Range: " + error.ToString());
                     }
                     error = gigeApi.Gige_Camera_getFrameRateIncrement(hCamera, ref increment);
                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                     {
-                        ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameterValues", "FrameRate.Increment: " + error.ToString());
+                        throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameterValues", "FrameRate.Increment: " + error.ToString());
                     }
                 }
 
@@ -366,7 +366,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_getFrameRate(hCamera, ref value);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameter", "FrameRate: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameter", "FrameRate: " + error.ToString());
                 }
                 return value;
             }
@@ -376,7 +376,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_setFrameRate(hCamera, value);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "FrameRate: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "FrameRate: " + error.ToString());
                 }
             }
         }
@@ -395,12 +395,12 @@ namespace MetriCam2.Cameras
                     error = gigeApi.Gige_Camera_getGainMax(hCamera, ref max);
                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                     {
-                        ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameterValues", "Gain.Max: " + error.ToString());
+                        throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameterValues", "Gain.Max: " + error.ToString());
                     }
                     error = gigeApi.Gige_Camera_getGainIncrement(hCamera, ref increment);
                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                     {
-                        ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameterValues", "Gain.Increment: " + error.ToString());
+                        throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameterValues", "Gain.Increment: " + error.ToString());
                     }
                 }
 
@@ -427,7 +427,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_getGain(hCamera, ref value);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameter", "Gain: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameter", "Gain: " + error.ToString());
                 }
                 return value;
             }
@@ -437,7 +437,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_setGain(hCamera, value);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "Gain: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "Gain: " + error.ToString());
                 }
             }
         }
@@ -470,7 +470,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_getWhiteBalance(hCamera, ref r, ref g, ref b);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_getParameter", "WhiteBalance: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_getParameter", "WhiteBalance: " + error.ToString());
                 }
                 return new Point3f(r, g, b);
             }
@@ -480,7 +480,7 @@ namespace MetriCam2.Cameras
                 error = gigeApi.Gige_Camera_setWhiteBalance(hCamera, value.X, value.Y, value.Z);
                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                 {
-                    ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "WhiteBalance: " + error.ToString());
+                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "WhiteBalance: " + error.ToString());
                 }
             }
         }
@@ -554,7 +554,7 @@ namespace MetriCam2.Cameras
                                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                                     {
                                         log.ErrorFormat("    Could not set PixelDepth to 12bpp: {0}", error.ToString());
-                                        ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "PixelDepth: " + error.ToString());
+                                        throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "PixelDepth: " + error.ToString());
                                     }
                                 }
                                 bitCount = 12;
@@ -570,7 +570,7 @@ namespace MetriCam2.Cameras
                                 if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                                 {
                                     log.ErrorFormat("    Could not set PixelDepth to 8bpp: {0}", error.ToString());
-                                    ExceptionBuilder.Throw(typeof(Exception), this, "error_setParameter", "PixelDepth: " + error.ToString());
+                                    throw ExceptionBuilder.Build(typeof(Exception), Name, "error_setParameter", "PixelDepth: " + error.ToString());
                                 }
                                 bitCount = 8;
                             }
@@ -686,17 +686,17 @@ namespace MetriCam2.Cameras
             container = gigeApi.Gige_CameraContainer_create(GigeApi.SVGigETL_Type.SVGigETL_TypeFilter);
             if (container < 0)
             {
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "ContainerCreate failed");
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "ContainerCreate failed");
             }
             error = gigeApi.Gige_CameraContainer_discovery(container);
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Camera discovery failed: " + error.ToString());
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "Camera discovery failed: " + error.ToString());
             }
             numCameras = gigeApi.Gige_CameraContainer_getNumberOfCameras(container);
             if (numCameras <= 0)
             {
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "No cameras found.");
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "No cameras found.");
             }
             log.DebugFormat("    found {0} cameras", numCameras);
 
@@ -746,7 +746,7 @@ namespace MetriCam2.Cameras
             // check if connection was successful
             if (IntPtr.Zero == hCamera)
             {
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to open connection to camera");
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "Failed to open connection to camera");
             }
             log.InfoFormat("    connected to camera with serial number {0}", SerialNumber);
 
@@ -754,7 +754,7 @@ namespace MetriCam2.Cameras
             error = CreateStreamingChannel();
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to create stream: " + error.ToString());
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "Failed to create stream: " + error.ToString());
             }
 
             // Register log message callback
@@ -772,7 +772,7 @@ namespace MetriCam2.Cameras
                     error = gigeApi.Gige_Camera_registerForLogMessages(hCamera, LogLevel, LogFilename: "", LogCallback: logMessageCallbackDelegate, MessageContext: IntPtr.Zero);
                     if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
                     {
-                        ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
+                        throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "Failed to register for log messages from camera: " + error.ToString());
                     }
                 }
             }
@@ -781,7 +781,7 @@ namespace MetriCam2.Cameras
             if (gigeApi.Gige_Camera_getSizeX(hCamera, ref width) != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS ||
                 gigeApi.Gige_Camera_getSizeY(hCamera, ref height) != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get width and/or height of current stream");
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "Failed to get width and/or height of current stream");
             }
             log.DebugFormat("    resolution is {0}x{1}", width, height);
 
@@ -790,7 +790,7 @@ namespace MetriCam2.Cameras
             error = gigeApi.Gige_Camera_getPixelDepth(hCamera, ref pixelDepth);
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel depth: " + error.ToString());
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "Failed to get pixel depth: " + error.ToString());
             }
             switch (pixelDepth)
             {
@@ -804,8 +804,7 @@ namespace MetriCam2.Cameras
                     bitCount = 16;
                     break;
                 default:
-                    ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Unsupported pixel depth");
-                    break;
+                    throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "Unsupported pixel depth");
             }
             log.DebugFormat("    pixel depth is {0}", pixelDepth.ToString());
 
@@ -813,7 +812,7 @@ namespace MetriCam2.Cameras
             error = GetPixelType();
             if (error != GigeApi.SVSGigeApiReturn.SVGigE_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", "Failed to get pixel type: " + error.ToString());
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "Failed to get pixel type: " + error.ToString());
             }
             log.DebugFormat("    pixel type is {0}", pixelType.ToString());
 

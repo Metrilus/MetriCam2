@@ -446,7 +446,7 @@ namespace MetriCam2.Cameras
                 deviceID = GetDeviceIDbySerial();
                 if (deviceID <= 0)
                 {
-                    ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), Name, "error_connectionFailed", String.Format("Could not connect to camera with the serial number {0}.", SerialNumber));
+                    throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", String.Format("Could not connect to camera with the serial number {0}.", SerialNumber));
                 }
                 deviceID |= uEyeDriverWrapper.IS_USE_DEVICE_ID;
             }
@@ -456,13 +456,13 @@ namespace MetriCam2.Cameras
             if (nRet == uEyeDriverWrapper.IS_STARTER_FW_UPLOAD_NEEDED)
             {
                 // TODO: Driver allows upload of new firmware. Check IDS docs for sample code.
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "This camera requires a new firmware. Please install with the appropriate tool from the camera vendor.");
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed", "This camera requires a new firmware. Please install with the appropriate tool from the camera vendor.");
 
             }
                 
             if (nRet != uEyeDriverWrapper.IS_SUCCESS)
             {
-                ExceptionBuilder.Throw(typeof(MetriCam2.Exceptions.ConnectionFailedException), Name, "error_connectionFailed");
+                throw ExceptionBuilder.Build(typeof(Exceptions.ConnectionFailedException), Name, "error_connectionFailed");
             }
             
 
@@ -651,8 +651,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.Intensity:
                     return CalcIntensity();
                 default:
-                    ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidChannelName", channelName);
-                    return null;
+                    throw ExceptionBuilder.Build(typeof(ArgumentException), Name, "error_invalidChannelName", channelName);
             }
         }
         #endregion

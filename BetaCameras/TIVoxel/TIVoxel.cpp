@@ -31,8 +31,7 @@ void TIVoxel::ConnectImpl()
 			size_t numDevices = devices.size();
 			if (numDevices == 0)
 			{
-				ExceptionBuilder::Throw(MetriCam2::Exceptions::ConnectionFailedException::typeid, this, "error_connectionFailed", "No devices found.");
-				return;
+				throw ExceptionBuilder::Build(MetriCam2::Exceptions::ConnectionFailedException::typeid, Name, "error_connectionFailed", "No devices found.");
 			}
 			Voxel::DevicePtr toConnect;
 			for (int i = 0; i < numDevices; i++)
@@ -59,8 +58,7 @@ void TIVoxel::ConnectImpl()
 		}
 		if (cam == NULL || !(cam->isInitialized()))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ConnectionFailedException::typeid, this, "error_connectionFailed", "Failed to open camera.");
-			return;
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ConnectionFailedException::typeid, Name, "error_connectionFailed", "Failed to open camera.");
 		}
 		
 		this->SerialNumber = marshal_as<String^>((device)->serialNumber());
@@ -97,13 +95,9 @@ void TIVoxel::ConnectImpl()
 		{
 			log->Error("Could not register callback.");
 			IsConnected = false;
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ConnectionFailedException::typeid, this, "error_connectionFailed", "Could not register callback.");
-			return;
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ConnectionFailedException::typeid, Name, "error_connectionFailed", "Could not register callback.");
 		}
-		else
-		{
-			log->Debug("Callback registered successfully.");
-		}
+		log->Debug("Callback registered successfully.");
 		cam->start();
 
 		ActivateChannel(CHANNEL_NAME_AMPLITUDE);
@@ -145,8 +139,7 @@ void TIVoxel::ConnectImpl()
 	{
 		// this exception was unexpected, log it and throw our own one
 		log->Error(ex->Message);
-		ExceptionBuilder::Throw(MetriCam2::Exceptions::ConnectionFailedException::typeid, this, "error_connectionFailed", "Unexpected error: " + ex->Message);
-		return;
+		throw ExceptionBuilder::Build(MetriCam2::Exceptions::ConnectionFailedException::typeid, Name, "error_connectionFailed", "Unexpected error: " + ex->Message);
 	}
 	finally
 	{
@@ -231,8 +224,7 @@ Object^ TIVoxel::GetParameterByName(String^ name)
 
 		if (!boolParam->get(value, true))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "error_getParameter", "Could not convert value of parameter " + name + ".");
-			return false;
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "error_getParameter", "Could not convert value of parameter " + name + ".");
 		}
 
 		log->Debug(name + " = " + value.ToString());
@@ -253,8 +245,7 @@ Object^ TIVoxel::GetParameterByName(String^ name)
 		int value;
 		if (!intParam->get(value, true))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "error_getParameter", "Could not convert value of parameter " + name + ".");
-			return false;
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "error_getParameter", "Could not convert value of parameter " + name + ".");
 		}
 
 		String^ unit = msclr::interop::marshal_as<String^>(intParam->unit());
@@ -267,8 +258,7 @@ Object^ TIVoxel::GetParameterByName(String^ name)
 		uint value;
 		if (!uintParam->get(value, true))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "error_getParameter", "Could not convert value of parameter " + name + ".");
-			return false;
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "error_getParameter", "Could not convert value of parameter " + name + ".");
 		}
 
 		String^ unit = msclr::interop::marshal_as<String^>(uintParam->unit());
@@ -281,8 +271,7 @@ Object^ TIVoxel::GetParameterByName(String^ name)
 		float value;
 		if (!floatParam->get(value, true))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "error_getParameter", "Could not convert value of parameter " + name + ".");
-			return false;
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "error_getParameter", "Could not convert value of parameter " + name + ".");
 		}
 
 		String^ unit = msclr::interop::marshal_as<String^>(floatParam->unit());
@@ -295,8 +284,7 @@ Object^ TIVoxel::GetParameterByName(String^ name)
 		int value;
 		if (!enumParam->get(value, true))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "error_getParameter", "Could not convert value of parameter " + name + ".");
-			return false;
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "error_getParameter", "Could not convert value of parameter " + name + ".");
 		}
 		log->Debug(name + " = " + value.ToString());
 
@@ -313,8 +301,7 @@ Object^ TIVoxel::GetParameterByName(String^ name)
 	}
 	else
 	{
-		ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "error_getParameter", "Could not convert value of parameter " + name + ". Unsupported parameter type.");
-		return false;
+		throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "error_getParameter", "Could not convert value of parameter " + name + ". Unsupported parameter type.");
 	}
 }
 
@@ -343,7 +330,7 @@ void TIVoxel::SetParameterByName(String^ name, Object^ value)
 		bool val = (bool)value;
 		if (!boolParam->set(val))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "Could not set parameter " + name + " to " + val + ".");
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "Could not set parameter " + name + " to " + val + ".");
 		}
 		return;
 	}
@@ -352,7 +339,7 @@ void TIVoxel::SetParameterByName(String^ name, Object^ value)
 		int val = (int)value;
 		if (!intParam->set(val))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "Could not set parameter " + name + " to " + val + ".");
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "Could not set parameter " + name + " to " + val + ".");
 		}
 		return;
 	}
@@ -361,7 +348,7 @@ void TIVoxel::SetParameterByName(String^ name, Object^ value)
 		uint val = (uint)value;
 		if (!uintParam->set(val))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "Could not set parameter " + name + " to " + val + ".");
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "Could not set parameter " + name + " to " + val + ".");
 		}
 		return;
 	}
@@ -370,7 +357,7 @@ void TIVoxel::SetParameterByName(String^ name, Object^ value)
 		float val = (float)value;
 		if (!floatParam->set(val))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "Could not set parameter " + name + " to " + val + ".");
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "Could not set parameter " + name + " to " + val + ".");
 		}
 		return;
 	}
@@ -379,12 +366,12 @@ void TIVoxel::SetParameterByName(String^ name, Object^ value)
 		int val = (System::UInt32)value;
 		if (!enumParam->set(val))
 		{
-			ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "Could not set parameter " + name + " to " + val + ".");
+			throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "Could not set parameter " + name + " to " + val + ".");
 		}
 		return;
 	}
 
-	ExceptionBuilder::Throw(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, this, "error_setParameter", "Could not set parameter " + name + ". Parameter type is unsupported.");
+	throw ExceptionBuilder::Build(MetriCam2::Exceptions::ParameterNotSupportedException::typeid, Name, "error_setParameter", "Could not set parameter " + name + ". Parameter type is unsupported.");
 	return;
 }
 
@@ -938,7 +925,7 @@ void TIVoxel::SetIntegrationDutyCycle(uint val)
 
 	if (regOverflow)
 	{
-		ExceptionBuilder::Throw(InvalidOperationException::typeid, this, "error_setParameter", "Integration Duty Cycle beyond limit. Change it to a lower value.");
+		throw ExceptionBuilder::Build(InvalidOperationException::typeid, Name, "error_setParameter", "Integration Duty Cycle beyond limit. Change it to a lower value.");
 	}
 }
 
@@ -1125,7 +1112,7 @@ void TIVoxel::SetQuads(unsigned int val)
 {
 	if (val != 4 && val != 6)
 	{
-		ExceptionBuilder::Throw(InvalidOperationException::typeid, this, "error_setParameter", "Quads must be 4 or 6!");
+		throw ExceptionBuilder::Build(InvalidOperationException::typeid, Name, "error_setParameter", "Quads must be 4 or 6!");
 	}
 
 	System::Threading::Monitor::Enter(settingsLock);
@@ -1147,7 +1134,7 @@ void TIVoxel::SetSubFrames(uint val)
 {
 	if (val != 1 && val != 2 && val != 4)
 	{
-		ExceptionBuilder::Throw(InvalidOperationException::typeid, this, "error_setParameter", "Subframes must be 1, 2 or 4!");
+		throw ExceptionBuilder::Build(InvalidOperationException::typeid, Name, "error_setParameter", "Subframes must be 1, 2 or 4!");
 	}
 
 	System::Threading::Monitor::Enter(settingsLock);

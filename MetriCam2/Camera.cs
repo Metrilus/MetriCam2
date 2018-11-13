@@ -952,7 +952,9 @@ namespace MetriCam2
         /// </summary>
         /// <remarks>This flag is checked in <see cref="CalcChannel"/> to catch this common error in end user software.</remarks>
         private bool hasUpdateBeenCalled = false;
+#if !NETSTANDARD2_0
         private static string calibrationPathRegistry = null;
+#endif
         #endregion
 
         #region Public Properties
@@ -1070,7 +1072,7 @@ namespace MetriCam2
             {
                 if (IsConnected)
                 {
-                    ExceptionBuilder.Throw(typeof(InvalidOperationException), this, "error_changeParameterConnected", "Serial Number");
+                    throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, "error_changeParameterConnected", "Serial Number");
                 }
                 serialNumber = value;
             }
@@ -1207,7 +1209,7 @@ namespace MetriCam2
 
             if (this.IsConnected)
             {
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), this, "error_connectionFailed");
+                throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, "error_connectionFailed");
             }
 
             this.FrameNumber = -1;
@@ -1309,7 +1311,7 @@ namespace MetriCam2
         {
             if (!IsConnected)
             {
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), this, "error_cameraNotConnected");
+                throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, "error_cameraNotConnected");
             }
 
             lock (cameraLock)
@@ -1389,8 +1391,7 @@ namespace MetriCam2
         {
             if (!IsConnected)
             {
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), this, "error_cameraNotConnected");
-                return null;
+                throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, "error_cameraNotConnected");
             }
 
             if (intrinsicsCache.ContainsKey(channelName) && intrinsicsCache[channelName] != null)
@@ -1430,8 +1431,7 @@ namespace MetriCam2
         {
             if (!IsConnected)
             {
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), this, "error_cameraNotConnected");
-                return null;
+                throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, "error_cameraNotConnected");
             }
 
             if (channelFromName == channelToName)
@@ -1557,8 +1557,7 @@ namespace MetriCam2
 
             if (!hasUpdateBeenCalled)
             {
-                ExceptionBuilder.Throw(typeof(InvalidOperationException), this, "error_updateMustBeCalledBeforeCalcChannel");
-                return null;
+                throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, "error_updateMustBeCalledBeforeCalcChannel");
             }
             CameraImage img;
             if (enableImplicitThreadSafety)
@@ -1578,8 +1577,7 @@ namespace MetriCam2
             {
                 if (!IsChannelActive(channelName))
                 {
-                    ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_inactiveChannelName", channelName);
-                    return null;
+                    throw ExceptionBuilder.Build(typeof(ArgumentException), Name, "error_inactiveChannelName", channelName);
                 }
 
                 img = CalcChannelImpl(channelName);
@@ -2446,9 +2444,10 @@ namespace MetriCam2
             }
 
 #if DEBUG
-            ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidChannelName", channelName);
-#endif
+            throw ExceptionBuilder.Build(typeof(ArgumentException), Name, "error_invalidChannelName", channelName);
+#else
             return null;
+#endif
         }
 
         /// <summary>
@@ -2466,9 +2465,9 @@ namespace MetriCam2
             ActiveChannels.Add(GetChannelDescriptor(channelName));
             return true;
         }
-        #endregion
+#endregion
 
-        #region Abstract and Empty Virtual Methods
+#region Abstract and Empty Virtual Methods
         /// <summary>
         /// Reset list of available channels (<see cref="Channels"/>) to union of all cameras supported by the implementing class.
         /// </summary>
@@ -2526,9 +2525,9 @@ namespace MetriCam2
         /// If your implementation needs locking, use <see cref="Camera.cameraLock"/>.
         /// </remarks>
         protected abstract CameraImage CalcChannelImpl(string channelName);
-        #endregion
+#endregion
 
-        #region Private Methods
+#region Private Methods
         /// <summary>
         /// Finds the best matching Projective Transform for a channel of this camera.
         /// </summary>
@@ -2847,6 +2846,6 @@ namespace MetriCam2
             }
             return entryAssembly;
         }
-        #endregion
+#endregion
     }
 }

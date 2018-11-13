@@ -91,8 +91,7 @@ namespace MetriCam2.Cameras
                 var desc = DeviceChannelDesc;
                 if (!desc.IsValid(value))
                 {
-                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The device channel must be between {0} and {1}.", desc.Min, desc.Max));
-                    return;
+                    throw ExceptionBuilder.Build(typeof(ArgumentOutOfRangeException), Name, "error_setParameter", String.Format("The device channel must be between {0} and {1}.", desc.Min, desc.Max));
                 }
 
                 if (!IsConnected)
@@ -131,8 +130,7 @@ namespace MetriCam2.Cameras
                 var desc = ExposureDesc;
                 if (!desc.IsValid(value))
                 {
-                    ExceptionBuilder.Throw(typeof(ArgumentOutOfRangeException), this, "error_setParameter", String.Format("The exposure time must be between {0} and {1} ms.", desc.Min, desc.Max));
-                    return;
+                    throw ExceptionBuilder.Build(typeof(ArgumentOutOfRangeException), Name, "error_setParameter", String.Format("The exposure time must be between {0} and {1} ms.", desc.Min, desc.Max));
                 }
 
                 exposureMilliseconds = value;

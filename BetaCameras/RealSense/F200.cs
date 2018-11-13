@@ -221,8 +221,7 @@ namespace MetriCam2.Cameras
                     return irImage;
             }
 
-            ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidChannelName", channelName);
-            return null;
+            throw ExceptionBuilder.Build(typeof(ArgumentException), Name, "error_invalidChannelName", channelName);
         }
         #endregion
 

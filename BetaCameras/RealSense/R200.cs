@@ -127,7 +127,7 @@ namespace MetriCam2.Cameras
             if (deviceInfo.Count == 0)
             {
                 log.Error(Name + ": No devices found.");
-                ExceptionBuilder.Throw(typeof(ConnectionFailedException), this, "No devices found.");
+                throw ExceptionBuilder.Build(typeof(ConnectionFailedException), Name, "No devices found.");
             }
 
             int deviceIdx;
@@ -145,7 +145,7 @@ namespace MetriCam2.Cameras
             if (deviceIdx >= deviceInfo.Count)
             {
                 log.Error("Failed to find Intel Real Sense R200 camera!");
-                ExceptionBuilder.Throw(typeof(ConnectionFailedException), this, "No R200 found!");
+                throw ExceptionBuilder.Build(typeof(ConnectionFailedException), Name, "No R200 found!");
             }
 
             ScanForProfiles(deviceIdx);
@@ -166,7 +166,7 @@ namespace MetriCam2.Cameras
             if (retStat < pxcmStatus.PXCM_STATUS_NO_ERROR)
             {
                 log.Error(Name + ": Init() failed.");
-                ExceptionBuilder.Throw(typeof(ConnectionFailedException), this, "Failed to Initialize Real Sense SDK");
+                throw ExceptionBuilder.Build(typeof(ConnectionFailedException), Name, "Failed to Initialize Real Sense SDK");
             }
 
             pp.captureManager.device.ResetProperties(PXCMCapture.StreamType.STREAM_TYPE_ANY);
@@ -293,8 +293,7 @@ namespace MetriCam2.Cameras
                     return colorImage;
             }
 
-            ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidChannelName", channelName);
-            return null;
+            throw ExceptionBuilder.Build(typeof(ArgumentException), Name, "error_invalidChannelName", channelName);
         }
 
         public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)

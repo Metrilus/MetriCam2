@@ -143,7 +143,7 @@ namespace MetriCam2.Cameras
                         }
                         else
                         {
-                            ExceptionBuilder.Throw(typeof(ConnectionFailedException), this, "error_connectionFailed", "CoLa (binary) telegram subscription failed");
+                            throw ExceptionBuilder.Build(typeof(ConnectionFailedException), Name, "error_connectionFailed", "CoLa (binary) telegram subscription failed");
                         }
                     }
                     catch
@@ -178,7 +178,7 @@ namespace MetriCam2.Cameras
             catch (Exception foreignException)
             {
                 // Wrap and Throw other exceptions encountered during Connection
-                ExceptionBuilder.Throw(typeof(ConnectionFailedException), this, foreignException);
+                throw ExceptionBuilder.Build(typeof(ConnectionFailedException), Name, foreignException.Message, foreignException);
             }
         }
 
@@ -282,7 +282,7 @@ namespace MetriCam2.Cameras
             catch (Exception foreignException)
             {
                 // Wrap and Throw other exceptions encountered during Connection
-                ExceptionBuilder.Throw(typeof(ImageAcquisitionFailedException), this, foreignException);
+                throw ExceptionBuilder.Build(typeof(ImageAcquisitionFailedException), Name, foreignException.Message, foreignException);
             }
         }
 
@@ -350,7 +350,7 @@ namespace MetriCam2.Cameras
 
             string msg = $"{Name}: Invalid channelname: {channelName}";
             log.Error(msg);
-            throw ExceptionBuilder.Build(typeof(InvalidOperationException), this, msg);
+            throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, msg);
         }
 
         #region Channel Information
