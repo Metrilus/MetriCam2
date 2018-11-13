@@ -8,9 +8,6 @@ using Metrilus.Logging;
 using Metrilus.Util;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Metrilus.Logging;
 
 namespace MetriCam2.Tests.UnitTestParameterMechanism
 {

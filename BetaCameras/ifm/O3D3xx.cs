@@ -488,7 +488,7 @@ namespace MetriCam2.Cameras
                 {
                     _edit.StopEditingApplication();
                     SetConfigurationMode(Mode.Run);
-                    ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidApplicationId", _applicationId.ToString());
+                    throw ExceptionBuilder.Build(typeof(ArgumentException), Name, "error_invalidApplicationId", _applicationId.ToString());
                 }
             }
 
@@ -665,8 +665,7 @@ namespace MetriCam2.Cameras
                         return CalcRawConfidanceImage();
                 }
             }
-            ExceptionBuilder.Throw(typeof(ArgumentException), this, "error_invalidChannelName", channelName);
-            return null;
+            throw ExceptionBuilder.Build(typeof(ArgumentException), Name, "error_invalidChannelName", channelName);
         }
         #endregion
         #endregion

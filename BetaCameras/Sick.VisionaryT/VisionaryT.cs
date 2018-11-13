@@ -200,7 +200,7 @@ namespace MetriCam2.Cameras
             {
                 string msg = string.Format("IP address is not set. It must be set before connecting.");
                 log.Error(msg);
-                ExceptionBuilder.Throw(typeof(Exceptions.ConnectionFailedException), this, "error_connectionFailed", msg);
+                throw ExceptionBuilder.Build(typeof(ConnectionFailedException), Name, "error_connectionFailed", msg);
             }
             device = new Device(ipAddress, this, log);
 

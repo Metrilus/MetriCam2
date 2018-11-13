@@ -33,31 +33,18 @@ namespace MetriCam2
             // Fall-back
             return new Exception(exType + ": " + msg);
         }
+        #endregion
 
-        private static void Throw(Type exType, string msg)
+        #region Public Methods
+        public static MetriCam2Exception Build(Type exType, string cameraName, string message, Exception inner)
         {
-            throw Build(exType, msg);
-        }
-
-        private static MetriCam2Exception Build(Type exType, string msg, Exception inner)
-        {
+            string msg = cameraName + ": " + message;
             ConstructorInfo ci = exType.GetConstructor(new Type[] { typeof(string), typeof(Exception) });
             log.ErrorFormat("{0}: {1}", exType.Name, msg);
             log.ErrorFormat("    inner exception {0}: {1}", inner.GetType().Name, inner.Message);
             return (MetriCam2Exception)ci.Invoke(new object[] { msg, inner });
         }
-        private static void Throw(Type exType, string msg, Exception inner)
-        {
-            throw Build(exType, msg, inner);
-        }
 
-        private static void Throw(Type exType, string name, string message, Exception inner)
-        {
-            throw Build(exType, name + ": " + message, inner);
-        }
-        #endregion
-
-        #region Public Methods
         /// <summary>
         /// This is a special version of the Build methods to allow customer-specific exception IDs.
         /// </summary>
@@ -96,11 +83,8 @@ namespace MetriCam2
                 return new MetriCam2Exception(fullMessage, ex);
             }
         }
-        public static Exception Build(Type exType, Camera cam, string messageCode)
-        {
-            return Build(exType, cam.Name, messageCode);
-        }
-        public static Exception Build(Type exType, string name, string messageCode)
+
+        public static Exception Build(Type exType, string cameraName, string messageCode)
         {
             string localizedErrorMessage = Localization.GetString(messageCode);
 
@@ -108,7 +92,7 @@ namespace MetriCam2
             {
                 localizedErrorMessage = messageCode;
             }
-            string msg = name + ": " + localizedErrorMessage;
+            string msg = cameraName + ": " + localizedErrorMessage;
 
             return Build(exType, msg);
         }
@@ -117,111 +101,26 @@ namespace MetriCam2
         /// Throw methods are deprecated. Use <code>throw Build(...)</code> instead.
         /// </summary>
         /// <param name="exType"></param>
-        /// <param name="cam"></param>
-        /// <param name="messageCode"></param>
-        public static void Throw(Type exType, Camera cam, string messageCode)
-        {
-            throw Build(exType, cam.Name, messageCode);
-        }
-
-        /// <summary>
-        /// Throw methods are deprecated. Use <code>throw Build(...)</code> instead.
-        /// </summary>
-        /// <param name="exType"></param>
-        /// <param name="name"></param>
-        /// <param name="messageCode"></param>
-        public static void Throw(Type exType, string name, string messageCode)
-        {
-            throw Build(exType, name, messageCode);
-        }
-
-        /// <summary>
-        /// Throw methods are deprecated. Use <code>throw Build(...)</code> instead.
-        /// </summary>
-        /// <param name="exType"></param>
-        /// <param name="cam"></param>
+        /// <param name="cameraName"></param>
         /// <param name="messageCode"></param>
         /// <param name="messageExtraInfo"></param>
-        public static void Throw(Type exType, Camera cam, string messageCode, string messageExtraInfo)
-        {
-            Throw(exType, cam.Name, messageCode, messageExtraInfo);
-        }
-
-        /// <summary>
-        /// Throw methods are deprecated. Use <code>throw Build(...)</code> instead.
-        /// </summary>
-        /// <param name="exType"></param>
-        /// <param name="name"></param>
-        /// <param name="messageCode"></param>
-        /// <param name="messageExtraInfo"></param>
-        public static void Throw(Type exType, string name, string messageCode, string messageExtraInfo)
+        public static Exception Build(Type exType, string cameraName, string messageCode, string messageExtraInfo)
         {
             string localizedErrorMessage = Localization.GetString(messageCode);
 
             if (localizedErrorMessage == null)
             {
-                Throw(exType, name, "Unknown error occurred.");
+                return Build(exType, cameraName, "Unknown error occurred.");
             }
 
             if (localizedErrorMessage.Contains("{0}"))
             {
-                throw Build(exType, name + ": " + string.Format(localizedErrorMessage, messageExtraInfo));
+                return Build(exType, cameraName + ": " + string.Format(localizedErrorMessage, messageExtraInfo));
             }
             else
             {
-                throw Build(exType, name + ": " + localizedErrorMessage + "\n" + messageExtraInfo);
+                return Build(exType, cameraName + ": " + localizedErrorMessage + "\n" + messageExtraInfo);
             }
-        }
-
-        /// <summary>
-        /// Throw methods are deprecated. Use <code>throw Build(...)</code> instead.
-        /// </summary>
-        /// <param name="exType"></param>
-        /// <param name="cam"></param>
-        /// <param name="messageCode"></param>
-        /// <param name="messageExtraInfo"></param>
-        /// <param name="oniIError"></param>
-        public static void Throw(Type exType, Camera cam, string messageCode, string messageExtraInfo, string oniIError)
-        {
-            Throw(exType, cam.Name, messageCode, messageExtraInfo, oniIError);
-        }
-
-        /// <summary>
-        /// Throw methods are deprecated. Use <code>throw Build(...)</code> instead.
-        /// </summary>
-        /// <param name="exType"></param>
-        /// <param name="name"></param>
-        /// <param name="messageCode"></param>
-        /// <param name="messageExtraInfo"></param>
-        /// <param name="oniIError"></param>
-        public static void Throw(Type exType, string name, string messageCode, string messageExtraInfo, string oniIError)
-        {
-            string localizedErrorMessage = Localization.GetString(messageCode);
-
-            if (localizedErrorMessage == null)
-            {
-                Throw(exType, name, "Unknown error occurred.");
-            }
-
-            if (localizedErrorMessage.Contains("{0}"))
-            {
-                Throw(exType, name + ": " + String.Format(localizedErrorMessage, messageExtraInfo) + "\nOpenNI2 error message: " + oniIError);
-            }
-            else
-            {
-                Throw(exType, name + ": " + localizedErrorMessage + "\n" + messageExtraInfo + "\nOpenNI2 error message: " + oniIError);
-            }
-        }
-
-        /// <summary>
-        /// Throw methods are deprecated. Use <code>throw Build(...)</code> instead.
-        /// </summary>
-        /// <param name="exType"></param>
-        /// <param name="cam"></param>
-        /// <param name="inner"></param>
-        public static void Throw(Type exType, Camera cam, Exception inner)
-        {
-            Throw(exType, cam.Name, inner.Message, inner);
         }
         #endregion
     }
