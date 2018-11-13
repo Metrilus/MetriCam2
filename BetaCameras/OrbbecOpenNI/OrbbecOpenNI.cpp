@@ -17,7 +17,7 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	if (!initSucceeded)
 	{
 		log->Error("Could not initialize OpenNI");
-		throw gcnew System::ApplicationException("Could not initialize OpenNI" + Environment::NewLine + gcnew String(openni::OpenNI::getExtendedError());
+		throw gcnew System::ApplicationException("Could not initialize OpenNI" + Environment::NewLine + gcnew String(openni::OpenNI::getExtendedError()));
 	}
 
 	// Init to most reasonable values; update during ConnectImpl
