@@ -192,7 +192,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 
 	VendorID = _pCamData->openNICam->m_vid;
 	ProductID = _pCamData->openNICam->m_pid;
-	_pCamData->openNICam->ldp_set(true); //Ensure eye-safety by turning on the proximity sensor
+	//_pCamData->openNICam->ldp_set(true); //Ensure eye-safety by turning on the proximity sensor
 
 	// Start depth stream
 	Device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
@@ -217,8 +217,8 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	// Turn Emitter on if any depth channel is active.
 	// (querying from device here would return wrong value)
 	// (do not use properties as they check against their current value which might be wrong)
-	_emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
-	SetEmitterStatus(_emitterEnabled);
+	//_emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
+	//SetEmitterStatus(_emitterEnabled);
 	_irFlooderEnabled = false; // Default to IR flooder off.
 	SetIRFlooderStatus(_irFlooderEnabled);
 }
