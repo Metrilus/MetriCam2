@@ -251,6 +251,19 @@ void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
 	log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
 }
 
+void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatusAndWait(bool on)
+{
+	SetEmitterStatus(on);
+	if (on)
+	{
+		WaitUntilNextValidFrame();
+	}
+	else
+	{
+		WaitUntilNextInvalidFrame();
+	}
+}
+
 bool MetriCam2::Cameras::AstraOpenNI::GetProximitySensorStatus()
 {
 	int ldp_en = 0;
@@ -868,6 +881,89 @@ Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExt
 
 	log->ErrorFormat("Unsupported channel combination in GetExtrinsics(): {0} -> {1}", channelFromName, channelToName);
 	return nullptr;
+}
+
+void MetriCam2::Cameras::AstraOpenNI::WaitUntilNextValidFrame()
+{
+	int numFramesWaited = 0;
+	FloatCameraImage^ frame;
+	if (IsChannelActive(ChannelNames::ZImage))
+	{
+		do
+		{
+			Update();
+			frame = (FloatCameraImage^)CalcChannel(ChannelNames::ZImage);
+			numFramesWaited++;
+		} while (!IsDepthFrameValid_NumberNonZeros(frame, 30));
+	}
+	else if (IsChannelActive(ChannelNames::Intensity))
+	{
+
+	}
+	log->DebugFormat("Waited for {0} frames until first valid frame", numFramesWaited);
+}
+
+void MetriCam2::Cameras::AstraOpenNI::WaitUntilNextInvalidFrame()
+{
+	int numFramesWaited = 0;
+	FloatCameraImage^ frame;
+	if (IsChannelActive(ChannelNames::ZImage))
+	{
+		do
+		{
+			Update();
+			frame = (FloatCameraImage^)CalcChannel(ChannelNames::ZImage);
+			numFramesWaited++;
+		} while (IsDepthFrameValid_NumberNonZeros(frame, 30));
+	}
+	else if (IsChannelActive(ChannelNames::Intensity))
+	{
+
+	}
+	log->DebugFormat("Waited for {0} frames until first invalid frame", numFramesWaited);
+}
+
+[MethodImpl(MethodImplOptions::AggressiveInlining)]
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatCameraImage^ img)
+{
+	return IsDepthFrameValid_MinimumMean(img, 0.0f);
+}
+[MethodImpl(MethodImplOptions::AggressiveInlining)]
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatCameraImage^ img, float threshold)
+{
+	float sum = 0;
+	for (int y = 0; y < img->Height; y++)
+	{
+		for (int x = 0; x < img->Width; x++)
+		{
+			sum += img[y, x];
+		}
+	}
+	return sum > threshold;
+}
+
+[MethodImpl(MethodImplOptions::AggressiveInlining)]
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img)
+{
+	return IsDepthFrameValid_NumberNonZeros(img, 25);
+}
+[MethodImpl(MethodImplOptions::AggressiveInlining)]
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img, int thresholdPercentage)
+{
+	int numPixels = img->Height * img->Width;
+	int numNonZeros = 0;
+	for (int y = 0; y < img->Height; y++)
+	{
+		for (int x = 0; x < img->Width; x++)
+		{
+			if (img[y, x] > 0.0f)
+			{
+				numNonZeros++;
+			}
+		}
+	}
+	int ratio = (int)(numNonZeros * 100.0f / numPixels);
+	return ratio > thresholdPercentage;
 }
 
 #if USE_I2C_GAIN

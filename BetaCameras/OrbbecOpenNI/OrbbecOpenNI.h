@@ -25,6 +25,7 @@ const int IR_Gain_MAX = 256;
 using namespace System;
 using namespace System::ComponentModel;
 using namespace System::Threading;
+using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
 using namespace System::Drawing;
 using namespace Metrilus::Util;
@@ -132,6 +133,15 @@ namespace MetriCam2
 
 			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 			virtual Metrilus::Util::RigidBodyTransformation^ GetExtrinsics(String^ channelFromName, String^ channelToName) override;
+
+			/// <summary>
+			/// Updates the emitter (laser) status and waits for the next valid or invalid frame.
+			/// </summary>
+			/// <remarks>
+			/// Currently only implemented if the z-image channel is active.
+			/// If it's not active the wait will be skipped.
+			/// </remarks>
+			void SetEmitterStatusAndWait(bool on);
 
 #if !NETSTANDARD2_0
 			property System::Drawing::Icon^ CameraIcon
@@ -317,6 +327,13 @@ namespace MetriCam2
 
 			int GetIRExposure();
 			void SetIRExposure(int value);
+
+			void WaitUntilNextValidFrame();
+			void WaitUntilNextInvalidFrame();
+			bool IsDepthFrameValid_MinimumMean(FloatCameraImage^ img);
+			bool IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img);
+			bool IsDepthFrameValid_MinimumMean(FloatCameraImage^ img, float threshold);
+			bool IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img, int thresholdPercentage);
 
 			OrbbecNativeCameraData* _pCamData;
 			int _vid;
