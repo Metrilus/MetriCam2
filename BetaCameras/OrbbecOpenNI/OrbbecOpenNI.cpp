@@ -286,10 +286,29 @@ void MetriCam2::Cameras::AstraOpenNI::SetIRFlooderStatus(bool on)
 
 int MetriCam2::Cameras::AstraOpenNI::GetIRGain()
 {
+#if USE_I2C_GAIN
+	std::vector<std::string> cmd_r;
+	const char *argv_r[4] = {};
+	int i;
+	XnControlProcessingData I2C;
+
+	argv_r[0] = "i2c";
+	argv_r[1] = "read";
+	argv_r[2] = "1";
+	argv_r[3] = "0x35";
+	for (i = 0; i < 4; i++)
+	{
+		cmd_r.push_back(argv_r[i]);
+	}
+
+	unsigned short gain = read_i2c(Device, cmd_r, I2C);
+	return gain;
+#else
 	int gain = 0;
 	int size = 4;
 	Device.getProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, &size);
 	return gain;
+#endif
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetIRGain(int value)
@@ -302,9 +321,31 @@ void MetriCam2::Cameras::AstraOpenNI::SetIRGain(int value)
 	{
 		value = IR_Gain_MAX;
 	}
+#if USE_I2C_GAIN
+	std::string buf = string_format("0x%x", value);
+	std::vector<std::string> cmd_r;
+	const char *argv_r[5] = {};
+	int i;
+	XnControlProcessingData I2C;
+
+	argv_r[0] = "i2c";
+	argv_r[1] = "write";
+	argv_r[2] = "1";
+	argv_r[3] = "0x35";
+	argv_r[4] = buf.c_str();
+
+	for (i = 0; i < 5; i++)
+	{
+		cmd_r.push_back(argv_r[i]);
+	}
+
+	write_i2c(Device, cmd_r, I2C);
+	log->DebugFormat("IR gain is set to: {0}", gcnew String(buf.c_str()));
+#else
 	int gain = value;
 	int size = 4;
 	Device.setProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, size);
+#endif
 }
 
 int MetriCam2::Cameras::AstraOpenNI::GetIRExposure()
@@ -828,3 +869,138 @@ Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExt
 	log->ErrorFormat("Unsupported channel combination in GetExtrinsics(): {0} -> {1}", channelFromName, channelToName);
 	return nullptr;
 }
+
+#if USE_I2C_GAIN
+bool atoi2(const char* str, int* pOut)
+{
+	int output = 0;
+	int base = 10;
+	int start = 0;
+
+	if (strlen(str) > 1 && str[0] == '0' && str[1] == 'x')
+	{
+		start = 2;
+		base = 16;
+	}
+
+	for (size_t i = start; i < strlen(str); i++)
+	{
+		output *= base;
+		if (str[i] >= '0' && str[i] <= '9')
+			output += str[i] - '0';
+		else if (base == 16 && str[i] >= 'a' && str[i] <= 'f')
+			output += 10 + str[i] - 'a';
+		else if (base == 16 && str[i] >= 'A' && str[i] <= 'F')
+			output += 10 + str[i] - 'A';
+		else
+			return false;
+	}
+	*pOut = output;
+	return true;
+}
+
+unsigned short read_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C)
+{
+	if (Command.size() != 4)
+	{
+		std::cout << "Usage: " << Command[0] << " " << Command[1] << " <cmos> <register>" << std::endl;
+		return true;
+	}
+
+	int nRegister;
+	if (!atoi2(Command[3].c_str(), &nRegister))
+	{
+		printf("Don't understand %s as a register\n", Command[3].c_str());
+		return true;
+	}
+	I2C.nRegister = (unsigned short)nRegister;
+
+	int nParam = 0;
+
+	int command;
+	if (!atoi2(Command[2].c_str(), &command))
+	{
+		std::cout << "cmos must be 0/1" << std::endl;
+		return true;
+	}
+
+	if (command == 1)
+		nParam = XN_MODULE_PROPERTY_DEPTH_CONTROL;
+	else if (command == 0)
+		nParam = XN_MODULE_PROPERTY_IMAGE_CONTROL;
+	else
+	{
+		std::cout << "cmos must be 0/1" << std::endl;
+		return true;
+	}
+
+	if (device.getProperty(nParam, &I2C) != openni::STATUS_OK)
+	{
+		std::cout << "getProperty failed!" << std::endl;
+		return false;
+	}
+
+	std::cout << "I2C(" << command << ")[0x" << std::hex << I2C.nRegister << "] = 0x" << std::hex << I2C.nValue << std::endl;
+
+	return I2C.nValue;
+}
+
+bool write_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C)
+{
+	if (Command.size() != 5)
+	{
+		std::cout << "Usage: " << Command[0] << " " << Command[1] << " <cmos> <register> <value>" << std::endl;
+		return true;
+	}
+
+	int nRegister, nValue;
+	if (!atoi2(Command[3].c_str(), &nRegister))
+	{
+		printf("Don't understand %s as a register\n", Command[3].c_str());
+		return true;
+	}
+	if (!atoi2(Command[4].c_str(), &nValue))
+	{
+		printf("Don't understand %s as a value\n", Command[4].c_str());
+		return true;
+	}
+	I2C.nRegister = (unsigned short)nRegister;
+	I2C.nValue = (unsigned short)nValue;
+
+	int nParam = 0;
+
+	int command;
+	if (!atoi2(Command[2].c_str(), &command))
+	{
+		printf("cmos should be 0 (depth) or 1 (image)\n");
+		return true;
+	}
+
+	if (command == 1)
+		nParam = XN_MODULE_PROPERTY_DEPTH_CONTROL;
+	else if (command == 0)
+		nParam = XN_MODULE_PROPERTY_IMAGE_CONTROL;
+	else
+	{
+		std::cout << "cmos must be 0/1" << std::endl;
+		return true;
+	}
+
+	openni::Status rc = device.setProperty(nParam, I2C);
+	if (rc != openni::STATUS_OK)
+	{
+		printf("%s\n", openni::OpenNI::getExtendedError());
+	}
+
+	return true;
+}
+
+template<typename ... Args>
+std::string string_format(const std::string& format, Args ... args)
+{
+	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+	std::unique_ptr<char[]> buf(new char[size]);
+	snprintf(buf.get(), size, format.c_str(), args ...);
+	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+}
+#endif

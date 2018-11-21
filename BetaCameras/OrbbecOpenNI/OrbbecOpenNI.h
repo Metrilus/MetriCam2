@@ -2,10 +2,19 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 #pragma once
+// When USE_I2C_GAIN is set, then the old, I2C code is used to get/set the IrGain.
+// Otherwise, the new Orbbec OpenNI extension is used (which seems still buggy).
+#define USE_I2C_GAIN 1
+
 #include <msclr/marshal.h>
 #include <PS1080.h>
 #include <OpenNI.h>
 #include "cmd.h"
+
+#if USE_I2C_GAIN
+#include <iostream>
+#include <vector>
+#endif
 
 //Adpated from SimpleViewer of experimental interface
 const int IR_Exposure_MAX = 1 << 14;
@@ -20,6 +29,14 @@ using namespace System::Runtime::InteropServices;
 using namespace System::Drawing;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
+
+#if USE_I2C_GAIN
+bool atoi2(const char* str, int* pOut);
+unsigned short read_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C);
+bool write_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C);
+template<typename ... Args>
+std::string string_format(const std::string& format, Args ... args);
+#endif
 
 namespace MetriCam2 
 {
