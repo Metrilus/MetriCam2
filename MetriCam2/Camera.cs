@@ -1849,7 +1849,8 @@ namespace MetriCam2
                 if (!IsAutoParameter(name, out baseDesc))
                 {
                     log.DebugFormat("    {0} (ParameterDescriptor not found)", msgNotSupported);
-                    throw new ParameterNotSupportedException(msgNotSupported);
+                    return null;
+                    //throw new ParameterNotSupportedException(msgNotSupported);
                 }
                 // Seems to be a valid Auto* parameter
                 desc = new ParamDesc<bool>(baseDesc); // create a new ParamDesc to get rid of range or list types.

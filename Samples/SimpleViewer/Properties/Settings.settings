@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="CameraDLLPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">MetriCam2.Cameras.Kinect2.dll</Value>
+      <Value Profile="(Default)">MetriCam2.Cameras.OrbbecOpenNI.dll</Value>
     </Setting>
     <Setting Name="CameraName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">MetriCam2.Cameras.Kinect2</Value>
+      <Value Profile="(Default)">MetriCam2.Cameras.AstraOpenNI</Value>
     </Setting>
     <Setting Name="ChannelName" Type="System.String" Scope="User">
       <Value Profile="(Default)">Amplitude</Value>
