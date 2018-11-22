@@ -99,10 +99,10 @@ namespace MetriCam2
 				void set(bool value) { SetEmitterStatus(value); }
 			}
 
-			property unsigned int IRExposure
+			property int IRExposure
 			{
-				unsigned int get() { return GetIRExposure(); }
-				void set(unsigned int value)
+				int get() { return GetIRExposure(); }
+				void set(int value)
 				{
 					auto irGainBefore = GetIRGain();
 					SetIRExposure(value);
