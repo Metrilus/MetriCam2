@@ -792,17 +792,23 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 	FloatCameraImage^ irData = gcnew FloatCameraImage(irFrame.getWidth(), irFrame.getHeight(), 0.0f);
 	irData->ChannelName = ChannelNames::Intensity;
 
-	// Compensate for offset bug: Translate infrared frame by 16 pixels in vertical direction to match infrared with depth image.
-	// Leave first 16 rows black. Constructor of FloatCameraImage assigns zero to every pixel as initial value by default.
+	// Compensate for offset between IR and Distance images:
+	// Translate infrared frame by 16 pixels in vertical direction to match infrared with depth image.
 	const int yTranslation = 16;
 
-	for (int y = 0; y < irFrame.getHeight() - yTranslation; ++y)
+	// skip first yTranslation rows
+	if (yTranslation > 0)
+	{
+		pIRRow += rowSize * yTranslation;
+	}
+	int dataY = yTranslation;
+	int imgY = 0;
+	for (; imgY < irFrame.getHeight() && dataY < irFrame.getHeight(); ++imgY, ++dataY)
 	{
 		const openni::Grayscale16Pixel* pIR = pIRRow;
-
 		for (int x = 0; x < irFrame.getWidth(); ++x, ++pIR)
 		{
-			irData[y + yTranslation, x] = (float)*pIR;
+			irData[imgY, x] = (float)*pIR;
 		}
 		pIRRow += rowSize;
 	}
