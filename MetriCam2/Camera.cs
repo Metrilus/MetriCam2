@@ -1124,7 +1124,7 @@ namespace MetriCam2
         /// By default the TimeStamp is set to DateTime.UtcNow.Ticks at the beginning of <see cref="Update"/>.
         /// Individual cameras may override this behaviour and e.g. use a timestamp delivered by the camera itself.
         /// </remarks>
-        public long TimeStamp { get; protected set; }
+        public long TimeStamp { get; private set; }
 
 #if !NETSTANDARD2_0
         /// <summary>
@@ -1212,8 +1212,8 @@ namespace MetriCam2
                 throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, "error_connectionFailed");
             }
 
-            this.FrameNumber = -1;
-            this.TimeStamp = -1;
+            FrameNumber = -1;
+            TimeStamp = -1;
 
             if (OnConnecting != null)
             {
@@ -1318,9 +1318,8 @@ namespace MetriCam2
             {
                 this.hasUpdateBeenCalled = true;
                 this.FrameNumber++;
-                this.TimeStamp = DateTime.UtcNow.Ticks;
-
                 UpdateImpl();
+                this.TimeStamp = DateTime.UtcNow.Ticks;
             }
         }
 
@@ -1587,12 +1586,9 @@ namespace MetriCam2
             {
                 if (img.FrameNumber < 1)
                 {
-                    img.FrameNumber = this.FrameNumber;
+                    img.FrameNumber = FrameNumber;
                 }
-                if (img.TimeStamp < 1)
-                {
-                    img.TimeStamp = this.TimeStamp;
-                }
+                img.TimeStamp = TimeStamp;
                 if (string.IsNullOrWhiteSpace(img.ChannelName))
                 {
                     img.ChannelName = channelName;

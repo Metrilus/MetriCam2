@@ -326,7 +326,6 @@ namespace MetriCam2.Cameras
             lock (_frontLock)
             {
                 result = new FloatCameraImage(_frontFrameData.Width, _frontFrameData.Height);
-                result.TimeStamp = (long)_frontFrameData.TimeStamp;
                 int start = _frontFrameData.IntensityStartOffset;
                 for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
@@ -353,7 +352,6 @@ namespace MetriCam2.Cameras
             lock (_frontLock)
             {
                 result = new FloatCameraImage(_frontFrameData.Width, _frontFrameData.Height);
-                result.TimeStamp = (long)_frontFrameData.TimeStamp;
                 int start = _frontFrameData.DistanceStartOffset;
                 for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
@@ -379,7 +377,6 @@ namespace MetriCam2.Cameras
             lock (_frontLock)
             {
                 result = new UShortCameraImage(_frontFrameData.Width, _frontFrameData.Height);
-                result.TimeStamp = (long)_frontFrameData.TimeStamp;
                 int start = _frontFrameData.ConfidenceStartOffset;
                 for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
@@ -428,7 +425,6 @@ namespace MetriCam2.Cameras
             lock (_frontLock)
             {
                 result = new Point3fCameraImage(_frontFrameData.Width, _frontFrameData.Height);
-                result.TimeStamp = (long)_frontFrameData.TimeStamp;
 
                 float cx = _frontFrameData.CX;
                 float cy = _frontFrameData.CY;
