@@ -2004,7 +2004,6 @@ namespace MetriCam2.Cameras
             int width = _currentDepthFrame.Width;
 
             FloatCameraImage depthData = new FloatCameraImage(width, height);
-            depthData.TimeStamp = _currentFrameTimestamp;
             short* source = (short*)_currentDepthFrame.Data;
 
             for (int y = 0; y < height; y++)
@@ -2033,7 +2032,6 @@ namespace MetriCam2.Cameras
             int width = frame.Width;
 
             FloatCameraImage IRData = new FloatCameraImage(width, height);
-            IRData.TimeStamp = _currentFrameTimestamp;
             byte* source = (byte*)frame.Data;
 
             for (int y = 0; y < height; y++)
@@ -2072,10 +2070,7 @@ namespace MetriCam2.Cameras
             }
 
             bitmap.UnlockBits(bmpData);
-            ColorCameraImage image = new ColorCameraImage(bitmap);
-            image.TimeStamp = _currentFrameTimestamp;
-
-            return image;
+            return new ColorCameraImage(bitmap);
         }
 
         #endregion

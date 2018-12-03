@@ -292,7 +292,6 @@ namespace MetriCam2.Cameras
             {
                 ChannelName = _channelName,
                 FrameNumber = _scanCounter,
-                TimeStamp = _timeStamp
             };
 
             for (int x = 0; x < _radii.Length; ++x)
@@ -323,7 +322,6 @@ namespace MetriCam2.Cameras
             {
                 ChannelName = _channelName,
                 FrameNumber = _scanCounter,
-                TimeStamp = _timeStamp
             };
 
             for (int x = 0; x < _radii.Length; ++x)

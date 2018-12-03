@@ -722,8 +722,6 @@ namespace MetriCam2.Cameras
                         img[y, x] = depthFrameData[idx] * distanceMap[y, depthWidthMinusOne - x] * 0.001f;
                     }
                 }
-
-                img.TimeStamp = timestampDepth;
             }            
             return img;
         }
@@ -745,9 +743,7 @@ namespace MetriCam2.Cameras
                 bmp.UnlockBits(bData);
                 bmp.RotateFlip(RotateFlipType.RotateNoneFlipX); //Kinect images are flipped in x-direction
 
-                ColorCameraImage img = new ColorCameraImage(bmp);
-                img.TimeStamp = timestampColor;
-                return img;
+                return new ColorCameraImage(bmp);
             }
         }
 
@@ -766,8 +762,6 @@ namespace MetriCam2.Cameras
                         img[y, x] = (float)this.irFrameData[idx];
                     }
                 }
-
-                img.TimeStamp = timestampIR;
             }
             return img;
         }
@@ -870,8 +864,6 @@ namespace MetriCam2.Cameras
                         img[y, x] = new Point3f(worldPoints[idx].X * -1, worldPoints[idx].Y * -1, worldPoints[idx].Z);
                     }
                 }
-
-                img.TimeStamp = timestampDepth;
             }
             return img;
         }
