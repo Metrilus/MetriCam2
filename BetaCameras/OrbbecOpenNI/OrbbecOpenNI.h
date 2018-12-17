@@ -20,7 +20,7 @@
 const int IR_Exposure_MAX = 1 << 14;
 const int IR_Exposure_MIN = 0;
 const int IR_Gain_MIN = 8;
-const int IR_Gain_MAX = 256;
+const int IR_Gain_MAX = 63;
 
 using namespace System;
 using namespace System::ComponentModel;
