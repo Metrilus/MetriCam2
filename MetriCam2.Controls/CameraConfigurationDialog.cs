@@ -137,7 +137,7 @@ namespace MetriCam2.Controls
 
             // BUG: If currently selected channel will be deactivated, then we are in trouble
 
-            Task channelsTask = Task.Factory.StartNew(() =>
+            Task deactivateChannelsTask = Task.Factory.StartNew(() =>
             {
                 log.Debug("Deactivate unchecked channels");
                 for (int i = 0; i < checkedListBoxChannels.Items.Count; i++)
@@ -157,7 +157,9 @@ namespace MetriCam2.Controls
                         }
                     }
                 }
-            }).ContinueWith((t) =>
+            });
+            
+            Task activateChannelsTask = deactivateChannelsTask.ContinueWith((t) =>
             {
                 log.Debug("Activate checked channels");
                 for (int i = 0; i < checkedListBoxChannels.CheckedItems.Count; i++)
@@ -176,7 +178,7 @@ namespace MetriCam2.Controls
                 }
             });
 
-            channelsTask.Wait();
+            activateChannelsTask.Wait();
 
             log.Debug("Try to select a channel");
             if (1 == camera.ActiveChannels.Count)

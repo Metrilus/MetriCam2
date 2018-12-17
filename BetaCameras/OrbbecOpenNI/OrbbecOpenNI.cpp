@@ -125,17 +125,16 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 		// Open device by Uri
 		openni::Device* device = new openni::Device;
 		deviceUri = deviceList[i].getUri();
-
 		rc = device->open(deviceUri);
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't open device : ", deviceUris[i]);
-			log->WarnFormat("GetSerialNumberOfAttachedCameras: Couldn't open device {0}", gcnew String(deviceUri));
+			log->WarnFormat("GetSerialToUriMappingOfAttachedCameras: Couldn't open device {0}", gcnew String(deviceUri));
 			continue;
 		}
 
 		// Read serial number
 		int data_size = sizeof(serialNumber);
-		device->getProperty((int)ONI_DEVICE_PROPERTY_SERIAL_NUMBER, (void *)serialNumber, &data_size);
+		device->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serialNumber, &data_size);
 
 		// Close device
 		device->close();
@@ -178,7 +177,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		deviceURI = marshalContext.marshal_as<const char*>(serialsToUris[SerialNumber]);
 	}
 
-	int rc = _pCamData->openNICam->init(deviceURI);
+	int rc = _pCamData->device.open(deviceURI);
 	if (rc != openni::Status::STATUS_OK)
 	{
 		auto msg = String::Format("{0}: Could not init connection to device {1}.", Name, SerialNumber);
@@ -188,12 +187,23 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	// Read serial number
 	char serialNumber[12];
 	int data_size = sizeof(serialNumber);
-	Device.getProperty((int)ONI_DEVICE_PROPERTY_SERIAL_NUMBER, (void *)serialNumber, &data_size);
+	Device.getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serialNumber, &data_size);
 	SerialNumber = gcnew String(serialNumber);
 
-	VendorID = _pCamData->openNICam->m_vid;
-	ProductID = _pCamData->openNICam->m_pid;
-	//_pCamData->openNICam->ldp_set(true); //Ensure eye-safety by turning on the proximity sensor
+	openni::DeviceInfo dInfo = Device.getDeviceInfo();
+	VendorID = dInfo.getUsbVendorId();
+	ProductID = dInfo.getUsbProductId();
+
+	char deviceType[32] = { 0 };
+	int size = 32;
+	Device.getProperty(openni::OBEXTENSION_ID_DEVICETYPE, deviceType, &size);
+	DeviceType = gcnew String(deviceType);
+	if (DeviceType->StartsWith("Orbbec "))
+	{
+		Model = DeviceType->Substring(7);
+	}
+
+	SetProximitySensorStatus(true); // Ensure eye-safety by turning on the proximity sensor
 
 	// Start depth stream
 	Device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
@@ -214,111 +224,104 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		}
 	}
 
-	_irGain = GetIRGain();
 	// Turn Emitter on if any depth channel is active.
 	// (querying from device here would return wrong value)
 	// (do not use properties as they check against their current value which might be wrong)
-	//_emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
-	//SetEmitterStatus(_emitterEnabled);
-	_irFlooderEnabled = false; // Default to IR flooder off.
-	SetIRFlooderStatus(_irFlooderEnabled);
+	bool emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
+	SetEmitterStatus(emitterEnabled);
+	bool irFlooderEnabled = false; // Default to IR flooder off.
+	SetIRFlooderStatus(irFlooderEnabled);
+}
+
+bool MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
+{
+	// Reading the emitter status does not work yet. Check in future version of experimental SDK.
+	return _emitterEnabled;
+	//int laser_en = 0;
+	//int size = 4;
+	//Device.getProperty(openni::OBEXTENSION_ID_LASER_EN, (uint8_t*)&laser_en, &size);
+	//return (bool)laser_en;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
 {
-	if (_pCamData->openNICam->m_vid != 0x1d27) //Check if our device is not an Asus-Carmine device
+	const int laser_en = on ? 0x01 : 0x00;
+	Device.setProperty(openni::OBEXTENSION_ID_LASER_EN, (uint8_t*)&laser_en, 4);
+	_emitterEnabled = on;
+	log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
+}
+
+void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatusAndWait(bool on)
+{
+	SetEmitterStatus(on);
+	if (on)
 	{
-		if (_pCamData->openNICam->ldp_set(on) != openni::STATUS_OK)
-		{
-			LogOpenNIError("LDP set failed");
-		}
-		System::Threading::Thread::Sleep(100); //Is required, otherwise turning off the emitter did not work in some cases, also not when just waiting 50ms
+		WaitUntilNextValidFrame();
 	}
-
-	// Try to activate next code block in future version of experimental SDK (class "cmd"). Currently, the LDP status is alwas unknown
-	//LDPStatus status;
-	//LDPStatus statusToSet = on ? LDPStatus::LDP_ON : LDPStatus::LDP_OFF;
-	////We need to be sure that the proximity sensor status was set properly
-	//do
-	//{
-	//	camData->openNICam->ldp_get(status);
-	//	System::Threading::Thread::Sleep(1);
-	//}
-	//while (status != statusToSet);
-
-	if (_pCamData->openNICam->emitter_set(on) != openni::STATUS_OK)
+	else
 	{
-		LogOpenNIError("Emitter set failed");
+		WaitUntilNextInvalidFrame();
 	}
 }
 
-String^ MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
+bool MetriCam2::Cameras::AstraOpenNI::GetProximitySensorStatus()
 {
-	LaserStatus status;
-	if (_pCamData->openNICam->emitter_get(status) != openni::STATUS_OK)
-	{
-		LogOpenNIError("Emitter get failed");
-	}
-	String^ statusString = "Unknown";
-	if (status == LaserStatus::LASER_OFF)
-	{
-		statusString = "Off";
-	}
-	else if (status == LaserStatus::LASER_ON)
-	{
-		statusString = "On";
-	}
-	log->DebugFormat("Emitter status is: {0}", statusString);
-	return statusString;
+	int ldp_en = 0;
+	int size = 4;
+	Device.getProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, &size);
+	return (bool)ldp_en;
+}
+
+void MetriCam2::Cameras::AstraOpenNI::SetProximitySensorStatus(bool on)
+{
+	const int ldp_en = on ? 0x01 : 0x00;
+	Device.setProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, 4);
+	log->DebugFormat("Proximity sensor state set to: {0}", on.ToString());
+}
+
+bool MetriCam2::Cameras::AstraOpenNI::GetIRFlooderStatus()
+{
+	// Reading the IrFlood status does not work yet. Check in future version of experimental SDK.
+	return _irFlooderEnabled;
+	//int status = 0;
+	//int size = 4;
+	//Device.getProperty(XN_MODULE_PROPERTY_IRFLOOD_STATE, &status, &size);
+	//return (bool)status;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetIRFlooderStatus(bool on)
 {
-	// Try to activate next code block in future version of experimental SDK (class "cmd"). Currently, the IrFloodLedStatus status is alwas unknown
-	//IrFloodLedStatus statusToSet = on ? IrFloodLedStatus::IR_LED_ON : IrFloodLedStatus::IR_LED_OFF;
-	//camData->openNICam->ir_flood_set(statusToSet);
-	////We need to be sure that the proximity sensor status was set properly
-	//IrFloodLedStatus status;
-	//do
-	//{
-	//	camData->openNICam->ir_flood_get(status);
-	//	System::Threading::Thread::Sleep(1);
-	//}
-	//while (status != statusToSet);
-
-	if (_pCamData->openNICam->ir_flood_set(on) != openni::STATUS_OK)
-	{
-		LogOpenNIError("ir flooder set failed");
-	}
+	const int status = on ? 0x01 : 0x00;
+	Device.setProperty(XN_MODULE_PROPERTY_IRFLOOD_STATE, status);
+	_irFlooderEnabled = on;
+	log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
 }
 
-String^ MetriCam2::Cameras::AstraOpenNI::GetIRFlooderStatus()
+int MetriCam2::Cameras::AstraOpenNI::GetIRGain()
 {
-	IrFloodLedStatus status;
-	if (_pCamData->openNICam->ir_flood_get(status) != openni::STATUS_OK)
-	{
-		LogOpenNIError("ir_flood_get failed");
-	}
-	String^ statusString = "Unknown";
-	if (status == IrFloodLedStatus::IR_LED_OFF)
-	{
-		statusString = "Off";
-	}
-	else if (status == IrFloodLedStatus::IR_LED_ON)
-	{
-		statusString = "On";
-	}
-	log->DebugFormat("IR flooder status is: {0}", statusString);
-	return statusString;
-}
+#if USE_I2C_GAIN
+	std::vector<std::string> cmd_r;
+	const char *argv_r[4] = {};
+	int i;
+	XnControlProcessingData I2C;
 
-template<typename ... Args>
-string string_format(const std::string& format, Args ... args)
-{
-	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
-	unique_ptr<char[]> buf(new char[size]);
-	snprintf(buf.get(), size, format.c_str(), args ...);
-	return string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+	argv_r[0] = "i2c";
+	argv_r[1] = "read";
+	argv_r[2] = "1";
+	argv_r[3] = "0x35";
+	for (i = 0; i < 4; i++)
+	{
+		cmd_r.push_back(argv_r[i]);
+	}
+
+	unsigned short gain = read_i2c(Device, cmd_r, I2C);
+	return gain;
+#else
+	int gain = 0;
+	int size = 4;
+	Device.getProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, &size);
+	return gain;
+#endif
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetIRGain(int value)
@@ -331,82 +334,54 @@ void MetriCam2::Cameras::AstraOpenNI::SetIRGain(int value)
 	{
 		value = IR_Gain_MAX;
 	}
+#if USE_I2C_GAIN
+	std::string buf = string_format("0x%x", value);
+	std::vector<std::string> cmd_r;
+	const char *argv_r[5] = {};
+	int i;
+	XnControlProcessingData I2C;
 
-	string buf = string_format("0x%x", value);
-	if (!_pCamData->openNICam->ir_gain_set(buf.c_str()))
+	argv_r[0] = "i2c";
+	argv_r[1] = "write";
+	argv_r[2] = "1";
+	argv_r[3] = "0x35";
+	argv_r[4] = buf.c_str();
+
+	for (i = 0; i < 5; i++)
 	{
-		LogOpenNIError("Set IR gain failed");
+		cmd_r.push_back(argv_r[i]);
 	}
-	else
-	{
-		log->DebugFormat("IR gain is set to: {0}", gcnew String(buf.c_str()));
-	}
+
+	write_i2c(Device, cmd_r, I2C);
+	log->DebugFormat("IR gain is set to: {0}", gcnew String(buf.c_str()));
+#else
+	int gain = value;
+	int size = 4;
+	Device.setProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, size);
+#endif
 }
 
-unsigned short MetriCam2::Cameras::AstraOpenNI::GetIRGain()
+int MetriCam2::Cameras::AstraOpenNI::GetIRExposure()
 {
-	_pCamData->openNICam->ir_gain_get();
-	return _pCamData->openNICam->m_I2CReg;
+	int exposure = 0;
+	int size = 4;
+	Device.getProperty(openni::OBEXTENSION_ID_IR_EXP, (uint8_t*)&exposure, &size);
+	return exposure;
 }
 
-void MetriCam2::Cameras::AstraOpenNI::SetIRExposure(unsigned int value)
+void MetriCam2::Cameras::AstraOpenNI::SetIRExposure(int value)
 {
-	unsigned int irExposure;
 	if (value < IR_Exposure_MIN)
 	{
-		irExposure = IR_Exposure_MIN;
+		value = IR_Exposure_MIN;
 	}
 	else if (value > IR_Exposure_MAX)
 	{
-		irExposure = IR_Exposure_MAX;
+		value = IR_Exposure_MAX;
 	}
-	else
-	{
-		irExposure = value;
-	}
-
-	if (_pCamData->openNICam->ir_exposure_set(irExposure) != openni::STATUS_OK)
-	{
-		LogOpenNIError("Set IR exposure failed");
-	}
-	else
-	{
-		log->DebugFormat("IR exposure is set to: {0}", irExposure.ToString());
-	}
-	//camData->depth.stop();
-	if (!IsChannelActive(ChannelNames::Intensity))
-	{
-		IrStream.start();
-		if (IrStream.isValid())
-		{
-			VideoMode videomode = IrStream.getVideoMode();
-			videomode.setPixelFormat(openni::PIXEL_FORMAT_GRAY16);
-			videomode.setResolution(640, 480);
-			IrStream.setVideoMode(videomode);
-		}
-		IrStream.stop();
-	}
-	if (!IsChannelActive(ChannelNames::ZImage))
-	{
-		DepthStream.start();
-		if (DepthStream.isValid())
-		{
-			VideoMode videoMode = DepthStream.getVideoMode();
-			videoMode.setResolution(640, 480);
-			DepthStream.setVideoMode(videoMode);
-		}
-		DepthStream.stop();
-	}
-}
-
-unsigned int MetriCam2::Cameras::AstraOpenNI::GetIRExposure()
-{
-	unsigned int exposure;
-	if (_pCamData->openNICam->ir_exposure_get(exposure) != openni::STATUS_OK)
-	{
-		LogOpenNIError("Get IR exposure failed");
-	}
-	return exposure;
+	int exposure = value;
+	int size = 4;
+	Device.setProperty(openni::OBEXTENSION_ID_IR_EXP, (uint8_t*)&exposure, size);
 }
 
 void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
@@ -543,7 +518,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 			throw gcnew Exception("IR and depth are not allowed to be active at the same time. Please deactivate channel \"Intensity\" before activating channel \"ZImage\" or \"Point3DImage\"");
 		}
 
-		auto irGainBefore = _irGain;
+		auto irGainBefore = GetIRGain();
 
 		openni::VideoMode depthVideoMode = DepthStream.getVideoMode();
 		depthVideoMode.setResolution(640, 480);
@@ -829,50 +804,30 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 
 	log->Info("Projective transformation file not found.");
 	log->Info("Using Orbbec factory intrinsics as projective transformation.");
+	OBCameraParams params;
+	int dataSize = sizeof(OBCameraParams);
+	Device.getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, (uint8_t*)&params, &dataSize);
 
 	Metrilus::Util::ProjectiveTransformationZhang^ pt = nullptr;
-	ParamsResult res = _pCamData->openNICam->get_cmos_params(0);
 
 	if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
 	{
-		if (res.error)
-		{
-			//Extracted from 3-D coordinates
-			pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 570.3422f, 570.3422f, 320, 240, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-		}
 		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
-			640,
-			480,
-			res.params.l_intr_p[0],
-			res.params.l_intr_p[1],
-			res.params.l_intr_p[2],
-			res.params.l_intr_p[3],
-			res.params.l_k[0],
-			res.params.l_k[1],
-			res.params.l_k[2],
-			res.params.l_k[3],
-			res.params.l_k[4]);
+			640, 480,
+			params.l_intr_p[0], params.l_intr_p[1],
+			params.l_intr_p[2], params.l_intr_p[3],
+			params.l_k[0], params.l_k[1], params.l_k[2],
+			params.l_k[3], params.l_k[4]);
 	}
 
 	if (channelName->Equals(ChannelNames::Color))
 	{
-		if (res.error)
-		{
-			// Extracted from file in Orbbec calibration tool
-			pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(640, 480, 512.408f, 512.999f, 327.955f, 236.763f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-		}
 		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
-			640,
-			480,
-			res.params.r_intr_p[0],
-			res.params.r_intr_p[1],
-			res.params.r_intr_p[2],
-			res.params.r_intr_p[3],
-			res.params.r_k[0],
-			res.params.r_k[1],
-			res.params.r_k[2],
-			res.params.r_k[3],
-			res.params.r_k[4]);
+			640, 480,
+			params.r_intr_p[0], params.r_intr_p[1],
+			params.r_intr_p[2], params.r_intr_p[3],
+			params.r_k[0], params.r_k[1], params.r_k[2],
+			params.r_k[3], params.r_k[4]);
 	}
 
 	if (nullptr == pt)
@@ -901,31 +856,15 @@ Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExt
 
 	log->Info("Extrinsices file not found.");
 	log->Info("Using Orbbec factory extrinsics as projective transformation.");
+	OBCameraParams params;
+	int dataSize = sizeof(OBCameraParams);
+	Device.getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, (uint8_t*)&params, &dataSize);
 
-	ParamsResult res = _pCamData->openNICam->get_cmos_params(0);
-
-	Metrilus::Util::RotationMatrix^ rotMat;
-	Point3f translation;
-
-	if (res.error)
-	{
-		translation = Point3f(-0.0242641f, -0.000439535f, -0.000577864f);
-
-		//Extracted from file in Orbbec calibration tool
-		rotMat = gcnew Metrilus::Util::RotationMatrix(
-			Point3f(0.999983f, -0.00264698f, 0.00526572f),
-			Point3f(0.00264383f, 0.999996f, 0.000603628f),
-			Point3f(-0.0052673f, -0.000589696f, 0.999986f));
-	}
-	else
-	{
-		translation = Point3f(res.params.r2l_t[0] / 1000, res.params.r2l_t[1] / 1000, res.params.r2l_t[2] / 1000);
-
-		rotMat = gcnew Metrilus::Util::RotationMatrix(
-			Point3f(res.params.r2l_r[0], res.params.r2l_r[3], res.params.r2l_r[6]),
-			Point3f(res.params.r2l_r[1], res.params.r2l_r[4], res.params.r2l_r[7]),
-			Point3f(res.params.r2l_r[2], res.params.r2l_r[5], res.params.r2l_r[8]));
-	}
+	Point3f translation = Point3f(params.r2l_t[0] / 1000, params.r2l_t[1] / 1000, params.r2l_t[2] / 1000);
+	Metrilus::Util::RotationMatrix^ rotMat = gcnew Metrilus::Util::RotationMatrix(
+		Point3f(params.r2l_r[0], params.r2l_r[3], params.r2l_r[6]),
+		Point3f(params.r2l_r[1], params.r2l_r[4], params.r2l_r[7]),
+		Point3f(params.r2l_r[2], params.r2l_r[5], params.r2l_r[8]));
 
 	//TODO: Compare with own calibration, since IR-to-depth shift (in y-direction) can have an effect on the transformation
 	Metrilus::Util::RigidBodyTransformation^ depthToColor = gcnew Metrilus::Util::RigidBodyTransformation(rotMat, translation);
@@ -940,6 +879,224 @@ Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExt
 		return depthToColor->GetInverted();
 	}
 
-	log->Error("Unsupported channel combination in GetExtrinsics().");
+	log->ErrorFormat("Unsupported channel combination in GetExtrinsics(): {0} -> {1}", channelFromName, channelToName);
 	return nullptr;
 }
+
+void MetriCam2::Cameras::AstraOpenNI::WaitUntilNextValidFrame()
+{
+	int numFramesWaited = 0;
+	FloatCameraImage^ frame;
+	if (IsChannelActive(ChannelNames::ZImage))
+	{
+		do
+		{
+			Update();
+			frame = (FloatCameraImage^)CalcChannel(ChannelNames::ZImage);
+			numFramesWaited++;
+		} while (!IsDepthFrameValid_NumberNonZeros(frame, 30));
+	}
+	else if (IsChannelActive(ChannelNames::Intensity))
+	{
+
+	}
+	log->DebugFormat("Waited for {0} frames until first valid frame", numFramesWaited);
+}
+
+void MetriCam2::Cameras::AstraOpenNI::WaitUntilNextInvalidFrame()
+{
+	int numFramesWaited = 0;
+	FloatCameraImage^ frame;
+	if (IsChannelActive(ChannelNames::ZImage))
+	{
+		do
+		{
+			Update();
+			frame = (FloatCameraImage^)CalcChannel(ChannelNames::ZImage);
+			numFramesWaited++;
+		} while (IsDepthFrameValid_NumberNonZeros(frame, 30));
+	}
+	else if (IsChannelActive(ChannelNames::Intensity))
+	{
+
+	}
+	log->DebugFormat("Waited for {0} frames until first invalid frame", numFramesWaited);
+}
+
+[MethodImpl(MethodImplOptions::AggressiveInlining)]
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatCameraImage^ img)
+{
+	return IsDepthFrameValid_MinimumMean(img, 0.0f);
+}
+[MethodImpl(MethodImplOptions::AggressiveInlining)]
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatCameraImage^ img, float threshold)
+{
+	float sum = 0;
+	for (int y = 0; y < img->Height; y++)
+	{
+		for (int x = 0; x < img->Width; x++)
+		{
+			sum += img[y, x];
+		}
+	}
+	return sum > threshold;
+}
+
+[MethodImpl(MethodImplOptions::AggressiveInlining)]
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img)
+{
+	return IsDepthFrameValid_NumberNonZeros(img, 25);
+}
+[MethodImpl(MethodImplOptions::AggressiveInlining)]
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img, int thresholdPercentage)
+{
+	int numPixels = img->Height * img->Width;
+	int numNonZeros = 0;
+	for (int y = 0; y < img->Height; y++)
+	{
+		for (int x = 0; x < img->Width; x++)
+		{
+			if (img[y, x] > 0.0f)
+			{
+				numNonZeros++;
+			}
+		}
+	}
+	int ratio = (int)(numNonZeros * 100.0f / numPixels);
+	return ratio > thresholdPercentage;
+}
+
+#if USE_I2C_GAIN
+bool atoi2(const char* str, int* pOut)
+{
+	int output = 0;
+	int base = 10;
+	int start = 0;
+
+	if (strlen(str) > 1 && str[0] == '0' && str[1] == 'x')
+	{
+		start = 2;
+		base = 16;
+	}
+
+	for (size_t i = start; i < strlen(str); i++)
+	{
+		output *= base;
+		if (str[i] >= '0' && str[i] <= '9')
+			output += str[i] - '0';
+		else if (base == 16 && str[i] >= 'a' && str[i] <= 'f')
+			output += 10 + str[i] - 'a';
+		else if (base == 16 && str[i] >= 'A' && str[i] <= 'F')
+			output += 10 + str[i] - 'A';
+		else
+			return false;
+	}
+	*pOut = output;
+	return true;
+}
+
+unsigned short read_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C)
+{
+	if (Command.size() != 4)
+	{
+		std::cout << "Usage: " << Command[0] << " " << Command[1] << " <cmos> <register>" << std::endl;
+		return true;
+	}
+
+	int nRegister;
+	if (!atoi2(Command[3].c_str(), &nRegister))
+	{
+		printf("Don't understand %s as a register\n", Command[3].c_str());
+		return true;
+	}
+	I2C.nRegister = (unsigned short)nRegister;
+
+	int nParam = 0;
+
+	int command;
+	if (!atoi2(Command[2].c_str(), &command))
+	{
+		std::cout << "cmos must be 0/1" << std::endl;
+		return true;
+	}
+
+	if (command == 1)
+		nParam = XN_MODULE_PROPERTY_DEPTH_CONTROL;
+	else if (command == 0)
+		nParam = XN_MODULE_PROPERTY_IMAGE_CONTROL;
+	else
+	{
+		std::cout << "cmos must be 0/1" << std::endl;
+		return true;
+	}
+
+	if (device.getProperty(nParam, &I2C) != openni::STATUS_OK)
+	{
+		std::cout << "getProperty failed!" << std::endl;
+		return false;
+	}
+
+	std::cout << "I2C(" << command << ")[0x" << std::hex << I2C.nRegister << "] = 0x" << std::hex << I2C.nValue << std::endl;
+
+	return I2C.nValue;
+}
+
+bool write_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C)
+{
+	if (Command.size() != 5)
+	{
+		std::cout << "Usage: " << Command[0] << " " << Command[1] << " <cmos> <register> <value>" << std::endl;
+		return true;
+	}
+
+	int nRegister, nValue;
+	if (!atoi2(Command[3].c_str(), &nRegister))
+	{
+		printf("Don't understand %s as a register\n", Command[3].c_str());
+		return true;
+	}
+	if (!atoi2(Command[4].c_str(), &nValue))
+	{
+		printf("Don't understand %s as a value\n", Command[4].c_str());
+		return true;
+	}
+	I2C.nRegister = (unsigned short)nRegister;
+	I2C.nValue = (unsigned short)nValue;
+
+	int nParam = 0;
+
+	int command;
+	if (!atoi2(Command[2].c_str(), &command))
+	{
+		printf("cmos should be 0 (depth) or 1 (image)\n");
+		return true;
+	}
+
+	if (command == 1)
+		nParam = XN_MODULE_PROPERTY_DEPTH_CONTROL;
+	else if (command == 0)
+		nParam = XN_MODULE_PROPERTY_IMAGE_CONTROL;
+	else
+	{
+		std::cout << "cmos must be 0/1" << std::endl;
+		return true;
+	}
+
+	openni::Status rc = device.setProperty(nParam, I2C);
+	if (rc != openni::STATUS_OK)
+	{
+		printf("%s\n", openni::OpenNI::getExtendedError());
+	}
+
+	return true;
+}
+
+template<typename ... Args>
+std::string string_format(const std::string& format, Args ... args)
+{
+	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+	std::unique_ptr<char[]> buf(new char[size]);
+	snprintf(buf.get(), size, format.c_str(), args ...);
+	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+}
+#endif
