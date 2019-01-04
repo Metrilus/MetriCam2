@@ -285,6 +285,10 @@ namespace MetriCam2.Cameras
                     AddToActiveChannels(ChannelNames.Color);
                     AddToActiveChannels(ChannelNames.ZImage);
                 }
+
+                CheckReturnStatus(Methods.SetFilter(DeviceIndex, FilterType.ComputeRealDepthFilter, false));
+                CheckReturnStatus(Methods.SetFilter(DeviceIndex, FilterType.SmoothingExpFilter, false));
+                CheckReturnStatus(Methods.SetFilter(DeviceIndex, FilterType.SmoothingGDFilter, false));
             }
             catch(Exception e)
             {
