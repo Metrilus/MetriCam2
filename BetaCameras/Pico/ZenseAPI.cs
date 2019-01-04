@@ -246,6 +246,13 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         public double p2;  // Tangential distortion coefficient
     }
 
+    public unsafe struct CameraExtrinsicParameters
+    {
+
+        public fixed double rotation[9];
+        public fixed double transfer[3];
+    }
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public unsafe struct Frame
     {
@@ -683,6 +690,16 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         [DllImport("picozense_api", EntryPoint = "PsGetCameraParameters", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         public unsafe extern static ReturnStatus GetCameraParameters(int deviceIndex, SensorType sensorType, out CameraParameters pCameraParameters);
 
+
+        /*
+        *  Get camera rotation and transfer coefficient parameters
+        *  @Parameters:
+        *	deviceIndex[In]: the device index, its range is 0 to deviceCount-1
+        *	pCameraExtrinsicParameters[out]: pointer to the PsCameraExtrinsicParameters structure variable that used to store returned camera parameters
+        *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
+        */
+        [DllImport("picozense_api", EntryPoint = "PsGetCameraExtrinsicParameters", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus GetCameraExtrinsics(int deviceIndex, out CameraExtrinsicParameters pCameraExtrinsicParameters);
 
         /*
         *  write register value

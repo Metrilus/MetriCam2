@@ -461,6 +461,32 @@ namespace MetriCam2.Cameras
             }
         }
 
+        public override unsafe RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
+        {
+            CheckReturnStatus(Methods.GetCameraExtrinsics(DeviceIndex, out CameraExtrinsicParameters extrinsics));
+
+            var rbt = new RigidBodyTransformation(
+                new RotationMatrix(
+                    new Point3f((float)extrinsics.rotation[0], (float)extrinsics.rotation[1], (float)extrinsics.rotation[2]),
+                    new Point3f((float)extrinsics.rotation[3], (float)extrinsics.rotation[4], (float)extrinsics.rotation[5]),
+                    new Point3f((float)extrinsics.rotation[6], (float)extrinsics.rotation[7], (float)extrinsics.rotation[8])
+                ),
+                new Point3f((float)extrinsics.transfer[0], (float)extrinsics.transfer[2], (float)extrinsics.transfer[2])
+            );
+
+            if (channelFromName == ChannelNames.ZImage && channelToName == ChannelNames.Color)
+            {
+                return rbt;
+            }
+            else if (channelFromName == ChannelNames.Color && channelToName == ChannelNames.ZImage)
+            {
+                rbt.Invert();
+                return rbt;
+            }
+
+            throw new Exception($"Failed to get extrinsics from {channelFromName} to {channelToName}");
+        }
+
         unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
             FrameType frameType = GetFrameTypeFromChannelName(channelName);

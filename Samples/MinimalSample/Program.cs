@@ -296,10 +296,14 @@ namespace MetriCam2.Samples.MinimalSample
 =======
             int count = camera.DeviceCount;
             camera.SerialNumber = "PD7110CGC5080061W";
-            camera.ActivateChannel(ChannelNames.Intensity);
+            //camera.ActivateChannel(ChannelNames.Intensity);
             camera.ActivateChannel(ChannelNames.Color);
+<<<<<<< HEAD
             //camera.ActivateChannel(ChannelNames.ZImage);
 >>>>>>> lots and lots of workarounds
+=======
+            camera.ActivateChannel(ChannelNames.ZImage);
+>>>>>>> implement getting extrinsics from hardware
 
                 // warm-up
                 for (int i = 0; i < 10; i++)
@@ -366,10 +370,15 @@ namespace MetriCam2.Samples.MinimalSample
                     }
                 }
 
+<<<<<<< HEAD
                 // Half gain
                 camera.IRGain /= 2;
             }
             #endregion
+=======
+            var extrinsics = camera.GetExtrinsics(ChannelNames.ZImage, ChannelNames.Color);
+
+>>>>>>> implement getting extrinsics from hardware
 
             #region Get intrinsics and extrinsics
             using (camera = CreateCamera())
