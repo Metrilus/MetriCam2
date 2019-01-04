@@ -286,9 +286,8 @@ namespace MetriCam2.Cameras
                     AddToActiveChannels(ChannelNames.ZImage);
                 }
 
-                CheckReturnStatus(Methods.SetFilter(DeviceIndex, FilterType.ComputeRealDepthFilter, false));
-                CheckReturnStatus(Methods.SetFilter(DeviceIndex, FilterType.SmoothingExpFilter, false));
-                CheckReturnStatus(Methods.SetFilter(DeviceIndex, FilterType.SmoothingGDFilter, false));
+                CheckReturnStatus(Methods.SetTimeFilterEnabled(DeviceIndex, false));
+                CheckReturnStatus(Methods.SetRemoveEdgeEnabled(DeviceIndex, false));
             }
             catch(Exception e)
             {

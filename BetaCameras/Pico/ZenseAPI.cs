@@ -166,13 +166,6 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         CorrectFilterData
     }
 
-    public enum FilterType
-    {
-        ComputeRealDepthFilter = 0,
-        SmoothingGDFilter,
-        SmoothingExpFilter,
-    }
-
     public enum EncodeType
     {
         NV12 = 0x01,
@@ -241,9 +234,12 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
         public double cy;  // Principal point y (pixel)
         public double k1;  // Radial distortion coefficient, 1st-order
         public double k2;  // Radial distortion coefficient, 2nd-order
-        public double k3;  // Radial distortion coefficient, 3rd-order
         public double p1;  // Tangential distortion coefficient
         public double p2;  // Tangential distortion coefficient
+        public double k3;  // Radial distortion coefficient, 3rd-order
+        public double k4;  // Radial distortion coefficient, 4st-order
+        public double k5;  // Radial distortion coefficient, 5nd-order
+        public double k6;  // Radial distortion coefficient, 6rd-order
     }
 
     public unsafe struct CameraExtrinsicParameters
@@ -728,16 +724,24 @@ namespace MetriCam2.Cameras.Pico.ZenseAPI
 
 
         /*
-        *  Set to enable or disable the Filter feature
+        *  Set to enable or disable the TimeFilter feature
         *  @Parameters:
         *	deviceIndex[In]: the device index, its range is 0 to deviceCount-1
-        *	filterType[In]: filter type, refer to PsFilterType
         *	bEnabled [In]: true to enable the feature, false to disable the feature
         *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
         */
-        [DllImport("picozense_api", EntryPoint = "PsSetFilter", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        public unsafe extern static ReturnStatus SetFilter(int deviceIndex, FilterType filterType, bool bEnabled);
+        [DllImport("picozense_api", EntryPoint = "PsSetTimeFilterEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetTimeFilterEnabled(int deviceIndex, bool enabled);
 
+        /*
+        *  Set to enable or disable the TimeFilter feature
+        *  @Parameters:
+        *	deviceIndex[In]: the device index, its range is 0 to deviceCount-1
+        *	bEnabled [In]: true to enable the feature, false to disable the feature
+        *  @Return: PsReturnStatus value, PsRetOK: Succeed, Others: Failed
+        */
+        [DllImport("picozense_api", EntryPoint = "PsSetRemoveEdgeEnabled", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public unsafe extern static ReturnStatus SetRemoveEdgeEnabled(int deviceIndex, bool enabled);
 
         /*
         *  Set to enable or disable the Audio Record feature
