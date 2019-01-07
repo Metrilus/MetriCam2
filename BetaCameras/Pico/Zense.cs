@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+#if !NETSTANDARD2_0
 using System.Drawing;
 using System.Drawing.Imaging;
+#endif
 using System.Runtime.InteropServices;
 using Metrilus.Util;
 using MetriCam2.Cameras.Pico.ZenseAPI;
@@ -85,7 +87,7 @@ namespace MetriCam2.Cameras
             {
                 CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, FrameType.RGBFrame, out FrameMode mode));
 
-                switch(mode.resolutionHeight)
+                switch (mode.resolutionHeight)
                 {
                     case 360:
                         if (640 == mode.resolutionWidth)
@@ -138,7 +140,7 @@ namespace MetriCam2.Cameras
 
                     CheckReturnStatus(Methods.SetFrameMode(DeviceIndex, FrameType.RGBFrame, &mode));
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new ArgumentException($"{Name}: Error setting resolution", e);
                 }
@@ -207,7 +209,7 @@ namespace MetriCam2.Cameras
                         }
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new ArgumentException($"{Name}: Error setting FPS.", e);
                 }
@@ -223,7 +225,7 @@ namespace MetriCam2.Cameras
 
         public Zense() : base(modelName: "Zense")
         {
-            
+
         }
 
         public void Dispose()
@@ -289,7 +291,7 @@ namespace MetriCam2.Cameras
                 CheckReturnStatus(Methods.SetTimeFilterEnabled(DeviceIndex, false));
                 CheckReturnStatus(Methods.SetRemoveEdgeEnabled(DeviceIndex, false));
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new ConnectionFailedException($"Connecting to {Name} failed", e);
             }
@@ -335,7 +337,7 @@ namespace MetriCam2.Cameras
                     return;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new ImageAcquisitionFailedException($"{Name}: update failed", e);
             }
@@ -343,7 +345,7 @@ namespace MetriCam2.Cameras
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
-            switch(channelName)
+            switch (channelName)
             {
                 case ChannelNames.Intensity:
                     return CalcIRImage(_currentIRMode.resolutionWidth, _currentIRMode.resolutionHeight, _currentIRFrame);
@@ -394,9 +396,12 @@ namespace MetriCam2.Cameras
 
         unsafe private ColorCameraImage CalcColor(int width, int height, Frame frame)
         {
-
+#if NETSTANDARD2_0
+            Bitmap bitmap = new Bitmap(width, height, Metrilus.Util.PixelFormat.Format24bppRgb);
+#else
             Bitmap bitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            Rectangle imageRect = new Rectangle(0, 0, width, height);
+#endif
+            System.Drawing.Rectangle imageRect = new System.Drawing.Rectangle(0, 0, width, height);
             BitmapData bmpData = bitmap.LockBits(imageRect, ImageLockMode.WriteOnly, bitmap.PixelFormat);
 
             byte* source = (byte*)frame.pFrameData;
@@ -422,10 +427,10 @@ namespace MetriCam2.Cameras
 
         protected override void ActivateChannelImpl(String channelName)
         {
-            if(IsConnected)
+            if (IsConnected)
             {
                 FrameType type = GetFrameTypeFromChannelName(channelName);
-                switch(type)
+                switch (type)
                 {
                     // WORKAROUND
                     // StartFrame throws an error for RGBFrame
@@ -435,7 +440,7 @@ namespace MetriCam2.Cameras
                         break;
 
                     case FrameType.IRFrame:
-                        if(this.IsChannelActive(ChannelNames.ZImage))
+                        if (this.IsChannelActive(ChannelNames.ZImage))
                         {
                             throw new SettingsCombinationNotSupportedException("Intensity is not supported while ZImage is still active.");
                         }
@@ -457,7 +462,7 @@ namespace MetriCam2.Cameras
 
         protected override void DeactivateChannelImpl(String channelName)
         {
-            if(IsConnected)
+            if (IsConnected)
             {
                 FrameType type = GetFrameTypeFromChannelName(channelName);
                 CheckReturnStatus(Methods.StopFrame(DeviceIndex, type));
@@ -474,7 +479,7 @@ namespace MetriCam2.Cameras
                     new Point3f((float)extrinsics.rotation[3], (float)extrinsics.rotation[4], (float)extrinsics.rotation[5]),
                     new Point3f((float)extrinsics.rotation[6], (float)extrinsics.rotation[7], (float)extrinsics.rotation[8])
                 ),
-                new Point3f((float)extrinsics.transfer[0], (float)extrinsics.transfer[2], (float)extrinsics.transfer[2])
+                new Point3f((float)extrinsics.transfer[0] * 0.001f, (float)extrinsics.transfer[1] * 0.001f, (float)extrinsics.transfer[2] * 0.001f)
             );
 
             if (channelFromName == ChannelNames.ZImage && channelToName == ChannelNames.Color)
@@ -502,12 +507,12 @@ namespace MetriCam2.Cameras
 
 
             SensorType sensorType = SensorType.DepthSensor;
-            if(channelName == ChannelNames.Color)
+            if (channelName == ChannelNames.Color)
             {
                 sensorType = SensorType.RgbSensor;
             }
             CheckReturnStatus(Methods.GetCameraParameters(DeviceIndex, sensorType, out CameraParameters intrinsics));
-            
+
 
             var projTrans = new ProjectiveTransformationZhang(
                 mode.resolutionWidth,
@@ -593,10 +598,10 @@ namespace MetriCam2.Cameras
 
         private int GetDeviceIndexFromSerial(string serial)
         {
-            for(int i = 0; i < DeviceCount; i++)
+            for (int i = 0; i < DeviceCount; i++)
             {
                 CheckReturnStatus(Methods.OpenDevice(i));
-                if(serial == GetStringProperty(i, PropertyType.SN_Str))
+                if (serial == GetStringProperty(i, PropertyType.SN_Str))
                 {
                     return i;
                 }
