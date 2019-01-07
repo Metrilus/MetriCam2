@@ -228,7 +228,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	// (querying from device here would return wrong value)
 	// (do not use properties as they check against their current value which might be wrong)
 	bool emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
-	SetEmitterStatus(emitterEnabled);
+	//SetEmitterStatus(emitterEnabled);
 	bool irFlooderEnabled = false; // Default to IR flooder off.
 	SetIRFlooderStatus(irFlooderEnabled);
 }
@@ -246,7 +246,13 @@ bool MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
 {
 	const int laser_en = on ? 0x01 : 0x00;
-	Device.setProperty(openni::OBEXTENSION_ID_LASER_EN, (uint8_t*)&laser_en, 4);
+	int rc = Device.setProperty(openni::OBEXTENSION_ID_LASER_EN, (uint8_t*)&laser_en, 4);
+	if (rc != openni::Status::STATUS_OK)
+	{
+		auto msg = String::Format("Failed to set emitter status to '{0}'", on);
+		log->Warn(msg);
+		throw gcnew MetriCam2::Exceptions::MetriCam2Exception(msg);
+	}
 	_emitterEnabled = on;
 	log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
 }
@@ -275,7 +281,13 @@ bool MetriCam2::Cameras::AstraOpenNI::GetProximitySensorStatus()
 void MetriCam2::Cameras::AstraOpenNI::SetProximitySensorStatus(bool on)
 {
 	const int ldp_en = on ? 0x01 : 0x00;
-	Device.setProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, 4);
+	int rc = Device.setProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, 4);
+	if (rc != openni::Status::STATUS_OK)
+	{
+		auto msg = String::Format("Failed to set proximity sensor status to '{0}'", on);
+		log->Warn(msg);
+		throw gcnew MetriCam2::Exceptions::MetriCam2Exception(msg);
+	}
 	log->DebugFormat("Proximity sensor state set to: {0}", on.ToString());
 }
 
@@ -292,7 +304,15 @@ bool MetriCam2::Cameras::AstraOpenNI::GetIRFlooderStatus()
 void MetriCam2::Cameras::AstraOpenNI::SetIRFlooderStatus(bool on)
 {
 	const int status = on ? 0x01 : 0x00;
-	Device.setProperty(XN_MODULE_PROPERTY_IRFLOOD_STATE, status);
+	int rc = Device.setProperty(XN_MODULE_PROPERTY_IRFLOOD_STATE, status);
+	/*if (rc != openni::Status::STATUS_OK)
+	{
+		char buffer[512];
+		sprintf_s(buffer, 512, "%s", openni::OpenNI::getExtendedError());
+		auto msg = String::Format("Failed to set ir flooder status to '{0}'", on);
+		log->Warn(msg);
+		throw gcnew MetriCam2::Exceptions::MetriCam2Exception(msg);
+	}*/
 	_irFlooderEnabled = on;
 	log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
 }
@@ -500,6 +520,8 @@ void MetriCam2::Cameras::AstraOpenNI::InitColorStream()
 	ColorStream.setMirroringEnabled(false);
 	if (openni::STATUS_OK != rc)
 	{
+		char buffer[512];
+		sprintf_s(buffer, 512, "%s", openni::OpenNI::getExtendedError());
 		log->Error("Couldn't create color stream:" + Environment::NewLine + gcnew String(openni::OpenNI::getExtendedError()));
 		return;
 	}
@@ -806,7 +828,12 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 	log->Info("Using Orbbec factory intrinsics as projective transformation.");
 	OBCameraParams params;
 	int dataSize = sizeof(OBCameraParams);
-	Device.getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, (uint8_t*)&params, &dataSize);
+	int rc = Device.getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, (uint8_t*)&params, &dataSize);
+	if (openni::STATUS_OK != rc)
+	{
+		char buffer[512];
+		sprintf_s(buffer, 512, "%s", openni::OpenNI::getExtendedError());
+	}
 
 	Metrilus::Util::ProjectiveTransformationZhang^ pt = nullptr;
 
