@@ -110,6 +110,10 @@
       <Project>{de18d143-c624-4941-b8a1-0f91262d3350}</Project>
       <Name>Sick.VisionaryT</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\BetaCameras\WebCam\WebCam.vcxproj">
+      <Project>{01c2fb4d-1f35-4855-9b53-0480519387c5}</Project>
+      <Name>WebCam</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
       <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>
       <Name>MetriCam2</Name>
