@@ -543,7 +543,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		auto irGainBefore = GetIRGain();
 
 		openni::VideoMode depthVideoMode = DepthStream.getVideoMode();
-		depthVideoMode.setResolution(640, 480);
+		depthVideoMode.setResolution(640, 400);
 		DepthStream.setVideoMode(depthVideoMode);
 
 		// Start depth stream
@@ -584,7 +584,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		//Changing the exposure is not possible if both depth and ir streams have been running parallel in one session.
 
 		openni::VideoMode irVideoMode = IrStream.getVideoMode();
-		irVideoMode.setResolution(640, 480);
+		irVideoMode.setResolution(640, 400);
 		IrStream.setVideoMode(irVideoMode);
 
 		rc = IrStream.start();
@@ -616,7 +616,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		//Setting the resolution to 1280/640 does not work, even if we start only the color channel (image is corrupted)
 		/*colorVideoMode.setResolution(1280, 960);
 		colorVideoMode.setFps(7);*/
-		colorVideoMode.setResolution(640, 480);
+		colorVideoMode.setResolution(640, 400);
 		ColorStream.setVideoMode(colorVideoMode);
 
 		rc = ColorStream.start();
@@ -840,7 +840,7 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 	if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
 	{
 		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
-			640, 480,
+			640, 400,
 			params.l_intr_p[0], params.l_intr_p[1],
 			params.l_intr_p[2], params.l_intr_p[3],
 			params.l_k[0], params.l_k[1], params.l_k[2],
@@ -850,7 +850,7 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 	if (channelName->Equals(ChannelNames::Color))
 	{
 		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
-			640, 480,
+			640, 400,
 			params.r_intr_p[0], params.r_intr_p[1],
 			params.r_intr_p[2], params.r_intr_p[3],
 			params.r_k[0], params.r_k[1], params.r_k[2],

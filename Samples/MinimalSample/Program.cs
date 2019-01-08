@@ -372,6 +372,7 @@ namespace MetriCam2.Samples.MinimalSample
                 for (int i = 0; i < 5; i++)
                 {
                     camera.Update();
+                    var tmp = camera.CalcChannel(ChannelNames.ZImage);
                 }
                 timer.Stop();
                 var duration = timer.ElapsedMilliseconds;
