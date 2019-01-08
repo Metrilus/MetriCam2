@@ -850,7 +850,7 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 	if (channelName->Equals(ChannelNames::Color))
 	{
 		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
-			640, 400,
+			640, 480,
 			params.r_intr_p[0], params.r_intr_p[1],
 			params.r_intr_p[2], params.r_intr_p[3],
 			params.r_k[0], params.r_k[1], params.r_k[2],
