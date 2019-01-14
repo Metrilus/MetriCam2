@@ -839,6 +839,7 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 
 	if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
 	{
+		//Even if the Orbbec include file shows a different order, the real order of l_k is k1, k2, k3, p1, p2
 		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
 			640, 400,
 			params.l_intr_p[0], params.l_intr_p[1],
@@ -849,6 +850,7 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 
 	if (channelName->Equals(ChannelNames::Color))
 	{
+		//Even if the Orbbec include file shows a different order, the real order of r_k is k1, k2, k3, p1, p2
 		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
 			640, 480,
 			params.r_intr_p[0], params.r_intr_p[1],

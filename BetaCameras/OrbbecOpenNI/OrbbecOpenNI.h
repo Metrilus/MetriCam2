@@ -9,7 +9,6 @@
 #include <msclr/marshal.h>
 #include <PS1080.h>
 #include <OpenNI.h>
-#include "cmd.h"
 
 #if USE_I2C_GAIN
 #include <iostream>
