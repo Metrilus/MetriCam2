@@ -23,6 +23,7 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	// Init to most reasonable values; update during ConnectImpl
 	_emitterEnabled = true;
 	_irFlooderEnabled = false;
+	_hasColor = true;
 }
 
 // In C++/CLI, a Dispose() method is automatically created when implementing the deterministic destructor.
@@ -164,10 +165,32 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 {
 	_pCamData = new OrbbecNativeCameraData();
 
-	const char* deviceURI = openni::ANY_DEVICE;
-	if (!String::IsNullOrWhiteSpace(SerialNumber))
+	const char* deviceURI;
+
+	System::Collections::Generic::Dictionary<String^, String^>^ serialsToUris = GetSerialToUriMappingOfAttachedCameras();
+	if (String::IsNullOrWhiteSpace(SerialNumber))
 	{
-		System::Collections::Generic::Dictionary<String^, String^>^ serialsToUris = GetSerialToUriMappingOfAttachedCameras();
+		if (serialsToUris->Count >= 1)
+		{
+			for each(KeyValuePair<String^, String^>^ kvp in serialsToUris)
+			{
+				SerialNumber = kvp->Key;
+				deviceURI = marshalContext.marshal_as<const char*>(kvp->Value);
+				//Do not use deviceURI "openni::ANY_DEVICE" (even for only one camera), since this would require a different order
+				//of the DLLs listed in the Orbbec.ini file ("List of drivers to load", is required to use the same binaries
+				//for Astra models and new prototypes).
+				break;
+			}
+		}
+		else
+		{
+			auto msg = String::Format("{0}: Not Orbbec camera connected.", Name);
+			log->Warn(msg);
+			throw gcnew MetriCam2::Exceptions::ConnectionFailedException(msg);
+		}
+	}
+	else
+	{		
 		if (!serialsToUris->ContainsKey(SerialNumber))
 		{
 			auto msg = String::Format("No camera with requested S/N ({0}) found.", SerialNumber);
@@ -184,6 +207,18 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		log->Warn(msg);
 		throw gcnew MetriCam2::Exceptions::ConnectionFailedException(msg);
 	}
+
+	//Currently a lot of non-working modes are listed, but maybe the following is an option for the future:
+	/*const openni::SensorInfo* sensorInfo = _pCamData->device.getSensorInfo(openni::SensorType::SENSOR_DEPTH);
+	const openni::Array<openni::VideoMode>& modes = sensorInfo->getSupportedVideoModes();
+	for (int i = 0; i < modes.getSize(); i++)
+	{
+		const openni::VideoMode mode = modes[i];
+		int resY = mode.getResolutionY();
+		int resX = mode.getResolutionX();
+		int fps = mode.getFps();
+	}*/
+
 	// Read serial number
 	char serialNumber[12];
 	int data_size = sizeof(serialNumber);
@@ -201,6 +236,20 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	if (DeviceType->StartsWith("Orbbec "))
 	{
 		Model = DeviceType->Substring(7);
+		if (Model->Contains("Astra"))
+		{
+			_depthResolution = Point2i(640, 480); //Regular Astra Product
+		}
+		else
+		{
+			_depthResolution = Point2i(640, 400); //Prototype
+			Channels->Remove(GetChannelDescriptor(ChannelNames::Color));
+			_hasColor = false;
+		}
+	}
+	else
+	{
+		_depthResolution = Point2i(640, 480); //Let's try VGA for really unknown camera types.
 	}
 
 	SetProximitySensorStatus(true); // Ensure eye-safety by turning on the proximity sensor
@@ -430,7 +479,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 	{
 		ppStreams[IrIdx] = &IrStream;
 	}
-	if (IsChannelActive(ChannelNames::Color))
+	if (_hasColor && IsChannelActive(ChannelNames::Color))
 	{
 		ppStreams[ColorIdx] = &ColorStream;
 	}
@@ -492,6 +541,9 @@ void MetriCam2::Cameras::AstraOpenNI::InitDepthStream()
 {
 	// Create depth stream reader
 	openni::Status rc = DepthStream.create(Device, openni::SENSOR_DEPTH);
+	openni::VideoMode depthVideoMode = DepthStream.getVideoMode();
+	depthVideoMode.setResolution(_depthResolution.X, _depthResolution.Y);
+	rc = DepthStream.setVideoMode(depthVideoMode);
 	DepthStream.setMirroringEnabled(false);
 	if (openni::STATUS_OK != rc)
 	{
@@ -543,7 +595,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		auto irGainBefore = GetIRGain();
 
 		openni::VideoMode depthVideoMode = DepthStream.getVideoMode();
-		depthVideoMode.setResolution(640, 400);
+		depthVideoMode.setResolution(_depthResolution.X, _depthResolution.Y);
 		DepthStream.setVideoMode(depthVideoMode);
 
 		// Start depth stream
@@ -584,7 +636,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		//Changing the exposure is not possible if both depth and ir streams have been running parallel in one session.
 
 		openni::VideoMode irVideoMode = IrStream.getVideoMode();
-		irVideoMode.setResolution(640, 400);
+		irVideoMode.setResolution(_depthResolution.X, _depthResolution.Y);
 		IrStream.setVideoMode(irVideoMode);
 
 		rc = IrStream.start();
@@ -616,7 +668,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		//Setting the resolution to 1280/640 does not work, even if we start only the color channel (image is corrupted)
 		/*colorVideoMode.setResolution(1280, 960);
 		colorVideoMode.setFps(7);*/
-		colorVideoMode.setResolution(640, 400);
+		colorVideoMode.setResolution(640, 480);
 		ColorStream.setVideoMode(colorVideoMode);
 
 		rc = ColorStream.start();
@@ -841,7 +893,7 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 	{
 		//Even if the Orbbec include file shows a different order, the real order of l_k is k1, k2, k3, p1, p2
 		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
-			640, 400,
+			_depthResolution.X, _depthResolution.Y,
 			params.l_intr_p[0], params.l_intr_p[1],
 			params.l_intr_p[2], params.l_intr_p[3],
 			params.l_k[0], params.l_k[1], params.l_k[2],
