@@ -27,6 +27,7 @@ using namespace System::Threading;
 using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
 using namespace System::Drawing;
+using namespace System::Collections::Generic;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
 
@@ -338,6 +339,8 @@ namespace MetriCam2
 			int _vid;
 			int _pid;
 			String^ _deviceType;
+			Point2i _depthResolution;
+			bool _hasColor;
 
 			msclr::interop::marshal_context marshalContext;
 		};
