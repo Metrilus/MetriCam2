@@ -277,7 +277,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	// (querying from device here would return wrong value)
 	// (do not use properties as they check against their current value which might be wrong)
 	bool emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
-	//SetEmitterStatus(emitterEnabled);
+	SetEmitterStatus(emitterEnabled);
 	bool irFlooderEnabled = false; // Default to IR flooder off.
 	SetIRFlooderStatus(irFlooderEnabled);
 }
@@ -582,6 +582,11 @@ void MetriCam2::Cameras::AstraOpenNI::InitColorStream()
 void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 {
 	log->EnterMethod();
+
+	if (!IsConnected)
+	{
+		return;
+	}
 
 	openni::Status rc;
 
