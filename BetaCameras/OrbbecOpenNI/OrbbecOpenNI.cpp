@@ -276,20 +276,16 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	// Turn Emitter on if any depth channel is active.
 	// (querying from device here would return wrong value)
 	// (do not use properties as they check against their current value which might be wrong)
-	bool emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
-	SetEmitterStatus(emitterEnabled);
+	_emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
+	
 	bool irFlooderEnabled = false; // Default to IR flooder off.
 	SetIRFlooderStatus(irFlooderEnabled);
 }
 
 bool MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
 {
-	// Reading the emitter status does not work yet. Check in future version of experimental SDK.
+	// Reading the emitter status with SDK method is not supported according to Orbbec support team, so we need to use the internal member here.
 	return _emitterEnabled;
-	//int laser_en = 0;
-	//int size = 4;
-	//Device.getProperty(openni::OBEXTENSION_ID_LASER_EN, (uint8_t*)&laser_en, &size);
-	//return (bool)laser_en;
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatus(bool on)
@@ -622,14 +618,14 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		_pCamData->depthWidth = depthVideoMode.getResolutionX();
 		_pCamData->depthHeight = depthVideoMode.getResolutionY();
 
-		if (this->IsConnected)
+		if (GetIRGain() != irGainBefore)
 		{
-			if (GetIRGain() != irGainBefore)
-			{
-				// Activating the depth channel resets the IR gain to the default value -> we need to restore the value that was set before.
-				SetIRGain(irGainBefore);
-			}
+			// Activating the depth channel resets the IR gain to the default value -> we need to restore the value that was set before.
+			SetIRGain(irGainBefore);
 		}
+
+		// Activating depth or IR channel can modify Orbbec's internal emitter state, so we need to set it gain manually.
+		SetEmitterStatus(_emitterEnabled); 
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{	
@@ -661,6 +657,9 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		irVideoMode = IrStream.getVideoMode();
 		_pCamData->irWidth = irVideoMode.getResolutionX();
 		_pCamData->irHeight = irVideoMode.getResolutionY();
+
+		// Activating depth or IR channel can modify Orbbec's internal emitter state, so we need to set it gain manually.
+		SetEmitterStatus(_emitterEnabled);
 	}
 	else if (channelName->Equals(ChannelNames::Color))
 	{
