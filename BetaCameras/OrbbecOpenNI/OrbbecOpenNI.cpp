@@ -240,6 +240,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		{
 			_depthResolution = Point2i(640, 480); //Regular Astra Product
 			_hasColor = true;
+			_intensityYTranslation = 16;
 		}
 		else //Prototypes do not contain the keyword "Astra"
 		{
@@ -261,12 +262,14 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 			}
 			Channels->Remove(GetChannelDescriptor(ChannelNames::Color));
 			_hasColor = false;
+			_intensityYTranslation = 0;
 		}
 	}
 	else
 	{
 		_depthResolution = Point2i(640, 480); //Let's try VGA for really unknown camera types.
 		_hasColor = true; //Let's expect, that the unknown camera has a color channel.
+		_intensityYTranslation = 0;
 	}
 
 	//Is buggy in OpenNI version 2.3.1.48, so we skip activating the proximity sensor.
@@ -876,19 +879,21 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 	const openni::Grayscale16Pixel* pIRRow = (const openni::Grayscale16Pixel*)irFrame.getData();
 	const int rowSize = irFrame.getStrideInBytes() / sizeof(openni::Grayscale16Pixel);
 	FloatCameraImage^ irData = gcnew FloatCameraImage(irFrame.getWidth(), irFrame.getHeight(), 0.0f);
-	irData->ChannelName = ChannelNames::Intensity;
-
-	// Compensate for offset between IR and Distance images:
-	// Translate infrared frame by 16 pixels in vertical direction to match infrared with depth image.
-	const int yTranslation = 16;
+	irData->ChannelName = ChannelNames::Intensity;	
 
 	// skip first yTranslation rows
-	if (yTranslation > 0)
-	{
-		pIRRow += rowSize * yTranslation;
-	}
-	int dataY = yTranslation;
 	int imgY = 0;
+	if (_intensityYTranslation > 0)
+	{
+		pIRRow += rowSize * _intensityYTranslation;
+	}
+	else
+	{
+		imgY = -_intensityYTranslation;
+	}
+
+	int dataY = _intensityYTranslation;
+	
 	for (; imgY < irFrame.getHeight() && dataY < irFrame.getHeight(); ++imgY, ++dataY)
 	{
 		const openni::Grayscale16Pixel* pIR = pIRRow;

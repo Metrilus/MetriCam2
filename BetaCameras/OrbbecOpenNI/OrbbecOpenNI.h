@@ -343,6 +343,9 @@ namespace MetriCam2
 			String^ _deviceType;
 			Point2i _depthResolution;
 			bool _hasColor;
+			// Compensate for offset between IR and Distance images:
+			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.
+			int _intensityYTranslation;
 
 			msclr::interop::marshal_context marshalContext;
 		};
