@@ -239,10 +239,17 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		if (Model->Contains("Astra"))
 		{
 			_depthResolution = Point2i(640, 480); //Regular Astra Product
+			_hasColor = true;
 		}
 		else
 		{
 			_depthResolution = Point2i(640, 400); //Prototype
+
+			if (IsChannelActive((ChannelNames::Color)))
+			{
+				log->Warn("This camera does not support the channel \"Color\". Deactivating and removing channel \"Color\"...");
+				DeactivateChannel(ChannelNames::Color);
+			}
 			Channels->Remove(GetChannelDescriptor(ChannelNames::Color));
 			_hasColor = false;
 		}
@@ -250,16 +257,14 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	else
 	{
 		_depthResolution = Point2i(640, 480); //Let's try VGA for really unknown camera types.
+		_hasColor = true; //Let's expecte, that the unknown camera has a color channel.
 	}
 
-	SetProximitySensorStatus(true); // Ensure eye-safety by turning on the proximity sensor
+	//Is buggy in OpenNI version 2.3.1.48, so we skip activating the proximity sensor.
+	//SetProximitySensorStatus(true); // Ensure eye-safety by turning on the proximity sensor
 
 	// Start depth stream
 	Device.setImageRegistrationMode(openni::IMAGE_REGISTRATION_OFF);
-
-	InitDepthStream();
-	InitIRStream();
-	InitColorStream();
 
 	if (ActiveChannels->Count == 0)
 	{
@@ -270,6 +275,18 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		if (String::IsNullOrWhiteSpace(SelectedChannel))
 		{
 			SelectChannel(ChannelNames::ZImage);
+		}
+	}
+
+	InitDepthStream();
+	InitIRStream();
+	if (_hasColor)
+	{
+		InitColorStream();
+		if (IsChannelActive(ChannelNames::Intensity) && IsChannelActive(ChannelNames::Color))
+		{
+			log->Warn("This camera does not support to fetch the channels \"Color\" and \"Intensity\" in parallel. Deactivating channel \"Intensity\"...");
+			DeactivateChannel(ChannelNames::Intensity);
 		}
 	}
 
@@ -315,26 +332,29 @@ void MetriCam2::Cameras::AstraOpenNI::SetEmitterStatusAndWait(bool on)
 	}
 }
 
-bool MetriCam2::Cameras::AstraOpenNI::GetProximitySensorStatus()
-{
-	int ldp_en = 0;
-	int size = 4;
-	Device.getProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, &size);
-	return (bool)ldp_en;
-}
+//The code below does not work and seems to be buggy in OpenNI. It even destroys the depth channel (if it is started), so that it will be completely black.
+//bool MetriCam2::Cameras::AstraOpenNI::GetProximitySensorStatus()
+//{
+//	
+//	int ldp_en = 0;
+//	int size = 4;
+//	Device.getProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, &size);
+//	return (bool)ldp_en;
+//}
 
-void MetriCam2::Cameras::AstraOpenNI::SetProximitySensorStatus(bool on)
-{
-	const int ldp_en = on ? 0x01 : 0x00;
-	int rc = Device.setProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, 4);
-	if (rc != openni::Status::STATUS_OK)
-	{
-		auto msg = String::Format("Failed to set proximity sensor status to '{0}'", on);
-		log->Warn(msg);
-		throw gcnew MetriCam2::Exceptions::MetriCam2Exception(msg);
-	}
-	log->DebugFormat("Proximity sensor state set to: {0}", on.ToString());
-}
+//The code below does not work and seems to be buggy in OpenNI. It even destroys the depth channel (if it is started), so that it will be completely black.
+//void MetriCam2::Cameras::AstraOpenNI::SetProximitySensorStatus(bool on)
+//{
+//	const int ldp_en = on ? 0x01 : 0x00;
+//	int rc = Device.setProperty(openni::OBEXTENSION_ID_LDP_EN, (uint8_t*)&ldp_en, 4);
+//	if (rc != openni::Status::STATUS_OK)
+//	{
+//		auto msg = String::Format("Failed to set proximity sensor status to '{0}'", on);
+//		log->Warn(msg);
+//		throw gcnew MetriCam2::Exceptions::MetriCam2Exception(msg);
+//	}
+//	log->DebugFormat("Proximity sensor state set to: {0}", on.ToString());
+//}
 
 bool MetriCam2::Cameras::AstraOpenNI::GetIRFlooderStatus()
 {
@@ -588,11 +608,6 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
 	{
-		if (IsChannelActive(ChannelNames::Intensity))
-		{
-			throw gcnew Exception("IR and depth are not allowed to be active at the same time. Please deactivate channel \"Intensity\" before activating channel \"ZImage\" or \"Point3DImage\"");
-		}
-
 		auto irGainBefore = GetIRGain();
 
 		openni::VideoMode depthVideoMode = DepthStream.getVideoMode();
@@ -623,15 +638,17 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 			// Activating the depth channel resets the IR gain to the default value -> we need to restore the value that was set before.
 			SetIRGain(irGainBefore);
 		}
-
-		// Activating depth or IR channel can modify Orbbec's internal emitter state, so we need to set it gain manually.
-		SetEmitterStatus(_emitterEnabled); 
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
-	{	
-		if (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage) || IsChannelActive(ChannelNames::Color))
+	{
+		//Intensity cannot by activated if color is active -> Deactivate color channel.
+		if (_hasColor)
 		{
-			throw gcnew Exception("IR and depth/color are not allowed to be active at the same time. Please deactivate channel \"ZImage\", \"Point3DImage\" and \"Color\" before activating channel \"Intensity\"");
+			if (IsChannelActive(ChannelNames::Color))
+			{
+				log->Warn("This camera does not support to fetch the channels \"Intensity\" and \"Color\" in parallel. Deactivating channel \"Color\"...");
+				DeactivateChannel(ChannelNames::Color);
+			}
 		}
 
 		//Changing the exposure is not possible if both depth and ir streams have been running parallel in one session.
@@ -657,15 +674,14 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		irVideoMode = IrStream.getVideoMode();
 		_pCamData->irWidth = irVideoMode.getResolutionX();
 		_pCamData->irHeight = irVideoMode.getResolutionY();
-
-		// Activating depth or IR channel can modify Orbbec's internal emitter state, so we need to set it gain manually.
-		SetEmitterStatus(_emitterEnabled);
 	}
 	else if (channelName->Equals(ChannelNames::Color))
 	{
 		if (IsChannelActive(ChannelNames::Intensity))
 		{
-			throw gcnew Exception("IR and color are not allowed to be active at the same time. Please deactivate channel \"Intensity\" before activating channel \"Color\"");
+			//Color cannot by activated if intensity is active -> Deactivate intensity channel.
+			log->Warn("This camera does not support to fetch the channels \"Color\" and \"Intensity\" in parallel. Deactivating channel \"Intensity\"...");
+			DeactivateChannel(ChannelNames::Intensity);
 		}
 
 		openni::VideoMode colorVideoMode = ColorStream.getVideoMode();
@@ -694,11 +710,19 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		_pCamData->colorHeight = colorVideoMode.getResolutionY();
 	}
 
+	// Activating depth or IR channel can modify Orbbec's internal emitter state, so we need to set it again manually.
+	SetEmitterStatus(_emitterEnabled);
+
 	log->LeaveMethod();
 }
 
 void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 {
+	if (!IsConnected)
+	{
+		return;
+	}
+
 	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
 	{
 		DepthStream.stop();
