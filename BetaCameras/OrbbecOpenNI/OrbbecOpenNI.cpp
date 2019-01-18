@@ -241,9 +241,18 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 			_depthResolution = Point2i(640, 480); //Regular Astra Product
 			_hasColor = true;
 		}
-		else
+		else //Prototypes do not contain the keyword "Astra"
 		{
 			_depthResolution = Point2i(640, 400); //Prototype
+
+			if (ProductID == 1547)
+			{
+				Model = "Astra embedded S";
+			}
+			else if (ProductID == 1544)
+			{
+				Model = "Astra stereo S";
+			}
 
 			if (IsChannelActive((ChannelNames::Color)))
 			{
@@ -257,7 +266,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	else
 	{
 		_depthResolution = Point2i(640, 480); //Let's try VGA for really unknown camera types.
-		_hasColor = true; //Let's expecte, that the unknown camera has a color channel.
+		_hasColor = true; //Let's expect, that the unknown camera has a color channel.
 	}
 
 	//Is buggy in OpenNI version 2.3.1.48, so we skip activating the proximity sensor.
