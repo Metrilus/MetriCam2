@@ -915,7 +915,29 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 	}
 	catch (...) 
 	{ 
-		/* empty */ 
+		//The intensity and the Z-channel have the same intrinsics, so he have a second chance to find a suitable file...
+		if (channelName->Equals(ChannelNames::Intensity))
+		{
+			try
+			{
+				return Camera::GetIntrinsics(ChannelNames::ZImage);
+			}
+			catch (...)
+			{
+				/* empty */
+			}
+		}
+		else if (channelName->Equals(ChannelNames::ZImage))
+		{
+			try
+			{
+				return Camera::GetIntrinsics(ChannelNames::Intensity);
+			}
+			catch (...)
+			{
+				/* empty */
+			}
+		}
 	}
 
 	log->Info("Projective transformation file not found.");
