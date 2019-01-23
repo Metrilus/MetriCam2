@@ -308,9 +308,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	// (querying from device here would return wrong value)
 	// (do not use properties as they check against their current value which might be wrong)
 	_emitterEnabled = (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage));
-	
-	bool irFlooderEnabled = false; // Default to IR flooder off.
-	SetIRFlooderStatus(irFlooderEnabled);
+	SetIRFlooderStatus(false); // Default to IR flooder off.
 }
 
 bool MetriCam2::Cameras::AstraOpenNI::GetEmitterStatus()
@@ -384,16 +382,15 @@ void MetriCam2::Cameras::AstraOpenNI::SetIRFlooderStatus(bool on)
 {
 	const int status = on ? 0x01 : 0x00;
 	int rc = Device.setProperty(XN_MODULE_PROPERTY_IRFLOOD_STATE, status);
-	/*if (rc != openni::Status::STATUS_OK)
+	if (rc != openni::Status::STATUS_OK)
 	{
-		char buffer[512];
-		sprintf_s(buffer, 512, "%s", openni::OpenNI::getExtendedError());
-		auto msg = String::Format("Failed to set ir flooder status to '{0}'", on);
-		log->Warn(msg);
-		throw gcnew MetriCam2::Exceptions::MetriCam2Exception(msg);
-	}*/
-	_irFlooderEnabled = on;
-	log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
+		log->Warn("The IR flooder state could not be set. This camera model has no IR flooder support.");
+	}
+	else
+	{
+		_irFlooderEnabled = on;
+		log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
+	}
 }
 
 int MetriCam2::Cameras::AstraOpenNI::GetIRGain()
