@@ -31,63 +31,388 @@ namespace MetriCam2.Samples.MinimalSample
             AstraOpenNI camera;
 
             //#region Connect and Disconnect
-            //using (camera = CreateCamera())
-            //{
-            //    camera.Connect();
-            //    Console.WriteLine($"Vendor = {camera.Vendor}");
-            //    Console.WriteLine($"Model  = {camera.Model}");
-            //    Console.WriteLine($"DeviceType = {camera.DeviceType}");
-            //    Console.WriteLine($"SerialNumber = {camera.SerialNumber}");
-            //}
+            ////using (camera = CreateCamera())
+            ////{
+            ////    camera.Connect();
+            ////    Console.WriteLine($"Vendor = {camera.Vendor}");
+            ////    Console.WriteLine($"Model  = {camera.Model}");
+            ////    Console.WriteLine($"DeviceType = {camera.DeviceType}");
+            ////    Console.WriteLine($"SerialNumber = {camera.SerialNumber}");
+            ////}
             //#endregion
 
             //#region Test Emitter on/off
+            ////using (camera = CreateCamera())
+            ////{
+            ////    camera.Connect();
+            ////    camera.IRGain = 8;
+            ////    string channelName = ChannelNames.ZImage;
+            ////    // warm-up
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            Console.Write($"Accessing {channelName} data");
+            ////            FloatCameraImage ampData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////            FloatImage fImg = new FloatImage(ref ampData);
+            ////            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    camera.SetEmitterStatusAndWait(false);
+
+            ////    for (int i = 0; i < 3; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            Console.Write($"Accessing {channelName} data");
+            ////            FloatCameraImage ampData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////            FloatImage fImg = new FloatImage(ref ampData);
+            ////            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    Console.WriteLine($"Switching emitter on.");
+            ////    Console.WriteLine($"Exposure is at {camera.IRExposure}.");
+            ////    Console.WriteLine($"Gain is at {camera.IRGain}.");
+            ////    camera.SetEmitterStatusAndWait(true);
+
+            ////    for (int i = 0; i < 3; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            Console.Write($"Accessing {channelName} data");
+            ////            FloatCameraImage ampData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////            FloatImage fImg = new FloatImage(ref ampData);
+            ////            string tmp = fImg.ShowInDebug;
+            ////            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+            ////}
+            //#endregion
+
+            //#region Test Fast Emitter Switching
+            ////using (camera = CreateCamera())
+            ////{
+            ////    Stopwatch sw = new Stopwatch();
+            ////    camera.Connect();
+            ////    SetAcquisitionMode(camera, AcquisitionModes.Idle);
+            ////    sw.Start();
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        SetAcquisitionMode(camera, AcquisitionModes.ColorAndZImage);
+            ////        camera.Update();
+
+            ////        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
+            ////        FloatImage fImg = new FloatImage(ref rawData);
+            ////        Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
+
+            ////        FloatCameraImage rawColorData = camera.CalcChannel(ChannelNames.Color).ToFloatCameraImage();
+            ////        FloatImage fColorImg = new FloatImage(ref rawColorData);
+            ////        Console.WriteLine($"\tMean (color) = {fColorImg.ComputeMean()}");
+
+            ////        SetAcquisitionMode(camera, AcquisitionModes.Idle);
+            ////        Console.WriteLine($"\tElappsed: {sw.ElapsedMilliseconds}");
+            ////    }
+            ////}
+            //#endregion
+
+            //#region Test Fast Emitter Switching
+            ////using (camera = CreateCamera())
+            ////{
+            ////    using (AstraOpenNI otherCamera = CreateCamera())
+            ////    {
+            ////        AstraOpenNI[] cameras = { camera, otherCamera };
+
+            ////        Stopwatch sw = new Stopwatch();
+            ////        camera.Connect();
+            ////        otherCamera.Connect();
+
+            ////        // Set camera to ColorAndZImage mode
+            ////        if (camera.IsChannelActive(ChannelNames.Intensity))
+            ////        {
+            ////            camera.DeactivateChannel(ChannelNames.Intensity);
+            ////        }
+            ////        camera.ActivateChannel(ChannelNames.Color);
+            ////        camera.ActivateChannel(ChannelNames.Point3DImage);
+            ////        camera.ActivateChannel(ChannelNames.ZImage);
+            ////        //camera.IRFlooderEnabled = false;
+            ////        //camera.SetEmitterStatusAndWait(true);
+
+            ////        // Set otherCamera to ColorAndZImage mode
+            ////        if (otherCamera.IsChannelActive(ChannelNames.Intensity))
+            ////        {
+            ////            otherCamera.DeactivateChannel(ChannelNames.Intensity);
+            ////        }
+            ////        otherCamera.ActivateChannel(ChannelNames.Color);
+            ////        otherCamera.ActivateChannel(ChannelNames.Point3DImage);
+            ////        otherCamera.ActivateChannel(ChannelNames.ZImage);
+            ////        //otherCamera.IRFlooderEnabled = false;
+            ////        //otherCamera.SetEmitterStatusAndWait(true);
+
+            ////        // Set camera to Idle mode
+            ////        //camera.IRFlooderEnabled = false;
+            ////        //camera.SetEmitterStatusAndWait(false);
+            ////        // Set otherCamera to Idle mode
+            ////        //otherCamera.IRFlooderEnabled = false;
+            ////        //otherCamera.SetEmitterStatusAndWait(false);
+
+            ////        // Extra
+            ////        //camera.SetEmitterStatusAndWait(false);
+            ////        //otherCamera.SetEmitterStatusAndWait(false);
+
+            ////        sw.Start();
+            ////        for (int i = 0; i < 10; i++)
+            ////        {
+            ////            for (int c = 0; c < cameras.Length; c++)
+            ////            {
+            ////                AstraOpenNI curr = cameras[c];
+
+            ////                SetAcquisitionMode(curr, AcquisitionModes.ColorAndZImage);
+            ////                System.Threading.Thread.Sleep(100);
+            ////                curr.Update();
+
+            ////                FloatCameraImage rawData = (FloatCameraImage)curr.CalcChannel(ChannelNames.ZImage);
+            ////                FloatImage fImg = new FloatImage(ref rawData);
+            ////                Console.WriteLine($"\tMean = {fImg.ComputeMean()} (#{curr.SerialNumber})");
+
+            ////                FloatCameraImage rawColorData = curr.CalcChannel(ChannelNames.Color).ToFloatCameraImage();
+            ////                FloatImage fColorImg = new FloatImage(ref rawColorData);
+            ////                Console.WriteLine($"\tMean (color) = {fColorImg.ComputeMean()} (#{curr.SerialNumber})");
+
+            ////                SetAcquisitionMode(curr, AcquisitionModes.Idle);
+            ////            }
+            ////            Console.WriteLine($"\tElappsed: {sw.ElapsedMilliseconds}");
+            ////        }
+            ////    }
+            ////}
+            //#endregion
+
+            //#region Test IR Exposure
+            ////using (camera = CreateCamera())
+            ////{
+            ////    camera.Connect();
+            ////    camera.DeactivateChannel(ChannelNames.Color);
+            ////    camera.DeactivateChannel(ChannelNames.ZImage);
+            ////    camera.DeactivateChannel(ChannelNames.Point3DImage);
+            ////    camera.ActivateChannel(ChannelNames.Intensity);
+            ////    string channelName = ChannelNames.Intensity;
+
+            ////    // warm-up
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    // 10 frames with current exposure
+            ////    Console.WriteLine($"Exposure is at {camera.IRExposure}.");
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////            FloatImage fImg = new FloatImage(ref rawData);
+            ////            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    // Double exposure
+            ////    camera.IRExposure *= 2;
+
+            ////    // warm-up
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    // 10 frames with new exposure
+            ////    Console.WriteLine($"Exposure is at {camera.IRExposure}.");
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////            FloatImage fImg = new FloatImage(ref rawData);
+            ////            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    // Half exposure
+            ////    camera.IRExposure /= 2;
+            ////}
+            //#endregion
+
+            //#region Test IR Gain
+            ////using (camera = CreateCamera())
+            ////{
+            ////    camera.Connect();
+            ////    camera.DeactivateChannel(ChannelNames.Color);
+            ////    camera.DeactivateChannel(ChannelNames.ZImage);
+            ////    camera.DeactivateChannel(ChannelNames.Point3DImage);
+            ////    camera.ActivateChannel(ChannelNames.Intensity);
+            ////    string channelName = ChannelNames.Intensity;
+
+            ////    // warm-up
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    // 10 frames with current gain
+            ////    Console.WriteLine($"Gain is at {camera.IRGain}.");
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////            FloatImage fImg = new FloatImage(ref rawData);
+            ////            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    // Double gain
+            ////    camera.IRGain *= 2;
+
+            ////    // warm-up
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    // 10 frames with new gain
+            ////    Console.WriteLine($"Gain is at {camera.IRGain}.");
+            ////    for (int i = 0; i < 10; i++)
+            ////    {
+            ////        camera.Update();
+            ////        try
+            ////        {
+            ////            FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
+            ////            FloatImage fImg = new FloatImage(ref rawData);
+            ////            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
+            ////        }
+            ////        catch (ArgumentException ex)
+            ////        {
+            ////            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
+            ////        }
+            ////    }
+
+            ////    // Half gain
+            ////    camera.IRGain /= 2;
+            ////}
+            //#endregion
+
+            //#region Get intrinsics and extrinsics
+            using (camera = CreateCamera())
+            {
+                camera.Connect();
+                Stopwatch timer = new Stopwatch();
+                timer.Start();
+                for (int i = 0; i < 5; i++)
+                {
+                    camera.Update();
+                    var tmp = camera.CalcChannel(ChannelNames.ZImage);
+                }
+                timer.Stop();
+                var duration = timer.ElapsedMilliseconds;
+                // ZImage == Intensity
+                ProjectiveTransformationZhang intrinsics_Intensity = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Intensity);
+                ProjectiveTransformationZhang intrinsics_Color = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Color);
+                RigidBodyTransformation depthToColor = camera.GetExtrinsics(ChannelNames.ZImage, ChannelNames.Color);
+            }
+            //#endregion
+
+            #region Activate and deactivate channels
             //using (camera = CreateCamera())
             //{
             //    camera.Connect();
-            //    camera.IRGain = 8;
+            //    // This should work
+            //    camera.ActivateChannel(ChannelNames.Color);
+            //    // This should throw
+            //    try
+            //    {
+            //        camera.ActivateChannel(ChannelNames.Intensity);
+            //    }
+            //    catch { }
+            //    // This should work
+            //    camera.DeactivateChannel(ChannelNames.Color);
+            //    camera.DeactivateChannel(ChannelNames.ZImage);
+            //    camera.DeactivateChannel(ChannelNames.Point3DImage);
+            //    camera.ActivateChannel(ChannelNames.Intensity);
+            //}
+            #endregion
+
+            //#region Fetching frames
+            //Console.WriteLine("Fetching frames");
+            //using (camera = CreateCamera())
+            //{
+            //    camera.Connect();
+
             //    string channelName = ChannelNames.ZImage;
-            //    // warm-up
+
+
             //    for (int i = 0; i < 10; i++)
-            //    {
-            //        camera.Update();
-            //        try
-            //        {
-            //            Console.Write($"Accessing {channelName} data");
-            //            FloatCameraImage ampData = (FloatCameraImage)camera.CalcChannel(channelName);
-            //            FloatImage fImg = new FloatImage(ref ampData);
-            //            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
-            //        }
-            //        catch (ArgumentException ex)
-            //        {
-            //            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-            //        }
-            //    }
-
-            //    camera.SetEmitterStatusAndWait(false);
-
-            //    for (int i = 0; i < 3; i++)
-            //    {
-            //        camera.Update();
-            //        try
-            //        {
-            //            Console.Write($"Accessing {channelName} data");
-            //            FloatCameraImage ampData = (FloatCameraImage)camera.CalcChannel(channelName);
-            //            FloatImage fImg = new FloatImage(ref ampData);
-            //            Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
-            //        }
-            //        catch (ArgumentException ex)
-            //        {
-            //            Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-            //        }
-            //    }
-
-            //    Console.WriteLine($"Switching emitter on.");
-            //    Console.WriteLine($"Exposure is at {camera.IRExposure}.");
-            //    Console.WriteLine($"Gain is at {camera.IRGain}.");
-            //    camera.SetEmitterStatusAndWait(true);
-
-            //    for (int i = 0; i < 3; i++)
             //    {
             //        camera.Update();
             //        try
@@ -106,326 +431,12 @@ namespace MetriCam2.Samples.MinimalSample
             //}
             //#endregion
 
-            //#region Test Fast Emitter Switching
-            //using (camera = CreateCamera())
-            //{
-            //    Stopwatch sw = new Stopwatch();
-            //    camera.Connect();
-            //    SetAcquisitionMode(camera, AcquisitionModes.Idle);
-            //    sw.Start();
-            //    for (int i = 0; i < 10; i++)
-            //    {
-            //        SetAcquisitionMode(camera, AcquisitionModes.ColorAndZImage);
-            //        camera.Update();
-
-            //        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
-            //        FloatImage fImg = new FloatImage(ref rawData);
-            //        Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
-
-            //        FloatCameraImage rawColorData = camera.CalcChannel(ChannelNames.Color).ToFloatCameraImage();
-            //        FloatImage fColorImg = new FloatImage(ref rawColorData);
-            //        Console.WriteLine($"\tMean (color) = {fColorImg.ComputeMean()}");
-
-            //        SetAcquisitionMode(camera, AcquisitionModes.Idle);
-            //        Console.WriteLine($"\tElappsed: {sw.ElapsedMilliseconds}");
-            //    }
-            //}
-            //#endregion
-
-            #region Test Fast Emitter Switching
-            using (camera = CreateCamera())
-            {
-                using (AstraOpenNI otherCamera = CreateCamera("18042730319"))
-                {
-                    AstraOpenNI[] cameras = { camera, otherCamera };
-
-                    Stopwatch sw = new Stopwatch();
-                    camera.Connect();
-                    otherCamera.Connect();
-
-                    // Set camera to ColorAndZImage mode
-                    if (camera.IsChannelActive(ChannelNames.Intensity))
-                    {
-                        camera.DeactivateChannel(ChannelNames.Intensity);
-                    }
-                    camera.ActivateChannel(ChannelNames.Color);
-                    camera.ActivateChannel(ChannelNames.Point3DImage);
-                    camera.ActivateChannel(ChannelNames.ZImage);
-                    //camera.IRFlooderEnabled = false;
-                    //camera.SetEmitterStatusAndWait(true);
-
-                    // Set otherCamera to ColorAndZImage mode
-                    if (otherCamera.IsChannelActive(ChannelNames.Intensity))
-                    {
-                        otherCamera.DeactivateChannel(ChannelNames.Intensity);
-                    }
-                    otherCamera.ActivateChannel(ChannelNames.Color);
-                    otherCamera.ActivateChannel(ChannelNames.Point3DImage);
-                    otherCamera.ActivateChannel(ChannelNames.ZImage);
-                    //otherCamera.IRFlooderEnabled = false;
-                    //otherCamera.SetEmitterStatusAndWait(true);
-
-                    // Set camera to Idle mode
-                    //camera.IRFlooderEnabled = false;
-                    //camera.SetEmitterStatusAndWait(false);
-                    // Set otherCamera to Idle mode
-                    //otherCamera.IRFlooderEnabled = false;
-                    //otherCamera.SetEmitterStatusAndWait(false);
-
-                    // Extra
-                    //camera.SetEmitterStatusAndWait(false);
-                    //otherCamera.SetEmitterStatusAndWait(false);
-
-                    sw.Start();
-                    for (int i = 0; i < 10; i++)
-                    {
-                        for (int c = 0; c < cameras.Length; c++)
-                        {
-                            AstraOpenNI curr = cameras[c];
-
-                            SetAcquisitionMode(curr, AcquisitionModes.ColorAndZImage);
-                            System.Threading.Thread.Sleep(100);
-                            curr.Update();
-
-                            FloatCameraImage rawData = (FloatCameraImage)curr.CalcChannel(ChannelNames.ZImage);
-                            FloatImage fImg = new FloatImage(ref rawData);
-                            Console.WriteLine($"\tMean = {fImg.ComputeMean()} (#{curr.SerialNumber})");
-
-                            FloatCameraImage rawColorData = curr.CalcChannel(ChannelNames.Color).ToFloatCameraImage();
-                            FloatImage fColorImg = new FloatImage(ref rawColorData);
-                            Console.WriteLine($"\tMean (color) = {fColorImg.ComputeMean()} (#{curr.SerialNumber})");
-
-                            SetAcquisitionMode(curr, AcquisitionModes.Idle);
-                        }
-                        Console.WriteLine($"\tElappsed: {sw.ElapsedMilliseconds}");
-                    }
-                }
-            }
-            #endregion
-
-            #region Test IR Exposure
-            using (camera = CreateCamera())
-            {
-                camera.Connect();
-                camera.DeactivateChannel(ChannelNames.Color);
-                camera.DeactivateChannel(ChannelNames.ZImage);
-                camera.DeactivateChannel(ChannelNames.Point3DImage);
-                camera.ActivateChannel(ChannelNames.Intensity);
-                string channelName = ChannelNames.Intensity;
-
-                // warm-up
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-
-                // 10 frames with current exposure
-                Console.WriteLine($"Exposure is at {camera.IRExposure}.");
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
-                        FloatImage fImg = new FloatImage(ref rawData);
-                        Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-
-                // Double exposure
-                camera.IRExposure *= 2;
-
-                // warm-up
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-
-                // 10 frames with new exposure
-                Console.WriteLine($"Exposure is at {camera.IRExposure}.");
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
-                        FloatImage fImg = new FloatImage(ref rawData);
-                        Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-
-                // Half exposure
-                camera.IRExposure /= 2;
-            }
-            #endregion
-
-            #region Test IR Gain
-            using (camera = CreateCamera())
-            {
-                camera.Connect();
-                camera.DeactivateChannel(ChannelNames.Color);
-                camera.DeactivateChannel(ChannelNames.ZImage);
-                camera.DeactivateChannel(ChannelNames.Point3DImage);
-                camera.ActivateChannel(ChannelNames.Intensity);
-                string channelName = ChannelNames.Intensity;
-
-                // warm-up
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-
-                // 10 frames with current gain
-                Console.WriteLine($"Gain is at {camera.IRGain}.");
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
-                        FloatImage fImg = new FloatImage(ref rawData);
-                        Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-
-                // Double gain
-                camera.IRGain *= 2;
-
-                // warm-up
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-
-                // 10 frames with new gain
-                Console.WriteLine($"Gain is at {camera.IRGain}.");
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        FloatCameraImage rawData = (FloatCameraImage)camera.CalcChannel(channelName);
-                        FloatImage fImg = new FloatImage(ref rawData);
-                        Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-
-                // Half gain
-                camera.IRGain /= 2;
-            }
-            #endregion
-
-            #region Get intrinsics and extrinsics
-            using (camera = CreateCamera())
-            {
-                camera.Connect();
-                camera.Update();
-                // ZImage == Intensity
-                ProjectiveTransformationZhang intrinsics_Intensity = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Intensity);
-                ProjectiveTransformationZhang intrinsics_Color = (ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Color);
-                RigidBodyTransformation depthToColor = camera.GetExtrinsics(ChannelNames.ZImage, ChannelNames.Color);
-            }
-            #endregion
-
-            #region Activate and deactivate channels
-            using (camera = CreateCamera())
-            {
-                camera.Connect();
-                // This should work
-                camera.ActivateChannel(ChannelNames.Color);
-                // This should throw
-                try
-                {
-                    camera.ActivateChannel(ChannelNames.Intensity);
-                }
-                catch { }
-                // This should work
-                camera.DeactivateChannel(ChannelNames.Color);
-                camera.DeactivateChannel(ChannelNames.ZImage);
-                camera.DeactivateChannel(ChannelNames.Point3DImage);
-                camera.ActivateChannel(ChannelNames.Intensity);
-            }
-            #endregion
-
-            #region Fetching frames
-            Console.WriteLine("Fetching frames");
-            using (camera = CreateCamera())
-            {
-                camera.Connect();
-
-                string channelName = ChannelNames.ZImage;
-                for (int i = 0; i < 10; i++)
-                {
-                    camera.Update();
-                    try
-                    {
-                        Console.Write($"Accessing {channelName} data");
-                        FloatCameraImage ampData = (FloatCameraImage)camera.CalcChannel(channelName);
-                        FloatImage fImg = new FloatImage(ref ampData);
-                        string tmp = fImg.ShowInDebug;
-                        Console.WriteLine($"\tMean = {fImg.ComputeMean()}");
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        Console.WriteLine(string.Format("Error getting channel {0}: {1}.", channelName, ex.Message));
-                    }
-                }
-            }
-            #endregion
-
+            camera.CalcChannel(ChannelNames.Color).ToBitmap().Save(@"test.bmp");
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();
         }
 
-        private static AstraOpenNI CreateCamera(string serial = "18042730138")
+        private static AstraOpenNI CreateCamera(string serial = "18070530031")
         {
             AstraOpenNI camera;
             try
@@ -441,7 +452,9 @@ namespace MetriCam2.Samples.MinimalSample
                 return null;
             }
 
-            camera.SerialNumber = serial; // 18042730138 18042730319
+            // astra P: 18070530031
+            // deeya: AQ0D8830106
+            camera.SerialNumber = serial; // 18042730138 18042730319 18042730319
             return camera;
         }
 

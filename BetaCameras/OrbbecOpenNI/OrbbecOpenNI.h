@@ -9,7 +9,6 @@
 #include <msclr/marshal.h>
 #include <PS1080.h>
 #include <OpenNI.h>
-#include "cmd.h"
 
 #if USE_I2C_GAIN
 #include <iostream>
@@ -28,6 +27,7 @@ using namespace System::Threading;
 using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
 using namespace System::Drawing;
+using namespace System::Collections::Generic;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
 
@@ -123,11 +123,12 @@ namespace MetriCam2
 				void set(int value) { SetIRGain(value); }
 			}
 
-			property bool ProximitySensorEnabled
+			//Is buggy in OpenNI version 2.3.1.48, depth channel (if started) will turn black if one of this methods is called.
+			/*property bool ProximitySensorEnabled
 			{
 				bool get() { return GetProximitySensorStatus(); }
 				void set(bool value) { SetProximitySensorStatus(value); }
-			}
+			}*/
 
 			static System::Collections::Generic::Dictionary<String^, String^>^ GetSerialToUriMappingOfAttachedCameras();
 
@@ -319,8 +320,9 @@ namespace MetriCam2
 			bool GetEmitterStatus();
 			void SetEmitterStatus(bool on);
 
-			bool GetProximitySensorStatus();
-			void SetProximitySensorStatus(bool on);
+			//Is buggy in OpenNI version 2.3.1.48, depth channel (if started) will turn black if one of this methods is called.
+			/*bool GetProximitySensorStatus();
+			void SetProximitySensorStatus(bool on);*/
 
 			int GetIRGain();
 			void SetIRGain(int value);
@@ -339,6 +341,13 @@ namespace MetriCam2
 			int _vid;
 			int _pid;
 			String^ _deviceType;
+			Point2i _depthResolution;
+			bool _hasColor;
+			// Compensate for offset between IR and Distance images:
+			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.
+			int _intensityYTranslation;
+			System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>^ _extrinsicsCache;
+			System::Collections::Generic::Dictionary<String^, IProjectiveTransformation^>^ _intrinsicsCache;
 
 			msclr::interop::marshal_context marshalContext;
 		};
