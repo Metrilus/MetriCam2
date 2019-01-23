@@ -346,6 +346,8 @@ namespace MetriCam2
 			// Compensate for offset between IR and Distance images:
 			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.
 			int _intensityYTranslation;
+			System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>^ _extrinsicsCache;
+			System::Collections::Generic::Dictionary<String^, IProjectiveTransformation^>^ _intrinsicsCache;
 
 			msclr::interop::marshal_context marshalContext;
 		};

@@ -24,6 +24,8 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	_emitterEnabled = true;
 	_irFlooderEnabled = false;
 	_hasColor = true;
+	_extrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>();
+	_intrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, IProjectiveTransformation^>();
 }
 
 // In C++/CLI, a Dispose() method is automatically created when implementing the deterministic destructor.
@@ -483,6 +485,8 @@ void MetriCam2::Cameras::AstraOpenNI::SetIRExposure(int value)
 
 void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
 {
+	_intrinsicsCache->Clear();
+	_extrinsicsCache->Clear();
 	DepthStream.destroy();
 	IrStream.destroy();
 	ColorStream.destroy();
@@ -908,6 +912,13 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 
 Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIntrinsics(String^ channelName)
 {
+	//We need to cache the intrinsics, since OpenNI 2.3.1.48 generates a black depth image, if Device.getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, ...) is called too often. 
+	if (_intrinsicsCache->ContainsKey(channelName) && _intrinsicsCache[channelName] != nullptr)
+	{
+		log->DebugFormat("Found intrinsic calibration for channel {0} in cache.", channelName);
+		return _intrinsicsCache[channelName];
+	}
+
 	log->Info("Trying to load projective transformation from file.");
 	try
 	{
@@ -982,6 +993,7 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 	else
 	{
 		pt->CameraSerial = SerialNumber;
+		_intrinsicsCache[channelName] = pt;
 	}
 
 	return pt;
@@ -989,6 +1001,14 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 
 Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExtrinsics(String^ channelFromName, String^ channelToName)
 {
+	//We need to cache the extrinsics, since OpenNI 2.3.1.48 generates a black depth image, if Device.getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, ...) is called too often. 
+	String^ keyName = String::Format("{0}_{1}", channelFromName, channelToName);	
+	if (_extrinsicsCache->ContainsKey(keyName) && _extrinsicsCache[keyName] != nullptr)
+	{
+		log->DebugFormat("Found extrinsic calibration for channels {0} and {1} in cache.", channelFromName, channelToName);
+		return _extrinsicsCache[keyName];
+	}
+
 	log->Info("Trying to load extrinsics from file.");
 	try
 	{
@@ -1015,13 +1035,16 @@ Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExt
 	Metrilus::Util::RigidBodyTransformation^ depthToColor = gcnew Metrilus::Util::RigidBodyTransformation(rotMat, translation);
 
 	if ((channelFromName->Equals(ChannelNames::Intensity) || channelFromName->Equals(ChannelNames::ZImage)) && channelToName->Equals(ChannelNames::Color))
-	{			
+	{		
+		_extrinsicsCache[keyName] = depthToColor;
 		return depthToColor;
 	}
+
 	if (channelFromName->Equals(ChannelNames::Color) && (channelToName->Equals(ChannelNames::Intensity) || channelToName->Equals(ChannelNames::ZImage)))
 	{
-		// Extracted from file in Orbbec calibration tool
-		return depthToColor->GetInverted();
+		Metrilus::Util::RigidBodyTransformation^ colorToDepth = depthToColor->GetInverted();
+		_extrinsicsCache[keyName] = colorToDepth;
+		return colorToDepth;
 	}
 
 	log->ErrorFormat("Unsupported channel combination in GetExtrinsics(): {0} -> {1}", channelFromName, channelToName);
