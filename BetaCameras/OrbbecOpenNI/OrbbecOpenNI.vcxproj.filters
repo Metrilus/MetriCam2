@@ -24,9 +24,6 @@
     <ClInclude Include="OrbbecOpenNI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cmd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stdafx.cpp">
@@ -36,9 +33,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AssemblyInfo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

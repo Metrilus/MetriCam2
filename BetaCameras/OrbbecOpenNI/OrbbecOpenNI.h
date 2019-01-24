@@ -2,24 +2,42 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 #pragma once
+// When USE_I2C_GAIN is set, then the old, I2C code is used to get/set the IrGain.
+// Otherwise, the new Orbbec OpenNI extension is used (which seems still buggy).
+#define USE_I2C_GAIN 1
+
 #include <msclr/marshal.h>
+#include <PS1080.h>
 #include <OpenNI.h>
-#include "cmd.h"
+
+#if USE_I2C_GAIN
+#include <iostream>
+#include <vector>
+#endif
 
 //Adpated from SimpleViewer of experimental interface
-#define IR_Exposure_MAX 4096
-#define IR_Exposure_MIN 0
-#define IR_Exposure_SCALE 256
-#define IR_Gain_MIN 8
-#define IR_Gain_MAX 96
+const int IR_Exposure_MAX = 1 << 14;
+const int IR_Exposure_MIN = 0;
+const int IR_Gain_MIN = 8;
+const int IR_Gain_MAX = 63;
 
 using namespace System;
 using namespace System::ComponentModel;
 using namespace System::Threading;
+using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
 using namespace System::Drawing;
+using namespace System::Collections::Generic;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
+
+#if USE_I2C_GAIN
+bool atoi2(const char* str, int* pOut);
+unsigned short read_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C);
+bool write_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C);
+template<typename ... Args>
+std::string string_format(const std::string& format, Args ... args);
+#endif
 
 namespace MetriCam2 
 {
@@ -27,20 +45,7 @@ namespace MetriCam2
 	{
 		struct OrbbecNativeCameraData
 		{
-			OrbbecNativeCameraData()
-			{
-				openNICam = new cmd();
-			}
-			~OrbbecNativeCameraData()
-			{
-				if (openNICam != nullptr)
-				{
-					delete openNICam;
-				}
-				openNICam = nullptr;
-			}
-
-			cmd* openNICam;
+			openni::Device device;
 
 			openni::VideoStream depth;
 			int depthWidth;
@@ -81,74 +86,63 @@ namespace MetriCam2
 			private:
 				void set(int value) { _vid = value; }
 			}
+			property String^ DeviceType
+			{
+				String^ get() { return _deviceType; }
+			private:
+				void set(String^ value) { _deviceType = value; }
+			}
 
 			property bool EmitterEnabled
 			{
-				bool get()
+				bool get() { return GetEmitterStatus(); }
+				void set(bool value) { SetEmitterStatus(value); }
+			}
+
+			property int IRExposure
+			{
+				int get() { return GetIRExposure(); }
+				void set(int value)
 				{
-					// Reading the emitter status via the "cmd" class does not yet work. Check in future version of experimental SDK.
-					return _emitterEnabled;
-				}
-				void set(bool value)
-				{
-					_emitterEnabled = value;
-					SetEmitterStatus(_emitterEnabled);
-					log->DebugFormat("Emitter state set to: {0}", _emitterEnabled.ToString());
+					auto irGainBefore = GetIRGain();
+					SetIRExposure(value);
+					// Set IRExposure resets the gain to its default value (96 for Astra and 8 for AstraS). We have to set the gain to the memorized value (member irGain).
+					SetIRGain(irGainBefore);
 				}
 			}
 
 			property bool IRFlooderEnabled
 			{
-				bool get()
-				{
-					// Reading the IrFlood status via the "cmd" class does not yet work. Check in future version of experimental SDK.
-					return _irFlooderEnabled;
-				}
-				void set(bool value)
-				{
-					_irFlooderEnabled = value;
-					SetIRFlooderStatus(_irFlooderEnabled);
-					log->DebugFormat("IR flooder state set to: {0}", _irFlooderEnabled.ToString());
-				}
+				bool get() { return GetIRFlooderStatus(); }
+				void set(bool value) { SetIRFlooderStatus(value); }
 			}
 
 			property int IRGain
 			{
-				int get()
-				{
-					return _irGain;
-				}
-				void set(int value)
-				{
-					if (value != _irGain)
-					{
-						_irGain = value;
-						SetIRGain(_irGain);
-					}
-				}
+				int get() { return GetIRGain(); }
+				void set(int value) { SetIRGain(value); }
 			}
 
-			// Implementation in experimental interface seems to be buggy, changing the value destroys the distance image
-			property unsigned int IRExposure
+			//Is buggy in OpenNI version 2.3.1.48, depth channel (if started) will turn black if one of this methods is called.
+			/*property bool ProximitySensorEnabled
 			{
-				unsigned int get()
-				{
-					//ir_exposure_get in cmd class not yet functional and can destroy the current state of the camera
-					throw gcnew NotImplementedException();
-					//return GetIRExposure();
-				}
-				void set(unsigned int value)
-				{
-					SetIRExposure(value);
-					// Set IRExposure resets the gain to its default value (96 for Astra and 8 for AstraS). We have to set the gain to the memorized value (member irGain).
-					SetIRGain(_irGain);
-				}
-			}
+				bool get() { return GetProximitySensorStatus(); }
+				void set(bool value) { SetProximitySensorStatus(value); }
+			}*/
 
 			static System::Collections::Generic::Dictionary<String^, String^>^ GetSerialToUriMappingOfAttachedCameras();
 
 			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 			virtual Metrilus::Util::RigidBodyTransformation^ GetExtrinsics(String^ channelFromName, String^ channelToName) override;
+
+			/// <summary>
+			/// Updates the emitter (laser) status and waits for the next valid or invalid frame.
+			/// </summary>
+			/// <remarks>
+			/// Currently only implemented if the z-image channel is active.
+			/// If it's not active the wait will be skipped.
+			/// </remarks>
+			void SetEmitterStatusAndWait(bool on);
 
 #if !NETSTANDARD2_0
 			property System::Drawing::Icon^ CameraIcon
@@ -212,7 +206,7 @@ namespace MetriCam2
 			{
 				openni::Device& get()
 				{
-					return _pCamData->openNICam->device;
+					return _pCamData->device;
 				}
 			}
 			property openni::VideoStream& DepthStream
@@ -250,6 +244,19 @@ namespace MetriCam2
 				}
 			}
 
+			property ParamDesc<int>^ IRExposureDesc
+			{
+				inline ParamDesc<int>^ get()
+				{
+					ParamDesc<int>^ res = ParamDesc::BuildRangeParamDesc(IR_Exposure_MIN, IR_Exposure_MAX);
+					res->Unit = "";
+					res->Description = "IR exposure";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
 			property ParamDesc<bool>^ IRFlooderEnabledDesc
 			{
 				inline ParamDesc<bool>^ get()
@@ -263,20 +270,6 @@ namespace MetriCam2
 				}
 			}
 
-			// Disabled while the IRExposure getter is not implemented
-			//property ParamDesc<unsigned int>^ IRExposureDesc
-			//{
-			//	inline ParamDesc<unsigned int>^ get()
-			//	{
-			//		ParamDesc<unsigned int>^ res = gcnew ParamDesc<unsigned int>();
-			//		res->Unit = "";
-			//		res->Description = "IR exposure";
-			//		res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
-			//		res->WritableWhen = ParamDesc::ConnectionStates::Connected;
-			//		return res;
-			//	}
-			//}
-
 			property ParamDesc<int>^ IRGainDesc
 			{
 				inline ParamDesc<int>^ get()
@@ -284,6 +277,19 @@ namespace MetriCam2
 					ParamDesc<int>^ res = ParamDesc::BuildRangeParamDesc(IR_Gain_MIN, IR_Gain_MAX);
 					res->Unit = "";
 					res->Description = "IR gain";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
+					return res;
+				}
+			}
+
+			property ParamDesc<bool>^ ProximitySensorEnabledDesc
+			{
+				inline ParamDesc<bool>^ get()
+				{
+					ParamDesc<bool>^ res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "Proximity sensor is enabled";
 					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
 					res->WritableWhen = ParamDesc::ConnectionStates::Connected;
 					return res;
@@ -301,29 +307,47 @@ namespace MetriCam2
 			static int _openNIInitCounter = 0;
 
 			bool _isDisposed = false;
-			int _irGain = 0;
 
 			void InitDepthStream();
 			void InitIRStream();
 			void InitColorStream();
 
-			String^ GetIRFlooderStatus();
+			bool _irFlooderEnabled;
+			bool GetIRFlooderStatus();
 			void SetIRFlooderStatus(bool on);
 
-			String^ GetEmitterStatus();
+			bool _emitterEnabled;
+			bool GetEmitterStatus();
 			void SetEmitterStatus(bool on);
 
+			//Is buggy in OpenNI version 2.3.1.48, depth channel (if started) will turn black if one of this methods is called.
+			/*bool GetProximitySensorStatus();
+			void SetProximitySensorStatus(bool on);*/
+
+			int GetIRGain();
 			void SetIRGain(int value);
-			unsigned short GetIRGain();
 
-			void SetIRExposure(unsigned int value);
-			unsigned int GetIRExposure();
+			int GetIRExposure();
+			void SetIRExposure(int value);
 
-			bool _emitterEnabled;
-			bool _irFlooderEnabled;
+			void WaitUntilNextValidFrame();
+			void WaitUntilNextInvalidFrame();
+			bool IsDepthFrameValid_MinimumMean(FloatCameraImage^ img);
+			bool IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img);
+			bool IsDepthFrameValid_MinimumMean(FloatCameraImage^ img, float threshold);
+			bool IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img, int thresholdPercentage);
+
 			OrbbecNativeCameraData* _pCamData;
 			int _vid;
 			int _pid;
+			String^ _deviceType;
+			Point2i _depthResolution;
+			bool _hasColor;
+			// Compensate for offset between IR and Distance images:
+			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.
+			int _intensityYTranslation;
+			System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>^ _extrinsicsCache;
+			System::Collections::Generic::Dictionary<String^, IProjectiveTransformation^>^ _intrinsicsCache;
 
 			msclr::interop::marshal_context marshalContext;
 		};

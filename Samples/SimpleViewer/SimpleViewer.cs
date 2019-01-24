@@ -15,6 +15,8 @@ using System.Text;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Drawing.Imaging;
+using MetriPrimitives.Data;
 
 namespace MetriCam2.Samples.SimpleViewer
 {
@@ -41,7 +43,6 @@ namespace MetriCam2.Samples.SimpleViewer
             {
                 CameraManagement.ScanForCameraDLLs = false;
                 CameraManagement.ScanAssembly(Properties.Settings.Default.CameraDLLPath);
-
             }
             catch (Exception ex)
             {
@@ -153,8 +154,19 @@ namespace MetriCam2.Samples.SimpleViewer
                     // ignore errors. However, this might be a hint that something is wrong in your application.
                     continue;
                 }
-                
-                Bitmap bmp = camImg.ToBitmap();
+
+                Bitmap bmp;
+                if (camImg is FloatCameraImage fcImg)
+                {
+                    FloatImage fImg = new FloatImage(ref fcImg);
+                    fImg = fImg.NormalizeTrimmed(0.1f, 0.9f);
+                    bmp = fImg.CreateBitmap();
+                }
+                else
+                {
+                    bmp = camImg.ToBitmap();
+                }
+
                 if (saveSnapshot)
                 {
                     string snapName = "MetriCam 2 Snapshot.png";
@@ -167,6 +179,71 @@ namespace MetriCam2.Samples.SimpleViewer
             }
             DisconnectCamera();
             isBgwFinished.Set();
+        }
+
+        private unsafe static Bitmap ToBitmap(FloatCameraImage img)
+        {
+            if (img.Data == null)
+            {
+                return null;
+            }
+            float maxVal = float.MinValue;
+            float minVal = float.MaxValue;
+
+            for (int y = 0; y < img.Height; y++)
+            {
+                float* dataPtr = img.Data + y * img.Stride;
+                for (int x = 0; x < img.Width; x++)
+                {
+                    float val = *dataPtr++;
+                    if (val > maxVal)
+                    {
+                        maxVal = val;
+                    }
+                    if (val < minVal)
+                    {
+                        minVal = val;
+                    }
+                }
+            }
+
+            maxVal = 0.9f * maxVal;
+            for (int y = 0; y < img.Height; y++)
+            {
+                float* dataPtr = img.Data + y * img.Stride;
+                for (int x = 0; x < img.Width; x++)
+                {
+                    if (*dataPtr > maxVal)
+                    {
+                        *dataPtr = maxVal;
+                    }
+                    dataPtr++;
+                }
+            }
+            Bitmap bitmap = new Bitmap(img.Width, img.Height, PixelFormat.Format24bppRgb);
+            if (maxVal == minVal)
+            {
+                // avoid division by zero.
+                return bitmap;
+            }
+            Rectangle rect = new Rectangle(0, 0, img.Width, img.Height);
+            BitmapData bitmapData = bitmap.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format24bppRgb);
+            byte* bmpPtr = (byte*)bitmapData.Scan0;
+            for (int y = 0; y < img.Height; y++)
+            {
+                byte* linePtr = bmpPtr + bitmapData.Stride * y;
+                float* dataPtr = img.Data + y * img.Stride;
+                for (int x = 0; x < img.Width; x++)
+                {
+                    byte value = (byte)(byte.MaxValue * (*dataPtr++ - minVal) / (maxVal - minVal));
+                    *linePtr++ = value;
+                    *linePtr++ = value;
+                    *linePtr++ = value;
+                }
+            }
+            bitmap.UnlockBits(bitmapData);
+            GC.KeepAlive(img);
+            return bitmap;
         }
 
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -188,6 +265,16 @@ namespace MetriCam2.Samples.SimpleViewer
             try
             {
                 cam.Connect();
+                if (cam is Cameras.AstraOpenNI astra)
+                {
+                    astra.DeactivateChannel(ChannelNames.Point3DImage);
+                    astra.DeactivateChannel(ChannelNames.ZImage);
+                    astra.ActivateChannel(ChannelNames.Intensity);
+                    astra.SelectChannel(ChannelNames.Intensity);
+                    astra.SetEmitterStatusAndWait(false);
+                    astra.IRExposure = 1024 * 15;
+                    astra.IRGain = 16;
+                }
             }
             catch (Exception ex)
             {

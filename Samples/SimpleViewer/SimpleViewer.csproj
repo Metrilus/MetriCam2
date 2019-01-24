@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MetriCam2.Samples.SimpleViewer</RootNamespace>
     <AssemblyName>SimpleViewer</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -46,6 +46,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>..\..\bin\Samples\x64\Release\</OutputPath>
@@ -57,6 +58,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>MetrilusPlainAppIcon.ico</ApplicationIcon>
@@ -64,6 +66,14 @@
   <ItemGroup>
     <Reference Include="Metrilus.Util">
       <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
+    </Reference>
+    <Reference Include="MetriPrimitives, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\releases\Metrilus.Framework\v.19.4.0.42\lib\MetriPrimitives.dll</HintPath>
+    </Reference>
+    <Reference Include="MetriPrimitivesNative, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\releases\Metrilus.Framework\v.19.4.0.42\lib\MetriPrimitivesNative.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -101,6 +111,10 @@
     <Content Include="MetrilusPlainAppIcon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\BetaCameras\OrbbecOpenNI\OrbbecOpenNI.vcxproj">
+      <Project>{c82202f8-55db-4511-b006-c88ff3e4427e}</Project>
+      <Name>OrbbecOpenNI</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2.Controls\MetriCam2.Controls.csproj">
       <Project>{9060cbcf-609d-47b3-9245-43d34c540a73}</Project>
       <Name>MetriCam2.Controls</Name>

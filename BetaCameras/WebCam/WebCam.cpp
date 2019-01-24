@@ -513,7 +513,7 @@ void WebCam::DirectShowDisconnect(DirectShowPointers^ dsPointers, String^ serial
     dsPointers->pNullF = NULL; 
     dsPointers->pGrabber = NULL;
     dsPointers->pGrabberF = NULL;
-    //if (serialNumber != nullptr) // TODO: remove this check?
+    if (serialNumber != nullptr) // TODO: remove this check?
     {
         DirectShowReleasePrepareConnect(dsPointers);
         DirectShowRePrepareConnect(dsPointers, serialNumber);
