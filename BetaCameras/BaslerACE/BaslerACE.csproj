@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\MetrilusReferencesVersions.props" />
+  <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
@@ -43,7 +43,7 @@
       <HintPath>Z:\external-libraries\Basler\acA1300\pylon 5.0.11\Basler.Pylon\x64\Basler.Pylon.dll</HintPath>
     </Reference>
     <Reference Include="Metrilus.Util">
-      <HintPath>$(MetrilusUtilPath)Metrilus.Util.dll</HintPath>
+      <HintPath>$(LibrariesPath)Metrilus.Util.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

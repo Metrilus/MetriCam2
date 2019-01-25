@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Wrapper for Intel libRealSense2 cameras</Description>
@@ -51,7 +51,7 @@
       <HintPath>Z:\external-libraries\Intel\libRealSense2\2.12.0\AnyCPU\Release\netstandard2.0\Intel.RealSense.dll</HintPath>
     </Reference>
     <Reference Include="Metrilus.Util.NetStandard">
-      <HintPath>..\..\libraries\Metrilus.Util.NetStandard.dll</HintPath>
+      <HintPath>$(LibrariesPath)Metrilus.Util.NetStandard.dll</HintPath>
     </Reference>
   </ItemGroup>
 
