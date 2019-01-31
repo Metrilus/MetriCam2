@@ -12,19 +12,22 @@ pipeline {
         def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.BaslerACE MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.MatrixVision MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.TIVoxel MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam MetriCam2.Cameras.Pico'
         def dllsToDeployAnyCPU = 'Intel.RealSense log4net MathNet.Numerics MetriCam2 MetriCam2.Cameras.RealSense2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
         def dllsToDeployNetStandard = 'MetriCam2.NetStandard MetriCam2.Cameras.RealSense2.NetStandard Metrilus.Util.NetStandard'
+        def dllsToDeployX64StrongName = 'MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI'
+        def dllsToDeployAnyCPUStrongName = 'log4net MathNet.Numerics MetriCam2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
 
         def currentBranch = "${env.GITHUB_BRANCH_NAME}"
         def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
         def solutionFilename = 'MetriCam2_SDK.sln'
 
         def releaseVersion = getReleaseVersion(currentBranch, V_MAJOR, V_MINOR, V_BUILD);
-		def niceVersion = "${releaseVersion}"
+        def niceVersion = "${releaseVersion}"
         def releaseFolder = getReleaseFolder(currentBranch, niceVersion)
 
         def releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
         def releaseLibraryDirectory = "${releaseDirectory}\\lib"
         def releaseSuffixNetStandard20 = "_netstandard2.0"
         def releaseSuffixDebug = "_debug"
+        def releaseSuffixStrongName = "_strongname"
 
         def STATUS_CONTEXT = 'MetriCam2 CI'
         def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
@@ -55,6 +58,8 @@ pipeline {
             steps {
                 bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=Release;Platform=x64"
                 bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=Debug;Platform=x64"
+                bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=ReleaseStrongName;Platform=x64"
+                bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=DebugStrongName;Platform=x64"
             }
         }
 
@@ -62,8 +67,12 @@ pipeline {
             environment {
                 def RELEASE_DIR_X64 = 'bin\\x64\\Release\\'
                 def DEBUG_DIR_X64 = 'bin\\x64\\Debug\\'
+                def RELEASE_DIR_X64_STRONGNAME = 'bin\\x64\\ReleaseStrongName\\'
+                def DEBUG_DIR_X64_STRONGNAME = 'bin\\x64\\DebugStrongName\\'
                 def RELEASE_DIR_ANYCPU = 'bin\\Release\\'
                 def DEBUG_DIR_ANYCPU = 'bin\\Debug\\'
+                def RELEASE_DIR_ANYCPU_STRONGNAME = 'bin\\ReleaseStrongName\\'
+                def DEBUG_DIR_ANYCPU_STRONGNAME = 'bin\\DebugStrongName\\'
                 def RELEASE_DIR_NETSTANDARD = 'bin\\Release\\netstandard2.0\\'
                 def DEBUG_DIR_NETSTANDARD = 'bin\\Debug\\netstandard2.0\\'
             }
@@ -89,6 +98,10 @@ pipeline {
                     mkdir \"${releaseLibraryDirectory}${releaseSuffixNetStandard20}\"
                     if errorlevel 1 GOTO StepFailed
                     mkdir \"${releaseLibraryDirectory}${releaseSuffixNetStandard20}${releaseSuffixDebug}\"
+                    if errorlevel 1 GOTO StepFailed
+                    mkdir \"${releaseLibraryDirectory}${releaseSuffixStrongName}\"
+                    if errorlevel 1 GOTO StepFailed
+                    mkdir \"${releaseLibraryDirectory}${releaseSuffixStrongName}${releaseSuffixDebug}\"
                     if errorlevel 1 GOTO StepFailed
 
                     exit /b 0
@@ -129,6 +142,24 @@ pipeline {
                         if errorlevel 1 GOTO StepFailed
                         COPY /Y "%DEBUG_DIR_NETSTANDARD%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixNetStandard20%%releaseSuffixDebug%"
                     )
+                    FOR %%p IN (%dllsToDeployX64StrongName%) DO (
+                        COPY /Y "%RELEASE_DIR_X64_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
+                        if errorlevel 1 GOTO StepFailed
+                        COPY /Y "%RELEASE_DIR_X64_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
+
+                        COPY /Y "%DEBUG_DIR_X64_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
+                        if errorlevel 1 GOTO StepFailed
+                        COPY /Y "%DEBUG_DIR_X64_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
+                    )
+                    FOR %%p IN (%dllsToDeployAnyCPUStrongName%) DO (
+                        COPY /Y "%RELEASE_DIR_ANYCPU_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
+                        if errorlevel 1 GOTO StepFailed
+                        COPY /Y "%RELEASE_DIR_ANYCPU_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
+
+                        COPY /Y "%DEBUG_DIR_ANYCPU_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
+                        if errorlevel 1 GOTO StepFailed
+                        COPY /Y "%DEBUG_DIR_ANYCPU_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
+                    )
 
                     exit /b 0
 
@@ -142,9 +173,13 @@ pipeline {
 
                     copy \"License.txt\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
-                    copy \"libraries\\LICENSE-MathNet\" \"${releaseDirectory}\"
+                    copy \"lib\\License-MathNet.Numerics.txt\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
-                    copy \"libraries\\NOTICE-log4net.md\" \"${releaseDirectory}\"
+                    copy \"lib\\License-Newtonsoft.Json.txt\" \"${releaseDirectory}\"
+                    if errorlevel 1 GOTO StepFailed
+                    copy \"lib\\License-Metrilus.Util.txt\" \"${releaseDirectory}\"
+                    if errorlevel 1 GOTO StepFailed
+                    copy \"lib\\Notice-log4net.md\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
                 
                     exit /b 0

@@ -14,8 +14,10 @@
 
 # Build results
 [Dd]ebug/
+[Dd]ebugStrongName/
 [Dd]ebugPublic/
 [Rr]elease/
+[Rr]eleaseStrongName/
 [Rr]eleases/
 x64/
 x86/

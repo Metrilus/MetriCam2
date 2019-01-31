@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
@@ -40,7 +40,7 @@
 
   <ItemGroup>
     <Reference Include="Metrilus.Util.NetStandard">
-      <HintPath>..\libraries\Metrilus.Util.NetStandard.dll</HintPath>
+      <HintPath>$(LibrariesPath)Metrilus.Util.NetStandard.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>Z:\external-libraries\Newtonsoft.Json\v11.0.2\Bin\netstandard2.0\Newtonsoft.Json.dll</HintPath>
