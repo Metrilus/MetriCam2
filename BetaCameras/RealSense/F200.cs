@@ -195,13 +195,19 @@ namespace MetriCam2.Cameras
             PXCMImage.ImageData depthData;
             sample.depth.AcquireAccess(PXCMImage.Access.ACCESS_READ, PXCMImage.PixelFormat.PIXEL_FORMAT_DEPTH_F32, out depthData);
             depthImage = new FloatCameraImage(sample.depth.info.width, sample.depth.info.height);
-            memcpy(new IntPtr(depthImage.Data), depthData.planes[0], new UIntPtr((uint)sample.depth.info.width * (uint)sample.depth.info.height * (uint)sizeof(float)));
+            fixed (float* depthImageData = depthImage.Data)
+            {
+                memcpy(new IntPtr(depthImageData), depthData.planes[0], new UIntPtr((uint)sample.depth.info.width * (uint)sample.depth.info.height * (uint)sizeof(float)));
+            }
             sample.depth.ReleaseAccess(depthData);
 
             PXCMImage.ImageData irData;
             sample.ir.AcquireAccess(PXCMImage.Access.ACCESS_READ, PXCMImage.PixelFormat.PIXEL_FORMAT_Y8, out irData);
             irImage = new ByteCameraImage(sample.ir.info.width, sample.ir.info.height);
-            memcpy(new IntPtr(irImage.Data), irData.planes[0], new UIntPtr((uint)sample.ir.info.width * (uint)sample.ir.info.height * (uint)sizeof(byte)));
+            fixed (byte* irImageData = irImage.Data)
+            {
+                memcpy(new IntPtr(irImageData), irData.planes[0], new UIntPtr((uint)sample.ir.info.width * (uint)sample.ir.info.height * (uint)sizeof(byte)));
+            }
             sample.ir.ReleaseAccess(irData);
 
             pp.ReleaseFrame();
