@@ -7,11 +7,18 @@
   <PropertyGroup Label="UserMacros"  Condition="'$(Configuration)'=='DebugStrongName' Or '$(Configuration)'=='ReleaseStrongName'">
     <LibrariesPath>$(SolutionDir)lib_strongname\</LibrariesPath>
   </PropertyGroup>
+  <PropertyGroup Label="UserMacros">
+    <LibrariesPathNetStandard>$(SolutionDir)lib_netstandard2.0\</LibrariesPathNetStandard>
+  </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
   <ItemGroup>
     <BuildMacro Include="LibrariesPath">
       <Value>$(LibrariesPath)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="LibrariesPathNetStandard">
+      <Value>$(LibrariesPathNetStandard)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
   </ItemGroup>

@@ -11,7 +11,7 @@ pipeline {
 
         def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.BaslerACE MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.MatrixVision MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.SVS MetriCam2.Cameras.TIVoxel MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam MetriCam2.Cameras.Pico'
         def dllsToDeployAnyCPU = 'Intel.RealSense log4net MathNet.Numerics MetriCam2 MetriCam2.Cameras.RealSense2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
-        def dllsToDeployNetStandard = 'MetriCam2.NetStandard MetriCam2.Cameras.RealSense2.NetStandard Metrilus.Util.NetStandard'
+        def dllsToDeployNetStandard = 'MetriCam2 MetriCam2.Cameras.RealSense2 Metrilus.Util'
         def dllsToDeployX64StrongName = 'MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI'
         def dllsToDeployAnyCPUStrongName = 'log4net MathNet.Numerics MetriCam2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
 

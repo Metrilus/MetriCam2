@@ -6,7 +6,7 @@
     <Company>Metrilus GmbH</Company>
     <Authors>Metrilus GmbH</Authors>
     <Product>MetriCam2</Product>
-    <AssemblyName>MetriCam2.Cameras.RealSense2.NetStandard</AssemblyName>
+    <AssemblyName>MetriCam2.Cameras.RealSense2</AssemblyName>
     <RootNamespace>MetriCam2.Cameras</RootNamespace>
   </PropertyGroup>
 
@@ -50,8 +50,8 @@
     <Reference Include="Intel.RealSense">
       <HintPath>Z:\external-libraries\Intel\libRealSense2\2.12.0\AnyCPU\Release\netstandard2.0\Intel.RealSense.dll</HintPath>
     </Reference>
-    <Reference Include="Metrilus.Util.NetStandard">
-      <HintPath>$(LibrariesPath)Metrilus.Util.NetStandard.dll</HintPath>
+    <Reference Include="Metrilus.Util">
+      <HintPath>$(LibrariesPathNetStandard)Metrilus.Util.dll</HintPath>
     </Reference>
   </ItemGroup>
 

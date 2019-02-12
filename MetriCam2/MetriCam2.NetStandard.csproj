@@ -2,6 +2,8 @@
   <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>MetriCam2</AssemblyName>
+    <RootNamespace>MetriCam2</RootNamespace>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -39,8 +41,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Metrilus.Util.NetStandard">
-      <HintPath>$(LibrariesPath)Metrilus.Util.NetStandard.dll</HintPath>
+    <Reference Include="Metrilus.Util">
+      <HintPath>$(LibrariesPathNetStandard)Metrilus.Util.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>Z:\external-libraries\Newtonsoft.Json\v11.0.2\Bin\netstandard2.0\Newtonsoft.Json.dll</HintPath>

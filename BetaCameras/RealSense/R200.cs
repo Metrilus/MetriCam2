@@ -272,7 +272,10 @@ namespace MetriCam2.Cameras
             {
                 sample.depth.AcquireAccess(PXCMImage.Access.ACCESS_READ, PXCMImage.PixelFormat.PIXEL_FORMAT_DEPTH_F32, out depthData);
                 depthImage = new FloatCameraImage(sample.depth.info.width, sample.depth.info.height);
-                CopyImageWithStride(sample.depth.info.width, sample.depth.info.height, 4, depthData, new IntPtr(depthImage.Data));
+                fixed (float* depthImageData = depthImage.Data)
+                {
+                    CopyImageWithStride(sample.depth.info.width, sample.depth.info.height, 4, depthData, new IntPtr(depthImageData));
+                }
                 sample.depth.ReleaseAccess(depthData);
             }
 

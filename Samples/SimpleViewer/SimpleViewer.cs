@@ -190,60 +190,62 @@ namespace MetriCam2.Samples.SimpleViewer
             float maxVal = float.MinValue;
             float minVal = float.MaxValue;
 
-            for (int y = 0; y < img.Height; y++)
+            fixed (float* imgData = img.Data)
             {
-                float* dataPtr = img.Data + y * img.Stride;
-                for (int x = 0; x < img.Width; x++)
+                for (int y = 0; y < img.Height; y++)
                 {
-                    float val = *dataPtr++;
-                    if (val > maxVal)
+                    float* dataPtr = imgData + y * img.Stride;
+                    for (int x = 0; x < img.Width; x++)
                     {
-                        maxVal = val;
-                    }
-                    if (val < minVal)
-                    {
-                        minVal = val;
+                        float val = *dataPtr++;
+                        if (val > maxVal)
+                        {
+                            maxVal = val;
+                        }
+                        if (val < minVal)
+                        {
+                            minVal = val;
+                        }
                     }
                 }
-            }
 
-            maxVal = 0.9f * maxVal;
-            for (int y = 0; y < img.Height; y++)
-            {
-                float* dataPtr = img.Data + y * img.Stride;
-                for (int x = 0; x < img.Width; x++)
+                maxVal = 0.9f * maxVal;
+                for (int y = 0; y < img.Height; y++)
                 {
-                    if (*dataPtr > maxVal)
+                    float* dataPtr = imgData + y * img.Stride;
+                    for (int x = 0; x < img.Width; x++)
                     {
-                        *dataPtr = maxVal;
+                        if (*dataPtr > maxVal)
+                        {
+                            *dataPtr = maxVal;
+                        }
+                        dataPtr++;
                     }
-                    dataPtr++;
                 }
-            }
-            Bitmap bitmap = new Bitmap(img.Width, img.Height, PixelFormat.Format24bppRgb);
-            if (maxVal == minVal)
-            {
-                // avoid division by zero.
-                return bitmap;
-            }
-            Rectangle rect = new Rectangle(0, 0, img.Width, img.Height);
-            BitmapData bitmapData = bitmap.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format24bppRgb);
-            byte* bmpPtr = (byte*)bitmapData.Scan0;
-            for (int y = 0; y < img.Height; y++)
-            {
-                byte* linePtr = bmpPtr + bitmapData.Stride * y;
-                float* dataPtr = img.Data + y * img.Stride;
-                for (int x = 0; x < img.Width; x++)
+                Bitmap bitmap = new Bitmap(img.Width, img.Height, PixelFormat.Format24bppRgb);
+                if (maxVal == minVal)
                 {
-                    byte value = (byte)(byte.MaxValue * (*dataPtr++ - minVal) / (maxVal - minVal));
-                    *linePtr++ = value;
-                    *linePtr++ = value;
-                    *linePtr++ = value;
+                    // avoid division by zero.
+                    return bitmap;
                 }
-            }
-            bitmap.UnlockBits(bitmapData);
-            GC.KeepAlive(img);
-            return bitmap;
+                Rectangle rect = new Rectangle(0, 0, img.Width, img.Height);
+                BitmapData bitmapData = bitmap.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format24bppRgb);
+                byte* bmpPtr = (byte*)bitmapData.Scan0;
+                for (int y = 0; y < img.Height; y++)
+                {
+                    byte* linePtr = bmpPtr + bitmapData.Stride * y;
+                    float* dataPtr = imgData + y * img.Stride;
+                    for (int x = 0; x < img.Width; x++)
+                    {
+                        byte value = (byte)(byte.MaxValue * (*dataPtr++ - minVal) / (maxVal - minVal));
+                        *linePtr++ = value;
+                        *linePtr++ = value;
+                        *linePtr++ = value;
+                    }
+                }
+                bitmap.UnlockBits(bitmapData);
+                return bitmap;
+            }           
         }
 
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
