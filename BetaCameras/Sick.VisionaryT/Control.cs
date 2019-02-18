@@ -39,7 +39,6 @@ namespace MetriCam2.Cameras.Internal.Sick
 
         internal void Close()
         {
-            StopStream();
             streamControl.Close();
             sockControl.Close();
         }
@@ -71,21 +70,6 @@ namespace MetriCam2.Cameras.Internal.Sick
             if (!success)
             {
                 throw new InvalidOperationException("Failed to start stream.");
-            }
-        }
-
-        /// <summary>
-        /// Stops the data stream on the device.
-        /// </summary>
-        internal void StopStream()
-        {
-            log.Debug("Stopping data stream");
-            SendCommand("sMN PLAYSTOP");
-
-            bool success = ReceiveResponse(out byte[] payload, out byte checkSum);
-            if (!success)
-            {
-                throw new InvalidOperationException("Failed to stop stream.");
             }
         }
 
