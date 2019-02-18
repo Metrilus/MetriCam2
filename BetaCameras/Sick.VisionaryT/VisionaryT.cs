@@ -154,13 +154,13 @@ namespace MetriCam2.Cameras
         public VisionaryT()
             : base()
         {
-            ipAddress       = "";
-            device          = null;
+            ipAddress = "";
+            device = null;
             _frontFrameData = null;
-            _backFrameData  = null;
-            _updateThread   = new Thread(new ThreadStart(UpdateLoop));
-            width           = 0;
-            height          = 0;
+            _backFrameData = null;
+            _updateThread = null;
+            width = 0;
+            height = 0;
         }
         #endregion
 
@@ -212,6 +212,7 @@ namespace MetriCam2.Cameras
             ActivateChannel(ChannelNames.Intensity);
             SelectChannel(ChannelNames.Intensity);
 
+            _updateThread = new Thread(new ThreadStart(UpdateLoop));
             _updateThread.Start();
         }
 
@@ -223,6 +224,7 @@ namespace MetriCam2.Cameras
         {
             _cancelUpdateThreadSource.Cancel();
             _updateThread.Join();
+            _updateThread = null;
             _control.Close();
             _control = null;
             device.Disconnect();
