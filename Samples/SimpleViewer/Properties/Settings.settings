@@ -3,16 +3,22 @@
   <Profiles />
   <Settings>
     <Setting Name="CameraDLLPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">MetriCam2.Cameras.OrbbecOpenNI.dll</Value>
+      <Value Profile="(Default)">MetriCam2.Cameras.Kinect2.dll</Value>
     </Setting>
     <Setting Name="CameraName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">MetriCam2.Cameras.AstraOpenNI</Value>
+      <Value Profile="(Default)">MetriCam2.Cameras.Kinect2</Value>
     </Setting>
     <Setting Name="ChannelName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Amplitude</Value>
+      <Value Profile="(Default)">Distance</Value>
     </Setting>
     <Setting Name="PreConnectParameters" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="MinDepthToDisplay" Type="System.Single" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="MaxDepthToDisplay" Type="System.Single" Scope="User">
+      <Value Profile="(Default)">3</Value>
     </Setting>
   </Settings>
 </SettingsFile>

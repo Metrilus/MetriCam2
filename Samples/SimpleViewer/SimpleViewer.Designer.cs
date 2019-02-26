@@ -34,6 +34,7 @@
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.buttonSnapshot = new System.Windows.Forms.Button();
+            this.labelFps = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -86,11 +87,23 @@
             this.buttonSnapshot.UseVisualStyleBackColor = true;
             this.buttonSnapshot.Click += new System.EventHandler(this.buttonSnapshot_Click);
             // 
+            // labelFps
+            // 
+            this.labelFps.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.labelFps.AutoSize = true;
+            this.labelFps.Location = new System.Drawing.Point(1288, 17);
+            this.labelFps.Name = "labelFps";
+            this.labelFps.Size = new System.Drawing.Size(27, 13);
+            this.labelFps.TabIndex = 7;
+            this.labelFps.Text = "- fps";
+            this.labelFps.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            // 
             // SimpleViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1327, 818);
+            this.Controls.Add(this.labelFps);
             this.Controls.Add(this.buttonSnapshot);
             this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.buttonConfigure);
@@ -101,6 +114,7 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SimpleViewer_FormClosing);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -111,6 +125,7 @@
         private System.Windows.Forms.PictureBox pictureBox;
         private System.ComponentModel.BackgroundWorker backgroundWorker;
         private System.Windows.Forms.Button buttonSnapshot;
+        private System.Windows.Forms.Label labelFps;
     }
 }
 
