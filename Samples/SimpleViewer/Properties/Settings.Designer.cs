@@ -12,7 +12,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.9.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.7.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -25,7 +25,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.OrbbecOpenNI.dll")]
+        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.Kinect2.dll")]
         public string CameraDLLPath {
             get {
                 return ((string)(this["CameraDLLPath"]));
@@ -37,7 +37,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.AstraOpenNI")]
+        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.Kinect2")]
         public string CameraName {
             get {
                 return ((string)(this["CameraName"]));
@@ -49,7 +49,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Amplitude")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Distance")]
         public string ChannelName {
             get {
                 return ((string)(this["ChannelName"]));
@@ -68,6 +68,30 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
             }
             set {
                 this["PreConnectParameters"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public float MinDepthToDisplay {
+            get {
+                return ((float)(this["MinDepthToDisplay"]));
+            }
+            set {
+                this["MinDepthToDisplay"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        public float MaxDepthToDisplay {
+            get {
+                return ((float)(this["MaxDepthToDisplay"]));
+            }
+            set {
+                this["MaxDepthToDisplay"] = value;
             }
         }
     }

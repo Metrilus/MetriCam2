@@ -16,7 +16,6 @@ using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Drawing.Imaging;
-using MetriPrimitives.Data;
 
 namespace MetriCam2.Samples.SimpleViewer
 {
@@ -144,6 +143,8 @@ namespace MetriCam2.Samples.SimpleViewer
 
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            DateTime lastSecond = DateTime.Now;
+            int fps = 0;
             while (!backgroundWorker.CancellationPending)
             {
                 cam.Update();
@@ -155,17 +156,12 @@ namespace MetriCam2.Samples.SimpleViewer
                     continue;
                 }
 
-                Bitmap bmp;
-                if (camImg is FloatCameraImage fcImg)
+                if (camImg is FloatCameraImage && (cam.SelectedChannel == ChannelNames.Distance || cam.SelectedChannel == ChannelNames.ZImage))
                 {
-                    FloatImage fImg = new FloatImage(ref fcImg);
-                    fImg = fImg.NormalizeTrimmed(0.1f, 0.9f);
-                    bmp = fImg.CreateBitmap();
+                    TrimImage((FloatCameraImage)camImg, Properties.Settings.Default.MinDepthToDisplay, Properties.Settings.Default.MaxDepthToDisplay);
                 }
-                else
-                {
-                    bmp = camImg.ToBitmap();
-                }
+
+                Bitmap bmp= camImg.ToBitmap();
 
                 if (saveSnapshot)
                 {
@@ -176,9 +172,36 @@ namespace MetriCam2.Samples.SimpleViewer
                     saveSnapshot = false;
                 }
                 this.BeginInvokeEx(f => pictureBox.Image = bmp);
+
+                fps++;
+                DateTime now = DateTime.Now;
+                if(now - lastSecond > new TimeSpan(0, 0, 1))
+                {
+                    int fpsCopy = fps;
+                    this.BeginInvokeEx(f => labelFps.Text = $"{fpsCopy} fps");
+                    lastSecond = now;
+                    fps = 0;
+                }
+
             }
             DisconnectCamera();
             isBgwFinished.Set();
+        }
+
+        private static void TrimImage(FloatCameraImage img, float minVal, float maxVal)
+        {           
+            for (int i = 0; i < img.Length; i++)
+            {
+                if (img[i] < minVal)
+                {
+                    img[i] = minVal;
+                }
+
+                if (img[i] > maxVal)
+                {
+                    img[i] = maxVal;
+                }
+            }
         }
 
         private unsafe static Bitmap ToBitmap(FloatCameraImage img)
@@ -267,16 +290,6 @@ namespace MetriCam2.Samples.SimpleViewer
             try
             {
                 cam.Connect();
-                if (cam is Cameras.AstraOpenNI astra)
-                {
-                    astra.DeactivateChannel(ChannelNames.Point3DImage);
-                    astra.DeactivateChannel(ChannelNames.ZImage);
-                    astra.ActivateChannel(ChannelNames.Intensity);
-                    astra.SelectChannel(ChannelNames.Intensity);
-                    astra.SetEmitterStatusAndWait(false);
-                    astra.IRExposure = 1024 * 15;
-                    astra.IRGain = 16;
-                }
             }
             catch (Exception ex)
             {
