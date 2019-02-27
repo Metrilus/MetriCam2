@@ -158,7 +158,7 @@ namespace MetriCam2.Samples.SimpleViewer
 
                 if (camImg is FloatCameraImage && (cam.SelectedChannel == ChannelNames.Distance || cam.SelectedChannel == ChannelNames.ZImage))
                 {
-                    TrimDepthImage((FloatCameraImage)camImg);
+                    TrimImage((FloatCameraImage)camImg, Properties.Settings.Default.MinDepthToDisplay, Properties.Settings.Default.MaxDepthToDisplay);
                 }
 
                 Bitmap bmp= camImg.ToBitmap();
@@ -188,20 +188,18 @@ namespace MetriCam2.Samples.SimpleViewer
             isBgwFinished.Set();
         }
 
-        private static void TrimDepthImage(FloatCameraImage img)
-        {
-            float minDepth = Properties.Settings.Default.MinDepthToDisplay;
-            float maxDepth = Properties.Settings.Default.MaxDepthToDisplay;
+        private static void TrimImage(FloatCameraImage img, float minVal, float maxVal)
+        {           
             for (int i = 0; i < img.Length; i++)
             {
-                if (img[i] < minDepth)
+                if (img[i] < minVal)
                 {
-                    img[i] = minDepth;
+                    img[i] = minVal;
                 }
 
-                if (img[i] > maxDepth)
+                if (img[i] > maxVal)
                 {
-                    img[i] = maxDepth;
+                    img[i] = maxVal;
                 }
             }
         }
