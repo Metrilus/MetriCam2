@@ -20,6 +20,21 @@ namespace MetriCam2.Cameras
     /// </summary>
     public class VisionaryTPro : Camera
     {
+        #region Types
+        private class InverseBrownConradyParams
+        {
+            public float Fx { get; set; }
+            public float Fy { get; set; }
+            public float Cx { get; set; }
+            public float Cy { get; set; }
+            public float K1 { get; set; }
+            public float K2 { get; set; }
+            public float K3 { get; set; }
+            public float P1 { get; set; }
+            public float P2 { get; set; }
+        }
+        #endregion
+
         private Thread _updateThread;
         private Socket _socket;
         private char[] _frontJsonData = null;
@@ -32,7 +47,7 @@ namespace MetriCam2.Cameras
         private int _imageWidth = 0;
         private AutoResetEvent _frameAvailable = new AutoResetEvent(false);
         private CancellationTokenSource _cancelUpdateThreadSource;
-        private ProjectiveTransformationZhang _intrinsics = null;
+        private Point3fCameraImage _directions = null;
         private const int NumFrameRetries = 3;
         private string _updateThreadError = null;
 
@@ -89,6 +104,7 @@ namespace MetriCam2.Cameras
 
             Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
             Channels.Add(cr.RegisterChannel(ChannelNames.Distance));
+            Channels.Add(cr.RegisterChannel(ChannelNames.Point3DImage));
         }
 
 
@@ -120,6 +136,7 @@ namespace MetriCam2.Cameras
             }
 
             ActivateChannel(ChannelNames.Distance);
+            ActivateChannel(ChannelNames.Point3DImage);
             ActivateChannel(ChannelNames.Intensity);
             SelectChannel(ChannelNames.Intensity);
 
@@ -155,10 +172,52 @@ namespace MetriCam2.Cameras
                     return ParseImage(_frontJsonData, _intensityJsonOffset, _intensityJsonSize, 1.0f);
                 case ChannelNames.Distance:
                     return ParseImage(_frontJsonData, _distanceJsonOffset, _distanceJsonSize);
+                case ChannelNames.Point3DImage:
+                    return GetScaledDistances(ParseImage(_frontJsonData, _distanceJsonOffset, _distanceJsonSize));
             }
             
             log.Error(Name + ": Invalid channelname: " + channelName);
             return null;
+        }
+
+
+        //TODO: Metrilus.Util should implement the *-operator on FloatCameraImage and Point3fCameraImage in future. Then just replace this method.
+        private Point3fCameraImage GetScaledDistances(FloatCameraImage distances)
+        {            
+            Point3fCameraImage coords = new Point3fCameraImage(distances.Width, distances.Height);
+            for(int i = 0; i < coords.Length; i++)
+            {
+                coords[i] = distances[i] * _directions[i];
+            }
+            return coords;
+        }
+
+        private Point3fCameraImage CalcDirections(InverseBrownConradyParams intrinsics, int width, int height)
+        {
+            Point3fCameraImage directions = new Point3fCameraImage(width, height);
+            for (int row = 0; row < height; row++)
+            {
+                float yp = (intrinsics.Cy - row) / intrinsics.Fy;
+                float yp2 = yp * yp;
+
+                for (int col = 0; col < width; col++)
+                {
+                    float xp = (intrinsics.Cx - col) / intrinsics.Fx;
+
+                    // correct the camera distortion
+                    float r2 = xp * xp + yp2;
+                    float r4 = r2 * r2;
+                    float k = 1 + intrinsics.K1 * r2 + intrinsics.K2 * r4;
+
+                    // Undistorted direction vector of the point
+                    float x = xp * k;
+                    float y = yp * k;
+                    float s0Inv = (float)(1 / Math.Sqrt(x * x + y * y + 1)); //z is 1, since x and y are coordinates on normalized image plane.
+
+                    directions[row, col] = new Point3f(-x * s0Inv, -y * s0Inv, s0Inv);
+                }
+            }
+            return directions;
         }
 
         #endregion
@@ -176,13 +235,14 @@ namespace MetriCam2.Cameras
                     SyncCola();
                     uint jsonSize = ReceiveDataSize();
                     _backJsonData = ReceiveJsonString(jsonSize);
-                    if(null == _intrinsics)
+                    if(null == _directions)
                     {
                         string json = new string(_backJsonData);
-                        var frameData = JsonConvert.DeserializeObject<List<CameraObject>>(json);
-                        _intrinsics = ParseIntrinsics(frameData[0]);
+                        var frameData = JsonConvert.DeserializeObject<List<CameraObject>>(json);                        
                         _imageWidth = frameData[1].Data.Data.Width;
                         _imageHeight = frameData[1].Data.Data.Height;
+                        InverseBrownConradyParams intrinsics = ParseIntrinsics(frameData[0]);
+                        _directions = CalcDirections(intrinsics, _imageWidth, _imageHeight);
 
                         //Determine the offsets of intensity and distance image, which are stable over time.
                         string needle = "\"data\":\"";
@@ -282,7 +342,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private ProjectiveTransformationZhang ParseIntrinsics(CameraObject metaObj)
+        private InverseBrownConradyParams ParseIntrinsics(CameraObject metaObj)
         {
             if (null == metaObj.Data.IntrinsicK)
             {
@@ -291,19 +351,18 @@ namespace MetriCam2.Cameras
                 throw new ImageAcquisitionFailedException(msg);
             }
 
-            return new ProjectiveTransformationZhang(
-                metaObj.Data.ImageWidth,
-                metaObj.Data.ImageHeight,
-                metaObj.Data.IntrinsicK[0][0],
-                metaObj.Data.IntrinsicK[1][1],
-                metaObj.Data.IntrinsicK[0][2],
-                metaObj.Data.IntrinsicK[1][2],
-                metaObj.Data.SensorToWorldDistortion[0][0],
-                metaObj.Data.SensorToWorldDistortion[1][0],
-                metaObj.Data.SensorToWorldDistortion[2][0],
-                metaObj.Data.SensorToWorldDistortion[3][0],
-                metaObj.Data.SensorToWorldDistortion[4][0]
-                );
+            return new InverseBrownConradyParams()
+            {
+                Fx = metaObj.Data.IntrinsicK[0][0],
+                Fy = metaObj.Data.IntrinsicK[1][1],
+                Cx = metaObj.Data.IntrinsicK[0][2],
+                Cy = metaObj.Data.IntrinsicK[1][2],
+                K1 = metaObj.Data.SensorToWorldDistortion[0][0],
+                K2 = metaObj.Data.SensorToWorldDistortion[1][0],
+                P1 = metaObj.Data.SensorToWorldDistortion[2][0],
+                P2 = metaObj.Data.SensorToWorldDistortion[3][0],
+                K3 = metaObj.Data.SensorToWorldDistortion[4][0]
+            };
         }
 
         private unsafe FloatCameraImage ParseImage(char[] base64Data, int offset, int length, float scaleFactor = 1000.0f)
@@ -334,24 +393,6 @@ namespace MetriCam2.Cameras
             }
             
             return image;
-        }
-
-        public override IProjectiveTransformation GetIntrinsics(string channelName)
-        {
-            if (null == _intrinsics)
-            {
-                // wait for first frameset to arrive and check availablity of intrinsics again
-                UpdateImpl();
-
-                if (null == _intrinsics)
-                {
-                    string msg = $"{Name}: No intrinsics available";
-                    log.Error(msg);
-                    throw new MetriCam2Exception(msg);
-                }
-            }
-
-            return _intrinsics;
         }
     }
 }
