@@ -93,8 +93,8 @@ namespace MetriCam2.Cameras
 
         #region MetriCam2 Camera Interface
 
-        public new string Name { get => "Visionary-T-Pro"; }
-        public new string Vendor { get => "Sick"; }
+        public override string Name { get => "Visionary-T-Pro"; }
+        public override string Vendor { get => "Sick"; }
 
         protected override void LoadAllAvailableChannels()
         {

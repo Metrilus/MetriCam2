@@ -167,7 +167,8 @@ namespace MetriCam2.Cameras
         #region MetriCam2 Camera Interface
         #region MetriCam2 Camera Interface Properties
         /// <summary>The camera's name.</summary>
-        public new string Name { get => "Visionary-T"; }
+        public override string Name { get => "Visionary-T"; }
+        public override string Vendor { get => "Sick"; }
         #endregion
 
         #region MetriCam2 Camera Interface Methods
