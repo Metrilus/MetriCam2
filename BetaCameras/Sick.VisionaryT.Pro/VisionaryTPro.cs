@@ -2,12 +2,12 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 using System;
-using System.Threading;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Collections.Generic;
-using System.Drawing;
+using System.Threading;
 using Newtonsoft.Json;
 using Metrilus.Util;
 using MetriCam2.Exceptions;
