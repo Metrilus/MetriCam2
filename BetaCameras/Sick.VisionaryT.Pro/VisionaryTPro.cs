@@ -50,6 +50,7 @@ namespace MetriCam2.Cameras
         private Point3fCameraImage _directions = null;
         private const int NumFrameRetries = 3;
         private string _updateThreadError = null;
+        private Exception _updateThreadException = null;
 
         private ParamDesc<string> IPAddressDesc
         {
@@ -111,6 +112,7 @@ namespace MetriCam2.Cameras
         protected override void ConnectImpl()
         {
             _updateThreadError = null;
+            _updateThreadException = null;
             _updateThread = new Thread(new ThreadStart(UpdateLoop));
             _cancelUpdateThreadSource = new CancellationTokenSource();
 
@@ -158,7 +160,14 @@ namespace MetriCam2.Cameras
             if (null != _updateThreadError)
             {
                 Disconnect();
-                throw new ImageAcquisitionFailedException(_updateThreadError);
+                if (null != _updateThreadException)
+                {
+                    throw new ImageAcquisitionFailedException(_updateThreadError, _updateThreadException);
+                }
+                else
+                {
+                    throw new ImageAcquisitionFailedException(_updateThreadError);
+                }
             }
 
             _frontJsonData = _backJsonData;
@@ -284,6 +293,7 @@ namespace MetriCam2.Cameras
                         log.Error(msg);
                         log.Error(e.Message);
                         _updateThreadError = msg;
+                        _updateThreadException = e;
                         _frameAvailable.Set();
                         break;
                     }
