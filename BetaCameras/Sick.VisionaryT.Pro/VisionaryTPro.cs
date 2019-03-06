@@ -256,17 +256,19 @@ namespace MetriCam2.Cameras
                         _intensityJsonSize = end_second_img - start_second_img;
 
                         if ("uint16" != frameData[1].Data.Data.ImageType
-                        &&  "uint16" != frameData[2].Data.Data.ImageType)
+                        ||  "uint16" != frameData[2].Data.Data.ImageType)
                         {
-                            string msg = $"{Name}: Frame data has unexpected format: '{frameData[1].Data.Data.ImageType}', expected: 'uint16'";
+                            string format = frameData[1].Data.Data.ImageType != "uint16" ? frameData[1].Data.Data.ImageType : frameData[2].Data.Data.ImageType;
+                            string msg = $"{Name}: Frame data has unexpected format: '{format}', expected: 'uint16'";
                             log.Error(msg);
                             throw new ImageAcquisitionFailedException(msg);
                         }
 
                         if ("little" != frameData[1].Data.Data.Pixels.endian
-                        &&  "little" != frameData[2].Data.Data.Pixels.endian)
+                        ||  "little" != frameData[2].Data.Data.Pixels.endian)
                         {
-                            string msg = $"{Name}: Frame data has unexpected endian: '{frameData[1].Data.Data.Pixels.endian}', expected: 'little'";
+                            string endian = frameData[1].Data.Data.Pixels.endian != "little" ? frameData[1].Data.Data.Pixels.endian : frameData[2].Data.Data.Pixels.endian;
+                            string msg = $"{Name}: Frame data has unexpected endian: '{endian}', expected: 'little'";
                             log.Error(msg);
                             throw new ImageAcquisitionFailedException(msg);
                         }
