@@ -26,7 +26,7 @@ namespace MetriCam2.Cameras
         // ipAddress to connect to
         private string ipAddress;
         // device handle
-        private Device device;
+        private Device _device;
         private Control _control;
 
         // image data contains information about the current frame e.g. width and height
@@ -155,7 +155,7 @@ namespace MetriCam2.Cameras
             : base()
         {
             ipAddress = "";
-            device = null;
+            _device = null;
             _frontFrameData = null;
             _backFrameData = null;
             _updateThread = null;
@@ -167,7 +167,8 @@ namespace MetriCam2.Cameras
         #region MetriCam2 Camera Interface
         #region MetriCam2 Camera Interface Properties
         /// <summary>The camera's name.</summary>
-        public new string Name { get => "Visionary-T"; }
+        public override string Name { get => "Visionary-T"; }
+        public override string Vendor { get => "Sick"; }
         #endregion
 
         #region MetriCam2 Camera Interface Methods
@@ -202,7 +203,7 @@ namespace MetriCam2.Cameras
                 log.Error(msg);
                 throw ExceptionBuilder.Build(typeof(ConnectionFailedException), Name, "error_connectionFailed", msg);
             }
-            device = new Device(ipAddress, this, log);
+            _device = new Device(ipAddress, this, log);
 
             _control = new Control(log, ipAddress);
             _control.StartStream();
@@ -227,8 +228,8 @@ namespace MetriCam2.Cameras
             _updateThread = null;
             _control.Close();
             _control = null;
-            device.Disconnect();
-            device = null;
+            _device.Disconnect();
+            _device = null;
         }
 
         /// <summary>
@@ -292,7 +293,7 @@ namespace MetriCam2.Cameras
                 {
                     lock (_backLock)
                     {
-                        byte[] imageBuffer = device.GetFrameData();
+                        byte[] imageBuffer = _device.GetFrameData();
                         _backFrameData = new FrameData(imageBuffer, this, log);
                         _frameAvailable.Set();
                     }
