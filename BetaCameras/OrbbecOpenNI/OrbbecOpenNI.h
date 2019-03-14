@@ -2,24 +2,19 @@
 // MetriCam 2 is licensed under the MIT license. See License.txt for full license text.
 
 #pragma once
-// When USE_I2C_GAIN is set, then the old, I2C code is used to get/set the IrGain.
-// Otherwise, the new Orbbec OpenNI extension is used (which seems still buggy).
-#define USE_I2C_GAIN 1
-
 #include <msclr/marshal.h>
 #include <PS1080.h>
 #include <OpenNI.h>
-
-#if USE_I2C_GAIN
 #include <iostream>
 #include <vector>
-#endif
 
 //Adpated from SimpleViewer of experimental interface
 const int IR_Exposure_MAX = 1 << 14;
 const int IR_Exposure_MIN = 0;
-const int IR_Gain_MIN = 8;
-const int IR_Gain_MAX = 63;
+const int IR_Gain_1st_gen_MIN = 8;
+const int IR_Gain_1st_gen_MAX = 63;
+const int IR_Gain_2nd_gen_MIN = 64;
+const int IR_Gain_2nd_gen_MAX = 15999;
 
 using namespace System;
 using namespace System::ComponentModel;
@@ -31,13 +26,11 @@ using namespace System::Collections::Generic;
 using namespace Metrilus::Util;
 using namespace Metrilus::Logging;
 
-#if USE_I2C_GAIN
 bool atoi2(const char* str, int* pOut);
 unsigned short read_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C);
 bool write_i2c(openni::Device& device, std::vector<std::string>& Command, XnControlProcessingData& I2C);
 template<typename ... Args>
 std::string string_format(const std::string& format, Args ... args);
-#endif
 
 namespace MetriCam2 
 {
@@ -274,7 +267,7 @@ namespace MetriCam2
 			{
 				inline ParamDesc<int>^ get()
 				{
-					ParamDesc<int>^ res = ParamDesc::BuildRangeParamDesc(IR_Gain_MIN, IR_Gain_MAX);
+					ParamDesc<int>^ res = ParamDesc::BuildRangeParamDesc(_irGainMin, _irGainMax);
 					res->Unit = "";
 					res->Description = "IR gain";
 					res->ReadableWhen = ParamDesc::ConnectionStates::Connected;
@@ -340,8 +333,14 @@ namespace MetriCam2
 			OrbbecNativeCameraData* _pCamData;
 			int _vid;
 			int _pid;
+			// When USE_I2C_GAIN is set, then the old, I2C code is used to get/set the IrGain.
+			// Otherwise, the new Orbbec OpenNI extension is used (which seems still buggy).
+			bool _useI2CGain;
+			int _irGainMin;
+			int _irGainMax;
 			String^ _deviceType;
 			Point2i _depthResolution;
+			int _depthFps;
 			bool _hasColor;
 			// Compensate for offset between IR and Distance images:
 			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.

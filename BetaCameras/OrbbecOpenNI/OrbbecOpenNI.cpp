@@ -231,47 +231,47 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	VendorID = dInfo.getUsbVendorId();
 	ProductID = dInfo.getUsbProductId();
 
+	//Check whether the camera has a color channel.
+	_hasColor = Device.hasSensor(openni::SensorType::SENSOR_COLOR);
+	if (!_hasColor)
+	{
+		if (IsChannelActive((ChannelNames::Color)))
+		{
+			log->Warn("This camera does not support the channel \"Color\". Deactivating and removing channel \"Color\"...");
+			DeactivateChannel(ChannelNames::Color);
+		}
+		Channels->Remove(GetChannelDescriptor(ChannelNames::Color));
+	}
+
 	char deviceType[32] = { 0 };
 	int size = 32;
 	Device.getProperty(openni::OBEXTENSION_ID_DEVICETYPE, deviceType, &size);
 	DeviceType = gcnew String(deviceType);
-	if (DeviceType->StartsWith("Orbbec "))
+	Model = DeviceType->StartsWith("Orbbec ") ? DeviceType->Substring(7) : DeviceType; //1st gen device types start with string "Orbbec ", 2nd gen devices not.
+	if (ProductID == 1547 || ProductID == 1544) //2nd gen device types are: Embedded S and Stereo S
 	{
-		Model = DeviceType->Substring(7);
-		if (Model->Contains("Astra"))
+		_useI2CGain = false;
+		_irGainMin = IR_Gain_2nd_gen_MIN;
+		_irGainMax = IR_Gain_2nd_gen_MAX;
+		_intensityYTranslation = 0;
+		_depthResolution = Point2i(640, 400);
+		if (ProductID == 1547)
 		{
-			_depthResolution = Point2i(640, 480); //Regular Astra Product
-			_hasColor = true;
-			_intensityYTranslation = 16;
+			_depthFps = 60; //Embedded S is the only model which supports 60fps.
 		}
-		else //Prototypes do not contain the keyword "Astra"
+		else
 		{
-			_depthResolution = Point2i(640, 400); //Prototype
-
-			if (ProductID == 1547)
-			{
-				Model = "Astra embedded S";
-			}
-			else if (ProductID == 1544)
-			{
-				Model = "Astra stereo S";
-			}
-
-			if (IsChannelActive((ChannelNames::Color)))
-			{
-				log->Warn("This camera does not support the channel \"Color\". Deactivating and removing channel \"Color\"...");
-				DeactivateChannel(ChannelNames::Color);
-			}
-			Channels->Remove(GetChannelDescriptor(ChannelNames::Color));
-			_hasColor = false;
-			_intensityYTranslation = 0;
+			_depthFps = 30;
 		}
 	}
-	else
-	{
-		_depthResolution = Point2i(640, 480); //Let's try VGA for really unknown camera types.
-		_hasColor = true; //Let's expect, that the unknown camera has a color channel.
-		_intensityYTranslation = 0;
+	else //1st gen device types are: Astra, Astra S, Astra Pro, Astra Mini, Astra Mini S
+	{				
+		_intensityYTranslation = 16; //1st gen shift between IR and color.
+		_useI2CGain = true;
+		_irGainMin = IR_Gain_1st_gen_MIN;
+		_irGainMax = IR_Gain_1st_gen_MAX;
+		_depthResolution = Point2i(640, 480);
+		_depthFps = 30;
 	}
 
 	//Is buggy in OpenNI version 2.3.1.48, so we skip activating the proximity sensor.
@@ -395,66 +395,73 @@ void MetriCam2::Cameras::AstraOpenNI::SetIRFlooderStatus(bool on)
 
 int MetriCam2::Cameras::AstraOpenNI::GetIRGain()
 {
-#if USE_I2C_GAIN
-	std::vector<std::string> cmd_r;
-	const char *argv_r[4] = {};
-	int i;
-	XnControlProcessingData I2C;
-
-	argv_r[0] = "i2c";
-	argv_r[1] = "read";
-	argv_r[2] = "1";
-	argv_r[3] = "0x35";
-	for (i = 0; i < 4; i++)
+	if (_useI2CGain)
 	{
-		cmd_r.push_back(argv_r[i]);
-	}
+		std::vector<std::string> cmd_r;
+		const char *argv_r[4] = {};
+		int i;
+		XnControlProcessingData I2C;
 
-	unsigned short gain = read_i2c(Device, cmd_r, I2C);
-	return gain;
-#else
-	int gain = 0;
-	int size = 4;
-	Device.getProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, &size);
-	return gain;
-#endif
+		argv_r[0] = "i2c";
+		argv_r[1] = "read";
+		argv_r[2] = "1";
+		argv_r[3] = "0x35";
+		for (i = 0; i < 4; i++)
+		{
+			cmd_r.push_back(argv_r[i]);
+		}
+
+		unsigned short gain = read_i2c(Device, cmd_r, I2C);
+		return gain;
+	}
+	else
+	{
+		int gain = 0;
+		int size = 4;
+		Device.getProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, &size);
+		return gain;
+	}
 }
 
 void MetriCam2::Cameras::AstraOpenNI::SetIRGain(int value)
 {
-	if (value < IR_Gain_MIN)
+	if (value < _irGainMin)
 	{
-		value = IR_Gain_MIN;
+		value = _irGainMin;
 	}
-	else if (value > IR_Gain_MAX)
+	else if (value > _irGainMax)
 	{
-		value = IR_Gain_MAX;
-	}
-#if USE_I2C_GAIN
-	std::string buf = string_format("0x%x", value);
-	std::vector<std::string> cmd_r;
-	const char *argv_r[5] = {};
-	int i;
-	XnControlProcessingData I2C;
-
-	argv_r[0] = "i2c";
-	argv_r[1] = "write";
-	argv_r[2] = "1";
-	argv_r[3] = "0x35";
-	argv_r[4] = buf.c_str();
-
-	for (i = 0; i < 5; i++)
-	{
-		cmd_r.push_back(argv_r[i]);
+		value = _irGainMax;
 	}
 
-	write_i2c(Device, cmd_r, I2C);
-	log->DebugFormat("IR gain is set to: {0}", gcnew String(buf.c_str()));
-#else
-	int gain = value;
-	int size = 4;
-	Device.setProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, size);
-#endif
+	if (_useI2CGain)
+	{
+		std::string buf = string_format("0x%x", value);
+		std::vector<std::string> cmd_r;
+		const char *argv_r[5] = {};
+		int i;
+		XnControlProcessingData I2C;
+
+		argv_r[0] = "i2c";
+		argv_r[1] = "write";
+		argv_r[2] = "1";
+		argv_r[3] = "0x35";
+		argv_r[4] = buf.c_str();
+
+		for (i = 0; i < 5; i++)
+		{
+			cmd_r.push_back(argv_r[i]);
+		}
+
+		write_i2c(Device, cmd_r, I2C);
+		log->DebugFormat("IR gain is set to: {0}", gcnew String(buf.c_str()));
+	}
+	else
+	{
+		int gain = value;
+		int size = 4;
+		Device.setProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&gain, size);
+	}
 }
 
 int MetriCam2::Cameras::AstraOpenNI::GetIRExposure()
@@ -572,6 +579,7 @@ void MetriCam2::Cameras::AstraOpenNI::InitDepthStream()
 	openni::Status rc = DepthStream.create(Device, openni::SENSOR_DEPTH);
 	openni::VideoMode depthVideoMode = DepthStream.getVideoMode();
 	depthVideoMode.setResolution(_depthResolution.X, _depthResolution.Y);
+	depthVideoMode.setFps(_depthFps);
 	rc = DepthStream.setVideoMode(depthVideoMode);
 	DepthStream.setMirroringEnabled(false);
 	if (openni::STATUS_OK != rc)
@@ -1131,7 +1139,6 @@ bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatCame
 	return ratio > thresholdPercentage;
 }
 
-#if USE_I2C_GAIN
 bool atoi2(const char* str, int* pOut)
 {
 	int output = 0;
@@ -1264,4 +1271,3 @@ std::string string_format(const std::string& format, Args ... args)
 	snprintf(buf.get(), size, format.c_str(), args ...);
 	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
-#endif
