@@ -231,13 +231,13 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	VendorID = dInfo.getUsbVendorId();
 	ProductID = dInfo.getUsbProductId();
 
-	//Check whether the camera has a color channel.
+	// Check whether the camera has a color channel.
 	_hasColor = Device.hasSensor(openni::SensorType::SENSOR_COLOR);
 	if (!_hasColor)
 	{
 		if (IsChannelActive((ChannelNames::Color)))
 		{
-			log->Warn("This camera does not support the channel \"Color\". Deactivating and removing channel \"Color\"...");
+			log->Warn("This camera does not support the channel \"" + ChannelNames::Color + "\". Deactivating and removing channel \"" + ChannelNames::Color + "\"...");
 			DeactivateChannel(ChannelNames::Color);
 		}
 		Channels->Remove(GetChannelDescriptor(ChannelNames::Color));
@@ -248,14 +248,15 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	Device.getProperty(openni::OBEXTENSION_ID_DEVICETYPE, deviceType, &size);
 	DeviceType = gcnew String(deviceType);
 	Model = DeviceType->StartsWith("Orbbec ") ? DeviceType->Substring(7) : DeviceType; //1st gen device types start with string "Orbbec ", 2nd gen devices not.
-	if (ProductID == 1547 || ProductID == 1544) //2nd gen device types are: Embedded S and Stereo S
+	if (ProductID == ProductIDs::EmbeddedS || ProductID == ProductIDs::StereoS)
 	{
+		// 2nd Gen devices
 		_useI2CGain = false;
 		_irGainMin = IR_Gain_2nd_gen_MIN;
 		_irGainMax = IR_Gain_2nd_gen_MAX;
 		_intensityYTranslation = 0;
 		_depthResolution = Point2i(640, 400);
-		if (ProductID == 1547)
+		if (ProductID == ProductIDs::EmbeddedS)
 		{
 			_depthFps = 60; //Embedded S is the only model which supports 60fps.
 		}
@@ -264,9 +265,10 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 			_depthFps = 30;
 		}
 	}
-	else //1st gen device types are: Astra, Astra S, Astra Pro, Astra Mini, Astra Mini S
-	{				
-		_intensityYTranslation = 16; //1st gen shift between IR and color.
+	else
+	{
+		// 1st Gen devices: Astra, Astra S, Astra Pro, Astra Mini, Astra Mini S
+		_intensityYTranslation = 16; // 1st Gen shift between IR and color.
 		_useI2CGain = true;
 		_irGainMin = IR_Gain_1st_gen_MIN;
 		_irGainMax = IR_Gain_1st_gen_MAX;
@@ -299,7 +301,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		InitColorStream();
 		if (IsChannelActive(ChannelNames::Intensity) && IsChannelActive(ChannelNames::Color))
 		{
-			log->Warn("This camera does not support to fetch the channels \"Color\" and \"Intensity\" in parallel. Deactivating channel \"Intensity\"...");
+			log->Warn("This camera does not support to fetch the channels \"" + ChannelNames::Color + "\" and \"" + ChannelNames::Intensity + "\" in parallel. Deactivating channel \"" + ChannelNames::Intensity + "\"...");
 			DeactivateChannel(ChannelNames::Intensity);
 		}
 	}
@@ -667,7 +669,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		{
 			if (IsChannelActive(ChannelNames::Color))
 			{
-				log->Warn("This camera does not support to fetch the channels \"Intensity\" and \"Color\" in parallel. Deactivating channel \"Color\"...");
+				log->Warn("This camera does not support to fetch the channels \"" + ChannelNames::Intensity + "\" and \"" + ChannelNames::Color + "\" in parallel. Deactivating channel \"" + ChannelNames::Color + "\"...");
 				DeactivateChannel(ChannelNames::Color);
 			}
 		}
@@ -701,7 +703,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 		if (IsChannelActive(ChannelNames::Intensity))
 		{
 			//Color cannot by activated if intensity is active -> Deactivate intensity channel.
-			log->Warn("This camera does not support to fetch the channels \"Color\" and \"Intensity\" in parallel. Deactivating channel \"Intensity\"...");
+			log->Warn("This camera does not support to fetch the channels \"" + ChannelNames::Color + "\" and \"" + ChannelNames::Intensity + "\" in parallel. Deactivating channel \"" + ChannelNames::Intensity + "\"...");
 			DeactivateChannel(ChannelNames::Intensity);
 		}
 

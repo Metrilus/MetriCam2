@@ -16,6 +16,12 @@ const int IR_Gain_1st_gen_MAX = 63;
 const int IR_Gain_2nd_gen_MIN = 64;
 const int IR_Gain_2nd_gen_MAX = 15999;
 
+enum ProductIDs
+{
+	StereoS = 1544,
+	EmbeddedS = 1547
+};
+
 using namespace System;
 using namespace System::ComponentModel;
 using namespace System::Threading;
@@ -333,8 +339,8 @@ namespace MetriCam2
 			OrbbecNativeCameraData* _pCamData;
 			int _vid;
 			int _pid;
-			// When USE_I2C_GAIN is set, then the old, I2C code is used to get/set the IrGain.
-			// Otherwise, the new Orbbec OpenNI extension is used (which seems still buggy).
+			// When _useI2CGain is set, then the old, I2C code is used to get/set the IrGain.
+			// Otherwise, the new Orbbec OpenNI extension is used (which seems still buggy but works for 2nd Gen models).
 			bool _useI2CGain;
 			int _irGainMin;
 			int _irGainMax;
