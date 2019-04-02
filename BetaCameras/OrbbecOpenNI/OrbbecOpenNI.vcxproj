@@ -111,34 +111,42 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
+    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugStrongName|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
+    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
+    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStrongName|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
+    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
+    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugStrongName|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
+    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
+    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStrongName|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)MetrilusReferencesVersions.props" />
+    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -201,14 +209,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0.55\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>
       </TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0.55\Lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Lib</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>
       </TreatLinkerWarningAsErrors>
       <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
@@ -220,14 +228,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>
       </TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0.55\Lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Lib</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>
       </TreatLinkerWarningAsErrors>
       <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
@@ -239,11 +247,11 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\x86-Release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugStrongName|Win32'">
@@ -252,11 +260,11 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\x86-Release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -264,13 +272,13 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\x86-Release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -280,13 +288,13 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\x86-Release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -296,12 +304,12 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0.55\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0.55\Lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Lib</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
@@ -311,12 +319,12 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.1.48\windows\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\2.3.0.55\Lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Lib</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
