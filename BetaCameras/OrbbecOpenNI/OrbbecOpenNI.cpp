@@ -132,6 +132,7 @@ System::Collections::Generic::Dictionary<String^, String^>^ MetriCam2::Cameras::
 		if (openni::Status::STATUS_OK != rc) {
 			// CheckOpenNIError(rc, "Couldn't open device : ", deviceUris[i]);
 			log->WarnFormat("GetSerialToUriMappingOfAttachedCameras: Couldn't open device {0}", gcnew String(deviceUri));
+			delete device;
 			continue;
 		}
 
@@ -186,7 +187,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 		}
 		else
 		{
-			auto msg = String::Format("{0}: Not Orbbec camera connected.", Name);
+			auto msg = String::Format("{0}: No Orbbec camera connected.", Name);
 			log->Warn(msg);
 			throw gcnew MetriCam2::Exceptions::ConnectionFailedException(msg);
 		}
@@ -538,6 +539,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 			{
 				log->ErrorFormat("{0} {1}: Wait failed: rc={2}", Name, SerialNumber, (int)rc);
 			}
+			delete ppStreams;
 			return;
 		}
 		ppStreams[changedIndex] = NULL;
@@ -552,6 +554,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 			}
 		}
 	}
+	delete ppStreams;
 }
 
 Metrilus::Util::CameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcChannelImpl(String ^ channelName)
