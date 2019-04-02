@@ -124,6 +124,10 @@ pipeline {
                         if errorlevel 1 GOTO StepFailed
                         COPY /Y "%DEBUG_DIR_X64%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixDebug%"
                     )
+                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%"
+                    if errorlevel 1 GOTO StepFailed
+                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%%releaseSuffixDebug%"
+                    if errorlevel 1 GOTO StepFailed
                     FOR %%p IN (%dllsToDeployAnyCPU%) DO (
                         COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%releaseLibraryDirectory%"
                         if errorlevel 1 GOTO StepFailed
@@ -151,6 +155,10 @@ pipeline {
                         if errorlevel 1 GOTO StepFailed
                         COPY /Y "%DEBUG_DIR_X64_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
                     )
+                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
+                    if errorlevel 1 GOTO StepFailed
+                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
+                    if errorlevel 1 GOTO StepFailed
                     FOR %%p IN (%dllsToDeployAnyCPUStrongName%) DO (
                         COPY /Y "%RELEASE_DIR_ANYCPU_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
                         if errorlevel 1 GOTO StepFailed
