@@ -374,6 +374,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Resource.resx" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="MetriCam2.Orbbec.props" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
