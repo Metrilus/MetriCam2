@@ -632,7 +632,8 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 	openni::Status rc;
 
-	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
+	if ((channelName->Equals(ChannelNames::Point3DImage) && !IsChannelActive(ChannelNames::ZImage))
+		|| (channelName->Equals(ChannelNames::ZImage) && !IsChannelActive(ChannelNames::Point3DImage)))
 	{
 		auto irGainBefore = GetIRGain();
 
