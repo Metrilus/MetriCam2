@@ -56,7 +56,6 @@
             this.buttonConfigure.TabIndex = 4;
             this.buttonConfigure.Text = "Configure Camera";
             this.buttonConfigure.UseVisualStyleBackColor = true;
-            this.buttonConfigure.Click += new System.EventHandler(this.buttonConfigure_Click);
             // 
             // pictureBox
             // 
@@ -65,7 +64,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBox.Location = new System.Drawing.Point(12, 41);
             this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(1303, 765);
+            this.pictureBox.Size = new System.Drawing.Size(1303, 696);
             this.pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox.TabIndex = 5;
             this.pictureBox.TabStop = false;
@@ -73,8 +72,6 @@
             // backgroundWorker
             // 
             this.backgroundWorker.WorkerSupportsCancellation = true;
-            this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
-            this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_RunWorkerCompleted);
             // 
             // buttonSnapshot
             // 
@@ -85,7 +82,6 @@
             this.buttonSnapshot.TabIndex = 6;
             this.buttonSnapshot.Text = "Save Snapshot";
             this.buttonSnapshot.UseVisualStyleBackColor = true;
-            this.buttonSnapshot.Click += new System.EventHandler(this.buttonSnapshot_Click);
             // 
             // labelFps
             // 
@@ -102,7 +98,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1327, 818);
+            this.ClientSize = new System.Drawing.Size(1327, 749);
             this.Controls.Add(this.labelFps);
             this.Controls.Add(this.buttonSnapshot);
             this.Controls.Add(this.pictureBox);

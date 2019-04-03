@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MetriCam2.Samples.SimpleViewer</RootNamespace>
     <AssemblyName>SimpleViewer</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -24,6 +24,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>..\..\bin\Samples\x86\Release\</OutputPath>
@@ -35,6 +36,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -63,10 +65,36 @@
   <PropertyGroup>
     <ApplicationIcon>MetrilusPlainAppIcon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugStrongName|x86'">
+    <LangVersion>7.1</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseStrongName|x86'">
+    <LangVersion>7.1</LangVersion>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MetriCalibration">
+      <HintPath>Z:\releases\Metrilus.Framework\v.22.0.2.177\lib\MetriCalibration.dll</HintPath>
+    </Reference>
+    <Reference Include="Metrilus.Future">
+      <HintPath>Z:\releases\Metrilus.Presentation\v.1.4.3.33\lib\Metrilus.Future.dll</HintPath>
+    </Reference>
+    <Reference Include="Metrilus.Presentation">
+      <HintPath>Z:\releases\Metrilus.Presentation\v.1.4.3.33\lib\Metrilus.Presentation.dll</HintPath>
+    </Reference>
     <Reference Include="Metrilus.Util">
       <HintPath>$(LibrariesPath)Metrilus.Util.dll</HintPath>
     </Reference>
+    <Reference Include="MetriPrimitives, Version=19.4.0.42, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Z:\releases\Metrilus.Framework\v.22.0.2.177\lib\MetriPrimitives.dll</HintPath>
+    </Reference>
+    <Reference Include="MetriX.Core">
+      <HintPath>Z:\releases\MetriX\MetriX Freight\v.0.9.13.1062\bin\MetriX.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MetriX.Utils">
+      <HintPath>Z:\releases\MetriX\MetriX Freight\v.0.9.13.1062\bin\MetriX.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -77,11 +105,16 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\SolutionAssemblyInfo.cs">
       <Link>SolutionAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="MetriX\CameraBase.cs" />
+    <Compile Include="MetriX\MockEngine.cs" />
+    <Compile Include="MetriX\OrbbecAstra.cs" />
+    <Compile Include="MetriX\WorkerArgs.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -103,9 +136,9 @@
     <Content Include="MetrilusPlainAppIcon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\Kinect2\Kinect2.csproj">
-      <Project>{03558646-61b1-4f4e-bf70-7a623df27095}</Project>
-      <Name>Kinect2</Name>
+    <ProjectReference Include="..\..\BetaCameras\OrbbecOpenNI\OrbbecOpenNI.vcxproj">
+      <Project>{c82202f8-55db-4511-b006-c88ff3e4427e}</Project>
+      <Name>OrbbecOpenNI</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2.Controls\MetriCam2.Controls.csproj">
       <Project>{9060cbcf-609d-47b3-9245-43d34c540a73}</Project>

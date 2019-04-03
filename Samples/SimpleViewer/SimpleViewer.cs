@@ -16,19 +16,29 @@ using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Drawing.Imaging;
+using MetriX.Cameras.Debug;
+using MetriX.Models;
+using System.Windows.Media.Imaging;
+using System.Windows;
+using MetriX.Debug;
+using MetriX.Freight.Views.Debug;
 
 namespace MetriCam2.Samples.SimpleViewer
 {
     public partial class SimpleViewer : Form
     {
-        private const string txtConnect = "Connect Camera";
-        private const string txtDisconnect = "Disconnect Camera";
+        private const string TxtConnect = "Connect Camera";
+        private const string TxtDisconnect = "Disconnect Camera";
 
-        private static MetriLog log = new MetriLog("SimpleViewer");
+        private static MetriLog _log = new MetriLog("SimpleViewer");
 
-        private Camera cam = null;
-        private AutoResetEvent isBgwFinished = new AutoResetEvent(false);
-        private bool saveSnapshot = false;
+        private bool _closing = false;
+        private Thread _worker;
+        private readonly object _workerLock = new Object();
+        private CancellationTokenSource _workerCancelled = new CancellationTokenSource();
+        private CancellationTokenSource _drawCancelled = new CancellationTokenSource();
+
+        //private bool _saveSnapshot = false;
 
         /// <summary>
         /// Initializes camera and parses configuration to set camera parameters.
@@ -54,7 +64,9 @@ namespace MetriCam2.Samples.SimpleViewer
             string dummy;
             try
             {
-                cam = CameraManagement.GetCameraInstanceByName(Properties.Settings.Default.CameraName, out dummy);
+                // Load Orbbec DLL
+                var cam = CameraManagement.GetCameraInstanceByName(Properties.Settings.Default.CameraName, out dummy);
+                cam = null;
             }
             catch (Exception ex)
             {
@@ -63,38 +75,7 @@ namespace MetriCam2.Samples.SimpleViewer
                 buttonConnect.Enabled = false;
                 return;
             }
-            buttonConnect.Text = txtConnect;
-            try
-            {
-                // set pre-connect parameters
-                string[] preConnectSettings = Properties.Settings.Default.PreConnectParameters.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string preConnectSetting in preConnectSettings)
-                {
-                    string[] settingNameValuePair = preConnectSetting.Split('=');
-                    MetriCam2.Camera.ParamDesc param = cam.GetParameter(settingNameValuePair[0]);
-                    if (param.Type == typeof(string))
-                    {
-                        cam.SetParameter(settingNameValuePair[0], settingNameValuePair[1]);
-                    }
-                    else if (param.Type == typeof(List<string>))
-                    {
-                        List<string> paramValue = new List<string>(settingNameValuePair[1].Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries));
-                        cam.SetParameter(settingNameValuePair[0], paramValue);
-                    }
-                    else
-                    {
-                        // if this doesn't work, additional conversion should be tried.
-                        cam.SetParameter(settingNameValuePair[0], settingNameValuePair[1]);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Setting pre-connect parameters failed." + Environment.NewLine + ex.Message, "Error");
-                buttonConfigure.Enabled = false;
-                buttonConnect.Enabled = false;
-                return;
-            }
+            buttonConnect.Text = TxtConnect;
         }
 
         private void buttonConnect_Click(object sender, EventArgs e)
@@ -102,90 +83,168 @@ namespace MetriCam2.Samples.SimpleViewer
             buttonConnect.Enabled = false;
             try
             {
-                if (!cam.IsConnected)
-                {
-                    ConnectCamera();
-
-                    if (!cam.IsConnected)
-                    {
-                        return;
-                    }
-
-                    buttonSnapshot.Enabled = true;
-                    backgroundWorker.RunWorkerAsync();
-                }
-                else
-                {
-                    buttonSnapshot.Enabled = false;
-                    StopBackgroundWorker();
-                }
+                Window_StartWorker(ProcessDisplayFrames, FramePurposes.Display);
             }
             catch (Exception ex)
             {
                 // Failure -> Reset BackgroundWorker and GUI
-                if (backgroundWorker.IsBusy)
-                {
-                    StopBackgroundWorker();
-                }
-                else
-                {
-                    DisconnectCamera();
-                }
-                MessageBox.Show(ex.Message, "Error");
+                MessageBox.Show(this, ex.Message, "Error");
+                buttonConnect.Enabled = true;
             }
         }
 
-        private void buttonConfigure_Click(object sender, EventArgs e)
+        private void Window_StartWorker(Action<DisplayFrame[]> callback, FramePurposes purposes = FramePurposes.Display, Func<Exception, bool> exceptionHandler = null)
         {
-            MetriCam2.Controls.CameraConfigurationDialog diag = new MetriCam2.Controls.CameraConfigurationDialog(cam);
-            diag.ShowDialog();
-        }
-
-        private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            DateTime lastSecond = DateTime.Now;
-            int fps = 0;
-            while (!backgroundWorker.CancellationPending)
+            MockEngine engine = new MockEngine();
+            foreach (var cam in engine.Cameras)
             {
-                cam.Update();
-
-                CameraImage camImg = cam.CalcSelectedChannel();
-                if (null == camImg)
-                {
-                    // ignore errors. However, this might be a hint that something is wrong in your application.
-                    continue;
-                }
-
-                if (camImg is FloatCameraImage && (cam.SelectedChannel == ChannelNames.Distance || cam.SelectedChannel == ChannelNames.ZImage))
-                {
-                    TrimImage((FloatCameraImage)camImg, Properties.Settings.Default.MinDepthToDisplay, Properties.Settings.Default.MaxDepthToDisplay);
-                }
-
-                Bitmap bmp= camImg.ToBitmap();
-
-                if (saveSnapshot)
-                {
-                    string snapName = "MetriCam 2 Snapshot.png";
-                    string snapFilename = Path.GetTempPath() + snapName;
-                    bmp.Save(snapFilename);
-                    MessageBox.Show(string.Format("Snapshot saved as '{0}'.", snapFilename), "Snapshot saved", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
-                    saveSnapshot = false;
-                }
-                this.BeginInvokeEx(f => pictureBox.Image = bmp);
-
-                fps++;
-                DateTime now = DateTime.Now;
-                if(now - lastSecond > new TimeSpan(0, 0, 1))
-                {
-                    int fpsCopy = fps;
-                    this.BeginInvokeEx(f => labelFps.Text = $"{fpsCopy} fps");
-                    lastSecond = now;
-                    fps = 0;
-                }
-
+                cam.Initialize(engine);
             }
-            DisconnectCamera();
-            isBgwFinished.Set();
+
+            StartWorker(new WorkerArgs()
+            {
+                Engine = engine,
+                Callback = (CancellationToken cancellationToken) =>
+                {
+                    var result = engine.AcquireDisplayFrames(purposes);
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        callback(result);
+                        return true;
+                    }
+                    else return false;
+                },
+                ExceptionHandler = exceptionHandler
+            });
+        }
+
+        private void StartWorker(WorkerArgs workerArgs)
+        {
+            if (_closing) throw new InvalidOperationException("MetriX Window is closing");
+
+            lock (_workerLock)
+            {
+                if ((null != _worker) && (_worker.IsAlive)) throw new InvalidOperationException($"{_worker.Name} is running");
+
+                if (_drawCancelled.IsCancellationRequested)
+                {
+                    _drawCancelled = new CancellationTokenSource();
+                }
+
+                if (_workerCancelled.IsCancellationRequested)
+                {
+                    _workerCancelled = new CancellationTokenSource();
+                }
+
+                // Initialize the Worker
+                _worker = new Thread((object args) => WorkerProc((WorkerArgs)args))
+                {
+                    IsBackground = true,
+                    Name = "MetriX Freight Worker"
+                };
+
+                // Start the Worker
+                _worker.Start(workerArgs);
+            }
+        }
+
+        private void WorkerProc(WorkerArgs workerArgs)
+        {
+            try
+            {
+                while (!_workerCancelled.IsCancellationRequested)
+                {
+                    if (!workerArgs.Callback(_workerCancelled.Token))
+                    {
+                        _workerCancelled.Cancel();
+                        break;
+                    }
+                }
+            }
+            catch (DeviceException /*deviceException*/)
+            {
+                _workerCancelled.Cancel();
+                //Dispatcher.BeginInvoke((Action<DeviceException>)ShowExceptionView, deviceException);
+            }
+            catch (AggregateException aggregateException) when ((aggregateException.InnerExceptions.Count == 1) && (aggregateException.InnerException is DeviceException deviceException))
+            {
+                _workerCancelled.Cancel();
+                //Dispatcher.BeginInvoke((Action<DeviceException>)ShowExceptionView, deviceException);
+            }
+            catch (Exception primaryException)
+            {
+                bool handled = false;
+                try
+                {
+                    // Write Failure Snapshots if data is available
+                    if ((primaryException is AlgorithmException algorithmException) && (null != algorithmException.Context))
+                    {
+                        //MetriXApplication.CurrentContext.SnapshotManager.WriteSnapshotAsync(workerArgs.FailureSnapshotType, workerArgs.Engine, algorithmException.Context, exception: algorithmException, namePrefix: workerArgs.FailureSnapshotPrefix);
+                    }
+
+                    // If an exception handler is registered for background-thread exceptions, call it
+                    if ((null != workerArgs.ExceptionHandler) && (!_closing) && (!_workerCancelled.IsCancellationRequested))
+                    {
+                        handled = workerArgs.ExceptionHandler(primaryException);
+                    }
+                }
+                catch (Exception secondaryException)
+                {
+                    _log.Error(secondaryException.Message);
+                    throw;
+                }
+
+                // If the exception was handled, log it as a warning and suppress it. Throw it otherwise.
+                if (handled)
+                {
+                    _log.Warn(primaryException.Message);
+                }
+                else throw;
+            }
+        }
+
+        private void ProcessDisplayFrames(DisplayFrame[] displayFrames)
+        {
+            //_metrixCam.AcquireFrame(FramePurposes.Display, out DataFrame dataFrame);
+            //DisplayFrame df = DisplayFrame.FromDataFrame(dataFrame);
+            //var bmp = GetBitmap(df.BitmapSource);
+            //this.BeginInvokeEx(f => pictureBox.Image = bmp);
+
+            Bitmap[] bmps = new Bitmap[displayFrames.Length];
+            for (int i = 0; i < displayFrames.Length; ++i)
+            {
+                bmps[i] = GetBitmap(displayFrames[i].BitmapSource);
+            }
+            this.BeginInvokeEx(t =>
+            {
+                pictureBox.Image = bmps[0];
+            });
+
+            //Window.InvokeUpdate((cancellationToken) =>
+            //{
+            //    Model.InitialiseCalibrationProgress(MetriXApplication.CurrentContext.Engine.CalibrationParameters, MetriXApplication.CurrentContext.Engine.Cameras.Count);
+
+            //    for (int i = 0; i < displayFrames.Length; ++i)
+            //    {
+            //        if (i >= Model.CardsViewModel.Count)
+            //        {
+            //            Model.CardsViewModel.Add(new CardViewItem(displayFrames[i], $"Camera {i + 1}", "Camera View"));
+            //        }
+            //        else
+            //        {
+            //            bool maximized = Object.ReferenceEquals(Model.CardsViewModel[i].Model, Model.ActiveViewModel);
+            //            Model.CardsViewModel[i].Model = displayFrames[i];
+            //            if (maximized)
+            //            {
+            //                Model.ActiveViewModel = displayFrames[i];
+            //            }
+
+            //            Model.CardsViewModel[i].Description = "Camera View";
+            //        }
+            //    }
+            //});
+
+            //Model.EngineIdle = true;
         }
 
         private static void TrimImage(FloatCameraImage img, float minVal, float maxVal)
@@ -271,101 +330,17 @@ namespace MetriCam2.Samples.SimpleViewer
             }           
         }
 
-        private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            if (e.Error != null)
-            {
-                MessageBox.Show(e.Error.Message);
-            }
-        }
-
-        private void StopBackgroundWorker()
-        {
-            backgroundWorker.CancelAsync();
-            isBgwFinished.WaitOne();
-        }
-
-        private void ConnectCamera()
-        {
-            try
-            {
-                cam.Connect();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Connection failed." + Environment.NewLine
-                    + Environment.NewLine
-                    + ex.Message, "Error");
-                DisconnectCamera();
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(cam.SelectedChannel))
-            {
-                // To be flexible, test several channels and select the first existing one.
-                string[] preferedChannels = new string[]
-                {
-                    ChannelNames.Color,
-                    ChannelNames.Intensity,
-                    ChannelNames.Amplitude,
-                };
-                foreach (var channelName in preferedChannels)
-                {
-                    try
-                    {
-                        if (cam.IsChannelActive(channelName))
-                        {
-                            cam.SelectChannel(channelName);
-                            break;
-                        }
-                    }
-                    catch { /* empty */ }
-                }
-            }
-
-            this.BeginInvokeEx((f) =>
-            {
-                buttonConnect.Text = txtDisconnect;
-                buttonConnect.Enabled = true;
-            });
-        }
-
-        private void DisconnectCamera()
-        {
-            if (null != cam && cam.IsConnected)
-            {
-                try
-                {
-                    cam.Disconnect();
-                }
-                catch { /* empty */ }
-            }
-
-            if (!IsDisposed)
-            {
-                this.BeginInvokeEx((f) =>
-                {
-                    buttonConnect.Text = txtConnect;
-                    buttonConnect.Enabled = true;
-                });
-            }
-        }
-
         private void SimpleViewer_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (backgroundWorker.IsBusy)
-            {
-                StopBackgroundWorker();
-            }
-            else
-            {
-                DisconnectCamera();
-            }
         }
 
-        private void buttonSnapshot_Click(object sender, EventArgs e)
+        Bitmap GetBitmap(BitmapSource source)
         {
-            saveSnapshot = true;
+            Bitmap bmp = new Bitmap(source.PixelWidth, source.PixelHeight, PixelFormat.Format32bppPArgb);
+            BitmapData data = bmp.LockBits(new Rectangle(System.Drawing.Point.Empty, bmp.Size), ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
+            source.CopyPixels(Int32Rect.Empty, data.Scan0, data.Height * data.Stride, data.Stride);
+            bmp.UnlockBits(data);
+            return bmp;
         }
     }
 }
