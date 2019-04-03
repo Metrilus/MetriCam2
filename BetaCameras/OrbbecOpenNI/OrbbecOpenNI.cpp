@@ -528,7 +528,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 	while (!gotAllRequestedStreams)
 	{
 		int changedIndex;
-		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, NumRequestedStreams, &changedIndex, 5000);
+		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, NumRequestedStreams, &changedIndex, 2000);
 		if (openni::STATUS_OK != rc)
 		{
 			if (openni::STATUS_TIME_OUT == rc)
@@ -632,7 +632,8 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 	openni::Status rc;
 
-	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
+	if ((channelName->Equals(ChannelNames::Point3DImage) && !IsChannelActive(ChannelNames::ZImage))
+		|| (channelName->Equals(ChannelNames::ZImage) && !IsChannelActive(ChannelNames::Point3DImage)))
 	{
 		auto irGainBefore = GetIRGain();
 
