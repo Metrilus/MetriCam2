@@ -99,26 +99,29 @@ namespace MetriX.Cameras.Debug
         {
             if (mode == _currentAcquisitionMode)
             {
+                Logs.Write(Severity.Information, $"{SerialNumber}: Already in AQ mode {_currentAcquisitionMode}");
                 return;
             }
 
+            Logs.Write(Severity.Information, $"{SerialNumber}: Entering AQ mode {mode}");
             switch (mode)
             {
                 case AcquisitionModes.ColorAndZImage:
                     // Color+Depth is ok, just make sure that Intensity is off
-                    if (_camera.IsChannelActive(ChannelNames.Intensity))
-                    {
-                        _camera.DeactivateChannel(ChannelNames.Intensity);
-                    }
+                    //if (_camera.IsChannelActive(ChannelNames.Intensity))
+                    //{
+                    //    _camera.DeactivateChannel(ChannelNames.Intensity);
+                    //}
 
-                    _camera.ActivateChannel(ChannelNames.Color);
-                    _camera.ActivateChannel(ChannelNames.Point3DImage);
-                    _camera.ActivateChannel(ChannelNames.ZImage);
+                    //_camera.ActivateChannel(ChannelNames.Color);
+                    //_camera.ActivateChannel(ChannelNames.Point3DImage);
+                    //_camera.DeactivateChannel(ChannelNames.ZImage);
+                    ActivateChannels(new HashSet<string>() { ChannelNames.Color, ChannelNames.Point3DImage });
 
                     _camera.IRFlooderEnabled = false;
                     _camera.EmitterEnabled = true;
                     System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(EmitterDelay));
-                    _camera.Update();
+                    //_camera.Update();
                     break;
                 case AcquisitionModes.Idle:
                     // don't care about channels, just switch off Emitter and Flooder
@@ -134,6 +137,7 @@ namespace MetriX.Cameras.Debug
                     break;
             }
             _currentAcquisitionMode = mode;
+            Logs.Write(Severity.Information, $"{SerialNumber}: Switched AQ mode to {_currentAcquisitionMode}");
         }
 
         private void CalcDepthChannel(out DataFrame dataFrame)
@@ -168,9 +172,8 @@ namespace MetriX.Cameras.Debug
 
         private void CalcColorChannel(out DisplayFrame displayFrame)
         {
-            BitmapSource bitmapSource;
             ColorCameraImage cameraImage = (ColorCameraImage)_camera.CalcChannel(ChannelNames.Color);
-            bitmapSource = BitmapUtils.CopySource(cameraImage.Data);
+            BitmapSource bitmapSource = BitmapUtils.CopySource(cameraImage.Data);
             bitmapSource.Freeze();
 
             displayFrame = new DisplayFrame(bitmapSource, RigidBodyTransformationColour, ProjectiveTransformationColour);
@@ -200,11 +203,15 @@ namespace MetriX.Cameras.Debug
                 {
                     SetAcquisitionMode(AcquisitionModes.ColorAndZImage);
                 }
+                string ac = string.Join("; ", _camera.ActiveChannels.Select((cd) => cd.Name));
+                Logs.Write(Severity.Information, $"Active Channels: {ac}");
                 _camera.Update();
                 CalcColorChannel(out displayFrame);
             }
             else
             {
+                string ac = string.Join("; ", _camera.ActiveChannels.Select((cd) => cd.Name));
+                Logs.Write(Severity.Information, $"Active Channels: {ac}");
                 var intensity = AcquireIntensityImage(1);
                 CalcIrChannel(intensity, out displayFrame);
             }
@@ -212,6 +219,8 @@ namespace MetriX.Cameras.Debug
             if (_multiOrbbecMode)
             {
                 SetAcquisitionMode(AcquisitionModes.Idle);
+                string ac = string.Join("; ", _camera.ActiveChannels.Select((cd) => cd.Name));
+                Logs.Write(Severity.Information, $"Active Channels: {ac}");
             }
         }
 
@@ -339,6 +348,7 @@ namespace MetriX.Cameras.Debug
             }
 
             SetAcquisitionMode(AcquisitionModes.ColorAndZImage);
+            _camera.Update();
 
             // Fetch Camera Intrinsics and Extrinsics
             IProjectiveTransformation ipt = _camera.GetIntrinsics(ChannelNames.Intensity);
@@ -348,7 +358,7 @@ namespace MetriX.Cameras.Debug
             Calibration.DepthToColourTransformation = _camera.GetExtrinsics(ChannelNames.Intensity, ChannelNames.Color);
 
             // Count the Orbbec cameras in the Camera collection
-            int orbbecCount = engine.Cameras.Count((CameraBase camera) => (camera is OrbbecAstra));
+            int orbbecCount = 2;// engine.Cameras.Count((CameraBase camera) => (camera is OrbbecAstra));
             if (orbbecCount > 1)
             {
                 engine.FrameAcquisitionOptions.MaxDegreeOfParallelism = 1;
@@ -490,6 +500,8 @@ namespace MetriX.Cameras.Debug
             {
                 _camera.ActivateChannel(channelName);
             }
+            string ac = string.Join("; ", _camera.ActiveChannels.Select((cd) => cd.Name));
+            Logs.Write(Severity.Information, $"Active Channels: {ac}");
         }
     }
 }
