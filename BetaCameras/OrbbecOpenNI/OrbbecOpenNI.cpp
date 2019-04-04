@@ -528,7 +528,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 	while (!gotAllRequestedStreams)
 	{
 		int changedIndex;
-		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, NumRequestedStreams, &changedIndex, 2000);
+		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, NumRequestedStreams, &changedIndex, 500);
 		if (openni::STATUS_OK != rc)
 		{
 			if (openni::STATUS_TIME_OUT == rc)
