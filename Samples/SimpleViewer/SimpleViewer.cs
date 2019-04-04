@@ -22,6 +22,8 @@ using System.Windows.Media.Imaging;
 using System.Windows;
 using MetriX.Debug;
 using MetriX.Freight.Views.Debug;
+using Metrilus.Presentation;
+using MetriX.Utils.Logging;
 
 namespace MetriCam2.Samples.SimpleViewer
 {
@@ -38,6 +40,9 @@ namespace MetriCam2.Samples.SimpleViewer
         private CancellationTokenSource _workerCancelled = new CancellationTokenSource();
         private CancellationTokenSource _drawCancelled = new CancellationTokenSource();
 
+        DateTime lastSecond = DateTime.Now;
+        int fps = 0;
+
         //private bool _saveSnapshot = false;
 
         /// <summary>
@@ -47,6 +52,10 @@ namespace MetriCam2.Samples.SimpleViewer
         public SimpleViewer()
         {
             InitializeComponent();
+            WindowState = FormWindowState.Maximized;
+
+            Logs.Add(new ConsoleLog(Severity.Debug));
+
             // load camera DLL
             try
             {
@@ -205,11 +214,6 @@ namespace MetriCam2.Samples.SimpleViewer
 
         private void ProcessDisplayFrames(DisplayFrame[] displayFrames)
         {
-            //_metrixCam.AcquireFrame(FramePurposes.Display, out DataFrame dataFrame);
-            //DisplayFrame df = DisplayFrame.FromDataFrame(dataFrame);
-            //var bmp = GetBitmap(df.BitmapSource);
-            //this.BeginInvokeEx(f => pictureBox.Image = bmp);
-
             Bitmap[] bmps = new Bitmap[displayFrames.Length];
             for (int i = 0; i < displayFrames.Length; ++i)
             {
@@ -219,6 +223,16 @@ namespace MetriCam2.Samples.SimpleViewer
             {
                 pictureBox.Image = bmps[0];
             });
+
+            fps++;
+            DateTime now = DateTime.Now;
+            if (now - lastSecond > new TimeSpan(0, 0, 1))
+            {
+                int fpsCopy = fps;
+                this.BeginInvokeEx(f => labelFps.Text = $"{fpsCopy} fps");
+                lastSecond = now;
+                fps = 0;
+            }
 
             //Window.InvokeUpdate((cancellationToken) =>
             //{
@@ -336,8 +350,8 @@ namespace MetriCam2.Samples.SimpleViewer
 
         Bitmap GetBitmap(BitmapSource source)
         {
-            Bitmap bmp = new Bitmap(source.PixelWidth, source.PixelHeight, PixelFormat.Format32bppPArgb);
-            BitmapData data = bmp.LockBits(new Rectangle(System.Drawing.Point.Empty, bmp.Size), ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
+            Bitmap bmp = new Bitmap(source.PixelWidth, source.PixelHeight, PixelFormat.Format24bppRgb);
+            BitmapData data = bmp.LockBits(new Rectangle(System.Drawing.Point.Empty, bmp.Size), ImageLockMode.WriteOnly, bmp.PixelFormat);
             source.CopyPixels(Int32Rect.Empty, data.Scan0, data.Height * data.Stride, data.Stride);
             bmp.UnlockBits(data);
             return bmp;
