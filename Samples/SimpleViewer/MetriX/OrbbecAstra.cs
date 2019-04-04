@@ -322,11 +322,16 @@ namespace MetriX.Cameras.Debug
                     Dictionary<string, string> serialNumberMap = AstraOpenNI.GetSerialToUriMappingOfAttachedCameras();
                     if (0 == serialNumberMap.Count)
                     {
-                        throw new MetriCam2.Exceptions.ConnectionFailedException("No connected Orbbec cameras found. This may be a hardware or driver failure.");
+                        _camera = new AstraOpenNI();
+                        //throw new MetriCam2.Exceptions.ConnectionFailedException("No connected Orbbec cameras found. This may be a hardware or driver failure.");
                     }
                     else if (("" == Serial || null == Serial) && 1 == serialNumberMap.Count)
                     {
                         Serial = serialNumberMap.Keys.First();
+                        _camera = new AstraOpenNI()
+                        {
+                            SerialNumber = Serial
+                        };
                     }
                     else if (!serialNumberMap.ContainsKey(Serial))
                     {
@@ -335,10 +340,13 @@ namespace MetriX.Cameras.Debug
 
                         throw new MetriCam2.Exceptions.ConnectionFailedException("No connected Orbbec camera with serial number: " + Serial + ".");
                     }
-                    _camera = new AstraOpenNI()
+                    else
                     {
-                        SerialNumber = Serial
-                    };
+                        _camera = new AstraOpenNI()
+                        {
+                            SerialNumber = Serial
+                        };
+                    }
                 }
 
                 if (!_camera.IsConnected)
