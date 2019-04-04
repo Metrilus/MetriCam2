@@ -352,6 +352,7 @@ namespace MetriX.Cameras.Debug
                 if (!_camera.IsConnected)
                 {
                     _camera.Connect();
+                    ActivateChannels(new HashSet<string>() { });
                     _camera.IRGain = IRGain;
                     _camera.IRExposure = (int)IRExposure;
                 }
