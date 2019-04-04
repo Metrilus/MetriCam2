@@ -116,24 +116,27 @@ namespace MetriX.Cameras.Debug
                     //_camera.ActivateChannel(ChannelNames.Color);
                     //_camera.ActivateChannel(ChannelNames.Point3DImage);
                     //_camera.DeactivateChannel(ChannelNames.ZImage);
-                    ActivateChannels(new HashSet<string>() { ChannelNames.Color, ChannelNames.Point3DImage });
+                    ActivateChannels(new HashSet<string>() { ChannelNames.Color, ChannelNames.ZImage });
 
-                    _camera.IRFlooderEnabled = false;
-                    _camera.EmitterEnabled = true;
-                    System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(EmitterDelay));
+                    //_camera.IRFlooderEnabled = false;
+                    //_camera.EmitterEnabled = true;
+                    //System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(EmitterDelay));
+                    _camera.SetEmitterStatusAndWait(true);
                     //_camera.Update();
                     break;
                 case AcquisitionModes.Idle:
                     // don't care about channels, just switch off Emitter and Flooder
-                    _camera.IRFlooderEnabled = false;
+                    //_camera.IRFlooderEnabled = false;
                     _camera.EmitterEnabled = false;
+                    //_camera.SetEmitterStatusAndWait(false);
                     break;
                 case AcquisitionModes.IntensityImage:
                     // Intensity does not support any other active channels
                     ActivateChannels(new HashSet<string>() { ChannelNames.Intensity });
-                    _camera.IRFlooderEnabled = true;
-                    _camera.EmitterEnabled = false;
-                    System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(EmitterDelay));
+                    //_camera.IRFlooderEnabled = true;
+                    //_camera.EmitterEnabled = false;
+                    //System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(EmitterDelay));
+                    _camera.SetEmitterStatusAndWait(true);
                     break;
             }
             _currentAcquisitionMode = mode;
@@ -144,7 +147,6 @@ namespace MetriX.Cameras.Debug
         {
             Point3fCameraImage points = (Point3fCameraImage)_camera.CalcChannel(ChannelNames.Point3DImage);
             FloatImage distanceImage = ToDistance(points);
-
             dataFrame = new DataFrame(distanceImage, distanceImage, RigidBodyTransformation, ProjectiveTransformation, PreFilteringParameters);
         }
 
