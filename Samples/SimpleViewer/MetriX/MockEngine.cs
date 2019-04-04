@@ -55,7 +55,9 @@ namespace MetriX.Debug
                 EmitterDelay = emitterDelay,
                 Serial = "18042630416",
             };
-            _cameras = new List<CameraBase>() { astra0, astra1 };
+            _cameras = new List<CameraBase>();
+            _cameras.Add(astra0);
+            _cameras.Add(astra1);
         }
 
         public DisplayFrame[] AcquireDisplayFrames(FramePurposes purposes = FramePurposes.Display)
@@ -63,11 +65,13 @@ namespace MetriX.Debug
             try
             {
                 DisplayFrame[] displayFrames = new DisplayFrame[_cameras.Count];
-                Parallel.For(0, _cameras.Count, _frameAcquisitionOptions, (int cameraIndex) =>
+                //Parallel.For(0, _cameras.Count, _frameAcquisitionOptions, (int cameraIndex) =>
+                for(int cameraIndex = 0; cameraIndex < _cameras.Count; cameraIndex++)
                 {
-                // Acquire the Frame
-                SafeAcquireFrame(_cameras[cameraIndex], purposes, out displayFrames[cameraIndex]);
-                });
+                    // Acquire the Frame
+                    SafeAcquireFrame(_cameras[cameraIndex], purposes, out displayFrames[cameraIndex]);
+                }
+                //);
 
                 return displayFrames;
             }
