@@ -1,0 +1,473 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+using Microsoft.AzureKinect;
+using Metrilus.Util;
+using MetriCam2.Exceptions;
+
+namespace MetriCam2.Cameras
+{
+    public class Kinect4Azure : Camera, IDisposable
+    {
+        private Device _device = null;
+        private Capture _capture = null;
+        private bool _disposed = false;
+
+        private Dictionary<string, RigidBodyTransformation> extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
+        private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+
+        internal enum Intrinsics
+        {
+            Cx,
+            Cy,
+            Fx,
+            Fy,
+            K1,
+            K2,
+            K3,
+            K4,
+            K5,
+            K6,
+            Codx,
+            Cody,
+            P2,
+            P1,
+            MetricRadius
+        }
+
+        #region Properties
+
+        public override string Vendor
+        {
+            get { return "Microsoft"; }
+        }
+
+        private ColorResolution _colorResolution = ColorResolution.r720p;
+        public ColorResolution ColorResolution
+        {
+            get
+            {
+                return _colorResolution;
+            }
+
+            set
+            {
+                if (value != _colorResolution)
+                {
+                    _colorResolution = value;
+                    if (IsConnected)
+                    {
+                        restartCamera();
+                    }
+                }
+            }
+        }
+
+        ListParamDesc<ColorResolution> ColorResolutionDesc
+        {
+            get
+            {
+                ListParamDesc<ColorResolution> res = new ListParamDesc<ColorResolution>()
+                {
+                    Description = "Resolution of the Color Image",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                };
+
+                return res;
+            }
+        }
+
+        private FPS _fps = FPS.fps30;
+        public FPS Fps
+        {
+            get
+            {
+                return _fps;
+            }
+        }
+
+        ListParamDesc<FPS> FpsDesc
+        {
+            get
+            {
+                ListParamDesc<FPS> res = new ListParamDesc<FPS>()
+                {
+                    Description = "Frames per second",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+
+                return res;
+            }
+        }
+
+        private DepthMode _depthMode = DepthMode.WFOV_Unbinned;
+        public DepthMode DepthMode
+        {
+            get
+            {
+                return _depthMode;
+            }
+
+            set
+            {
+                if (value != _depthMode)
+                {
+                    _depthMode = value;
+                    if (IsConnected)
+                    {
+                        restartCamera();
+                    }
+                }
+            }
+        }
+
+        ListParamDesc<DepthMode> DepthModeDesc
+        {
+            get
+            {
+                ListParamDesc<DepthMode> res = new ListParamDesc<DepthMode>()
+                {
+                    Description = "Depth Mode",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
+                };
+
+                return res;
+            }
+        }
+        #endregion
+
+#if !NETSTANDARD2_0
+        public override Icon CameraIcon { get => Properties.Resources.MSIcon; }
+#endif
+
+        public Kinect4Azure() : base("Kinect4Azure")
+        {
+            
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (IsConnected)
+                DisconnectImpl();
+
+            if (disposing)
+            {
+                // dispose managed resources
+            }
+
+            _disposed = true;
+        }
+
+        protected override void LoadAllAvailableChannels()
+        {
+            ChannelRegistry cr = ChannelRegistry.Instance;
+            Channels.Clear();
+
+            Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
+            Channels.Add(cr.RegisterChannel(ChannelNames.Color));
+            Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
+        }
+
+        protected override void ConnectImpl()
+        {
+            bool haveSerial = !string.IsNullOrWhiteSpace(SerialNumber);
+
+            if (!haveSerial)
+            {
+                _device = Device.Open(0);
+                this.SerialNumber = _device.SerialNum;
+            }
+            else
+            {
+                for(int i = 0; i < Device.GetInstalledCount(); i++)
+                {
+                    Device tmpDev = Device.Open(i);
+                    if (SerialNumber == tmpDev.SerialNum)
+                    {
+                        _device = tmpDev;
+                        break;
+                    }
+                }
+            }
+
+            if (ActiveChannels.Count == 0)
+            {
+                AddToActiveChannels(ChannelNames.Color);
+                AddToActiveChannels(ChannelNames.ZImage);
+                AddToActiveChannels(ChannelNames.Intensity);
+            }
+
+            restartCamera();
+        }
+
+        private void restartCamera()
+        {
+            _device.StopCameras();
+            if (DepthMode == DepthMode.WFOV_Unbinned)
+            {
+                _fps = FPS.fps15;
+            }
+            else
+            {
+                _fps = FPS.fps30;
+            }
+            _device.StartCameras(new DeviceConfiguration
+            {
+                ColorFormat = Microsoft.AzureKinect.ImageFormat.ColorBGRA32,
+                ColorResolution = ColorResolution,
+                DepthMode = DepthMode,
+                SynchronizedImagesOnly = true,
+                CameraFPS = Fps,
+            });
+        }
+
+        protected override void DisconnectImpl()
+        {
+            intrinsicsCache.Clear();
+            extrinsicsCache.Clear();
+
+            if (null != _device)
+            {
+                _device.StopCameras();
+                _device.Dispose();
+            }
+        }
+
+        protected override void UpdateImpl()
+        {
+            try
+            {
+                _capture = _device.GetCapture();
+            }
+            catch (Microsoft.AzureKinect.Exception e)
+            {
+                string msg = $"{Name}: getting new capture failed: {e.Message}";
+                log.Error(msg);
+                throw new ImageAcquisitionFailedException(msg);
+            }
+        }
+
+        protected override CameraImage CalcChannelImpl(string channelName)
+        {
+            switch (channelName)
+            {
+                case ChannelNames.Color:
+                    return CalcColor();
+
+                case ChannelNames.ZImage:
+                    return CalcZImage();
+
+                case ChannelNames.Intensity:
+                    return CalcIntensityImage();
+            }
+
+            throw new ImageAcquisitionFailedException($"Channel {channelName} not supported!");
+        }
+
+        unsafe private ColorCameraImage CalcColor()
+        {
+            int height = _capture.Color.HeightPixels;
+            int width = _capture.Color.WidthPixels;
+
+            if (_capture.Color.Format != Microsoft.AzureKinect.ImageFormat.ColorBGRA32)
+            {
+                throw new ImageAcquisitionFailedException($"Expected format ColorBGRA32, found format {_capture.Color.Format.ToString()}");
+            }
+
+            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            Rectangle imageRect = new Rectangle(0, 0, width, height);
+            BitmapData bmpData = bitmap.LockBits(imageRect, ImageLockMode.WriteOnly, bitmap.PixelFormat);
+
+            byte* source = (byte*)_capture.Color.Buffer;
+            byte* target = (byte*)(void*)bmpData.Scan0;
+            for (int y = 0; y < height; y++)
+            {
+                byte* sourceLine = source + y * width * 4;
+                for (int x = 0; x < width; x++)
+                {
+                    target[0] = *sourceLine++;
+                    target[1] = *sourceLine++;
+                    target[2] = *sourceLine++;
+                    target += 3;
+                    sourceLine++;
+                }
+            }
+
+            bitmap.UnlockBits(bmpData);
+            return new ColorCameraImage(bitmap);
+        }
+
+        unsafe private FloatCameraImage CalcZImage()
+        {
+            int height = _capture.Depth.HeightPixels;
+            int width = _capture.Depth.WidthPixels;
+
+            if (_capture.Depth.Format != Microsoft.AzureKinect.ImageFormat.Depth16)
+            {
+                throw new ImageAcquisitionFailedException($"Expected format Depth16, found format {_capture.Depth.Format.ToString()}");
+            }
+
+            FloatCameraImage depthData = new FloatCameraImage(width, height);
+            short* source = (short*)_capture.Depth.Buffer;
+
+            for (int y = 0; y < height; y++)
+            {
+                short* sourceLine = source + y * width;
+                for (int x = 0; x < width; x++)
+                {
+                    depthData[y, x] = (float)(*sourceLine++) / 1000.0f;
+                }
+            }
+
+            return depthData;
+        }
+
+        unsafe private FloatCameraImage CalcIntensityImage()
+        {
+            int height = _capture.IR.HeightPixels;
+            int width = _capture.IR.WidthPixels;
+
+            if (_capture.IR.Format != Microsoft.AzureKinect.ImageFormat.IR16)
+            {
+                throw new ImageAcquisitionFailedException($"Expected format IR16, found format {_capture.IR.Format.ToString()}");
+            }
+
+            FloatCameraImage IRData = new FloatCameraImage(width, height);
+            short* source = (short*)_capture.IR.Buffer;
+
+            for (int y = 0; y < height; y++)
+            {
+                short* sourceLine = source + y * width;
+                for (int x = 0; x < width; x++)
+                {
+                    IRData[y, x] = (float)(*sourceLine++);
+                }
+            }
+
+            return IRData;
+        }
+
+        public override IProjectiveTransformation GetIntrinsics(string channelName)
+        {
+            string keyName = $"{channelName}_{channelName}_{DepthMode.ToString()}";
+            if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
+            {
+                return intrinsicsCache[keyName];
+            }
+
+
+            Calibration calibration = _device.GetCalibration();
+            float metricRadius = 0.0f;
+            Calibration.Intrinsics intrinsics;
+            int width;
+            int height;
+
+            switch (channelName)
+            {
+                case ChannelNames.Color:
+                    intrinsics = calibration.color_camera_calibration.intrinsics;
+                    width = calibration.color_camera_calibration.resolution_width;
+                    height = calibration.color_camera_calibration.resolution_height;
+                    metricRadius = calibration.color_camera_calibration.metric_radius;
+                    break;
+
+                case ChannelNames.ZImage:
+                case ChannelNames.Intensity:
+                    intrinsics = calibration.depth_camera_calibration.intrinsics;
+                    width = calibration.depth_camera_calibration.resolution_width;
+                    height = calibration.depth_camera_calibration.resolution_height;
+                    metricRadius = calibration.depth_camera_calibration.metric_radius;
+                    break;
+
+                default:
+                    string msg = string.Format("{0}: no valid intrinsics for channel {1}", Name, channelName);
+                    log.Error(msg);
+                    throw new System.Exception(msg);
+            }
+
+            IProjectiveTransformation projTrans = new ProjectiveTransformationRational(
+                width,
+                height,
+                intrinsics.parameters[(int)Intrinsics.Fx],
+                intrinsics.parameters[(int)Intrinsics.Fy],
+                intrinsics.parameters[(int)Intrinsics.Cx],
+                intrinsics.parameters[(int)Intrinsics.Cy],
+                intrinsics.parameters[(int)Intrinsics.K1],
+                intrinsics.parameters[(int)Intrinsics.K2],
+                intrinsics.parameters[(int)Intrinsics.K3],
+                intrinsics.parameters[(int)Intrinsics.K4],
+                intrinsics.parameters[(int)Intrinsics.K5],
+                intrinsics.parameters[(int)Intrinsics.K6],
+                intrinsics.parameters[(int)Intrinsics.P1],
+                intrinsics.parameters[(int)Intrinsics.P2],
+                metricRadius);
+
+            intrinsicsCache[keyName] = projTrans;
+            return projTrans;
+        }
+
+        public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
+        {
+            string keyName = $"{channelFromName}_{channelToName}";
+            if (extrinsicsCache.ContainsKey(keyName) && extrinsicsCache[keyName] != null)
+            {
+                return extrinsicsCache[keyName];
+            }
+
+            Calibration calibration = _device.GetCalibration();
+            RotationMatrix rotMat;
+            Point3f translation;
+            
+            if (channelFromName == ChannelNames.Color && (channelToName == ChannelNames.ZImage || channelToName == ChannelNames.Intensity))
+            {
+                rotMat = new RotationMatrix(calibration.color_camera_calibration.extrinsics.rotation);
+                translation = new Point3f(
+                    calibration.color_camera_calibration.extrinsics.translation[0],
+                    calibration.color_camera_calibration.extrinsics.translation[1],
+                    calibration.color_camera_calibration.extrinsics.translation[2]);
+            }
+            else if (channelToName == ChannelNames.Color && (channelFromName == ChannelNames.ZImage || channelFromName == ChannelNames.Intensity))
+            {
+                rotMat = new RotationMatrix(calibration.depth_camera_calibration.extrinsics.rotation);
+                translation = new Point3f(
+                    calibration.depth_camera_calibration.extrinsics.translation[0],
+                    calibration.depth_camera_calibration.extrinsics.translation[1],
+                    calibration.depth_camera_calibration.extrinsics.translation[2]);
+            }
+            else
+            {
+                string msg = string.Format("{0}: no valid extrinsics from channel {1} to {2}", Name, channelFromName, channelToName);
+                log.Error(msg);
+                throw new System.Exception(msg);
+            }
+
+            RigidBodyTransformation rbt = new RigidBodyTransformation(rotMat, translation);
+            extrinsicsCache[keyName] = rbt;
+            return rbt;
+        }
+
+        private void CheckConnected([CallerMemberName] String propertyName = "")
+        {
+            if (!IsConnected)
+            {
+                throw new InvalidOperationException(string.Format("The property '{0}' can only be read or written when the camera is connected!", propertyName));
+            }
+        }
+    }
+}
