@@ -973,28 +973,30 @@ Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetI
 		sprintf_s(buffer, 512, "%s", openni::OpenNI::getExtendedError());
 	}
 
-	Metrilus::Util::ProjectiveTransformationZhang^ pt = nullptr;
+	Metrilus::Util::ProjectiveTransformationRational^ pt = nullptr;
 
 	if (channelName->Equals(ChannelNames::Intensity) || channelName->Equals(ChannelNames::ZImage))
 	{
 		//Even if the Orbbec include file shows a different order, the real order of l_k is k1, k2, k3, p1, p2
-		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
+		pt = gcnew Metrilus::Util::ProjectiveTransformationRational(
 			_depthResolution.X, _depthResolution.Y,
 			params.l_intr_p[0], params.l_intr_p[1],
 			params.l_intr_p[2], params.l_intr_p[3],
 			params.l_k[0], params.l_k[1], params.l_k[2],
-			params.l_k[3], params.l_k[4]);
+			0, 0, 0,
+			params.l_k[3], params.l_k[4], float::NaN);
 	}
 
 	if (channelName->Equals(ChannelNames::Color))
 	{
 		//Even if the Orbbec include file shows a different order, the real order of r_k is k1, k2, k3, p1, p2
-		pt = gcnew Metrilus::Util::ProjectiveTransformationZhang(
+		pt = gcnew Metrilus::Util::ProjectiveTransformationRational(
 			640, 480,
 			params.r_intr_p[0], params.r_intr_p[1],
 			params.r_intr_p[2], params.r_intr_p[3],
 			params.r_k[0], params.r_k[1], params.r_k[2],
-			params.r_k[3], params.r_k[4]);
+			0, 0, 0,
+			params.r_k[3], params.r_k[4], float::NaN);
 	}
 
 	if (nullptr == pt)

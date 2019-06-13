@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MetriCam2.Samples.MinimalSample</RootNamespace>
     <AssemblyName>MinimalSample</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -77,9 +77,9 @@
     <Reference Include="Metrilus.Util">
       <HintPath>$(LibrariesPath)Metrilus.Util.dll</HintPath>
     </Reference>
-    <Reference Include="MetriPrimitives, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="MetriPrimitives, Version=19.4.0.42, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Z:\releases\Metrilus.Framework\v.19.4.0.42\lib\MetriPrimitives.dll</HintPath>
+      <HintPath>Z:\releases\Metrilus.Framework\v.22.0.2.177\lib\MetriPrimitives.dll</HintPath>
     </Reference>
     <Reference Include="MetriPrimitivesNative, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
@@ -115,9 +115,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\OrbbecOpenNI\OrbbecOpenNI.vcxproj">
-      <Project>{c82202f8-55db-4511-b006-c88ff3e4427e}</Project>
-      <Name>OrbbecOpenNI</Name>
+    <ProjectReference Include="..\..\BetaCameras\Kinect4Azure\Kinect4Azure.csproj">
+      <Project>{9a292249-66ee-4c9c-a6b7-dd5112e3625f}</Project>
+      <Name>Kinect4Azure</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj">
       <Project>{342f049e-668b-4351-b21d-75e4bef5a1e4}</Project>

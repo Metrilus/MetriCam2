@@ -21,8 +21,8 @@ Bitmap bmp = camImg.Data;
 How to load a Camera's intrinsic parameters (and convert them to a Framework type)
 ===
 
-<code>Camera.GetIntrinsics</code> returns an object of type <code>Metrilus.Util.ProjectiveTransformationZhang</code>. If you need an object of type <code>MetriPrimitives.Transformations.ProjectiveTransformationZhang</code> instead, you currently have to create it yourself:
+<code>Camera.GetIntrinsics</code> returns an object of type <code>Metrilus.Util.ProjectiveTransformationRational</code>. If you need an object of type <code>MetriPrimitives.Transformations.ProjectiveTransformationRational</code> instead, you currently have to create it yourself:
 ~~~{.cs}
-Metrilus.Util.ProjectiveTransformationZhang utilPT = (Metrilus.Util.ProjectiveTransformationZhang)camera.GetIntrinsics(ChannelNames.Color);
-MetriPrimitives.Transformations.ProjectiveTransformationZhang primPT = new MetriPrimitives.Transformations.ProjectiveTransformationZhang(utilPT.Width, utilPT.Height, utilPT.Fx, utilPT.Fy, utilPT.Cx, utilPT.Cy, utilPT.K1, utilPT.K2, utilPT.K3, utilPT.P1, utilPT.P2);
+Metrilus.Util.ProjectiveTransformationRational utilPT = (Metrilus.Util.ProjectiveTransformationRational)camera.GetIntrinsics(ChannelNames.Color);
+MetriPrimitives.Transformations.ProjectiveTransformationRational primPT = new MetriPrimitives.Transformations.ProjectiveTransformationRational(utilPT.Width, utilPT.Height, utilPT.Fx, utilPT.Fy, utilPT.Cx, utilPT.Cy, utilPT.K1, utilPT.K2, utilPT.K3, utilPT.P1, utilPT.P2);
 ~~~
