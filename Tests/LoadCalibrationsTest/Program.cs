@@ -42,10 +42,10 @@ namespace MetriCam2.Tests.LoadCalibrationsTest
                 cam.Update();
             }
 
-            ProjectiveTransformationZhang pt;
+            ProjectiveTransformationRational pt;
             try
             {
-                pt = (ProjectiveTransformationZhang)cam.GetIntrinsics(ChannelNames.Color);
+                pt = (ProjectiveTransformationRational)cam.GetIntrinsics(ChannelNames.Color);
             }
             catch (FileNotFoundException)
             {
@@ -53,7 +53,7 @@ namespace MetriCam2.Tests.LoadCalibrationsTest
             }
             try
             {
-                pt = (ProjectiveTransformationZhang)cam.GetIntrinsics(ChannelNames.Color);
+                pt = (ProjectiveTransformationRational)cam.GetIntrinsics(ChannelNames.Color);
             }
             catch (FileNotFoundException)
             {
@@ -61,7 +61,7 @@ namespace MetriCam2.Tests.LoadCalibrationsTest
             }
             try
             {
-                pt = (ProjectiveTransformationZhang)cam.GetIntrinsics(ChannelNames.Color);
+                pt = (ProjectiveTransformationRational)cam.GetIntrinsics(ChannelNames.Color);
             }
             catch (FileNotFoundException)
             {

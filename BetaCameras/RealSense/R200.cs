@@ -322,7 +322,7 @@ namespace MetriCam2.Cameras
         /// Overrides the standard GetIntrinsic method.
         /// </summary>
         /// <param name="channelName">The channel name.</param>
-        /// <returns>The ProjectiveTransformationZhang</returns>
+        /// <returns>The ProjectiveTransformationRational</returns>
         /// <remarks>The method first searches for a pt file on disk. If this fails it is able to provide internal intrinsics for ZImage channel.</remarks>
         public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
@@ -340,11 +340,11 @@ namespace MetriCam2.Cameras
                 switch (channelName)
                 {
                     case ChannelNames.ZImage:
-                        result = new ProjectiveTransformationZhang(widthZImage, heightZImage, calibDataDepth.focalLength.x, calibDataDepth.focalLength.y, calibDataDepth.principalPoint.x, calibDataDepth.principalPoint.y, calibDataDepth.radialDistortion[0], calibDataDepth.radialDistortion[1], calibDataDepth.radialDistortion[2], calibDataDepth.tangentialDistortion[0],
+                        result = new ProjectiveTransformationRational(widthZImage, heightZImage, calibDataDepth.focalLength.x, calibDataDepth.focalLength.y, calibDataDepth.principalPoint.x, calibDataDepth.principalPoint.y, calibDataDepth.radialDistortion[0], calibDataDepth.radialDistortion[1], calibDataDepth.radialDistortion[2], 0, 0, 0, calibDataDepth.tangentialDistortion[0],
                             calibDataDepth.tangentialDistortion[1]);
                         break;
                     case ChannelNames.Color:
-                        result = new ProjectiveTransformationZhang(widthColor, heightColor, calibDataColor.focalLength.x, calibDataColor.focalLength.y, calibDataColor.principalPoint.x, calibDataColor.principalPoint.y, calibDataColor.radialDistortion[0], calibDataColor.radialDistortion[1], calibDataColor.radialDistortion[2], calibDataColor.tangentialDistortion[0],
+                        result = new ProjectiveTransformationRational(widthColor, heightColor, calibDataColor.focalLength.x, calibDataColor.focalLength.y, calibDataColor.principalPoint.x, calibDataColor.principalPoint.y, calibDataColor.radialDistortion[0], calibDataColor.radialDistortion[1], calibDataColor.radialDistortion[2], 0, 0, 0, calibDataColor.tangentialDistortion[0],
                         calibDataColor.tangentialDistortion[1]);
                         break;
                     default:

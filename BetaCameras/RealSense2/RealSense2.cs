@@ -1852,7 +1852,7 @@ namespace MetriCam2.Cameras
                 throw new Exception(msg);
             }
 
-            var projTrans = new ProjectiveTransformationZhang(
+            var projTrans = new ProjectiveTransformationRational(
                 intrinsics.width,
                 intrinsics.height,
                 intrinsics.fx,
@@ -1862,6 +1862,9 @@ namespace MetriCam2.Cameras
                 intrinsics.coeffs[0],
                 intrinsics.coeffs[1],
                 intrinsics.coeffs[4],
+                0,
+                0,
+                0,
                 intrinsics.coeffs[2],
                 intrinsics.coeffs[3]);
 
@@ -1880,7 +1883,7 @@ namespace MetriCam2.Cameras
         {
             if (DecimationFilter.Enabled && IsDepthChannel(channelName))
             {
-                ProjectiveTransformationZhang rescaled = new ProjectiveTransformationZhang((ProjectiveTransformationZhang)intrinsics);
+                ProjectiveTransformationRational rescaled = new ProjectiveTransformationRational((ProjectiveTransformationRational)intrinsics);
                 rescaled.RescaleParameters(_filteredDepthResolution.X, _filteredDepthResolution.Y);
                 return rescaled;
             }
@@ -2021,7 +2024,7 @@ namespace MetriCam2.Cameras
         private FloatCameraImage CalcDistanceImage()
         {
             FloatCameraImage zImage = CalcZImage();
-            ProjectiveTransformationZhang projTrans = GetIntrinsics(ChannelNames.ZImage) as ProjectiveTransformationZhang;
+            ProjectiveTransformationRational projTrans = GetIntrinsics(ChannelNames.ZImage) as ProjectiveTransformationRational;
             Point3fCameraImage p3fImage = projTrans.ZImageToWorld(zImage);
             return p3fImage.ToFloatCameraImage();
         }

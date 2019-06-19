@@ -168,7 +168,7 @@ List<KeyValuePair<int, String^>>^ TIVoxel::GetCameraProfiles()
 	return result;
 }
 
-bool TIVoxel::WritePT(ProjectiveTransformationZhang^ proj, int profileId)
+bool TIVoxel::WritePT(ProjectiveTransformationRational^ proj, int profileId)
 {
 	Voxel::ConfigurationFile* configFile = cam->configFile.getCameraProfile(profileId);
 

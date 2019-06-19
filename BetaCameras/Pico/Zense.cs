@@ -514,7 +514,7 @@ namespace MetriCam2.Cameras
             CheckReturnStatus(Methods.GetCameraParameters(DeviceIndex, sensorType, out CameraParameters intrinsics));
 
 
-            var projTrans = new ProjectiveTransformationZhang(
+            var projTrans = new ProjectiveTransformationRational(
                 mode.resolutionWidth,
                 mode.resolutionHeight,
                 (float)intrinsics.fx,
@@ -524,6 +524,7 @@ namespace MetriCam2.Cameras
                 (float)intrinsics.k1,
                 (float)intrinsics.k2,
                 (float)intrinsics.k3,
+                0, 0, 0,
                 (float)intrinsics.p1,
                 (float)intrinsics.p2);
 

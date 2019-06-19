@@ -267,7 +267,7 @@ namespace Cameras
 			}
 		}
 		
-		bool WritePT(ProjectiveTransformationZhang^ proj, int profileId);
+		bool WritePT(ProjectiveTransformationRational^ proj, int profileId);
 		List<KeyValuePair<int, String^>>^ GetCameraProfiles();
 
 	protected:
