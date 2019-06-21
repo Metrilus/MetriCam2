@@ -21,6 +21,34 @@ namespace MetriCam2.Cameras
         private Dictionary<string, RigidBodyTransformation> extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
         private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
 
+        public enum K4AColorResolution
+        {
+            Off = 0,
+            r720p = 1,
+            r1080p = 2,
+            r1440p = 3,
+            r1536p = 4,
+            r2160p = 5,
+            r3072p = 6
+        }
+
+        public enum K4AFPS
+        {
+            fps5 = 0,
+            fps15 = 1,
+            fps30 = 2
+        }
+
+        public enum K4ADepthMode
+        {
+            Off = 0,
+            NFOV_2x2Binned = 1,
+            NFOV_Unbinned = 2,
+            WFOV_2x2Binned = 3,
+            WFOV_Unbinned = 4,
+            PassiveIR = 5
+        }
+
         internal enum Intrinsics
         {
             Cx,
@@ -47,19 +75,19 @@ namespace MetriCam2.Cameras
             get { return "Microsoft"; }
         }
 
-        private ColorResolution _colorResolution = ColorResolution.r720p;
-        public ColorResolution ColorResolution
+        private ColorResolution _colorResolution = Microsoft.AzureKinect.ColorResolution.r720p;
+        public K4AColorResolution ColorResolution
         {
             get
             {
-                return _colorResolution;
+                return (K4AColorResolution)_colorResolution;
             }
 
             set
             {
-                if (value != _colorResolution)
+                if ((ColorResolution)value != _colorResolution)
                 {
-                    _colorResolution = value;
+                    _colorResolution = (ColorResolution)value;
                     if (IsConnected)
                     {
                         restartCamera();
@@ -68,11 +96,11 @@ namespace MetriCam2.Cameras
             }
         }
 
-        ListParamDesc<ColorResolution> ColorResolutionDesc
+        ListParamDesc<K4AColorResolution> ColorResolutionDesc
         {
             get
             {
-                ListParamDesc<ColorResolution> res = new ListParamDesc<ColorResolution>(typeof(ColorResolution))
+                ListParamDesc<K4AColorResolution> res = new ListParamDesc<K4AColorResolution>(typeof(K4AColorResolution))
                 {
                     Description = "Resolution of the Color Image",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
@@ -84,19 +112,19 @@ namespace MetriCam2.Cameras
         }
 
         private FPS _fps = FPS.fps30;
-        public FPS Fps
+        public K4AFPS Fps
         {
             get
             {
-                return _fps;
+                return (K4AFPS)_fps;
             }
         }
 
-        ListParamDesc<FPS> FpsDesc
+        ListParamDesc<K4AFPS> FpsDesc
         {
             get
             {
-                ListParamDesc<FPS> res = new ListParamDesc<FPS>(typeof(FPS))
+                ListParamDesc<K4AFPS> res = new ListParamDesc<K4AFPS>(typeof(K4AFPS))
                 {
                     Description = "Frames per second",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
@@ -106,19 +134,19 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private DepthMode _depthMode = DepthMode.WFOV_Unbinned;
-        public DepthMode DepthMode
+        private DepthMode _depthMode = Microsoft.AzureKinect.DepthMode.WFOV_Unbinned;
+        public K4ADepthMode DepthMode
         {
             get
             {
-                return _depthMode;
+                return (K4ADepthMode)_depthMode;
             }
 
             set
             {
-                if (value != _depthMode)
+                if ((DepthMode)value != _depthMode)
                 {
-                    _depthMode = value;
+                    _depthMode = (DepthMode)value;
                     if (IsConnected)
                     {
                         restartCamera();
@@ -127,11 +155,11 @@ namespace MetriCam2.Cameras
             }
         }
 
-        ListParamDesc<DepthMode> DepthModeDesc
+        ListParamDesc<K4ADepthMode> DepthModeDesc
         {
             get
             {
-                ListParamDesc<DepthMode> res = new ListParamDesc<DepthMode>(typeof(DepthMode))
+                ListParamDesc<K4ADepthMode> res = new ListParamDesc<K4ADepthMode>(typeof(K4ADepthMode))
                 {
                     Description = "Depth Mode",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
@@ -219,7 +247,7 @@ namespace MetriCam2.Cameras
         private void restartCamera()
         {
             _device.StopCameras();
-            if (DepthMode == DepthMode.WFOV_Unbinned)
+            if (DepthMode == K4ADepthMode.WFOV_Unbinned)
             {
                 _fps = FPS.fps15;
             }
@@ -230,10 +258,10 @@ namespace MetriCam2.Cameras
             _device.StartCameras(new DeviceConfiguration
             {
                 ColorFormat = Microsoft.AzureKinect.ImageFormat.ColorBGRA32,
-                ColorResolution = ColorResolution,
-                DepthMode = DepthMode,
+                ColorResolution = _colorResolution,
+                DepthMode = _depthMode,
                 SynchronizedImagesOnly = true,
-                CameraFPS = Fps,
+                CameraFPS = _fps,
             });
         }
 
