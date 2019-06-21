@@ -208,6 +208,7 @@ namespace MetriCam2.Cameras
             Channels.Clear();
 
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
+            Channels.Add(cr.RegisterChannel(ChannelNames.Distance));
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
             Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
         }
@@ -238,6 +239,7 @@ namespace MetriCam2.Cameras
             {
                 AddToActiveChannels(ChannelNames.Color);
                 AddToActiveChannels(ChannelNames.ZImage);
+                AddToActiveChannels(ChannelNames.Distance);
                 AddToActiveChannels(ChannelNames.Intensity);
             }
 
@@ -300,6 +302,9 @@ namespace MetriCam2.Cameras
 
                 case ChannelNames.ZImage:
                     return CalcZImage();
+
+                case ChannelNames.Distance:
+                    return CalcDistanceImage();
 
                 case ChannelNames.Intensity:
                     return CalcIntensityImage();
@@ -389,6 +394,14 @@ namespace MetriCam2.Cameras
             }
 
             return IRData;
+        }
+
+        private FloatCameraImage CalcDistanceImage()
+        {
+            FloatCameraImage zImage = CalcZImage();
+            ProjectiveTransformationRational projTrans = GetIntrinsics(ChannelNames.ZImage) as ProjectiveTransformationRational;
+            Point3fCameraImage p3fImage = projTrans.ZImageToWorld(zImage);
+            return p3fImage.ToFloatCameraImage();
         }
 
         public override IProjectiveTransformation GetIntrinsics(string channelName)
