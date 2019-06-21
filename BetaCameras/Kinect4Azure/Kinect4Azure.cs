@@ -474,8 +474,8 @@ namespace MetriCam2.Cameras
             Calibration calibration = _device.GetCalibration();
             RotationMatrix rotMat;
             Point3f translation;
-            
-            if ((channelFromName == ChannelNames.Distance || channelFromName == ChannelNames.ZImage || channelFromName == ChannelNames.Intensity) && channelToName == ChannelNames.Color)
+
+            if (channelFromName == ChannelNames.Color && (channelToName == ChannelNames.Distance || channelToName == ChannelNames.ZImage))
             {
                 rotMat = new RotationMatrix(calibration.color_camera_calibration.extrinsics.rotation);
                 translation = new Point3f(
@@ -483,7 +483,7 @@ namespace MetriCam2.Cameras
                     calibration.color_camera_calibration.extrinsics.translation[1],
                     calibration.color_camera_calibration.extrinsics.translation[2]);
             }
-            else if (channelFromName == ChannelNames.Color && (channelToName == ChannelNames.Distance || channelToName == ChannelNames.ZImage || channelToName == ChannelNames.Intensity))
+            else if ((channelFromName == ChannelNames.Distance || channelFromName == ChannelNames.ZImage) && channelToName == ChannelNames.Color)
             {
                 rotMat = new RotationMatrix(calibration.depth_camera_calibration.extrinsics.rotation);
                 translation = new Point3f(
