@@ -72,7 +72,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ListParamDesc<ColorResolution> res = new ListParamDesc<ColorResolution>()
+                ListParamDesc<ColorResolution> res = new ListParamDesc<ColorResolution>(typeof(ColorResolution))
                 {
                     Description = "Resolution of the Color Image",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
@@ -96,7 +96,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ListParamDesc<FPS> res = new ListParamDesc<FPS>()
+                ListParamDesc<FPS> res = new ListParamDesc<FPS>(typeof(FPS))
                 {
                     Description = "Frames per second",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
@@ -131,7 +131,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                ListParamDesc<DepthMode> res = new ListParamDesc<DepthMode>()
+                ListParamDesc<DepthMode> res = new ListParamDesc<DepthMode>(typeof(DepthMode))
                 {
                     Description = "Depth Mode",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
