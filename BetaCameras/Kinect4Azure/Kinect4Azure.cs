@@ -477,19 +477,19 @@ namespace MetriCam2.Cameras
 
             if (channelFromName == ChannelNames.Color && (channelToName == ChannelNames.Distance || channelToName == ChannelNames.ZImage))
             {
-                rotMat = new RotationMatrix(calibration.color_camera_calibration.extrinsics.rotation);
+                rotMat = new RotationMatrix(calibration.depth_camera_calibration.extrinsics.rotation);
                 translation = new Point3f(
-                    calibration.color_camera_calibration.extrinsics.translation[0],
-                    calibration.color_camera_calibration.extrinsics.translation[1],
-                    calibration.color_camera_calibration.extrinsics.translation[2]);
+                    calibration.depth_camera_calibration.extrinsics.translation[0] / 1000f,
+                    calibration.depth_camera_calibration.extrinsics.translation[1] / 1000f,
+                    calibration.depth_camera_calibration.extrinsics.translation[2] / 1000f);
             }
             else if ((channelFromName == ChannelNames.Distance || channelFromName == ChannelNames.ZImage) && channelToName == ChannelNames.Color)
             {
-                rotMat = new RotationMatrix(calibration.depth_camera_calibration.extrinsics.rotation);
+                rotMat = new RotationMatrix(calibration.color_camera_calibration.extrinsics.rotation);
                 translation = new Point3f(
-                    calibration.depth_camera_calibration.extrinsics.translation[0],
-                    calibration.depth_camera_calibration.extrinsics.translation[1],
-                    calibration.depth_camera_calibration.extrinsics.translation[2]);
+                    calibration.color_camera_calibration.extrinsics.translation[0] / 1000f,
+                    calibration.color_camera_calibration.extrinsics.translation[1] / 1000f,
+                    calibration.color_camera_calibration.extrinsics.translation[2] / 1000f);
             }
             else
             {
