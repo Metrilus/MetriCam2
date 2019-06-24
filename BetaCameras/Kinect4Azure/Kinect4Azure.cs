@@ -441,6 +441,7 @@ namespace MetriCam2.Cameras
 
                 case ChannelNames.ZImage:
                 case ChannelNames.Intensity:
+                case ChannelNames.Distance:
                     intrinsics = calibration.depth_camera_calibration.intrinsics;
                     width = calibration.depth_camera_calibration.resolution_width;
                     height = calibration.depth_camera_calibration.resolution_height;
