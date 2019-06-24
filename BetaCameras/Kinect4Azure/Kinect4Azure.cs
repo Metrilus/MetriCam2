@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using Microsoft.AzureKinect;
@@ -17,6 +18,7 @@ namespace MetriCam2.Cameras
         private Device _device = null;
         private Capture _capture = null;
         private bool _disposed = false;
+        private ManualResetEvent _reset = new ManualResetEvent(true);
 
         private Dictionary<string, RigidBodyTransformation> extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
         private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
@@ -248,6 +250,7 @@ namespace MetriCam2.Cameras
 
         private void restartCamera()
         {
+            _reset.Reset();
             _device.StopCameras();
             if (DepthMode == K4ADepthMode.WFOV_Unbinned)
             {
@@ -265,6 +268,7 @@ namespace MetriCam2.Cameras
                 SynchronizedImagesOnly = true,
                 CameraFPS = _fps,
             });
+            _reset.Set();
         }
 
         protected override void DisconnectImpl()
@@ -281,6 +285,8 @@ namespace MetriCam2.Cameras
 
         protected override void UpdateImpl()
         {
+            _reset.WaitOne();
+
             try
             {
                 _capture = _device.GetCapture();
@@ -295,6 +301,11 @@ namespace MetriCam2.Cameras
 
         protected override CameraImage CalcChannelImpl(string channelName)
         {
+            if (null == _capture)
+            {
+                throw new ImageAcquisitionFailedException("Call 'update' before calculating an image");
+            }
+
             switch (channelName)
             {
                 case ChannelNames.Color:

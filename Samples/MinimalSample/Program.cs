@@ -4,14 +4,9 @@
 using MetriCam2.Cameras;
 using Metrilus.Util;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using MetriPrimitives.Data;
 using Metrilus.Logging;
-using System.Runtime.CompilerServices;
-using System.Diagnostics;
 
 namespace MetriCam2.Samples.MinimalSample
 {
@@ -30,7 +25,17 @@ namespace MetriCam2.Samples.MinimalSample
 
             Kinect4Azure camera = new Kinect4Azure();
             camera.Connect();
-            camera.Update();
+
+            Thread thread = new Thread(() =>
+            {
+                while (true)
+                {
+                    camera.Update();
+                }
+            });
+            thread.Start();
+            
+            camera.DepthMode = Kinect4Azure.K4ADepthMode.WFOV_2x2Binned;
 
             FloatCameraImage fCImg = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
             ProjectiveTransformationRational pTrans = (ProjectiveTransformationRational)camera.GetIntrinsics(ChannelNames.ZImage);
