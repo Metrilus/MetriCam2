@@ -48,7 +48,7 @@ namespace MetriCam2.Cameras
             NFOV_Unbinned = 2,
             WFOV_2x2Binned = 3,
             WFOV_Unbinned = 4,
-            PassiveIR = 5
+            //PassiveIR = 5
         }
 
         internal enum Intrinsics
@@ -417,12 +417,11 @@ namespace MetriCam2.Cameras
 
         public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
-            string keyName = $"{channelName}_{channelName}_{DepthMode.ToString()}";
+            string keyName = channelName == ChannelNames.Color ? $"{channelName}_{ColorResolution.ToString()}" : $"{channelName}_{DepthMode.ToString()}";
             if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
             {
                 return intrinsicsCache[keyName];
             }
-
 
             Calibration calibration = _device.GetCalibration();
             float metricRadius = 0.0f;
