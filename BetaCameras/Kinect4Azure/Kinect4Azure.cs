@@ -371,13 +371,9 @@ namespace MetriCam2.Cameras
             FloatCameraImage depthData = new FloatCameraImage(width, height);
             short* source = (short*)_capture.Depth.Buffer;
 
-            for (int y = 0; y < height; y++)
+            for (int i = 0; i < depthData.Length; i++)
             {
-                short* sourceLine = source + y * width;
-                for (int x = 0; x < width; x++)
-                {
-                    depthData[y, x] = (float)(*sourceLine++) / 1000.0f;
-                }
+                depthData[i] = *source++ / 1000.0f;
             }
 
             return depthData;
@@ -393,19 +389,15 @@ namespace MetriCam2.Cameras
                 throw new ImageAcquisitionFailedException($"Expected format IR16, found format {_capture.IR.Format.ToString()}");
             }
 
-            FloatCameraImage IRData = new FloatCameraImage(width, height);
+            FloatCameraImage irData = new FloatCameraImage(width, height);
             short* source = (short*)_capture.IR.Buffer;
 
-            for (int y = 0; y < height; y++)
+            for (int i = 0; i < irData.Length; i++)
             {
-                short* sourceLine = source + y * width;
-                for (int x = 0; x < width; x++)
-                {
-                    IRData[y, x] = (float)(*sourceLine++);
-                }
+                irData[i] = *source++;
             }
 
-            return IRData;
+            return irData;
         }
 
         private FloatCameraImage CalcDistanceImage()
