@@ -20,8 +20,8 @@ namespace MetriCam2.Cameras
         private bool _disposed = false;
         private ManualResetEvent _reset = new ManualResetEvent(true);
 
-        private Dictionary<string, RigidBodyTransformation> extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
-        private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private Dictionary<string, RigidBodyTransformation> _extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
+        private Dictionary<string, IProjectiveTransformation> _intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
 
         public enum K4AColorResolution
         {
@@ -92,7 +92,7 @@ namespace MetriCam2.Cameras
                     _colorResolution = (ColorResolution)value;
                     if (IsConnected)
                     {
-                        restartCamera();
+                        RestartCamera();
                     }
                 }
             }
@@ -151,7 +151,7 @@ namespace MetriCam2.Cameras
                     _depthMode = (DepthMode)value;
                     if (IsConnected)
                     {
-                        restartCamera();
+                        RestartCamera();
                     }
                 }
             }
@@ -245,10 +245,10 @@ namespace MetriCam2.Cameras
                 AddToActiveChannels(ChannelNames.Intensity);
             }
 
-            restartCamera();
+            RestartCamera();
         }
 
-        private void restartCamera()
+        private void RestartCamera()
         {
             _reset.Reset();
             _device.StopCameras();
@@ -273,8 +273,8 @@ namespace MetriCam2.Cameras
 
         protected override void DisconnectImpl()
         {
-            intrinsicsCache.Clear();
-            extrinsicsCache.Clear();
+            _intrinsicsCache.Clear();
+            _extrinsicsCache.Clear();
 
             if (null != _device)
             {
@@ -418,9 +418,9 @@ namespace MetriCam2.Cameras
         public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
             string keyName = channelName == ChannelNames.Color ? $"{channelName}_{ColorResolution.ToString()}" : $"{channelName}_{DepthMode.ToString()}";
-            if (intrinsicsCache.ContainsKey(keyName) && intrinsicsCache[keyName] != null)
+            if (_intrinsicsCache.ContainsKey(keyName) && _intrinsicsCache[keyName] != null)
             {
-                return intrinsicsCache[keyName];
+                return _intrinsicsCache[keyName];
             }
 
             Calibration calibration = _device.GetCalibration();
@@ -470,16 +470,16 @@ namespace MetriCam2.Cameras
                 intrinsics.parameters[(int)Intrinsics.P2],
                 metricRadius);
 
-            intrinsicsCache[keyName] = projTrans;
+            _intrinsicsCache[keyName] = projTrans;
             return projTrans;
         }
 
         public override RigidBodyTransformation GetExtrinsics(string channelFromName, string channelToName)
         {
             string keyName = $"{channelFromName}_{channelToName}";
-            if (extrinsicsCache.ContainsKey(keyName) && extrinsicsCache[keyName] != null)
+            if (_extrinsicsCache.ContainsKey(keyName) && _extrinsicsCache[keyName] != null)
             {
-                return extrinsicsCache[keyName];
+                return _extrinsicsCache[keyName];
             }
 
             Calibration calibration = _device.GetCalibration();
@@ -510,7 +510,7 @@ namespace MetriCam2.Cameras
             }
 
             RigidBodyTransformation rbt = new RigidBodyTransformation(rotMat, translation);
-            extrinsicsCache[keyName] = rbt;
+            _extrinsicsCache[keyName] = rbt;
             return rbt;
         }
 
