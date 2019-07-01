@@ -234,6 +234,7 @@ namespace MetriCam2.Cameras
                         _device = tmpDev;
                         break;
                     }
+                    tmpDev.Dispose();
                 }
             }
 
