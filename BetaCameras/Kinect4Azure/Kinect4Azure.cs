@@ -261,12 +261,15 @@ namespace MetriCam2.Cameras
             {
                 _fps = FPS.fps30;
             }
+
+            bool synchronizedImagesOnly = _colorResolution != Microsoft.AzureKinect.ColorResolution.Off && _depthMode != Microsoft.AzureKinect.DepthMode.Off; //Off-mode does not support synchronization
+
             _device.StartCameras(new DeviceConfiguration
             {
                 ColorFormat = Microsoft.AzureKinect.ImageFormat.ColorBGRA32,
                 ColorResolution = _colorResolution,
                 DepthMode = _depthMode,
-                SynchronizedImagesOnly = true,
+                SynchronizedImagesOnly = synchronizedImagesOnly,
                 CameraFPS = _fps,
             });
             _reset.Set();
@@ -327,6 +330,11 @@ namespace MetriCam2.Cameras
 
         unsafe private ColorCameraImage CalcColor()
         {
+            if (_capture.Color == null)
+            {
+                throw new ImageAcquisitionFailedException($"Cannot acquire color channel. Please check, if it has been turned off.");
+            }
+
             int height = _capture.Color.HeightPixels;
             int width = _capture.Color.WidthPixels;
 
@@ -360,6 +368,11 @@ namespace MetriCam2.Cameras
 
         unsafe private FloatCameraImage CalcZImage()
         {
+            if (_capture.Depth == null)
+            {
+                throw new ImageAcquisitionFailedException($"Cannot acquire depth channel. Please check, if it has been turned off.");
+            }
+
             int height = _capture.Depth.HeightPixels;
             int width = _capture.Depth.WidthPixels;
 
