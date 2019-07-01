@@ -479,7 +479,7 @@ namespace MetriCam2.Cameras
             RotationMatrix rotMat;
             Point3f translation;
 
-            if (channelFromName == ChannelNames.Color && (channelToName == ChannelNames.Distance || channelToName == ChannelNames.ZImage))
+            if (channelFromName == ChannelNames.Color && (channelToName == ChannelNames.Distance || channelToName == ChannelNames.ZImage || channelToName == ChannelNames.Intensity))
             {
                 rotMat = new RotationMatrix(calibration.depth_camera_calibration.extrinsics.rotation);
                 translation = new Point3f(
@@ -487,7 +487,7 @@ namespace MetriCam2.Cameras
                     calibration.depth_camera_calibration.extrinsics.translation[1] / 1000f,
                     calibration.depth_camera_calibration.extrinsics.translation[2] / 1000f);
             }
-            else if ((channelFromName == ChannelNames.Distance || channelFromName == ChannelNames.ZImage) && channelToName == ChannelNames.Color)
+            else if ((channelFromName == ChannelNames.Distance || channelFromName == ChannelNames.ZImage || channelFromName == ChannelNames.Intensity) && channelToName == ChannelNames.Color)
             {
                 rotMat = new RotationMatrix(calibration.color_camera_calibration.extrinsics.rotation);
                 translation = new Point3f(
