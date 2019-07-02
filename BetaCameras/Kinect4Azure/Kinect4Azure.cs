@@ -22,7 +22,8 @@ namespace MetriCam2.Cameras
 
         private Dictionary<string, RigidBodyTransformation> _extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
         private Dictionary<string, IProjectiveTransformation> _intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
-        private HashSet<string> _activeChannels = new HashSet<string>();
+        private K4AColorResolution _lastValidColorResolution = K4AColorResolution.r720p; //Last valid mode != off
+        private K4ADepthMode _lastValidDepthMode = K4ADepthMode.WFOV_Unbinned; //Last valid mode != off
 
         public enum K4AColorResolution
         {
@@ -91,6 +92,10 @@ namespace MetriCam2.Cameras
                 if ((ColorResolution)value != _colorResolution)
                 {
                     _colorResolution = (ColorResolution)value;
+                    if(value != K4AColorResolution.Off)
+                    {
+                        _lastValidColorResolution = value;
+                    }
                     if (IsConnected)
                     {
                         RestartCamera();
@@ -150,6 +155,10 @@ namespace MetriCam2.Cameras
                 if ((DepthMode)value != _depthMode)
                 {
                     _depthMode = (DepthMode)value;
+                    if (value != K4ADepthMode.Off)
+                    {
+                        _lastValidDepthMode = value;
+                    }
                     if (IsConnected)
                     {
                         RestartCamera();
@@ -180,7 +189,7 @@ namespace MetriCam2.Cameras
 
         public Kinect4Azure() : base("Kinect4Azure")
         {
-            
+
         }
 
         public void Dispose()
@@ -525,34 +534,45 @@ namespace MetriCam2.Cameras
 
         protected override void ActivateChannelImpl(String channelName)
         {
-            if (_activeChannels.Contains(channelName))
-            {
-                return;
-            }
-
             if (channelName == ChannelNames.Color && ColorResolution == K4AColorResolution.Off)
             {
-                log.Debug($"Set color resolution to {K4AColorResolution.r720p.ToString()}");
-                ColorResolution = K4AColorResolution.r720p;
+                log.Debug($"Set color resolution to {_lastValidColorResolution.ToString()}");
+                ColorResolution = _lastValidColorResolution;
             }
 
             if ((channelName == ChannelNames.Distance || channelName == ChannelNames.ZImage) && DepthMode == K4ADepthMode.Off)
             {
-                log.Debug($"Set depth mode to {K4ADepthMode.WFOV_2x2Binned.ToString()}");
-                DepthMode = K4ADepthMode.WFOV_2x2Binned;
+                log.Debug($"Set depth mode to {_lastValidDepthMode.ToString()}");
+                DepthMode = _lastValidDepthMode;
             }
-
-            _activeChannels.Add(channelName);
         }
 
         protected override void DeactivateChannelImpl(String channelName)
         {
-            if (!_activeChannels.Contains(channelName))
+            if (channelName == ChannelNames.Color)
             {
+                ColorResolution = K4AColorResolution.Off;
                 return;
             }
 
-            _activeChannels.Remove(channelName);
+            int numberActivatedDepthChannels = 0;
+            if(IsChannelActive(ChannelNames.Intensity))
+            {
+                numberActivatedDepthChannels++;
+            }
+            if (IsChannelActive(ChannelNames.Distance))
+            {
+                numberActivatedDepthChannels++;
+            }
+            if (IsChannelActive(ChannelNames.ZImage))
+            {
+                numberActivatedDepthChannels++;
+            }
+            //If only one depth channels is activated and we deactivate it, the depth mode can be set to "off".
+            if(numberActivatedDepthChannels == 1 && (channelName == ChannelNames.Intensity || channelName == ChannelNames.Distance || channelName == ChannelNames.ZImage))
+            {
+                DepthMode = K4ADepthMode.Off;
+            }
         }
 
         private void CheckConnected([CallerMemberName] String propertyName = "")
