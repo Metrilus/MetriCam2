@@ -18,7 +18,7 @@ namespace MetriCam2.Cameras
         private Device _device = null;
         private Capture _capture = null;
         private bool _disposed = false;
-        private ManualResetEvent _reset = new ManualResetEvent(true);
+        private object _lock = new object();
 
         private Dictionary<string, RigidBodyTransformation> _extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
         private Dictionary<string, IProjectiveTransformation> _intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
@@ -251,28 +251,29 @@ namespace MetriCam2.Cameras
 
         private void RestartCamera()
         {
-            _reset.Reset();
-            _device.StopCameras();
-            if (DepthMode == K4ADepthMode.WFOV_Unbinned)
+            lock(_lock)
             {
-                _fps = FPS.fps15;
-            }
-            else
-            {
-                _fps = FPS.fps30;
-            }
+                _device.StopCameras();
+                if (DepthMode == K4ADepthMode.WFOV_Unbinned)
+                {
+                    _fps = FPS.fps15;
+                }
+                else
+                {
+                    _fps = FPS.fps30;
+                }
 
-            bool synchronizedImagesOnly = _colorResolution != Microsoft.AzureKinect.ColorResolution.Off && _depthMode != Microsoft.AzureKinect.DepthMode.Off; //Off-mode does not support synchronization
+                bool synchronizedImagesOnly = _colorResolution != Microsoft.AzureKinect.ColorResolution.Off && _depthMode != Microsoft.AzureKinect.DepthMode.Off; //Off-mode does not support synchronization
 
-            _device.StartCameras(new DeviceConfiguration
-            {
-                ColorFormat = Microsoft.AzureKinect.ImageFormat.ColorBGRA32,
-                ColorResolution = _colorResolution,
-                DepthMode = _depthMode,
-                SynchronizedImagesOnly = synchronizedImagesOnly,
-                CameraFPS = _fps,
-            });
-            _reset.Set();
+                _device.StartCameras(new DeviceConfiguration
+                {
+                    ColorFormat = Microsoft.AzureKinect.ImageFormat.ColorBGRA32,
+                    ColorResolution = _colorResolution,
+                    DepthMode = _depthMode,
+                    SynchronizedImagesOnly = synchronizedImagesOnly,
+                    CameraFPS = _fps,
+                });
+            }
         }
 
         protected override void DisconnectImpl()
@@ -289,17 +290,18 @@ namespace MetriCam2.Cameras
 
         protected override void UpdateImpl()
         {
-            _reset.WaitOne();
-
-            try
+            lock(_lock)
             {
-                _capture = _device.GetCapture();
-            }
-            catch (Microsoft.AzureKinect.Exception e)
-            {
-                string msg = $"{Name}: getting new capture failed: {e.Message}";
-                log.Error(msg);
-                throw new ImageAcquisitionFailedException(msg);
+                try
+                {
+                    _capture = _device.GetCapture();
+                }
+                catch (Microsoft.AzureKinect.Exception e)
+                {
+                    string msg = $"{Name}: getting new capture failed: {e.Message}";
+                    log.Error(msg);
+                    throw new ImageAcquisitionFailedException(msg);
+                }
             }
         }
 
