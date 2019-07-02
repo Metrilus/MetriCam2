@@ -22,6 +22,7 @@ namespace MetriCam2.Cameras
 
         private Dictionary<string, RigidBodyTransformation> _extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
         private Dictionary<string, IProjectiveTransformation> _intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private HashSet<string> _activeChannels = new HashSet<string>();
 
         public enum K4AColorResolution
         {
@@ -520,6 +521,38 @@ namespace MetriCam2.Cameras
             RigidBodyTransformation rbt = new RigidBodyTransformation(rotMat, translation);
             _extrinsicsCache[keyName] = rbt;
             return rbt;
+        }
+
+        protected override void ActivateChannelImpl(String channelName)
+        {
+            if (_activeChannels.Contains(channelName))
+            {
+                return;
+            }
+
+            if (channelName == ChannelNames.Color && ColorResolution == K4AColorResolution.Off)
+            {
+                log.Debug($"Set color resolution to {K4AColorResolution.r720p.ToString()}");
+                ColorResolution = K4AColorResolution.r720p;
+            }
+
+            if ((channelName == ChannelNames.Distance || channelName == ChannelNames.ZImage) && DepthMode == K4ADepthMode.Off)
+            {
+                log.Debug($"Set depth mode to {K4ADepthMode.WFOV_2x2Binned.ToString()}");
+                DepthMode = K4ADepthMode.WFOV_2x2Binned;
+            }
+
+            _activeChannels.Add(channelName);
+        }
+
+        protected override void DeactivateChannelImpl(String channelName)
+        {
+            if (!_activeChannels.Contains(channelName))
+            {
+                return;
+            }
+
+            _activeChannels.Remove(channelName);
         }
 
         private void CheckConnected([CallerMemberName] String propertyName = "")
