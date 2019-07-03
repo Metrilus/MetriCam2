@@ -326,11 +326,11 @@ namespace MetriCam2
 			if (MetriCam2::ChannelNames::Distance == channelName
 				|| MetriCam2::ChannelNames::ZImage == channelName)
 			{
-				return gcnew ProjectiveTransformationZhang(_depthRaw->Width, _depthRaw->Height, FocalLength, FocalLength, _depthRaw->Width / 2.0f, _depthRaw->Height / 2.0f, 0, 0, 0, 0, 0);
+				return gcnew ProjectiveTransformationRational(_depthRaw->Width, _depthRaw->Height, FocalLength, FocalLength, _depthRaw->Width / 2.0f, _depthRaw->Height / 2.0f, 0, 0, 0, 0, 0, 0, 0, 0, float::NaN);
 			}
 			if (MetriCam2::ChannelNames::Color == channelName)
 			{
-				return gcnew ProjectiveTransformationZhang(_color->Width, _color->Height, FocalLength, FocalLength, _color->Width / 2.0f, _color->Height / 2.0f, 0, 0, 0, 0, 0);
+				return gcnew ProjectiveTransformationRational(_color->Width, _color->Height, FocalLength, FocalLength, _color->Width / 2.0f, _color->Height / 2.0f, 0, 0, 0, 0, 0, 0, 0, 0, float::NaN);
 			}
 			return Camera::GetIntrinsics(channelName);
 		}

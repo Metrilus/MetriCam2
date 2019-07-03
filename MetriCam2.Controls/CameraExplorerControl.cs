@@ -98,9 +98,9 @@ namespace MetriCam2.Controls
             {
                 cameraManagement.AddCamerasFromDLL(filename);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                MessageBox.Show(string.Format("File '{0}' could not be loaded.", filename), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(string.Format("File '{0}' could not be loaded. {1}", filename, e.Message), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             RefreshAvailableCameras();
         }

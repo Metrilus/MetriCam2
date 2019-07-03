@@ -578,7 +578,7 @@ namespace MetriCam2.Cameras
         /// Overrides the standard GetIntrinsic method.
         /// </summary>
         /// <param name="channelName">The channel name.</param>
-        /// <returns>The ProjectiveTransformationZhang</returns>
+        /// <returns>The ProjectiveTransformationRational</returns>
         /// <remarks>The method first searches for a pt file on disk. If this fails it is able to provide internal intrinsics for amplitude / depth channel.</remarks>
         public override IProjectiveTransformation GetIntrinsics(string channelName)
         {
@@ -598,8 +598,6 @@ namespace MetriCam2.Cameras
                 switch (channelName)
                 {
                     case ChannelNames.Amplitude:
-                        result = GetFactoryIRIntrinsics();
-                        break;
                     case ChannelNames.Distance:
                         result = GetFactoryIRIntrinsics();
                         break;
@@ -629,7 +627,7 @@ namespace MetriCam2.Cameras
 
             float principalPointX = depthWidthMinusOne - intrinsics.PrincipalPointX; //Principal point in x-direction needs to be mirrored, since native Kinect images are flipped.
 
-            return new ProjectiveTransformationZhang(depthWidth, depthHeight, intrinsics.FocalLengthX, intrinsics.FocalLengthY, principalPointX, intrinsics.PrincipalPointY, intrinsics.RadialDistortionSecondOrder, intrinsics.RadialDistortionFourthOrder, intrinsics.RadialDistortionSixthOrder, 0, 0);
+            return new ProjectiveTransformationRational(depthWidth, depthHeight, intrinsics.FocalLengthX, intrinsics.FocalLengthY, principalPointX, intrinsics.PrincipalPointY, intrinsics.RadialDistortionSecondOrder, intrinsics.RadialDistortionFourthOrder, intrinsics.RadialDistortionSixthOrder, 0, 0, 0, 0, 0);
         }
 
         /// <summary>

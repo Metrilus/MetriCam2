@@ -2673,7 +2673,7 @@ namespace MetriCam2
 
             try
             {
-                return new ProjectiveTransformationZhang(filename);
+                return new ProjectiveTransformationRational(filename);
             }
             catch (Exception)
             {
@@ -2693,7 +2693,7 @@ namespace MetriCam2
 
                 using (BinaryReader br = new BinaryReader(stream))
                 {
-                    return (IProjectiveTransformation)ProjectiveTransformationZhang.ReadFromMetriStream(br);
+                    return (IProjectiveTransformation)ProjectiveTransformationRational.ReadFromMetriStream(br);
                 }
             }
         }
