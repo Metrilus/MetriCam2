@@ -295,10 +295,10 @@ namespace MetriCam2
 				}
 			}
 
-			FloatCameraImage^ CalcZImage();
-			ColorCameraImage^ CalcColor();
-			Point3fCameraImage^ CalcPoint3fImage();
-			FloatCameraImage^ CalcIRImage();
+			FloatImage^ CalcZImage();
+			ColorImage^ CalcColor();
+			Point3fImage^ CalcPoint3fImage();
+			FloatImage^ CalcIRImage();
 
 			static bool OpenNIInit();
 			static bool OpenNIShutdown();
@@ -331,10 +331,10 @@ namespace MetriCam2
 
 			void WaitUntilNextValidFrame();
 			void WaitUntilNextInvalidFrame();
-			bool IsDepthFrameValid_MinimumMean(FloatCameraImage^ img);
-			bool IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img);
-			bool IsDepthFrameValid_MinimumMean(FloatCameraImage^ img, float threshold);
-			bool IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img, int thresholdPercentage);
+			bool IsDepthFrameValid_MinimumMean(FloatImage^ img);
+			bool IsDepthFrameValid_NumberNonZeros(FloatImage^ img);
+			bool IsDepthFrameValid_MinimumMean(FloatImage^ img, float threshold);
+			bool IsDepthFrameValid_NumberNonZeros(FloatImage^ img, int thresholdPercentage);
 
 			OrbbecNativeCameraData* _pCamData;
 			int _vid;

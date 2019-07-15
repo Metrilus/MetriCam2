@@ -651,7 +651,7 @@ namespace MetriCam2
 					bmpNew->RotateFlip(RotateFlipType::RotateNoneFlipY);
 				}
 
-				return gcnew ColorCameraImage(bmpNew);
+				return gcnew ColorImage(bmpNew);
 			}
 
 		private:

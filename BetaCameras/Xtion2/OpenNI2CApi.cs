@@ -369,12 +369,12 @@ namespace MetriCam2.Cameras
                 oniFrameRelease((OniFrame*)frame.Handle);
         }
 
-        unsafe public static FloatCameraImage FrameToFloatImage(Frame frame)
+        unsafe public static FloatImage FrameToFloatImage(Frame frame)
         {
             OniFrame* frameHandle = (OniFrame*)frame.Handle;
             int width = (*frameHandle).width;
             int height = (*frameHandle).height;
-            FloatCameraImage img = new FloatCameraImage(width, height);
+            FloatImage img = new FloatImage(width, height);
 
             short* source = (short*)(*frameHandle).data;
             for (int y = 0; y < height; y++)
@@ -389,7 +389,7 @@ namespace MetriCam2.Cameras
             return img;
         }
 
-        unsafe public static ColorCameraImage FrameToColorImage(Frame frame)
+        unsafe public static ColorImage FrameToColorImage(Frame frame)
         {
             OniFrame* frameHandle = (OniFrame*)frame.Handle;
             int width = (*frameHandle).width;
@@ -417,7 +417,7 @@ namespace MetriCam2.Cameras
             }
 
             bitmap.UnlockBits(bmpData);
-            ColorCameraImage image = new ColorCameraImage(bitmap);
+            ColorImage image = new ColorImage(bitmap);
 
             return image;
         }

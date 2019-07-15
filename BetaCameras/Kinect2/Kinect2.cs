@@ -168,8 +168,8 @@ namespace MetriCam2.Cameras
             Channels.Add(cr.RegisterChannel(ChannelNames.Distance));
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
             Channels.Add(cr.RegisterChannel(ChannelNames.Point3DImage));
-            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.LongExposureIR, typeof(FloatCameraImage)));
-            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.BodyIndex, typeof(FloatCameraImage)));
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.LongExposureIR, typeof(FloatImage)));
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.BodyIndex, typeof(FloatImage)));
         }
 
         /// <summary>
@@ -703,11 +703,11 @@ namespace MetriCam2.Cameras
         /// Calculates the distance data for the current frame.
         /// </summary>
         /// <returns>Distance map with dimensions Width and Height.</returns>
-        protected virtual FloatCameraImage CalcDistances()
+        protected virtual FloatImage CalcDistances()
         {
             CalcDistanceMap();
 
-            FloatCameraImage img = new FloatCameraImage(depthWidth, depthHeight);
+            FloatImage img = new FloatImage(depthWidth, depthHeight);
 
             lock (this.depthFrameData)
             {
@@ -728,7 +728,7 @@ namespace MetriCam2.Cameras
         /// Calculates the color image for the current frame.
         /// </summary>
         /// <returns>Color image.</returns>
-        protected virtual unsafe ColorCameraImage CalcColor()
+        protected virtual unsafe ColorImage CalcColor()
         {
             lock (this.colorFrameData)
             {
@@ -741,13 +741,13 @@ namespace MetriCam2.Cameras
                 bmp.UnlockBits(bData);
                 bmp.RotateFlip(RotateFlipType.RotateNoneFlipX); //Kinect images are flipped in x-direction
 
-                return new ColorCameraImage(bmp);
+                return new ColorImage(bmp);
             }
         }
 
-        protected virtual FloatCameraImage CalcAmplitudes()
+        protected virtual FloatImage CalcAmplitudes()
         {
-            FloatCameraImage img = new FloatCameraImage(depthWidth, depthHeight);
+            FloatImage img = new FloatImage(depthWidth, depthHeight);
 
             lock (this.irFrameData)
             {
@@ -844,10 +844,10 @@ namespace MetriCam2.Cameras
         /// </summary>
         /// <returns>3-D point coordinates in meters.</returns>
         /// <remarks>Format is [height, width, coordinate] with coordinate in {0,1,2} for x, y and z.</remarks>
-        private Point3fCameraImage Calc3DCoordinates()
+        private Point3fImage Calc3DCoordinates()
         {
             CameraSpacePoint[] worldPoints = new CameraSpacePoint[depthHeight * depthWidth];
-            Point3fCameraImage img = new Point3fCameraImage(depthWidth, depthHeight);
+            Point3fImage img = new Point3fImage(depthWidth, depthHeight);
 
             lock (this.depthFrameData)
             {
@@ -866,9 +866,9 @@ namespace MetriCam2.Cameras
             return img;
         }
 
-        private FloatCameraImage CalcBodyIndex()
+        private FloatImage CalcBodyIndex()
         {
-            FloatCameraImage result = new FloatCameraImage(depthWidth, depthHeight);
+            FloatImage result = new FloatImage(depthWidth, depthHeight);
 
             for (int y = 0; y < this.depthHeight; y++)
             {
@@ -883,9 +883,9 @@ namespace MetriCam2.Cameras
             return result;
         }
 
-        private FloatCameraImage CalcLongExposureIR()
+        private FloatImage CalcLongExposureIR()
         {
-            FloatCameraImage result = new FloatCameraImage(depthWidth, depthHeight);
+            FloatImage result = new FloatImage(depthWidth, depthHeight);
 
             for (int y = 0; y < this.depthHeight; y++)
             {

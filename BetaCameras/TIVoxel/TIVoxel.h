@@ -302,16 +302,16 @@ namespace Cameras
 		//Voxel::DevicePtr* device;
 		Voxel::DepthCamera* cam;
 
-		ByteCameraImage^ currentPhases;
-		ByteCameraImage^ currentAmplitudes;
-		ByteCameraImage^ currentAmbient;
-		ByteCameraImage^ currentFlags;
+		ByteImage^ currentPhases;
+		ByteImage^ currentAmplitudes;
+		ByteImage^ currentAmbient;
+		ByteImage^ currentFlags;
 
 
-		ByteCameraImage^ phaseData;
-		ByteCameraImage^ amplitudeData;
-		ByteCameraImage^ ambientData;
-		ByteCameraImage^ flagsData;
+		ByteImage^ phaseData;
+		ByteImage^ amplitudeData;
+		ByteImage^ ambientData;
+		ByteImage^ flagsData;
 		AutoResetEvent^ updateResetEvent;
 
 		List<String^>^ configurationParameters;		

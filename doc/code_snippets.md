@@ -4,9 +4,9 @@ Code Snippets {#page_code_snippets}
 How to obtain a FloatImage
 ===
 
-Our Framework-<code>FloatImage</code> has a c'tor which takes a <code>FloatCameraImage</code> as parameter. **Caveat:** The <code>FloatCameraImage</code> is destroyed in the conversion.
+Our Framework-<code>FloatImage</code> has a c'tor which takes a <code>FloatImage</code> as parameter. **Caveat:** The <code>FloatImage</code> is destroyed in the conversion.
 ~~~{.cs}
-FloatCameraImage camImg = cam.CalcChannel(ChannelNames.Distances).ToFloatCameraImage();
+FloatImage camImg = cam.CalcChannel(ChannelNames.Distances).ToFloatImage();
 FloatImage fi = new FloatImage(ref camImg);
 ~~~
 
@@ -14,7 +14,7 @@ How to obtain a Bitmap
 ===
 
 ~~~{.cs}
-ColorCameraImage camImg = (ColorCameraImage)cam.CalcChannel(ChannelNames.Color);
+ColorImage camImg = (ColorImage)cam.CalcChannel(ChannelNames.Color);
 Bitmap bmp = camImg.Data;
 ~~~
 

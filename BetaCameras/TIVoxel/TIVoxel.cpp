@@ -476,8 +476,8 @@ void TIVoxel::LoadAllAvailableChannels()
 	Channels->Clear();
 	Channels->Add(cr->RegisterChannel(CHANNEL_NAME_AMPLITUDE));
 	Channels->Add(cr->RegisterChannel(CHANNEL_NAME_DISTANCE));
-	Channels->Add(cr->RegisterCustomChannel(CHANNEL_NAME_AMBIENT, FloatCameraImage::typeid));
-	Channels->Add(cr->RegisterCustomChannel(CHANNEL_NAME_PHASE, UShortCameraImage::typeid));
+	Channels->Add(cr->RegisterCustomChannel(CHANNEL_NAME_AMBIENT, FloatImage::typeid));
+	Channels->Add(cr->RegisterCustomChannel(CHANNEL_NAME_PHASE, UShortImage::typeid));
 }
 
 CameraImage^ TIVoxel::CalcChannelImpl(String^ channelName)
@@ -503,8 +503,8 @@ CameraImage^ TIVoxel::CalcChannelImpl(String^ channelName)
 
 CameraImage^ TIVoxel::CalcAmplitude()
 {
-	FloatCameraImage^ result = gcnew FloatCameraImage(m_width, m_height);
-	ByteCameraImage^ localAmplitudes = currentAmplitudes;
+	FloatImage^ result = gcnew FloatImage(m_width, m_height);
+	ByteImage^ localAmplitudes = currentAmplitudes;
 	pin_ptr<Byte> localAmplitudesData = &(localAmplitudes->Data)[0];
 	unsigned short int *rawConfidence = (unsigned short int*)localAmplitudesData;
 	
@@ -519,8 +519,8 @@ CameraImage^ TIVoxel::CalcAmplitude()
 
 CameraImage^ TIVoxel::CalcAmbient()
 {
-	FloatCameraImage^ result = gcnew FloatCameraImage(m_width, m_height);
-	ByteCameraImage^ localAmbient = currentAmbient;
+	FloatImage^ result = gcnew FloatImage(m_width, m_height);
+	ByteImage^ localAmbient = currentAmbient;
 
 	for (int i = 0; i < m_width*m_height; i++)
 	{
@@ -533,8 +533,8 @@ CameraImage^ TIVoxel::CalcAmbient()
 
 CameraImage^ TIVoxel::CalcPhase()
 {
-	UShortCameraImage^ result = gcnew UShortCameraImage(m_width, m_height);
-	ByteCameraImage^ localPhases = currentPhases;
+	UShortImage^ result = gcnew UShortImage(m_width, m_height);
+	ByteImage^ localPhases = currentPhases;
 	pin_ptr<Byte> localPhasesData = &(localPhases->Data)[0];
 	unsigned short int *rawPhases = (unsigned short int*)localPhasesData;
 
@@ -553,8 +553,8 @@ CameraImage^ TIVoxel::CalcDistance()
 	const float range = (v_light / (2.0f * (float)EffectiveModulationFrequency)); // FIXME: use GetUnambiguousRange or something here.
 	const float scaling = range / 4096.0f; // 12-bit phase data
 
-	FloatCameraImage^ result = gcnew FloatCameraImage(m_width, m_height);
-	ByteCameraImage^ localPhases = currentPhases;
+	FloatImage^ result = gcnew FloatImage(m_width, m_height);
+	ByteImage^ localPhases = currentPhases;
 	pin_ptr<Byte> localPhasesData = &(localPhases->Data)[0];
 	unsigned short int *rawPhases = (unsigned short int*)localPhasesData;
 
@@ -1269,17 +1269,17 @@ uint TIVoxel::GetSubFrames()
 
 void TIVoxel::AdoptCameraData(byte* amplitudes, byte* phases, byte* ambient, int amplitudesWidth, int phasesWidth, int ambientWidth)
 {
-	ByteCameraImage^ localPhases = gcnew ByteCameraImage(phasesWidth  * this->Width * this->Height, 1);
+	ByteImage^ localPhases = gcnew ByteImage(phasesWidth  * this->Width * this->Height, 1);
 	pin_ptr<Byte> localPhasesData = &(localPhases->Data)[0];
 	unsigned char * localPhasesPtr = localPhasesData;
 	memcpy(localPhasesPtr, phases, localPhases->Width);
 
-	ByteCameraImage^ localAmplitudes = gcnew ByteCameraImage(amplitudesWidth  * this->Width * this->Height, 1);
+	ByteImage^ localAmplitudes = gcnew ByteImage(amplitudesWidth  * this->Width * this->Height, 1);
 	pin_ptr<Byte> localAmplitudesData = &(localAmplitudes->Data)[0];
 	unsigned char * localAmplitudesPtr = localAmplitudesData;
 	memcpy(localAmplitudesPtr, amplitudes, localAmplitudes->Width);
 
-	ByteCameraImage^ localAmbient = gcnew ByteCameraImage(ambientWidth * this->Width * this->Height, 1);
+	ByteImage^ localAmbient = gcnew ByteImage(ambientWidth * this->Width * this->Height, 1);
 	pin_ptr<Byte> localAmbientData = &(localAmbient->Data)[0];
 	unsigned char * localAmbientPtr = localAmbientData;
 	memcpy(localAmbientPtr, ambient, localAmbient->Width);
@@ -1291,7 +1291,7 @@ void TIVoxel::AdoptCameraData(byte* amplitudes, byte* phases, byte* ambient, int
 
 void TIVoxel::AdoptFlagData(byte* flags, int flagsWidth)
 {
-	ByteCameraImage^ localFlags = gcnew ByteCameraImage(flagsWidth * this->Width * this->Height, 1);
+	ByteImage^ localFlags = gcnew ByteImage(flagsWidth * this->Width * this->Height, 1);
 	pin_ptr<Byte> localFlagsData = &(localFlags->Data)[0];
 	unsigned char * localFlagsPtr = localFlagsData;
 	memcpy(localFlagsPtr, flags, localFlags->Width);

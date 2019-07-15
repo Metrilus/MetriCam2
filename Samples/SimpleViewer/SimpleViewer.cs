@@ -156,9 +156,9 @@ namespace MetriCam2.Samples.SimpleViewer
                     continue;
                 }
 
-                if (camImg is FloatCameraImage && (cam.SelectedChannel == ChannelNames.Distance || cam.SelectedChannel == ChannelNames.ZImage))
+                if (camImg is FloatImage && (cam.SelectedChannel == ChannelNames.Distance || cam.SelectedChannel == ChannelNames.ZImage))
                 {
-                    TrimImage((FloatCameraImage)camImg, Properties.Settings.Default.MinDepthToDisplay, Properties.Settings.Default.MaxDepthToDisplay);
+                    TrimImage((FloatImage)camImg, Properties.Settings.Default.MinDepthToDisplay, Properties.Settings.Default.MaxDepthToDisplay);
                 }
 
                 Bitmap bmp= camImg.ToBitmap();
@@ -188,7 +188,7 @@ namespace MetriCam2.Samples.SimpleViewer
             isBgwFinished.Set();
         }
 
-        private static void TrimImage(FloatCameraImage img, float minVal, float maxVal)
+        private static void TrimImage(FloatImage img, float minVal, float maxVal)
         {           
             for (int i = 0; i < img.Length; i++)
             {
@@ -204,7 +204,7 @@ namespace MetriCam2.Samples.SimpleViewer
             }
         }
 
-        private unsafe static Bitmap ToBitmap(FloatCameraImage img)
+        private unsafe static Bitmap ToBitmap(FloatImage img)
         {
             if (img.Data == null)
             {
@@ -217,7 +217,7 @@ namespace MetriCam2.Samples.SimpleViewer
             {
                 for (int y = 0; y < img.Height; y++)
                 {
-                    float* dataPtr = imgData + y * img.Stride;
+                    float* dataPtr = imgData + y * img.Width;
                     for (int x = 0; x < img.Width; x++)
                     {
                         float val = *dataPtr++;
@@ -235,7 +235,7 @@ namespace MetriCam2.Samples.SimpleViewer
                 maxVal = 0.9f * maxVal;
                 for (int y = 0; y < img.Height; y++)
                 {
-                    float* dataPtr = imgData + y * img.Stride;
+                    float* dataPtr = imgData + y * img.Width;
                     for (int x = 0; x < img.Width; x++)
                     {
                         if (*dataPtr > maxVal)
@@ -257,7 +257,7 @@ namespace MetriCam2.Samples.SimpleViewer
                 for (int y = 0; y < img.Height; y++)
                 {
                     byte* linePtr = bmpPtr + bitmapData.Stride * y;
-                    float* dataPtr = imgData + y * img.Stride;
+                    float* dataPtr = imgData + y * img.Width;
                     for (int x = 0; x < img.Width; x++)
                     {
                         byte value = (byte)(byte.MaxValue * (*dataPtr++ - minVal) / (maxVal - minVal));

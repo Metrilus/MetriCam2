@@ -3,6 +3,7 @@
 
 using Metrilus.Util;
 using System;
+using System.Drawing;
 
 namespace MetriCam2.Cameras
 {
@@ -414,7 +415,7 @@ namespace MetriCam2.Cameras
 
             log.Warn(Name + ": TODO: Implement LoadAllAvailableChannels().");
             Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
-            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.DummyNoiseChannel, typeof(FloatCameraImage)));
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.DummyNoiseChannel, typeof(FloatImage)));
         }
 
         /// <summary>
@@ -472,9 +473,9 @@ namespace MetriCam2.Cameras
         /// <summary>Computes (image) data for the fake Noise channel.</summary>
         /// <returns>Noisy image data.</returns>
         /// <seealso cref="Camera.CalcChannel"/>
-        private FloatCameraImage CalcDummyNoiseChannel()
+        private FloatImage CalcDummyNoiseChannel()
         {
-            FloatCameraImage dummyNoiseImage = new FloatCameraImage(__noiseImageWidth, __noiseImageHeight);
+            FloatImage dummyNoiseImage = new FloatImage(__noiseImageWidth, __noiseImageHeight);
             // TODO: Add channel data (here: noise)
             return dummyNoiseImage;
         }

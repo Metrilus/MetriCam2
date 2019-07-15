@@ -752,22 +752,22 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private FloatCameraImage CalcBlue()
+        private FloatImage CalcBlue()
         {
             return CalcChannelFloat(2);
         }
 
-        private FloatCameraImage CalcGreen()
+        private FloatImage CalcGreen()
         {
             return CalcChannelFloat(1);
         }
 
-        private FloatCameraImage CalcRed()
+        private FloatImage CalcRed()
         {
             return CalcChannelFloat(0);
         }
 
-        private FloatCameraImage CalcIntensity()
+        private FloatImage CalcIntensity()
         {
             // get data
             switch (bitsPerPixel)
@@ -782,9 +782,9 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private FloatCameraImage CalcChannelByte()
+        private FloatImage CalcChannelByte()
         {
-            FloatCameraImage result = new FloatCameraImage((int)Width, (int)Height);
+            FloatImage result = new FloatImage((int)Width, (int)Height);
             result.FrameNumber = FrameNumber;
 
             unsafe
@@ -804,9 +804,9 @@ namespace MetriCam2.Cameras
             return result;
         }
 
-        private FloatCameraImage CalcChannelShort()
+        private FloatImage CalcChannelShort()
         {
-            FloatCameraImage result = new FloatCameraImage((int)Width, (int)Height);
+            FloatImage result = new FloatImage((int)Width, (int)Height);
             result.FrameNumber = FrameNumber;
 
             unsafe
@@ -826,9 +826,9 @@ namespace MetriCam2.Cameras
             return result;
         }
 
-        private FloatCameraImage CalcChannelFloat(int channelNr)
+        private FloatImage CalcChannelFloat(int channelNr)
         {
-            FloatCameraImage result = new FloatCameraImage((int)Width, (int)Height);
+            FloatImage result = new FloatImage((int)Width, (int)Height);
             result.FrameNumber = FrameNumber;
 
             float scale = 1.0f / 255.0f;
@@ -855,14 +855,14 @@ namespace MetriCam2.Cameras
         /// Extracts a bitmap representation from the current raw-data.
         /// </summary>
         /// <returns>Bitmap representation of the current frame.</returns>
-        private ColorCameraImage CalcColor()
+        private ColorImage CalcColor()
         {
-            ColorCameraImage result = new ColorCameraImage((int)Width, (int)Height);
+            ColorImage result = new ColorImage((int)Width, (int)Height);
             result.FrameNumber = FrameNumber;
 
             if (IsMonochrome)
             {
-                FloatCameraImage img = CalcChannelFloat(0);
+                FloatImage img = CalcChannelFloat(0);
                 float factor = (32 == bitsPerPixel) ? 255.0f : 1.0f;
 
                 BitmapData bData = result.Data.LockBits(new Rectangle(0, 0, imageWidth, imageHeight), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);

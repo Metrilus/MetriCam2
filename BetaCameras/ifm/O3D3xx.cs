@@ -439,7 +439,7 @@ namespace MetriCam2.Cameras
             Channels.Add(cr.RegisterChannel(ChannelNames.Point3DImage));
             Channels.Add(cr.RegisterChannel(ChannelNames.ZImage));
             Channels.Add(cr.RegisterChannel(ChannelNames.ConfidenceMap));
-            Channels.Add(cr.RegisterCustomChannel(ChannelNames.RawConfidenceMap, typeof(ByteCameraImage)));
+            Channels.Add(cr.RegisterCustomChannel(ChannelNames.RawConfidenceMap, typeof(ByteImage)));
         }
 
         /// <summary>
@@ -678,12 +678,12 @@ namespace MetriCam2.Cameras
         /// </summary>
         /// <param name="rawConfidenceMap">Raw confidence image as provided by camera</param>
         /// <returns>Confidence image as float image in range [0, 1]</returns>
-        private FloatCameraImage CalcConfidenceMap(ByteCameraImage rawConfidenceMap)
+        private FloatImage CalcConfidenceMap(ByteImage rawConfidenceMap)
         {
             int width = rawConfidenceMap.Width;
             int height = rawConfidenceMap.Height;
 
-            FloatCameraImage confidenceMap = new FloatCameraImage(width, height);
+            FloatImage confidenceMap = new FloatImage(width, height);
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
@@ -855,9 +855,9 @@ namespace MetriCam2.Cameras
             return macAddress;
         }
 
-        private FloatCameraImage CalcAmplidueImge()
+        private FloatImage CalcAmplidueImge()
         {
-            FloatCameraImage amplitudeImage = new FloatCameraImage(_width, _height);
+            FloatImage amplitudeImage = new FloatImage(_width, _height);
 
             using (MemoryStream stream = new MemoryStream(_frontBuffer))
             using (BinaryReader reader = new BinaryReader(stream))
@@ -875,9 +875,9 @@ namespace MetriCam2.Cameras
             return amplitudeImage;
         }
 
-        private FloatCameraImage CalcDistanceImage()
+        private FloatImage CalcDistanceImage()
         {
-            FloatCameraImage distanceImage = new FloatCameraImage(_width, _height);
+            FloatImage distanceImage = new FloatImage(_width, _height);
 
             using (MemoryStream stream = new MemoryStream(_frontBuffer))
             using (BinaryReader reader = new BinaryReader(stream))
@@ -895,12 +895,12 @@ namespace MetriCam2.Cameras
             return distanceImage;
         }
 
-        private Point3fCameraImage CalcPoint3fImage()
+        private Point3fImage CalcPoint3fImage()
         {
-            Point3fCameraImage point3fImage = new Point3fCameraImage(_width, _height);
-            FloatCameraImage xImage = new FloatCameraImage(_width, _height);
-            FloatCameraImage yImage = new FloatCameraImage(_width, _height);
-            FloatCameraImage zImage = new FloatCameraImage(_width, _height);
+            Point3fImage point3fImage = new Point3fImage(_width, _height);
+            FloatImage xImage = new FloatImage(_width, _height);
+            FloatImage yImage = new FloatImage(_width, _height);
+            FloatImage zImage = new FloatImage(_width, _height);
 
             using (MemoryStream stream = new MemoryStream(_frontBuffer))
             using (BinaryReader reader = new BinaryReader(stream))
@@ -944,9 +944,9 @@ namespace MetriCam2.Cameras
             return point3fImage;
         }
 
-        private FloatCameraImage CalcZImage()
+        private FloatImage CalcZImage()
         {
-            FloatCameraImage zImage = new FloatCameraImage(_width, _height);
+            FloatImage zImage = new FloatImage(_width, _height);
 
             using (MemoryStream stream = new MemoryStream(_frontBuffer))
             using (BinaryReader reader = new BinaryReader(stream))
@@ -964,9 +964,9 @@ namespace MetriCam2.Cameras
             return zImage;
         }
 
-        private ByteCameraImage CalcRawConfidanceImage()
+        private ByteImage CalcRawConfidanceImage()
         {
-            ByteCameraImage rawConfidenceImage = new ByteCameraImage(_width, _height);
+            ByteImage rawConfidenceImage = new ByteImage(_width, _height);
 
             using (MemoryStream stream = new MemoryStream(_frontBuffer))
             using (BinaryReader reader = new BinaryReader(stream))

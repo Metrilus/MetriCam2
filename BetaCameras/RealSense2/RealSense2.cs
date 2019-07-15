@@ -1455,8 +1455,8 @@ namespace MetriCam2.Cameras
             Channels.Add(cr.RegisterChannel(ChannelNames.Distance));
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
 
-            Channels.Add(cr.RegisterCustomChannel(ChannelNames.Left, typeof(FloatCameraImage)));
-            Channels.Add(cr.RegisterCustomChannel(ChannelNames.Right, typeof(FloatCameraImage)));
+            Channels.Add(cr.RegisterCustomChannel(ChannelNames.Left, typeof(FloatImage)));
+            Channels.Add(cr.RegisterCustomChannel(ChannelNames.Right, typeof(FloatImage)));
         }
 
 
@@ -1883,9 +1883,7 @@ namespace MetriCam2.Cameras
         {
             if (DecimationFilter.Enabled && IsDepthChannel(channelName))
             {
-                ProjectiveTransformationRational rescaled = new ProjectiveTransformationRational((ProjectiveTransformationRational)intrinsics);
-                rescaled.RescaleParameters(_filteredDepthResolution.X, _filteredDepthResolution.Y);
-                return rescaled;
+                return intrinsics.GetRescaled(_filteredDepthResolution.X, _filteredDepthResolution.Y);
             }
 
             return intrinsics;
@@ -2001,12 +1999,12 @@ namespace MetriCam2.Cameras
             return rbt;
         }
 
-        unsafe private FloatCameraImage CalcZImage()
+        unsafe private FloatImage CalcZImage()
         {
             int height = _currentDepthFrame.Height;
             int width = _currentDepthFrame.Width;
 
-            FloatCameraImage depthData = new FloatCameraImage(width, height);
+            FloatImage depthData = new FloatImage(width, height);
             short* source = (short*)_currentDepthFrame.Data;
 
             for (int y = 0; y < height; y++)
@@ -2021,20 +2019,20 @@ namespace MetriCam2.Cameras
             return depthData;
         }
 
-        private FloatCameraImage CalcDistanceImage()
+        private FloatImage CalcDistanceImage()
         {
-            FloatCameraImage zImage = CalcZImage();
+            FloatImage zImage = CalcZImage();
             ProjectiveTransformationRational projTrans = GetIntrinsics(ChannelNames.ZImage) as ProjectiveTransformationRational;
-            Point3fCameraImage p3fImage = projTrans.ZImageToWorld(zImage);
-            return p3fImage.ToFloatCameraImage();
+            Point3fImage p3fImage = projTrans.ZImageToWorld(zImage);
+            return p3fImage.ToFloatImage();
         }
 
-        unsafe private FloatCameraImage CalcIRImage(VideoFrame frame)
+        unsafe private FloatImage CalcIRImage(VideoFrame frame)
         {
             int height = frame.Height;
             int width = frame.Width;
 
-            FloatCameraImage IRData = new FloatCameraImage(width, height);
+            FloatImage IRData = new FloatImage(width, height);
             byte* source = (byte*)frame.Data;
 
             for (int y = 0; y < height; y++)
@@ -2049,7 +2047,7 @@ namespace MetriCam2.Cameras
             return IRData;
         }
 
-        unsafe private ColorCameraImage CalcColor()
+        unsafe private ColorImage CalcColor()
         {
             int height = _currentColorFrame.Height;
             int width = _currentColorFrame.Width;
@@ -2073,7 +2071,7 @@ namespace MetriCam2.Cameras
             }
 
             bitmap.UnlockBits(bmpData);
-            return new ColorCameraImage(bitmap);
+            return new ColorImage(bitmap);
         }
 
         #endregion

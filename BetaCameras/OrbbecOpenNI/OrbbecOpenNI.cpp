@@ -156,7 +156,7 @@ void MetriCam2::Cameras::AstraOpenNI::LoadAllAvailableChannels()
 	//log->EnterMethod();
 	ChannelRegistry^ cr = ChannelRegistry::Instance;
 	Channels->Clear();
-	// Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::Infrared, UShortCameraImage::typeid))
+	// Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::Infrared, UShortImage::typeid))
 	Channels->Add(cr->RegisterChannel(ChannelNames::ZImage));
 	Channels->Add(cr->RegisterChannel(ChannelNames::Intensity));
 	Channels->Add(cr->RegisterChannel(ChannelNames::Point3DImage));
@@ -764,7 +764,7 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 	}
 }
 
-FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
+FloatImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 {
 	if (!DepthStream.isValid())
 	{
@@ -781,7 +781,7 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 
 	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
 	const int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-	FloatCameraImage^ depthDataMeters = gcnew FloatCameraImage(depthFrame.getWidth(), depthFrame.getHeight());
+	FloatImage^ depthDataMeters = gcnew FloatImage(depthFrame.getWidth(), depthFrame.getHeight());
 	depthDataMeters->ChannelName = ChannelNames::ZImage;
 
 	for (int y = 0; y < depthFrame.getHeight(); ++y)
@@ -797,7 +797,7 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 	return depthDataMeters;
 }
 
-ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
+ColorImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 {
 	if (!ColorStream.isValid())
 	{
@@ -832,13 +832,13 @@ ColorCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 
 	bitmap->UnlockBits(bmpData);
 
-	ColorCameraImage^ image = gcnew ColorCameraImage(bitmap);
+	ColorImage^ image = gcnew ColorImage(bitmap);
 	image->ChannelName = ChannelNames::Color;
 
 	return image;
 }
 
-Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
+Point3fImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 {
 	if (!DepthStream.isValid())
 	{
@@ -855,7 +855,7 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 
 	const openni::DepthPixel* pDepthRow = (const openni::DepthPixel*)depthFrame.getData();
 	const int rowSize = depthFrame.getStrideInBytes() / sizeof(openni::DepthPixel);
-	Point3fCameraImage^ pointsImage = gcnew Point3fCameraImage(depthFrame.getWidth(), depthFrame.getHeight());
+	Point3fImage^ pointsImage = gcnew Point3fImage(depthFrame.getWidth(), depthFrame.getHeight());
 	pointsImage->ChannelName = ChannelNames::Point3DImage;
 
 	for (int y = 0; y < depthFrame.getHeight(); ++y)
@@ -876,7 +876,7 @@ Point3fCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcPoint3fImage()
 	return pointsImage;
 }
 
-FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
+FloatImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 {
 	if (!IrStream.isValid())
 	{
@@ -893,7 +893,7 @@ FloatCameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 
 	const openni::Grayscale16Pixel* pIRRow = (const openni::Grayscale16Pixel*)irFrame.getData();
 	const int rowSize = irFrame.getStrideInBytes() / sizeof(openni::Grayscale16Pixel);
-	FloatCameraImage^ irData = gcnew FloatCameraImage(irFrame.getWidth(), irFrame.getHeight(), 0.0f);
+	FloatImage^ irData = gcnew FloatImage(irFrame.getWidth(), irFrame.getHeight(), 0.0f);
 	irData->ChannelName = ChannelNames::Intensity;	
 
 	// skip first yTranslation rows
@@ -1067,13 +1067,13 @@ Metrilus::Util::RigidBodyTransformation^ MetriCam2::Cameras::AstraOpenNI::GetExt
 void MetriCam2::Cameras::AstraOpenNI::WaitUntilNextValidFrame()
 {
 	int numFramesWaited = 0;
-	FloatCameraImage^ frame;
+	FloatImage^ frame;
 	if (IsChannelActive(ChannelNames::ZImage))
 	{
 		do
 		{
 			Update();
-			frame = (FloatCameraImage^)CalcChannel(ChannelNames::ZImage);
+			frame = (FloatImage^)CalcChannel(ChannelNames::ZImage);
 			numFramesWaited++;
 		} while (!IsDepthFrameValid_NumberNonZeros(frame, 30));
 	}
@@ -1087,13 +1087,13 @@ void MetriCam2::Cameras::AstraOpenNI::WaitUntilNextValidFrame()
 void MetriCam2::Cameras::AstraOpenNI::WaitUntilNextInvalidFrame()
 {
 	int numFramesWaited = 0;
-	FloatCameraImage^ frame;
+	FloatImage^ frame;
 	if (IsChannelActive(ChannelNames::ZImage))
 	{
 		do
 		{
 			Update();
-			frame = (FloatCameraImage^)CalcChannel(ChannelNames::ZImage);
+			frame = (FloatImage^)CalcChannel(ChannelNames::ZImage);
 			numFramesWaited++;
 		} while (IsDepthFrameValid_NumberNonZeros(frame, 30));
 	}
@@ -1105,12 +1105,12 @@ void MetriCam2::Cameras::AstraOpenNI::WaitUntilNextInvalidFrame()
 }
 
 [MethodImpl(MethodImplOptions::AggressiveInlining)]
-bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatCameraImage^ img)
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatImage^ img)
 {
 	return IsDepthFrameValid_MinimumMean(img, 0.0f);
 }
 [MethodImpl(MethodImplOptions::AggressiveInlining)]
-bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatCameraImage^ img, float threshold)
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatImage^ img, float threshold)
 {
 	float sum = 0;
 	for (int y = 0; y < img->Height; y++)
@@ -1124,12 +1124,12 @@ bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_MinimumMean(FloatCameraI
 }
 
 [MethodImpl(MethodImplOptions::AggressiveInlining)]
-bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img)
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatImage^ img)
 {
 	return IsDepthFrameValid_NumberNonZeros(img, 25);
 }
 [MethodImpl(MethodImplOptions::AggressiveInlining)]
-bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatCameraImage^ img, int thresholdPercentage)
+bool MetriCam2::Cameras::AstraOpenNI::IsDepthFrameValid_NumberNonZeros(FloatImage^ img, int thresholdPercentage)
 {
 	int numPixels = img->Height * img->Width;
 	int numNonZeros = 0;

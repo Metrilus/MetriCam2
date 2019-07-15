@@ -53,17 +53,17 @@ namespace MetriCam2
         private ChannelRegistry()
         {
             registeredChannels = new Dictionary<string, Type>();
-            registeredChannels.Add(ChannelNames.Disparities, typeof(FloatCameraImage));
-            registeredChannels.Add(ChannelNames.Distance, typeof(FloatCameraImage));
-            registeredChannels.Add(ChannelNames.Color, typeof(ColorCameraImage));
-            registeredChannels.Add(ChannelNames.Red, typeof(FloatCameraImage));
-            registeredChannels.Add(ChannelNames.Green, typeof(FloatCameraImage));
-            registeredChannels.Add(ChannelNames.Blue, typeof(FloatCameraImage));
-            registeredChannels.Add(ChannelNames.Amplitude, typeof(FloatCameraImage));
-            registeredChannels.Add(ChannelNames.Intensity, typeof(FloatCameraImage));
-            registeredChannels.Add(ChannelNames.ZImage, typeof(FloatCameraImage));
-            registeredChannels.Add(ChannelNames.Point3DImage, typeof(Point3fCameraImage));
-            registeredChannels.Add(ChannelNames.ConfidenceMap, typeof(FloatCameraImage));
+            registeredChannels.Add(ChannelNames.Disparities, typeof(FloatImage));
+            registeredChannels.Add(ChannelNames.Distance, typeof(FloatImage));
+            registeredChannels.Add(ChannelNames.Color, typeof(ColorImage));
+            registeredChannels.Add(ChannelNames.Red, typeof(FloatImage));
+            registeredChannels.Add(ChannelNames.Green, typeof(FloatImage));
+            registeredChannels.Add(ChannelNames.Blue, typeof(FloatImage));
+            registeredChannels.Add(ChannelNames.Amplitude, typeof(FloatImage));
+            registeredChannels.Add(ChannelNames.Intensity, typeof(FloatImage));
+            registeredChannels.Add(ChannelNames.ZImage, typeof(FloatImage));
+            registeredChannels.Add(ChannelNames.Point3DImage, typeof(Point3fImage));
+            registeredChannels.Add(ChannelNames.ConfidenceMap, typeof(FloatImage));
         }
         #endregion
 

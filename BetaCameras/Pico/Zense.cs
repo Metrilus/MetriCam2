@@ -358,9 +358,9 @@ namespace MetriCam2.Cameras
             throw new ImageAcquisitionFailedException($"{Name}: No valid channel name");
         }
 
-        unsafe private FloatCameraImage CalcIRImage(int width, int height, Frame frame)
+        unsafe private FloatImage CalcIRImage(int width, int height, Frame frame)
         {
-            FloatCameraImage IRData = new FloatCameraImage(width, height);
+            FloatImage IRData = new FloatImage(width, height);
             IRData.TimeStamp = this.TimeStamp;
             ushort* source = (ushort*)frame.pFrameData;
 
@@ -376,9 +376,9 @@ namespace MetriCam2.Cameras
             return IRData;
         }
 
-        unsafe private FloatCameraImage CalcZImage(int width, int height, Frame frame)
+        unsafe private FloatImage CalcZImage(int width, int height, Frame frame)
         {
-            FloatCameraImage depthData = new FloatCameraImage(width, height);
+            FloatImage depthData = new FloatImage(width, height);
             depthData.TimeStamp = this.TimeStamp;
             ushort* source = (ushort*)frame.pFrameData;
 
@@ -394,7 +394,7 @@ namespace MetriCam2.Cameras
             return depthData;
         }
 
-        unsafe private ColorCameraImage CalcColor(int width, int height, Frame frame)
+        unsafe private ColorImage CalcColor(int width, int height, Frame frame)
         {
 #if NETSTANDARD2_0
             Bitmap bitmap = new Bitmap(width, height, Metrilus.Util.PixelFormat.Format24bppRgb);
@@ -419,7 +419,7 @@ namespace MetriCam2.Cameras
             }
 
             bitmap.UnlockBits(bmpData);
-            ColorCameraImage image = new ColorCameraImage(bitmap);
+            ColorImage image = new ColorImage(bitmap);
             image.TimeStamp = this.TimeStamp;
 
             return image;

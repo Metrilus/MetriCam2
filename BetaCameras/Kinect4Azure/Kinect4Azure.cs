@@ -340,7 +340,7 @@ namespace MetriCam2.Cameras
             throw new ImageAcquisitionFailedException($"Channel {channelName} not supported!");
         }
 
-        unsafe private ColorCameraImage CalcColor()
+        unsafe private ColorImage CalcColor()
         {
             if (_capture.Color == null)
             {
@@ -375,10 +375,10 @@ namespace MetriCam2.Cameras
             }
 
             bitmap.UnlockBits(bmpData);
-            return new ColorCameraImage(bitmap);
+            return new ColorImage(bitmap);
         }
 
-        unsafe private FloatCameraImage CalcZImage()
+        unsafe private FloatImage CalcZImage()
         {
             if (_capture.Depth == null)
             {
@@ -393,7 +393,7 @@ namespace MetriCam2.Cameras
                 throw new ImageAcquisitionFailedException($"Expected format Depth16, found format {_capture.Depth.Format.ToString()}");
             }
 
-            FloatCameraImage depthData = new FloatCameraImage(width, height);
+            FloatImage depthData = new FloatImage(width, height);
             short* source = (short*)_capture.Depth.Buffer;
 
             for (int i = 0; i < depthData.Length; i++)
@@ -404,7 +404,7 @@ namespace MetriCam2.Cameras
             return depthData;
         }
 
-        unsafe private FloatCameraImage CalcIntensityImage()
+        unsafe private FloatImage CalcIntensityImage()
         {
             int height = _capture.IR.HeightPixels;
             int width = _capture.IR.WidthPixels;
@@ -414,7 +414,7 @@ namespace MetriCam2.Cameras
                 throw new ImageAcquisitionFailedException($"Expected format IR16, found format {_capture.IR.Format.ToString()}");
             }
 
-            FloatCameraImage irData = new FloatCameraImage(width, height);
+            FloatImage irData = new FloatImage(width, height);
             short* source = (short*)_capture.IR.Buffer;
 
             for (int i = 0; i < irData.Length; i++)
@@ -425,12 +425,12 @@ namespace MetriCam2.Cameras
             return irData;
         }
 
-        private FloatCameraImage CalcDistanceImage()
+        private FloatImage CalcDistanceImage()
         {
-            FloatCameraImage zImage = CalcZImage();
+            FloatImage zImage = CalcZImage();
             ProjectiveTransformationRational projTrans = GetIntrinsics(ChannelNames.ZImage) as ProjectiveTransformationRational;
-            Point3fCameraImage p3fImage = projTrans.ZImageToWorld(zImage);
-            return p3fImage.ToFloatCameraImage();
+            Point3fImage p3fImage = projTrans.ZImageToWorld(zImage);
+            return p3fImage.ToFloatImage();
         }
 
         public override IProjectiveTransformation GetIntrinsics(string channelName)

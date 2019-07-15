@@ -18,10 +18,10 @@ namespace MetriCam2.Cameras
         private Coord3D[] bufferPoint3f;
         private AutoResetEvent dataAvailable = new AutoResetEvent(false);
 
-        private FloatCameraImage distanceImage;
-        private UShortCameraImage intensityImage;
-        private UShortCameraImage confidenceImage;
-        private Point3fCameraImage point3fImage;
+        private FloatImage distanceImage;
+        private UShortImage intensityImage;
+        private UShortImage confidenceImage;
+        private Point3fImage point3fImage;
 
         private Object dataLock = new Object();
 
@@ -445,7 +445,7 @@ namespace MetriCam2.Cameras
                 {
                     if (IsChannelActive(ChannelNames.Point3DImage))
                     {
-                        point3fImage = new Point3fCameraImage(width, height);
+                        point3fImage = new Point3fImage(width, height);
                         for (int y = 0, i = 0; y < height; y++)
                         {
                             for (int x = 0; x < width; x++, i++)
@@ -458,7 +458,7 @@ namespace MetriCam2.Cameras
 
                     if (IsChannelActive(ChannelNames.Distance))
                     {
-                        distanceImage = new FloatCameraImage(width, height);
+                        distanceImage = new FloatImage(width, height);
                         for (int y = 0, i = 0; y < height; y++)
                         {
                             for (int x = 0; x < width; x++, i++)
@@ -471,7 +471,7 @@ namespace MetriCam2.Cameras
 
                     if (IsChannelActive(ChannelNames.Intensity))
                     {
-                        intensityImage = new UShortCameraImage(width, height);
+                        intensityImage = new UShortImage(width, height);
 
                         for (int y = 0, i = 0; y < height; y++)
                         {
@@ -484,7 +484,7 @@ namespace MetriCam2.Cameras
 
                     if (IsChannelActive(ChannelNames.ConfidenceMap))
                     {
-                        confidenceImage = new UShortCameraImage(width, height);
+                        confidenceImage = new UShortImage(width, height);
 
                         for (int y = 0, i = 0; y < height; y++)
                         {
@@ -513,7 +513,7 @@ namespace MetriCam2.Cameras
                 case ChannelNames.Distance:
                     return distanceImage;
                 case ChannelNames.Intensity:
-                    return intensityImage.ToFloatCameraImage();
+                    return intensityImage.ToFloatImage();
                 case ChannelNames.Point3DImage:
                     return point3fImage;
             }
@@ -528,13 +528,13 @@ namespace MetriCam2.Cameras
         /// </summary>
         /// <param name="rawConfidenceMap">16-bit unsigned int raw confidence map as provided by camera</param>
         /// <returns>Confidence map as float image with intensities between 0 and 1</returns>
-        private FloatCameraImage CalcConfidenceMap(UShortCameraImage rawConfidenceMap)
+        private FloatImage CalcConfidenceMap(UShortImage rawConfidenceMap)
         {
             int width = rawConfidenceMap.Width;
             int height = rawConfidenceMap.Height;
             float scaling = 1.0f / ushort.MaxValue;
 
-            FloatCameraImage confidenceMap = new FloatCameraImage(width, height);
+            FloatImage confidenceMap = new FloatImage(width, height);
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)

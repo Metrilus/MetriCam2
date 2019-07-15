@@ -155,7 +155,7 @@ namespace MetriCam2.Cameras
             switch (channelName)
             {
                 case ChannelNames.Color:
-                    return new ColorCameraImage(_bitmap);
+                    return new ColorImage(_bitmap);
             }
 
             log.Error($"{Name}: Unexpected ChannelName in CalcChannel().");
