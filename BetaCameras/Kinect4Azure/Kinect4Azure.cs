@@ -21,7 +21,7 @@ namespace MetriCam2.Cameras
         private object _lock = new object();
 
         private Dictionary<string, RigidBodyTransformation> _extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
-        private Dictionary<string, IProjectiveTransformation> _intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private Dictionary<string, ProjectiveTransformation> _intrinsicsCache = new Dictionary<string, ProjectiveTransformation>();
         private K4AColorResolution _lastValidColorResolution = K4AColorResolution.r720p; //Last valid mode != off
         private K4ADepthMode _lastValidDepthMode = K4ADepthMode.WFOV_Unbinned; //Last valid mode != off
 
@@ -315,7 +315,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             if (null == _capture)
             {
@@ -433,7 +433,7 @@ namespace MetriCam2.Cameras
             return p3fImage.ToFloatImage();
         }
 
-        public override IProjectiveTransformation GetIntrinsics(string channelName)
+        public override ProjectiveTransformation GetIntrinsics(string channelName)
         {
             string keyName = channelName == ChannelNames.Color ? $"{channelName}_{ColorResolution.ToString()}" : $"{channelName}_{DepthMode.ToString()}";
             if (_intrinsicsCache.ContainsKey(keyName) && _intrinsicsCache[keyName] != null)
@@ -471,7 +471,7 @@ namespace MetriCam2.Cameras
                     throw new System.Exception(msg);
             }
 
-            IProjectiveTransformation projTrans = new ProjectiveTransformationRational(
+            ProjectiveTransformation projTrans = new ProjectiveTransformationRational(
                 width,
                 height,
                 intrinsics.parameters[(int)Intrinsics.Fx],

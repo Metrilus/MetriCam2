@@ -15,9 +15,9 @@ namespace MetriCam2
         {
             internal ChannelDescriptor(string name, Type imageType)
             {
-                if (!typeof(CameraImage).IsAssignableFrom(imageType))
+                if (!typeof(ImageBase).IsAssignableFrom(imageType))
                 {
-                    throw new ArgumentException(this.GetType().Name + ": imageType has to be of CameraImage.", "imageType");
+                    throw new ArgumentException(this.GetType().Name + ": imageType has to be of ImageBase.", "imageType");
                 }
                 Name = name;
                 ImageType = imageType;

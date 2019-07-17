@@ -33,7 +33,7 @@ namespace MetriCam2.Cameras
         private float _depthScale = 1.0f;
         private HashSet<string> _activeChannels = new HashSet<string>();
         private Dictionary<string, RigidBodyTransformation> extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
-        private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private Dictionary<string, ProjectiveTransformation> intrinsicsCache = new Dictionary<string, ProjectiveTransformation>();
 
         #region Filter
         public RealSense2Filters.DecimationFilter DecimationFilter { get; } = new RealSense2Filters.DecimationFilter();
@@ -1645,7 +1645,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -1833,7 +1833,7 @@ namespace MetriCam2.Cameras
             _activeChannels.Remove(channelName);
         }
 
-        unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
+        unsafe public override ProjectiveTransformation GetIntrinsics(string channelName)
         {
             Point2i resolution = GetResolutionFromChannelName(channelName);
             string keyName = $"{channelName}_{resolution.X}x{resolution.Y}";
@@ -1879,7 +1879,7 @@ namespace MetriCam2.Cameras
         /// <param name="intrinsics"></param>
         /// <param name="channelName"></param>
         /// <returns></returns>
-        private IProjectiveTransformation RescaleIntrinsics(IProjectiveTransformation intrinsics, string channelName)
+        private ProjectiveTransformation RescaleIntrinsics(ProjectiveTransformation intrinsics, string channelName)
         {
             if (DecimationFilter.Enabled && IsDepthChannel(channelName))
             {

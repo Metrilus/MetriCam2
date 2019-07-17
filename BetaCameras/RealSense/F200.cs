@@ -217,7 +217,7 @@ namespace MetriCam2.Cameras
         /// <param name="channelName">Channel name.</param>
         /// <returns>(Image) Data.</returns>
         /// <seealso cref="Camera.CalcChannel"/>
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {

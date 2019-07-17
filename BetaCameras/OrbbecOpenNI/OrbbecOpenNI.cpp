@@ -25,7 +25,7 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	_irFlooderEnabled = false;
 	_hasColor = true;
 	_extrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>();
-	_intrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, IProjectiveTransformation^>();
+	_intrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, ProjectiveTransformation^>();
 }
 
 // In C++/CLI, a Dispose() method is automatically created when implementing the deterministic destructor.
@@ -557,7 +557,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 	delete ppStreams;
 }
 
-Metrilus::Util::CameraImage ^ MetriCam2::Cameras::AstraOpenNI::CalcChannelImpl(String ^ channelName)
+Metrilus::Util::ImageBase ^ MetriCam2::Cameras::AstraOpenNI::CalcChannelImpl(String ^ channelName)
 {
 	if (channelName->Equals(ChannelNames::ZImage))
 	{
@@ -921,7 +921,7 @@ FloatImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 	return irData;
 }
 
-Metrilus::Util::IProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIntrinsics(String^ channelName)
+Metrilus::Util::ProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIntrinsics(String^ channelName)
 {
 	//We need to cache the intrinsics, since OpenNI 2.3.1.48 generates a black depth image, if Device.getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, ...) is called too often. 
 	if (_intrinsicsCache->ContainsKey(channelName) && _intrinsicsCache[channelName] != nullptr)

@@ -125,7 +125,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             if (!IsChannelActive(channelName))
                 throw new InvalidOperationException(string.Format("{0}: can't capture image from channel {1}, because it is not active.", this.Name, channelName));

@@ -173,7 +173,7 @@ namespace MetriCam2.Cameras
             _frontJsonData = _backJsonData;
         }
 
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {

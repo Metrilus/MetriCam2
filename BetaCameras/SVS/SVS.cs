@@ -968,7 +968,7 @@ namespace MetriCam2.Cameras
         /// <summary>Computes (image) data for a given channel.</summary>
         /// <param name="channelName">Channel name.</param>
         /// <returns>Copy of driver's image buffer.</returns>
-        protected unsafe override CameraImage CalcChannelImpl(string channelName)
+        protected unsafe override ImageBase CalcChannelImpl(string channelName)
         {
             lock (dataLock)
             {

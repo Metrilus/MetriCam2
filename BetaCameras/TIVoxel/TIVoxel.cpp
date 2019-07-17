@@ -480,7 +480,7 @@ void TIVoxel::LoadAllAvailableChannels()
 	Channels->Add(cr->RegisterCustomChannel(CHANNEL_NAME_PHASE, UShortImage::typeid));
 }
 
-CameraImage^ TIVoxel::CalcChannelImpl(String^ channelName)
+ImageBase^ TIVoxel::CalcChannelImpl(String^ channelName)
 {
 	if (channelName == CHANNEL_NAME_AMBIENT)
 	{
@@ -501,7 +501,7 @@ CameraImage^ TIVoxel::CalcChannelImpl(String^ channelName)
 	return nullptr;
 }
 
-CameraImage^ TIVoxel::CalcAmplitude()
+ImageBase^ TIVoxel::CalcAmplitude()
 {
 	FloatImage^ result = gcnew FloatImage(m_width, m_height);
 	ByteImage^ localAmplitudes = currentAmplitudes;
@@ -517,7 +517,7 @@ CameraImage^ TIVoxel::CalcAmplitude()
 	return result;
 }
 
-CameraImage^ TIVoxel::CalcAmbient()
+ImageBase^ TIVoxel::CalcAmbient()
 {
 	FloatImage^ result = gcnew FloatImage(m_width, m_height);
 	ByteImage^ localAmbient = currentAmbient;
@@ -531,7 +531,7 @@ CameraImage^ TIVoxel::CalcAmbient()
 	return result;
 }
 
-CameraImage^ TIVoxel::CalcPhase()
+ImageBase^ TIVoxel::CalcPhase()
 {
 	UShortImage^ result = gcnew UShortImage(m_width, m_height);
 	ByteImage^ localPhases = currentPhases;
@@ -547,7 +547,7 @@ CameraImage^ TIVoxel::CalcPhase()
 	return result;
 }
 
-CameraImage^ TIVoxel::CalcDistance()
+ImageBase^ TIVoxel::CalcDistance()
 {
 	const float v_light = Camera::SpeedOfLight;
 	const float range = (v_light / (2.0f * (float)EffectiveModulationFrequency)); // FIXME: use GetUnambiguousRange or something here.

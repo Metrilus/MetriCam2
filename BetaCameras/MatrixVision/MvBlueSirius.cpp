@@ -242,7 +242,7 @@ namespace MetriCam2
 			CheckResult(result, InvalidOperationException::typeid, 14);
 		}
 
-		CameraImage^ MvBlueSirius::CalcChannelImpl(String^ channelName)
+		ImageBase^ MvBlueSirius::CalcChannelImpl(String^ channelName)
 		{
 			if (ChannelNames::Color == channelName)
 			{
@@ -321,7 +321,7 @@ namespace MetriCam2
 			return nullptr;
 		}
 
-		IProjectiveTransformation^ MvBlueSirius::GetIntrinsics(String^ channelName)
+		ProjectiveTransformation^ MvBlueSirius::GetIntrinsics(String^ channelName)
 		{
 			if (MetriCam2::ChannelNames::Distance == channelName
 				|| MetriCam2::ChannelNames::ZImage == channelName)

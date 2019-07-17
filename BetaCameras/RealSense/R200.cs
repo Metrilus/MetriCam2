@@ -286,7 +286,7 @@ namespace MetriCam2.Cameras
         /// <param name="channelName">Channel name.</param>
         /// <returns>(Image) Data.</returns>
         /// <seealso cref="Camera.CalcChannel"/>
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -324,9 +324,9 @@ namespace MetriCam2.Cameras
         /// <param name="channelName">The channel name.</param>
         /// <returns>The ProjectiveTransformationRational</returns>
         /// <remarks>The method first searches for a pt file on disk. If this fails it is able to provide internal intrinsics for ZImage channel.</remarks>
-        public override IProjectiveTransformation GetIntrinsics(string channelName)
+        public override ProjectiveTransformation GetIntrinsics(string channelName)
         {
-            IProjectiveTransformation result = null;
+            ProjectiveTransformation result = null;
             log.Info("Trying to load projective transformation from file.");
             try
             {

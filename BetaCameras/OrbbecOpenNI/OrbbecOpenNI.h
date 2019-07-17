@@ -131,7 +131,7 @@ namespace MetriCam2
 
 			static System::Collections::Generic::Dictionary<String^, String^>^ GetSerialToUriMappingOfAttachedCameras();
 
-			virtual Metrilus::Util::IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
+			virtual Metrilus::Util::ProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 			virtual Metrilus::Util::RigidBodyTransformation^ GetExtrinsics(String^ channelFromName, String^ channelToName) override;
 
 			/// <summary>
@@ -186,7 +186,7 @@ namespace MetriCam2
 			/// <param name="channelName">Channel name.</param>
 			/// <returns>(Image) Data.</returns>
 			/// <seealso cref="Camera.CalcChannel"/>
-			virtual Metrilus::Util::CameraImage^ CalcChannelImpl(String^ channelName) override;
+			virtual Metrilus::Util::ImageBase^ CalcChannelImpl(String^ channelName) override;
 
 			/// <summary>
 			/// Activate a channel.
@@ -352,7 +352,7 @@ namespace MetriCam2
 			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.
 			int _intensityYTranslation;
 			System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>^ _extrinsicsCache;
-			System::Collections::Generic::Dictionary<String^, IProjectiveTransformation^>^ _intrinsicsCache;
+			System::Collections::Generic::Dictionary<String^, ProjectiveTransformation^>^ _intrinsicsCache;
 
 			msclr::interop::marshal_context marshalContext;
 		};

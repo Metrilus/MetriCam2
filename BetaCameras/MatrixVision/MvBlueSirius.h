@@ -251,7 +251,7 @@ namespace MetriCam2
 			MvBlueSirius();
 			~MvBlueSirius();
 
-			virtual IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
+			virtual ProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 
 			property System::String^ Vendor
 			{
@@ -415,7 +415,7 @@ namespace MetriCam2
 			/// <param name="channelName">Channel name.</param>
 			/// <returns>(Image) Data.</returns>
 			/// <seealso cref="Camera.CalcChannel"/>
-			virtual CameraImage^ CalcChannelImpl(String^ channelName) override;
+			virtual ImageBase^ CalcChannelImpl(String^ channelName) override;
 
 		private:
 			// Internal helper functions

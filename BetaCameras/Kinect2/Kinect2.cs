@@ -553,7 +553,7 @@ namespace MetriCam2.Cameras
         /// <param name="channelName">Channel name.</param>
         /// <returns>(Image) Data.</returns>
         /// <seealso cref="Camera.CalcChannel"/>
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -580,9 +580,9 @@ namespace MetriCam2.Cameras
         /// <param name="channelName">The channel name.</param>
         /// <returns>The ProjectiveTransformationRational</returns>
         /// <remarks>The method first searches for a pt file on disk. If this fails it is able to provide internal intrinsics for amplitude / depth channel.</remarks>
-        public override IProjectiveTransformation GetIntrinsics(string channelName)
+        public override ProjectiveTransformation GetIntrinsics(string channelName)
         {
-            IProjectiveTransformation result = null;
+            ProjectiveTransformation result = null;
 
             log.Info("Trying to load projective transformation from file.");
             try
@@ -616,7 +616,7 @@ namespace MetriCam2.Cameras
         /// Read out the factory intrinsics for the IR/Depth channel. The principal point in x-direction depends on the prperty <see cref="FlipX"/.>
         /// </summary>
         /// <returns>Factory IR intrinsics.</returns>
-        public IProjectiveTransformation GetFactoryIRIntrinsics()
+        public ProjectiveTransformation GetFactoryIRIntrinsics()
         {
             CameraIntrinsics intrinsics = Coordinates.GetDepthCameraIntrinsics();
             for (int i = 0; i < 100 && intrinsics.FocalLengthX == 0; i++)

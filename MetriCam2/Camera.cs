@@ -910,7 +910,7 @@ namespace MetriCam2
         /// <summary>
         /// Cache for intrinsic calibrations.
         /// </summary>
-        private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private Dictionary<string, ProjectiveTransformation> intrinsicsCache = new Dictionary<string, ProjectiveTransformation>();
         /// <summary>
         /// Cache for extrinsic calibrations.
         /// </summary>
@@ -1383,10 +1383,10 @@ namespace MetriCam2
         /// </summary>
         /// <remarks>This method is cached.</remarks>
         /// <param name="channelName">Channel for which the intrinsics should be loaded.</param>
-        /// <returns>An IProjectiveTransformation object.</returns>
+        /// <returns>An ProjectiveTransformation object.</returns>
         /// <exception cref="InvalidOperationException">When called while the camera is not connected.</exception>
         /// <exception cref="FileNotFoundException">When no calibration file was found for the specified channel.</exception>
-        public virtual IProjectiveTransformation GetIntrinsics(string channelName)
+        public virtual ProjectiveTransformation GetIntrinsics(string channelName)
         {
             if (!IsConnected)
             {
@@ -1400,7 +1400,7 @@ namespace MetriCam2
             }
 
             bool isDefault;
-            IProjectiveTransformation pt = LoadPT(channelName, out isDefault);
+            ProjectiveTransformation pt = LoadPT(channelName, out isDefault);
             if (null != pt)
             {
                 intrinsicsCache[channelName] = pt;
@@ -1534,7 +1534,7 @@ namespace MetriCam2
         /// <summary>Computes (image) data for the channel selected by <see cref="SelectChannel"/>.</summary>
         /// <returns>(Image) Data.</returns>
         /// <remarks>This is just a shorthand for <see cref="CalcChannel"/>.</remarks>
-        public CameraImage CalcSelectedChannel()
+        public ImageBase CalcSelectedChannel()
         {
             return CalcChannel(selectedChannel);
         }
@@ -1546,7 +1546,7 @@ namespace MetriCam2
         /// <remarks>Calls camera-specific <see cref="CalcChannelImpl"/>.</remarks>
         /// <exception cref="ArgumentException">If the specified channel is not active.</exception>
         /// <seealso cref="enableImplicitThreadSafety"/>
-        public CameraImage CalcChannel(string channelName)
+        public ImageBase CalcChannel(string channelName)
         {
             // TODO: Deactivated because of bug: see ticket #0003324.
             //if (calcChannelCache.ContainsKey(channelName))
@@ -1558,7 +1558,7 @@ namespace MetriCam2
             {
                 throw ExceptionBuilder.Build(typeof(InvalidOperationException), Name, "error_updateMustBeCalledBeforeCalcChannel");
             }
-            CameraImage img;
+            ImageBase img;
             if (enableImplicitThreadSafety)
             {
                 lock (cameraLock)
@@ -2521,7 +2521,7 @@ namespace MetriCam2
         /// This method is implicitly called by <see cref="Camera.CalcChannel"/>, non-locked.
         /// If your implementation needs locking, use <see cref="Camera.cameraLock"/>.
         /// </remarks>
-        protected abstract CameraImage CalcChannelImpl(string channelName);
+        protected abstract ImageBase CalcChannelImpl(string channelName);
 #endregion
 
 #region Private Methods
@@ -2542,11 +2542,11 @@ namespace MetriCam2
         /// 4) "default" only
         /// 2-4a-c) accordingly.
         /// </remarks>
-        private IProjectiveTransformation LoadPT(string channelName, out bool isDefault)
+        private ProjectiveTransformation LoadPT(string channelName, out bool isDefault)
         {
             log.DebugFormat("LoadPT({0})", channelName);
 
-            IProjectiveTransformation pt = null;
+            ProjectiveTransformation pt = null;
             string serial = SerialNumber;
             string suffix = channelName;
             isDefault = false;
@@ -2641,15 +2641,15 @@ namespace MetriCam2
                 + camTo.ChannelIdentifier(channelToName);
         }
 
-        private static IProjectiveTransformation LoadPTFromCurrentPath(string filename)
+        private static ProjectiveTransformation LoadPTFromCurrentPath(string filename)
         {
             return LoadPTFromFilesystem(".", filename);
         }
-        private static IProjectiveTransformation LoadPTFromRegistry(string filename)
+        private static ProjectiveTransformation LoadPTFromRegistry(string filename)
         {
             return LoadPTFromFilesystem(GetCalibrationPathFromRegistry(), filename);
         }
-        private static IProjectiveTransformation LoadPTFromFilesystem(string folder, string filename)
+        private static ProjectiveTransformation LoadPTFromFilesystem(string folder, string filename)
         {
             if (null == folder || "" == folder || null == filename || "" == filename)
             {
@@ -2657,7 +2657,7 @@ namespace MetriCam2
             }
             return LoadPTFromFilesystem(folder + Path.DirectorySeparatorChar + filename);
         }
-        private static IProjectiveTransformation LoadPTFromFilesystem(string filename)
+        private static ProjectiveTransformation LoadPTFromFilesystem(string filename)
         {
             if (null == filename)
             {
@@ -2680,7 +2680,7 @@ namespace MetriCam2
                 return null;
             }
         }
-        private static IProjectiveTransformation LoadPTFromEmbeddedResource(string filename)
+        private static ProjectiveTransformation LoadPTFromEmbeddedResource(string filename)
         {
             Assembly entryAssembly = GetManagedEntryAssembly();
 
@@ -2693,7 +2693,7 @@ namespace MetriCam2
 
                 using (BinaryReader br = new BinaryReader(stream))
                 {
-                    return (IProjectiveTransformation)ProjectiveTransformationRational.ReadFromMetriStream(br);
+                    return (ProjectiveTransformation)ProjectiveTransformationRational.ReadFromMetriStream(br);
                 }
             }
         }

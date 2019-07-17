@@ -149,7 +149,7 @@ namespace MetriCam2.Samples.SimpleViewer
             {
                 cam.Update();
 
-                CameraImage camImg = cam.CalcSelectedChannel();
+                ImageBase camImg = cam.CalcSelectedChannel();
                 if (null == camImg)
                 {
                     // ignore errors. However, this might be a hint that something is wrong in your application.

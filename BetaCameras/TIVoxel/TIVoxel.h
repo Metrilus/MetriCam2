@@ -275,7 +275,7 @@ namespace Cameras
 		virtual void DisconnectImpl() override;
 		virtual void UpdateImpl() override;
 		virtual void LoadAllAvailableChannels() override;
-		virtual CameraImage^ CalcChannelImpl(String^ channelName) override;
+		virtual ImageBase^ CalcChannelImpl(String^ channelName) override;
 	private:
 		/// <summary>
 		/// Gets the unambiguous range for two modulation frequencies.
@@ -355,10 +355,10 @@ namespace Cameras
 		Object^ settingsLock = gcnew Object();
 
 		// calculating channels for images
-		CameraImage^ CalcAmplitude();
-		CameraImage^ CalcAmbient();
-		CameraImage^ CalcPhase();
-		CameraImage^ CalcDistance();
+		ImageBase^ CalcAmplitude();
+		ImageBase^ CalcAmbient();
+		ImageBase^ CalcPhase();
+		ImageBase^ CalcDistance();
 		
 		Voxel::DevicePtr* GetDeviceBySerialNumber(String^ serial);
 		Object^ GetParameterByName(String^ name);

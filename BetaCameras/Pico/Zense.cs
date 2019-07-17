@@ -17,7 +17,7 @@ namespace MetriCam2.Cameras
     public class Zense : Camera, IDisposable
     {
         private bool _disposed = false;
-        private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private Dictionary<string, ProjectiveTransformation> intrinsicsCache = new Dictionary<string, ProjectiveTransformation>();
         private Frame _currentDepthFrame = new Frame();
         private Frame _currentColorFrame = new Frame();
         private Frame _currentIRFrame = new Frame();
@@ -343,7 +343,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -495,7 +495,7 @@ namespace MetriCam2.Cameras
             throw new Exception($"Failed to get extrinsics from {channelFromName} to {channelToName}");
         }
 
-        unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
+        unsafe public override ProjectiveTransformation GetIntrinsics(string channelName)
         {
             FrameType frameType = GetFrameTypeFromChannelName(channelName);
             CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, frameType, out FrameMode mode));
