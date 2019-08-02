@@ -17,7 +17,7 @@ namespace MetriCam2.Cameras
     public class Zense : Camera, IDisposable
     {
         private bool _disposed = false;
-        private Dictionary<string, IProjectiveTransformation> intrinsicsCache = new Dictionary<string, IProjectiveTransformation>();
+        private Dictionary<string, ProjectiveTransformation> intrinsicsCache = new Dictionary<string, ProjectiveTransformation>();
         private Frame _currentDepthFrame = new Frame();
         private Frame _currentColorFrame = new Frame();
         private Frame _currentIRFrame = new Frame();
@@ -343,7 +343,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -358,9 +358,9 @@ namespace MetriCam2.Cameras
             throw new ImageAcquisitionFailedException($"{Name}: No valid channel name");
         }
 
-        unsafe private FloatCameraImage CalcIRImage(int width, int height, Frame frame)
+        unsafe private FloatImage CalcIRImage(int width, int height, Frame frame)
         {
-            FloatCameraImage IRData = new FloatCameraImage(width, height);
+            FloatImage IRData = new FloatImage(width, height);
             IRData.TimeStamp = this.TimeStamp;
             ushort* source = (ushort*)frame.pFrameData;
 
@@ -376,9 +376,9 @@ namespace MetriCam2.Cameras
             return IRData;
         }
 
-        unsafe private FloatCameraImage CalcZImage(int width, int height, Frame frame)
+        unsafe private FloatImage CalcZImage(int width, int height, Frame frame)
         {
-            FloatCameraImage depthData = new FloatCameraImage(width, height);
+            FloatImage depthData = new FloatImage(width, height);
             depthData.TimeStamp = this.TimeStamp;
             ushort* source = (ushort*)frame.pFrameData;
 
@@ -394,7 +394,7 @@ namespace MetriCam2.Cameras
             return depthData;
         }
 
-        unsafe private ColorCameraImage CalcColor(int width, int height, Frame frame)
+        unsafe private ColorImage CalcColor(int width, int height, Frame frame)
         {
 #if NETSTANDARD2_0
             Bitmap bitmap = new Bitmap(width, height, Metrilus.Util.PixelFormat.Format24bppRgb);
@@ -419,7 +419,7 @@ namespace MetriCam2.Cameras
             }
 
             bitmap.UnlockBits(bmpData);
-            ColorCameraImage image = new ColorCameraImage(bitmap);
+            ColorImage image = new ColorImage(bitmap);
             image.TimeStamp = this.TimeStamp;
 
             return image;
@@ -495,7 +495,7 @@ namespace MetriCam2.Cameras
             throw new Exception($"Failed to get extrinsics from {channelFromName} to {channelToName}");
         }
 
-        unsafe public override IProjectiveTransformation GetIntrinsics(string channelName)
+        unsafe public override ProjectiveTransformation GetIntrinsics(string channelName)
         {
             FrameType frameType = GetFrameTypeFromChannelName(channelName);
             CheckReturnStatus(Methods.GetFrameMode(DeviceIndex, frameType, out FrameMode mode));

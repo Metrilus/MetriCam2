@@ -51,11 +51,11 @@ namespace MetriCam2
 			Channels->Add(cr->RegisterChannel(ChannelNames::Distance));
 			Channels->Add(cr->RegisterChannel(ChannelNames::ZImage));
 			Channels->Add(cr->RegisterChannel(ChannelNames::Point3DImage));
-			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Left, FloatCameraImage::typeid));
-			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Right, FloatCameraImage::typeid));
-			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::ZMapped, FloatCameraImage::typeid));
-			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::DistanceMapped, FloatCameraImage::typeid));
-			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::PointCloudMapped, Point3fCameraImage::typeid));
+			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Left, FloatImage::typeid));
+			Channels->Add(cr->RegisterCustomChannel(ChannelNames::Right, FloatImage::typeid));
+			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::ZMapped, FloatImage::typeid));
+			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::DistanceMapped, FloatImage::typeid));
+			Channels->Add(cr->RegisterCustomChannel((String^)CustomChannelNames::PointCloudMapped, Point3fImage::typeid));
 		}
 
 		void MvBlueSirius::ConnectImpl()
@@ -242,7 +242,7 @@ namespace MetriCam2
 			CheckResult(result, InvalidOperationException::typeid, 14);
 		}
 
-		CameraImage^ MvBlueSirius::CalcChannelImpl(String^ channelName)
+		ImageBase^ MvBlueSirius::CalcChannelImpl(String^ channelName)
 		{
 			if (ChannelNames::Color == channelName)
 			{
@@ -254,7 +254,7 @@ namespace MetriCam2
 				{
 					_currentMasterImage = CalcGreyImage(_master);
 				}
-				return gcnew FloatCameraImage(_currentMasterImage);
+				return gcnew FloatImage(_currentMasterImage);
 			}
 			if (ChannelNames::Right == channelName)
 			{
@@ -262,7 +262,7 @@ namespace MetriCam2
 				{
 					_currentSlaveImage = CalcGreyImage(_slave);
 				}
-				return gcnew FloatCameraImage(_currentSlaveImage);
+				return gcnew FloatImage(_currentSlaveImage);
 			}
 			if (CustomChannelNames::ZMapped == channelName)
 			{
@@ -270,7 +270,7 @@ namespace MetriCam2
 				{
 					_currentZImageMapped = CalcDepthImage(_depthMapped);
 				}
-				return gcnew FloatCameraImage(_currentZImageMapped);
+				return gcnew FloatImage(_currentZImageMapped);
 			}
 			if (ChannelNames::ZImage == channelName)
 			{
@@ -278,50 +278,50 @@ namespace MetriCam2
 				{
 					_currentZImage = CalcDepthImage(_depthRaw);
 				}
-				return gcnew FloatCameraImage(_currentZImage);
+				return gcnew FloatImage(_currentZImage);
 			}
 			if (CustomChannelNames::PointCloudMapped == channelName)
 			{
 				if (nullptr == _currentPointCloudMapped)
 				{
-					FloatCameraImage^ zImageMapped = (FloatCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::ZMapped);
+					FloatImage^ zImageMapped = (FloatImage^)CalcChannelImpl((System::String^)CustomChannelNames::ZMapped);
 					_currentPointCloudMapped = CalcPointCloud(zImageMapped);
 				}
-				return gcnew Point3fCameraImage(_currentPointCloudMapped);
+				return gcnew Point3fImage(_currentPointCloudMapped);
 			}
 			if (CustomChannelNames::DistanceMapped == channelName)
 			{
 				if (nullptr == _currentDistanceImageMapped)
 				{
-					Point3fCameraImage^ pts3DMapped = (Point3fCameraImage^)CalcChannelImpl((System::String^)CustomChannelNames::PointCloudMapped);
+					Point3fImage^ pts3DMapped = (Point3fImage^)CalcChannelImpl((System::String^)CustomChannelNames::PointCloudMapped);
 					_currentDistanceImageMapped = CalcDistances(pts3DMapped);
 				}
-				return gcnew FloatCameraImage(_currentDistanceImageMapped);
+				return gcnew FloatImage(_currentDistanceImageMapped);
 			}
 			if (ChannelNames::Distance == channelName)
 			{
 				if (nullptr == _currentDistanceImage)
 				{
-					Point3fCameraImage^ pts3D = (Point3fCameraImage^)CalcChannelImpl(ChannelNames::Point3DImage);
+					Point3fImage^ pts3D = (Point3fImage^)CalcChannelImpl(ChannelNames::Point3DImage);
 					_currentDistanceImage = CalcDistances(pts3D);
 				}
-				return gcnew FloatCameraImage(_currentDistanceImage);
+				return gcnew FloatImage(_currentDistanceImage);
 			}
 			if (ChannelNames::Point3DImage == channelName)
 			{
 				if (nullptr == _currentPointCloud)
 				{
-					FloatCameraImage^ zImage = (FloatCameraImage^)CalcChannelImpl(ChannelNames::ZImage);
+					FloatImage^ zImage = (FloatImage^)CalcChannelImpl(ChannelNames::ZImage);
 					_currentPointCloud = CalcPointCloud(zImage);
 				}
-				return gcnew Point3fCameraImage(_currentPointCloud);
+				return gcnew Point3fImage(_currentPointCloud);
 			}
 
 			// this should not happen, because Camera checks if the channel is active.
 			return nullptr;
 		}
 
-		IProjectiveTransformation^ MvBlueSirius::GetIntrinsics(String^ channelName)
+		ProjectiveTransformation^ MvBlueSirius::GetIntrinsics(String^ channelName)
 		{
 			if (MetriCam2::ChannelNames::Distance == channelName
 				|| MetriCam2::ChannelNames::ZImage == channelName)
@@ -335,11 +335,11 @@ namespace MetriCam2
 			return Camera::GetIntrinsics(channelName);
 		}
 
-		ColorCameraImage ^ MvBlueSirius::CalcColorImage(ImageData^ image)
+		ColorImage ^ MvBlueSirius::CalcColorImage(ImageData^ image)
 		{
 			System::Threading::Monitor::Enter(_updateLock);
 
-			ColorCameraImage^ cImage = gcnew ColorCameraImage(image->Width, image->Height);
+			ColorImage^ cImage = gcnew ColorImage(image->Width, image->Height);
 			BitmapData^ bitmapData = cImage->Data->LockBits(System::Drawing::Rectangle(0, 0, image->Width, image->Height), ImageLockMode::WriteOnly, cImage->Data->PixelFormat);
 			int colorIdx = 0;
 			for (unsigned int y = 0; y < image->Height; y++)
@@ -360,11 +360,11 @@ namespace MetriCam2
 			return cImage;
 		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcGreyImage(ImageData^ image)
+		FloatImage ^ MvBlueSirius::CalcGreyImage(ImageData^ image)
 		{
 			System::Threading::Monitor::Enter(_updateLock);
 
-			FloatCameraImage^ fImage = gcnew FloatCameraImage(image->Width, image->Height);
+			FloatImage^ fImage = gcnew FloatImage(image->Width, image->Height);
 			int i = 0;
 			for (unsigned int y = 0; y < image->Height; y++)
 			{
@@ -379,11 +379,11 @@ namespace MetriCam2
 			return fImage;
 		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcDepthImage(ImageData^ image)
+		FloatImage ^ MvBlueSirius::CalcDepthImage(ImageData^ image)
 		{
 			System::Threading::Monitor::Enter(_updateLock);
 
-			FloatCameraImage^ fImage = gcnew FloatCameraImage(image->Width, image->Height);
+			FloatImage^ fImage = gcnew FloatImage(image->Width, image->Height);
 			float* imageData = (float*)image->Data;
 			int i = 0;
 			for (unsigned int y = 0; y < image->Height; y++)
@@ -399,11 +399,11 @@ namespace MetriCam2
 			return fImage;
 		}
 
-		FloatCameraImage ^ MvBlueSirius::CalcDistances(Point3fCameraImage^ image)
+		FloatImage ^ MvBlueSirius::CalcDistances(Point3fImage^ image)
 		{
 			System::Threading::Monitor::Enter(_updateLock);
 
-			FloatCameraImage^ fImage = gcnew FloatCameraImage(image->Width, image->Height);
+			FloatImage^ fImage = gcnew FloatImage(image->Width, image->Height);
 			int i = 0;
 			for (int y = 0; y < image->Height; y++)
 			{
@@ -418,14 +418,14 @@ namespace MetriCam2
 			return fImage;
 		}
 
-		Point3fCameraImage ^ MvBlueSirius::CalcPointCloud(FloatCameraImage^ depthImage)
+		Point3fImage ^ MvBlueSirius::CalcPointCloud(FloatImage^ depthImage)
 		{
 			System::Threading::Monitor::Enter(_updateLock);
 
 			int depthWidth = depthImage->Width;
 			int depthHeight = depthImage->Height;
 
-			Point3fCameraImage^ PointCloud = gcnew Point3fCameraImage(depthWidth, depthHeight);
+			Point3fImage^ PointCloud = gcnew Point3fImage(depthWidth, depthHeight);
 
 			int halfWidth = depthWidth / 2;
 			int halfHeight = depthHeight / 2;

@@ -275,7 +275,7 @@ namespace Cameras
 		virtual void DisconnectImpl() override;
 		virtual void UpdateImpl() override;
 		virtual void LoadAllAvailableChannels() override;
-		virtual CameraImage^ CalcChannelImpl(String^ channelName) override;
+		virtual ImageBase^ CalcChannelImpl(String^ channelName) override;
 	private:
 		/// <summary>
 		/// Gets the unambiguous range for two modulation frequencies.
@@ -302,16 +302,16 @@ namespace Cameras
 		//Voxel::DevicePtr* device;
 		Voxel::DepthCamera* cam;
 
-		ByteCameraImage^ currentPhases;
-		ByteCameraImage^ currentAmplitudes;
-		ByteCameraImage^ currentAmbient;
-		ByteCameraImage^ currentFlags;
+		ByteImage^ currentPhases;
+		ByteImage^ currentAmplitudes;
+		ByteImage^ currentAmbient;
+		ByteImage^ currentFlags;
 
 
-		ByteCameraImage^ phaseData;
-		ByteCameraImage^ amplitudeData;
-		ByteCameraImage^ ambientData;
-		ByteCameraImage^ flagsData;
+		ByteImage^ phaseData;
+		ByteImage^ amplitudeData;
+		ByteImage^ ambientData;
+		ByteImage^ flagsData;
 		AutoResetEvent^ updateResetEvent;
 
 		List<String^>^ configurationParameters;		
@@ -355,10 +355,10 @@ namespace Cameras
 		Object^ settingsLock = gcnew Object();
 
 		// calculating channels for images
-		CameraImage^ CalcAmplitude();
-		CameraImage^ CalcAmbient();
-		CameraImage^ CalcPhase();
-		CameraImage^ CalcDistance();
+		ImageBase^ CalcAmplitude();
+		ImageBase^ CalcAmbient();
+		ImageBase^ CalcPhase();
+		ImageBase^ CalcDistance();
 		
 		Voxel::DevicePtr* GetDeviceBySerialNumber(String^ serial);
 		Object^ GetParameterByName(String^ name);

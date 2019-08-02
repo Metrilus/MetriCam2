@@ -286,9 +286,9 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private FloatCameraImage CalcDistance()
+        private FloatImage CalcDistance()
         {
-            FloatCameraImage image = new FloatCameraImage(_radii.Length, 1)
+            FloatImage image = new FloatImage(_radii.Length, 1)
             {
                 ChannelName = _channelName,
                 FrameNumber = _scanCounter,
@@ -302,7 +302,7 @@ namespace MetriCam2.Cameras
             return image;
         }
 
-        private Point3fCameraImage CalcPoint3DImage()
+        private Point3fImage CalcPoint3DImage()
         {
             // Recalculate Directions if necessary
             if (null == _directions)
@@ -318,7 +318,7 @@ namespace MetriCam2.Cameras
             }
 
             // Generate 3D Data
-            Point3fCameraImage image = new Point3fCameraImage(_radii.Length, 1)
+            Point3fImage image = new Point3fImage(_radii.Length, 1)
             {
                 ChannelName = _channelName,
                 FrameNumber = _scanCounter,
@@ -335,7 +335,7 @@ namespace MetriCam2.Cameras
             return image;
         }
 
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {

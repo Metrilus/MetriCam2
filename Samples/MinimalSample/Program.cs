@@ -5,7 +5,6 @@ using MetriCam2.Cameras;
 using Metrilus.Util;
 using System;
 using System.Threading;
-using MetriPrimitives.Data;
 using Metrilus.Logging;
 
 namespace MetriCam2.Samples.MinimalSample
@@ -37,16 +36,10 @@ namespace MetriCam2.Samples.MinimalSample
             
             camera.DepthMode = Kinect4Azure.K4ADepthMode.WFOV_2x2Binned;
 
-            FloatCameraImage fCImg = (FloatCameraImage)camera.CalcChannel(ChannelNames.ZImage);
+            FloatImage fCImg = (FloatImage)camera.CalcChannel(ChannelNames.ZImage);
             ProjectiveTransformationRational pTrans = (ProjectiveTransformationRational)camera.GetIntrinsics(ChannelNames.ZImage);
-            Point3fCameraImage p3fImg = pTrans.ZImageToWorld(fCImg);
-            PointCloud3D pc3d = new PointCloud3D(p3fImg);
-            pc3d.Save("G:\\k4a.pointcloud3d");
-
-
-
-
-
+            Point3fImage p3fImg = pTrans.ZImageToWorld(fCImg);
+            p3fImg.Save("G:\\k4a.p3f");
 
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();

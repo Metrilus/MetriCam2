@@ -185,7 +185,7 @@ namespace MetriCam2.Cameras
             Channels.Add(cr.RegisterChannel(ChannelNames.Intensity));
             Channels.Add(cr.RegisterChannel(ChannelNames.Distance));
             Channels.Add(cr.RegisterChannel(ChannelNames.ConfidenceMap));
-            Channels.Add(cr.RegisterCustomChannel(ChannelNames.RawConfidenceMap, typeof(UShortCameraImage)));
+            Channels.Add(cr.RegisterCustomChannel(ChannelNames.RawConfidenceMap, typeof(UShortImage)));
             Channels.Add(cr.RegisterChannel(ChannelNames.Point3DImage));
         }
 
@@ -261,7 +261,7 @@ namespace MetriCam2.Cameras
         /// <summary>Computes (image) data for a given channel.</summary>
         /// <param name="channelName">Channel name.</param>
         /// <returns>(Image) Data.</returns>
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -323,12 +323,12 @@ namespace MetriCam2.Cameras
         /// Calculates the intensity channel.
         /// </summary>
         /// <returns>Intensity image</returns>
-        private FloatCameraImage CalcIntensity()
+        private FloatImage CalcIntensity()
         {
-            FloatCameraImage result;
+            FloatImage result;
             lock (_frontLock)
             {
-                result = new FloatCameraImage(_frontFrameData.Width, _frontFrameData.Height);
+                result = new FloatImage(_frontFrameData.Width, _frontFrameData.Height);
                 int start = _frontFrameData.IntensityStartOffset;
                 for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
@@ -348,13 +348,13 @@ namespace MetriCam2.Cameras
         /// Calculates the distance channel.
         /// </summary>
         /// <returns>Distance image</returns>
-        private FloatCameraImage CalcDistance()
+        private FloatImage CalcDistance()
         {
-            FloatCameraImage result;
+            FloatImage result;
             // FIXME: distance calculation
             lock (_frontLock)
             {
-                result = new FloatCameraImage(_frontFrameData.Width, _frontFrameData.Height);
+                result = new FloatImage(_frontFrameData.Width, _frontFrameData.Height);
                 int start = _frontFrameData.DistanceStartOffset;
                 for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
@@ -374,12 +374,12 @@ namespace MetriCam2.Cameras
         /// Calculates the confidence map.
         /// </summary>
         /// <returns>Confidence map</returns>
-        private UShortCameraImage CalcRawConfidenceMap()
+        private UShortImage CalcRawConfidenceMap()
         {
-            UShortCameraImage result;
+            UShortImage result;
             lock (_frontLock)
             {
-                result = new UShortCameraImage(_frontFrameData.Width, _frontFrameData.Height);
+                result = new UShortImage(_frontFrameData.Width, _frontFrameData.Height);
                 int start = _frontFrameData.ConfidenceStartOffset;
                 for (int i = 0; i < _frontFrameData.Height; ++i)
                 {
@@ -401,13 +401,13 @@ namespace MetriCam2.Cameras
         /// </summary>
         /// <param name="rawConfidenceMap">Confidence map as provided by the camera</param>
         /// <returns>Confidence map as float image scaled to [0, 1] range</returns>
-        private FloatCameraImage CalcConfidenceMap(UShortCameraImage rawConfidenceMap)
+        private FloatImage CalcConfidenceMap(UShortImage rawConfidenceMap)
         {
             int width = rawConfidenceMap.Width;
             int height = rawConfidenceMap.Height;
             float scaling = 1.0f / (float)ushort.MaxValue;
 
-            FloatCameraImage confidenceMap = new FloatCameraImage(width, height);
+            FloatImage confidenceMap = new FloatImage(width, height);
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
@@ -422,12 +422,12 @@ namespace MetriCam2.Cameras
         /// Calculates the 3D point cloud from received data.
         /// </summary>
         /// <returns>point cloud</returns>
-        private Point3fCameraImage Calc3D()
+        private Point3fImage Calc3D()
         {
-            Point3fCameraImage result;
+            Point3fImage result;
             lock (_frontLock)
             {
-                result = new Point3fCameraImage(_frontFrameData.Width, _frontFrameData.Height);
+                result = new Point3fImage(_frontFrameData.Width, _frontFrameData.Height);
 
                 float cx = _frontFrameData.CX;
                 float cy = _frontFrameData.CY;
@@ -436,7 +436,7 @@ namespace MetriCam2.Cameras
                 float k1 = _frontFrameData.K1;
                 float k2 = _frontFrameData.K2;
 
-                FloatCameraImage distances = CalcDistance();
+                FloatImage distances = CalcDistance();
 
                 for (int i = 0; i < _frontFrameData.Height; ++i)
                 {

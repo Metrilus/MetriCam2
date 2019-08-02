@@ -31,8 +31,8 @@ namespace MetriCam2.Cameras
         private ListParamDesc<string> colorProfiles;
         private ListParamDesc<string> depthProfiles;
 
-        private ColorCameraImage colorImage;
-        private FloatCameraImage depthImage;
+        private ColorImage colorImage;
+        private FloatImage depthImage;
 
         private PXCMCalibration.StreamCalibration calibDataColor;
         private PXCMCalibration.StreamTransform calibTransColor;
@@ -263,7 +263,7 @@ namespace MetriCam2.Cameras
                 memcpy(bmpData.Scan0, colorData.planes[0], new UIntPtr(3 * (uint)sample.color.info.width * (uint)sample.color.info.height));
                 bmp.UnlockBits(bmpData);
                 Bitmap bmp32 = bmp.Clone(new Rectangle(0, 0, widthColor, heightColor), System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-                colorImage = new ColorCameraImage(bmp32);
+                colorImage = new ColorImage(bmp32);
                 sample.color.ReleaseAccess(colorData);
             }
             // depth
@@ -271,7 +271,7 @@ namespace MetriCam2.Cameras
             if (sample.depth != null)
             {
                 sample.depth.AcquireAccess(PXCMImage.Access.ACCESS_READ, PXCMImage.PixelFormat.PIXEL_FORMAT_DEPTH_F32, out depthData);
-                depthImage = new FloatCameraImage(sample.depth.info.width, sample.depth.info.height);
+                depthImage = new FloatImage(sample.depth.info.width, sample.depth.info.height);
                 fixed (float* depthImageData = depthImage.Data)
                 {
                     CopyImageWithStride(sample.depth.info.width, sample.depth.info.height, 4, depthData, new IntPtr(depthImageData));
@@ -286,7 +286,7 @@ namespace MetriCam2.Cameras
         /// <param name="channelName">Channel name.</param>
         /// <returns>(Image) Data.</returns>
         /// <seealso cref="Camera.CalcChannel"/>
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -324,9 +324,9 @@ namespace MetriCam2.Cameras
         /// <param name="channelName">The channel name.</param>
         /// <returns>The ProjectiveTransformationRational</returns>
         /// <remarks>The method first searches for a pt file on disk. If this fails it is able to provide internal intrinsics for ZImage channel.</remarks>
-        public override IProjectiveTransformation GetIntrinsics(string channelName)
+        public override ProjectiveTransformation GetIntrinsics(string channelName)
         {
-            IProjectiveTransformation result = null;
+            ProjectiveTransformation result = null;
             log.Info("Trying to load projective transformation from file.");
             try
             {
@@ -357,7 +357,7 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Private Methods
-        private FloatCameraImage CalcZImage()
+        private FloatImage CalcZImage()
         {
             lock (cameraLock)
             {

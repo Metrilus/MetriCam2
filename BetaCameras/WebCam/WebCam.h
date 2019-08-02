@@ -618,7 +618,7 @@ namespace MetriCam2
 				Channels->Add(cr->RegisterChannel(ChannelNames::Color));//0
 			}
 
-			virtual CameraImage^ CalcChannelImpl(String^ channelName) override
+			virtual ImageBase^ CalcChannelImpl(String^ channelName) override
 			{
 				if (channelName != ChannelNames::Color)
 				{
@@ -651,7 +651,7 @@ namespace MetriCam2
 					bmpNew->RotateFlip(RotateFlipType::RotateNoneFlipY);
 				}
 
-				return gcnew ColorCameraImage(bmpNew);
+				return gcnew ColorImage(bmpNew);
 			}
 
 		private:

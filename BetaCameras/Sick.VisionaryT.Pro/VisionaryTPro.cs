@@ -47,7 +47,7 @@ namespace MetriCam2.Cameras
         private int _imageWidth = 0;
         private AutoResetEvent _frameAvailable = new AutoResetEvent(false);
         private CancellationTokenSource _cancelUpdateThreadSource;
-        private Point3fCameraImage _directions = null;
+        private Point3fImage _directions = null;
         private const int NumFrameRetries = 3;
         private string _updateThreadError = null;
         private Exception _updateThreadException = null;
@@ -173,7 +173,7 @@ namespace MetriCam2.Cameras
             _frontJsonData = _backJsonData;
         }
 
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -190,10 +190,10 @@ namespace MetriCam2.Cameras
         }
 
 
-        //TODO: Metrilus.Util should implement the *-operator on FloatCameraImage and Point3fCameraImage in future. Then just replace this method.
-        private Point3fCameraImage GetScaledDistances(FloatCameraImage distances)
+        //TODO: Metrilus.Util should implement the *-operator on FloatImage and Point3fImage in future. Then just replace this method.
+        private Point3fImage GetScaledDistances(FloatImage distances)
         {            
-            Point3fCameraImage coords = new Point3fCameraImage(distances.Width, distances.Height);
+            Point3fImage coords = new Point3fImage(distances.Width, distances.Height);
             for(int i = 0; i < coords.Length; i++)
             {
                 coords[i] = distances[i] * _directions[i];
@@ -201,9 +201,9 @@ namespace MetriCam2.Cameras
             return coords;
         }
 
-        private Point3fCameraImage CalcDirections(InverseBrownConradyParams intrinsics, int width, int height)
+        private Point3fImage CalcDirections(InverseBrownConradyParams intrinsics, int width, int height)
         {
-            Point3fCameraImage directions = new Point3fCameraImage(width, height);
+            Point3fImage directions = new Point3fImage(width, height);
             for (int row = 0; row < height; row++)
             {
                 float yp = (intrinsics.Cy - row) / intrinsics.Fy;
@@ -377,11 +377,11 @@ namespace MetriCam2.Cameras
             };
         }
 
-        private unsafe FloatCameraImage ParseImage(char[] base64Data, int offset, int length, float scaleFactor = 1000.0f)
+        private unsafe FloatImage ParseImage(char[] base64Data, int offset, int length, float scaleFactor = 1000.0f)
         {
             byte[] raw = Convert.FromBase64CharArray(base64Data, offset, length);
 
-            FloatCameraImage image = new FloatCameraImage(_imageWidth, _imageHeight);
+            FloatImage image = new FloatImage(_imageWidth, _imageHeight);
 
             fixed (byte* rawData = raw)
             {

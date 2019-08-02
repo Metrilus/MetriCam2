@@ -110,14 +110,14 @@ namespace MetriCam2
 			ImageData^ _depthMapped;
 			ImageData^ _depthRaw;
 
-			FloatCameraImage^ _currentMasterImage; // caches computed FloatCameraImage
-			FloatCameraImage^ _currentSlaveImage; // caches computed FloatCameraImage
-			FloatCameraImage^ _currentZImageMapped; // caches computed FloatCameraImage
-			FloatCameraImage^ _currentZImage; // caches computed FloatCameraImage
-			FloatCameraImage^ _currentDistanceImage; // caches computed FloatCameraImage
-			FloatCameraImage^ _currentDistanceImageMapped; // caches computed FloatCameraImage
-			Point3fCameraImage^ _currentPointCloud; // caches computed Point3fCameraImage
-			Point3fCameraImage^ _currentPointCloudMapped; // caches computed Point3fCameraImage
+			FloatImage^ _currentMasterImage; // caches computed FloatImage
+			FloatImage^ _currentSlaveImage; // caches computed FloatImage
+			FloatImage^ _currentZImageMapped; // caches computed FloatImage
+			FloatImage^ _currentZImage; // caches computed FloatImage
+			FloatImage^ _currentDistanceImage; // caches computed FloatImage
+			FloatImage^ _currentDistanceImageMapped; // caches computed FloatImage
+			Point3fImage^ _currentPointCloud; // caches computed Point3fImage
+			Point3fImage^ _currentPointCloudMapped; // caches computed Point3fImage
 
 			property ParamDesc<bool>^ AutoExposureDesc
 			{
@@ -251,7 +251,7 @@ namespace MetriCam2
 			MvBlueSirius();
 			~MvBlueSirius();
 
-			virtual IProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
+			virtual ProjectiveTransformation^ GetIntrinsics(String^ channelName) override;
 
 			property System::String^ Vendor
 			{
@@ -415,15 +415,15 @@ namespace MetriCam2
 			/// <param name="channelName">Channel name.</param>
 			/// <returns>(Image) Data.</returns>
 			/// <seealso cref="Camera.CalcChannel"/>
-			virtual CameraImage^ CalcChannelImpl(String^ channelName) override;
+			virtual ImageBase^ CalcChannelImpl(String^ channelName) override;
 
 		private:
 			// Internal helper functions
-			ColorCameraImage^ CalcColorImage(ImageData^ image);
-			FloatCameraImage^ CalcGreyImage(ImageData^ image);
-			FloatCameraImage^ CalcDepthImage(ImageData^ image);
-			FloatCameraImage^ CalcDistances(Point3fCameraImage^ image);
-			Point3fCameraImage^ CalcPointCloud(FloatCameraImage^ depthImage);
+			ColorImage^ CalcColorImage(ImageData^ image);
+			FloatImage^ CalcGreyImage(ImageData^ image);
+			FloatImage^ CalcDepthImage(ImageData^ image);
+			FloatImage^ CalcDistances(Point3fImage^ image);
+			Point3fImage^ CalcPointCloud(FloatImage^ depthImage);
 			inline bool CheckResult(MV6D_ResultCode r, Type^ exceptionType, int exceptionID)
 			{
 				if (r != rcOk)

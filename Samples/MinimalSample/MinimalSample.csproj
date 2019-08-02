@@ -77,14 +77,6 @@
     <Reference Include="Metrilus.Util">
       <HintPath>$(LibrariesPath)Metrilus.Util.dll</HintPath>
     </Reference>
-    <Reference Include="MetriPrimitives, Version=19.4.0.42, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Z:\releases\Metrilus.Framework\v.22.0.2.177\lib\MetriPrimitives.dll</HintPath>
-    </Reference>
-    <Reference Include="MetriPrimitivesNative, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Z:\releases\Metrilus.Framework\v.19.4.0.42\lib\MetriPrimitivesNative.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />

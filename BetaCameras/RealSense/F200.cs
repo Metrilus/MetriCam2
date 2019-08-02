@@ -33,8 +33,8 @@ namespace MetriCam2.Cameras
         private string currentDepthProfile;
         private string currentIRProfile;
 
-        private FloatCameraImage depthImage;
-        private ByteCameraImage irImage;
+        private FloatImage depthImage;
+        private ByteImage irImage;
         #endregion
 
         #region Public Properties
@@ -194,7 +194,7 @@ namespace MetriCam2.Cameras
 
             PXCMImage.ImageData depthData;
             sample.depth.AcquireAccess(PXCMImage.Access.ACCESS_READ, PXCMImage.PixelFormat.PIXEL_FORMAT_DEPTH_F32, out depthData);
-            depthImage = new FloatCameraImage(sample.depth.info.width, sample.depth.info.height);
+            depthImage = new FloatImage(sample.depth.info.width, sample.depth.info.height);
             fixed (float* depthImageData = depthImage.Data)
             {
                 memcpy(new IntPtr(depthImageData), depthData.planes[0], new UIntPtr((uint)sample.depth.info.width * (uint)sample.depth.info.height * (uint)sizeof(float)));
@@ -203,7 +203,7 @@ namespace MetriCam2.Cameras
 
             PXCMImage.ImageData irData;
             sample.ir.AcquireAccess(PXCMImage.Access.ACCESS_READ, PXCMImage.PixelFormat.PIXEL_FORMAT_Y8, out irData);
-            irImage = new ByteCameraImage(sample.ir.info.width, sample.ir.info.height);
+            irImage = new ByteImage(sample.ir.info.width, sample.ir.info.height);
             fixed (byte* irImageData = irImage.Data)
             {
                 memcpy(new IntPtr(irImageData), irData.planes[0], new UIntPtr((uint)sample.ir.info.width * (uint)sample.ir.info.height * (uint)sizeof(byte)));
@@ -217,7 +217,7 @@ namespace MetriCam2.Cameras
         /// <param name="channelName">Channel name.</param>
         /// <returns>(Image) Data.</returns>
         /// <seealso cref="Camera.CalcChannel"/>
-        protected override CameraImage CalcChannelImpl(string channelName)
+        protected override ImageBase CalcChannelImpl(string channelName)
         {
             switch (channelName)
             {
@@ -232,7 +232,7 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Private Methods
-        private FloatCameraImage CalcZImage()
+        private FloatImage CalcZImage()
         {
             float factor = 1/1000.0f;
             int height = depthImage.Height;

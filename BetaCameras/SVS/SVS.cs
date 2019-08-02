@@ -35,7 +35,7 @@ namespace MetriCam2.Cameras
             /// When acquiring 12 or 16 bit data, this channel provides the de-bayered red color plane.
             /// </summary>
             /// <remarks>
-            /// While the type of this channel is <see cref="FloatCameraImage"/> the range of the image data will be ushort.
+            /// While the type of this channel is <see cref="FloatImage"/> the range of the image data will be ushort.
             /// If you acquire 12-bit data it will be converted and scaled to 16 bit.
             /// </remarks>
             public const string Red16 = "Red16Bit";
@@ -43,7 +43,7 @@ namespace MetriCam2.Cameras
             /// When acquiring 12 or 16 bit data, this channel provides the de-bayered green color plane.
             /// </summary>
             /// <remarks>
-            /// While the type of this channel is <see cref="FloatCameraImage"/> the range of the image data will be ushort.
+            /// While the type of this channel is <see cref="FloatImage"/> the range of the image data will be ushort.
             /// If you acquire 12-bit data it will be converted and scaled to 16 bit.
             /// </remarks>
             public const string Green16 = "Green16Bit";
@@ -51,7 +51,7 @@ namespace MetriCam2.Cameras
             /// When acquiring 12 or 16 bit data, this channel provides the de-bayered blue color plane.
             /// </summary>
             /// <remarks>
-            /// While the type of this channel is <see cref="FloatCameraImage"/> the range of the image data will be ushort.
+            /// While the type of this channel is <see cref="FloatImage"/> the range of the image data will be ushort.
             /// If you acquire 12-bit data it will be converted and scaled to 16 bit.
             /// </remarks>
             public const string Blue16 = "Blue16Bit";
@@ -639,10 +639,10 @@ namespace MetriCam2.Cameras
             ChannelRegistry cr = ChannelRegistry.Instance;
             Channels.Clear();
             Channels.Add(cr.RegisterChannel(ChannelNames.Color));
-            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Raw16, typeof(UShortCameraImage)));
-            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Red16, typeof(FloatCameraImage)));
-            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Green16, typeof(FloatCameraImage)));
-            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Blue16, typeof(FloatCameraImage)));
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Raw16, typeof(UShortImage)));
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Red16, typeof(FloatImage)));
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Green16, typeof(FloatImage)));
+            Channels.Add(cr.RegisterCustomChannel(CustomChannelNames.Blue16, typeof(FloatImage)));
         }
 
         /// <summary>
@@ -968,7 +968,7 @@ namespace MetriCam2.Cameras
         /// <summary>Computes (image) data for a given channel.</summary>
         /// <param name="channelName">Channel name.</param>
         /// <returns>Copy of driver's image buffer.</returns>
-        protected unsafe override CameraImage CalcChannelImpl(string channelName)
+        protected unsafe override ImageBase CalcChannelImpl(string channelName)
         {
             lock (dataLock)
             {
@@ -981,7 +981,7 @@ namespace MetriCam2.Cameras
                 switch (channelName)
                 {
                     case ChannelNames.Color:
-                        return new ColorCameraImage((Bitmap)currentBmp.Clone());
+                        return new ColorImage((Bitmap)currentBmp.Clone());
 
                     case CustomChannelNames.Red16:
                         return DeBayerBilinear(true, false, false)["red"];
@@ -996,7 +996,7 @@ namespace MetriCam2.Cameras
                         int width = currentBmp.Width;
                         int height = currentBmp.Height;
 
-                        UShortCameraImage resRaw16 = new UShortCameraImage(width, height);
+                        UShortImage resRaw16 = new UShortImage(width, height);
 
                         Rectangle rect = new Rectangle(0, 0, width, height);
                         BitmapData bmpData = currentBmp.LockBits(rect, ImageLockMode.ReadOnly, currentBmp.PixelFormat);
@@ -1224,7 +1224,7 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Private Methods
-        private Dictionary<string, FloatCameraImage> DeBayerBilinear(bool computeRedPlane = true, bool computeGreenPlane = true, bool computeBluePlane = true)
+        private Dictionary<string, FloatImage> DeBayerBilinear(bool computeRedPlane = true, bool computeGreenPlane = true, bool computeBluePlane = true)
         {
 #if DEBUG
             // Check pixel format of currentBmp
@@ -1244,9 +1244,9 @@ namespace MetriCam2.Cameras
             int four = 0;
             float div2 = 0.5f;
             float div4 = 0.25f;
-            FloatCameraImage red16, green16, blue16;
+            FloatImage red16, green16, blue16;
 
-            Dictionary<string, FloatCameraImage> rgb = new Dictionary<string, FloatCameraImage>();
+            Dictionary<string, FloatImage> rgb = new Dictionary<string, FloatImage>();
 
             Rectangle rect = new Rectangle(0, 0, width, height);
             BitmapData bmpData = currentBmp.LockBits(rect, ImageLockMode.ReadOnly, currentBmp.PixelFormat);
@@ -1256,7 +1256,7 @@ namespace MetriCam2.Cameras
 
                 if (computeBluePlane)
                 {
-                    blue16 = new FloatCameraImage(width, height);
+                    blue16 = new FloatImage(width, height);
 
                     // TODO:
                     // process output row y = 0
@@ -1290,7 +1290,7 @@ namespace MetriCam2.Cameras
 
                 if (computeRedPlane)
                 {
-                    red16 = new FloatCameraImage(width, height);
+                    red16 = new FloatImage(width, height);
 
                     for (int y = 0; y < height - 2; y += 2)
                     {
@@ -1318,7 +1318,7 @@ namespace MetriCam2.Cameras
 
                 if (computeGreenPlane)
                 {
-                    green16 = new FloatCameraImage(width, height);
+                    green16 = new FloatImage(width, height);
 
                     // TODO: Randbehandlung fuer y=0
 
