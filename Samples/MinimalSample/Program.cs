@@ -22,24 +22,18 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("Get MetriCam 2 at http://www.metricam.net/");
             Console.WriteLine("------------------------------------------");
 
-            Kinect4Azure camera = new Kinect4Azure();
-            camera.Connect();
+            Kinect4Azure camera1 = new Kinect4Azure();
+            //camera1.SerialNumber = "000067192412";
+            camera1.Connect();
 
-            Thread thread = new Thread(() =>
-            {
-                while (true)
-                {
-                    camera.Update();
-                }
-            });
-            thread.Start();
-            
-            camera.DepthMode = Kinect4Azure.K4ADepthMode.WFOV_2x2Binned;
+            Kinect4Azure camera2 = new Kinect4Azure();
+            //camera2.SerialNumber = "000049192312";
+            camera2.Connect();
 
-            FloatImage fCImg = (FloatImage)camera.CalcChannel(ChannelNames.ZImage);
-            ProjectiveTransformationRational pTrans = (ProjectiveTransformationRational)camera.GetIntrinsics(ChannelNames.ZImage);
-            Point3fImage p3fImg = pTrans.ZImageToWorld(fCImg);
-            p3fImg.Save("G:\\k4a.p3f");
+            camera1.Update();
+            camera2.Update();
+            FloatImage fCImg1 = (FloatImage)camera1.CalcChannel(ChannelNames.ZImage);
+            FloatImage fCImg2 = (FloatImage)camera2.CalcChannel(ChannelNames.ZImage);
 
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();
