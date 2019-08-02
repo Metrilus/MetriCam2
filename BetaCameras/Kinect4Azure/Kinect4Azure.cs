@@ -231,21 +231,49 @@ namespace MetriCam2.Cameras
 
             if (!haveSerial)
             {
-                _device = Device.Open(0);
+                Device tmpDev = null;
+                for (int i = 0; i < Device.GetInstalledCount(); i++)
+                {
+                    try
+                    {
+                        tmpDev = Device.Open(i);
+                        break;
+                    }
+                    catch (Microsoft.AzureKinect.Exception e)
+                    {
+                        log.Warn($"Could not open K4A Device number {i}. The device is probably already in use: {e.Message}");
+                    }
+                }
+
+                _device = tmpDev;
                 this.SerialNumber = _device.SerialNum;
             }
             else
             {
                 for(int i = 0; i < Device.GetInstalledCount(); i++)
                 {
-                    Device tmpDev = Device.Open(i);
-                    if (SerialNumber == tmpDev.SerialNum)
+                    try
                     {
-                        _device = tmpDev;
-                        break;
+                        Device tmpDev = Device.Open(i);
+                        if (SerialNumber == tmpDev.SerialNum)
+                        {
+                            _device = tmpDev;
+                            break;
+                        }
+                        tmpDev.Dispose();
                     }
-                    tmpDev.Dispose();
+                    catch (Microsoft.AzureKinect.Exception e)
+                    {
+                        log.Warn($"Could not open K4A Device number {i}. The device is probably already in use: {e.Message}");
+                    }
                 }
+            }
+
+            if (null == _device)
+            {
+                string msg = "No available Kinect4Azure device found.";
+                log.Error(msg);
+                throw new ConnectionFailedException(msg);
             }
 
             if (ActiveChannels.Count == 0)
