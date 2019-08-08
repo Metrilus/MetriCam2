@@ -529,24 +529,20 @@ namespace MetriCam2.Cameras
             }
 
             Calibration calibration = _device.GetCalibration();
-            RotationMatrix rotMat;
-            Point3f translation;
+            RigidBodyTransformation rbt = null;
 
             if (channelFromName == ChannelNames.Color && (channelToName == ChannelNames.Distance || channelToName == ChannelNames.ZImage || channelToName == ChannelNames.Intensity))
             {
-                rotMat = new RotationMatrix(calibration.depth_camera_calibration.extrinsics.rotation);
-                translation = new Point3f(
-                    calibration.depth_camera_calibration.extrinsics.translation[0] / 1000f,
-                    calibration.depth_camera_calibration.extrinsics.translation[1] / 1000f,
-                    calibration.depth_camera_calibration.extrinsics.translation[2] / 1000f);
+                rbt = GetExtrinsics(channelToName, channelFromName).GetInverted();
             }
             else if ((channelFromName == ChannelNames.Distance || channelFromName == ChannelNames.ZImage || channelFromName == ChannelNames.Intensity) && channelToName == ChannelNames.Color)
             {
-                rotMat = new RotationMatrix(calibration.color_camera_calibration.extrinsics.rotation);
-                translation = new Point3f(
+                RotationMatrix rotMat = new RotationMatrix(calibration.color_camera_calibration.extrinsics.rotation);
+                Point3f translation = new Point3f(
                     calibration.color_camera_calibration.extrinsics.translation[0] / 1000f,
                     calibration.color_camera_calibration.extrinsics.translation[1] / 1000f,
                     calibration.color_camera_calibration.extrinsics.translation[2] / 1000f);
+                rbt = new RigidBodyTransformation(rotMat, translation);
             }
             else
             {
@@ -554,8 +550,6 @@ namespace MetriCam2.Cameras
                 log.Error(msg);
                 throw new System.Exception(msg);
             }
-
-            RigidBodyTransformation rbt = new RigidBodyTransformation(rotMat, translation);
             _extrinsicsCache[keyName] = rbt;
             return rbt;
         }
