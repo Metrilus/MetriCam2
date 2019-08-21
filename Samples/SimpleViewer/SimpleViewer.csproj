@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MetriCam2.Samples.SimpleViewer</RootNamespace>
     <AssemblyName>SimpleViewer</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -103,9 +103,9 @@
     <Content Include="MetrilusPlainAppIcon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\Kinect2\Kinect2.csproj">
-      <Project>{03558646-61b1-4f4e-bf70-7a623df27095}</Project>
-      <Name>Kinect2</Name>
+    <ProjectReference Include="..\..\BetaCameras\Kinect4Azure\Kinect4Azure.csproj">
+      <Project>{9a292249-66ee-4c9c-a6b7-dd5112e3625f}</Project>
+      <Name>Kinect4Azure</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MetriCam2.Controls\MetriCam2.Controls.csproj">
       <Project>{9060cbcf-609d-47b3-9245-43d34c540a73}</Project>
