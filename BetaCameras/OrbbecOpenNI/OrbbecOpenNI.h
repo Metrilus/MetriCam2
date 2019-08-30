@@ -7,6 +7,7 @@
 #include <OpenNI.h>
 #include <iostream>
 #include <vector>
+#include "ObUvcAPI.h"
 
 //Adpated from SimpleViewer of experimental interface
 const int IR_Exposure_MAX = 1 << 14;
@@ -57,6 +58,15 @@ namespace MetriCam2
 			openni::VideoStream color;
 			int colorWidth;
 			int colorHeight;
+		};
+
+		public enum class UvcColorResolution
+		{
+			Res640x480,
+			Res1280x960,
+			Res1920x1080,
+			Res2592x1944,
+			NotSupported
 		};
 
 		public ref class AstraOpenNI : Camera, IDisposable
@@ -120,6 +130,75 @@ namespace MetriCam2
 			{
 				int get() { return GetIRGain(); }
 				void set(int value) { SetIRGain(value); }
+			}
+
+			property UvcColorResolution UVCColorResolution
+			{
+				UvcColorResolution get() 
+				{
+					if (_uvcColorWidth == 640 && _uvcColorHeight == 480)
+					{
+						return UvcColorResolution::Res640x480;
+					}
+					else if (_uvcColorWidth == 1280 && _uvcColorHeight == 960)
+					{
+						return UvcColorResolution::Res1280x960;
+					}
+					else if (_uvcColorWidth == 1920 && _uvcColorHeight == 1080)
+					{
+						return UvcColorResolution::Res1920x1080;
+					}
+					else if (_uvcColorWidth == 2592 && _uvcColorHeight == 1944)
+					{
+						return UvcColorResolution::Res2592x1944;
+					}
+					else
+					{
+						return UvcColorResolution::NotSupported;
+					}
+				}
+				void set(UvcColorResolution value)
+				{
+					if (_hasOpenNIColor)
+					{
+						_uvcColorWidth = -1;
+						_uvcColorHeight = -1;
+						return;
+					}
+
+					switch (value)
+					{
+						case UvcColorResolution::Res640x480:
+							_uvcColorWidth = 640;
+							_uvcColorHeight = 480;
+							break;
+						case UvcColorResolution::Res1280x960:
+							_uvcColorWidth = 1280;
+							_uvcColorHeight = 960;
+							break;
+						case UvcColorResolution::Res1920x1080:
+							_uvcColorWidth = 1920;
+							_uvcColorHeight = 1080;
+							break;
+						case UvcColorResolution::Res2592x1944:
+							_uvcColorWidth = 2592;
+							_uvcColorHeight = 1944;
+							break;
+						default:
+							_uvcColorWidth = -1;
+							_uvcColorHeight = -1;
+					}
+				}
+			}
+
+			/// <summary>
+			/// Poor illumination can slow down the color framerate to a value lower than 30fps, 
+			/// so it can either make sense to get color duplicates in "Update" (value = false) or to explicitly forbid color image duplicates (value = true).  
+			/// </summary>
+			property bool UVCColorEnforceNewImageInUpdate
+			{
+				bool get() { return _uvcColorEnforceNewImageInUpdate; }
+				void set(bool value) { _uvcColorEnforceNewImageInUpdate = value; }
 			}
 
 			//Is buggy in OpenNI version 2.3.1.48, depth channel (if started) will turn black if one of this methods is called.
@@ -295,6 +374,31 @@ namespace MetriCam2
 				}
 			}
 
+			property ListParamDesc<UvcColorResolution>^ UVCColorResolutionDesc
+			{
+				inline ListParamDesc<UvcColorResolution>^ get()
+				{
+					ListParamDesc<UvcColorResolution>^ res = gcnew ListParamDesc<UvcColorResolution>(UVCColorResolution.GetType());
+					res->Description = "Resolution of color image in UVC mode (Stereo/Embedded S)",
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected,
+					res->WritableWhen = ParamDesc::ConnectionStates::Disconnected;
+					return res;
+				}
+			}
+
+			property ParamDesc<bool>^ UVCColorEnforceNewImageInUpdateDesc
+			{
+				inline ParamDesc<bool>^ get()
+				{
+					ParamDesc<bool>^ res = gcnew ParamDesc<bool>();
+					res->Unit = "";
+					res->Description = "Forbid duplicate color images (Stereo/Embedded S)";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					return res;
+				}
+			}
+
 			FloatImage^ CalcZImage();
 			ColorImage^ CalcColor();
 			Point3fImage^ CalcPoint3fImage();
@@ -304,6 +408,7 @@ namespace MetriCam2
 			static bool OpenNIShutdown();
 			static void LogOpenNIError(String^ status);
 			static int _openNIInitCounter = 0;
+			static int _numberConnectedDevicesWithUVCColor = 0;
 
 			bool _isDisposed = false;
 
@@ -347,7 +452,10 @@ namespace MetriCam2
 			String^ _deviceType;
 			Point2i _depthResolution;
 			int _depthFps;
-			bool _hasColor;
+			bool _hasOpenNIColor;
+			int _uvcColorWidth;
+			int _uvcColorHeight;
+			bool _uvcColorEnforceNewImageInUpdate;
 			// Compensate for offset between IR and Distance images:
 			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.
 			int _intensityYTranslation;
