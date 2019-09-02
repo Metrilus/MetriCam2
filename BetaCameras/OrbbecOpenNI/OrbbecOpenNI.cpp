@@ -812,7 +812,8 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 		return;
 	}
 
-	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
+	if ((channelName->Equals(ChannelNames::ZImage) && !IsChannelActive(ChannelNames::Point3DImage)) ||
+		(channelName->Equals(ChannelNames::Point3DImage) && !IsChannelActive(ChannelNames::ZImage)))
 	{
 		DepthStream.stop();
 		_depthStreamRunning = false;
