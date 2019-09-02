@@ -23,7 +23,11 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	// Init to most reasonable values; update during ConnectImpl
 	_emitterEnabled = true;
 	_irFlooderEnabled = false;
-	_hasColor = true;
+	_hasOpenNIColor = false;
+	_uvcColorWidth = 1280;
+	_uvcColorHeight = 960;
+	_uvcColorEnforceNewImageInUpdate = false;
+	_depthStreamRunning = false;
 	_extrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>();
 	_intrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, ProjectiveTransformation^>();
 }
@@ -168,7 +172,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 {
 	_pCamData = new OrbbecNativeCameraData();
 
-	const char* deviceURI;
+	const char* deviceURI = NULL;
 
 	System::Collections::Generic::Dictionary<String^, String^>^ serialsToUris = GetSerialToUriMappingOfAttachedCameras();
 	if (String::IsNullOrWhiteSpace(SerialNumber))
@@ -223,26 +227,17 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	}*/
 
 	// Read serial number
-	char serialNumber[12];
-	int data_size = sizeof(serialNumber);
-	Device.getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serialNumber, &data_size);
-	SerialNumber = gcnew String(serialNumber);
+	char serialNumberCStr[12];
+	int data_size = sizeof(serialNumberCStr);
+	Device.getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serialNumberCStr, &data_size);
+	SerialNumber = gcnew String(serialNumberCStr);
 
 	openni::DeviceInfo dInfo = Device.getDeviceInfo();
 	VendorID = dInfo.getUsbVendorId();
 	ProductID = dInfo.getUsbProductId();
 
 	// Check whether the camera has a color channel.
-	_hasColor = Device.hasSensor(openni::SensorType::SENSOR_COLOR);
-	if (!_hasColor)
-	{
-		if (IsChannelActive((ChannelNames::Color)))
-		{
-			log->Warn("This camera does not support the channel \"" + ChannelNames::Color + "\". Deactivating and removing channel \"" + ChannelNames::Color + "\"...");
-			DeactivateChannel(ChannelNames::Color);
-		}
-		Channels->Remove(GetChannelDescriptor(ChannelNames::Color));
-	}
+	_hasOpenNIColor = Device.hasSensor(openni::SensorType::SENSOR_COLOR);
 
 	char deviceType[32] = { 0 };
 	int size = 32;
@@ -287,7 +282,10 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 	{
 		ActivateChannel(ChannelNames::ZImage);
 		ActivateChannel(ChannelNames::Point3DImage);
-		//ActivateChannel(ChannelNames::Color); //Do not activate channel color by default in order to avoid running into bandwidth problems (e.g. when multiple cameras ares used over USB hubs)
+		if (!_hasOpenNIColor)
+		{
+			ActivateChannel(ChannelNames::Color); //Do not activate channel color by default for OpenNI color cams in order to avoid running into bandwidth problems (e.g. when multiple cameras ares used over USB hubs)
+		}
 		//ActivateChannel(ChannelNames::Intensity); // Channel intensity cannot be activated, if depth/3D data channel is active
 		if (String::IsNullOrWhiteSpace(SelectedChannel))
 		{
@@ -297,7 +295,7 @@ void MetriCam2::Cameras::AstraOpenNI::ConnectImpl()
 
 	InitDepthStream();
 	InitIRStream();
-	if (_hasColor)
+	if (_hasOpenNIColor)
 	{
 		InitColorStream();
 		if (IsChannelActive(ChannelNames::Intensity) && IsChannelActive(ChannelNames::Color))
@@ -494,9 +492,31 @@ void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
 {
 	_intrinsicsCache->Clear();
 	_extrinsicsCache->Clear();
+	if (IsChannelActive(ChannelNames::Intensity))
+	{
+		IrStream.stop();
+	}
 	DepthStream.destroy();
+	_depthStreamRunning = false;
 	IrStream.destroy();
-	ColorStream.destroy();
+
+	if (_hasOpenNIColor)
+	{
+		if (IsChannelActive(ChannelNames::Color))
+		{
+			ColorStream.stop();
+		}
+		ColorStream.destroy();
+	}
+	else
+	{
+		if (IsChannelActive(ChannelNames::Color))
+		{
+			ObUVCShutdown();
+			_numberConnectedDevicesWithUVCColor--;
+		}
+	}
+
 	delete _pCamData;
 }
 
@@ -509,26 +529,36 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 		ppStreams[i] = NULL;
 	}
 
-	const int DepthIdx = 0, IrIdx = 1, ColorIdx = 2;
+	int numberActivatedOpenNIStreams = 0;
 	if (IsChannelActive(ChannelNames::ZImage) || IsChannelActive(ChannelNames::Point3DImage))
 	{
-		ppStreams[DepthIdx] = &DepthStream;
+		ppStreams[numberActivatedOpenNIStreams++] = &DepthStream;
 	}
 	if (IsChannelActive(ChannelNames::Intensity))
 	{
-		ppStreams[IrIdx] = &IrStream;
-	}
-	if (_hasColor && IsChannelActive(ChannelNames::Color))
-	{
-		ppStreams[ColorIdx] = &ColorStream;
+		ppStreams[numberActivatedOpenNIStreams++] = &IrStream;
 	}
 
-	int iter = 0;
-	bool gotAllRequestedStreams = false;
+	if (IsChannelActive(ChannelNames::Color))
+	{
+		if (_hasOpenNIColor)
+		{
+			ppStreams[numberActivatedOpenNIStreams++] = &ColorStream;
+		}
+		else
+		{
+			if (_uvcColorEnforceNewImageInUpdate)
+			{
+				ObUVCWaitForNewColorImage();
+			}
+		}
+	}
+
+	bool gotAllRequestedStreams = numberActivatedOpenNIStreams == 0;
 	while (!gotAllRequestedStreams)
 	{
 		int changedIndex;
-		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, NumRequestedStreams, &changedIndex, 500);
+		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, numberActivatedOpenNIStreams, &changedIndex, 500);
 		if (openni::STATUS_OK != rc)
 		{
 			if (openni::STATUS_TIME_OUT == rc)
@@ -545,7 +575,7 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 		ppStreams[changedIndex] = NULL;
 
 		gotAllRequestedStreams = true;
-		for (size_t i = 0; i < NumRequestedStreams; i++)
+		for (size_t i = 0; i < numberActivatedOpenNIStreams; i++)
 		{
 			if (ppStreams[i] != NULL)
 			{
@@ -632,8 +662,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 	openni::Status rc;
 
-	if ((channelName->Equals(ChannelNames::Point3DImage) && !IsChannelActive(ChannelNames::ZImage))
-		|| (channelName->Equals(ChannelNames::ZImage) && !IsChannelActive(ChannelNames::Point3DImage)))
+	if ((channelName->Equals(ChannelNames::Point3DImage) || channelName->Equals(ChannelNames::ZImage)) && !_depthStreamRunning)
 	{
 		auto irGainBefore = GetIRGain();
 
@@ -665,17 +694,16 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 			// Activating the depth channel resets the IR gain to the default value -> we need to restore the value that was set before.
 			SetIRGain(irGainBefore);
 		}
+
+		_depthStreamRunning = true;
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{
 		//Intensity cannot by activated if color is active -> Deactivate color channel.
-		if (_hasColor)
+		if (_hasOpenNIColor && IsChannelActive(ChannelNames::Color))
 		{
-			if (IsChannelActive(ChannelNames::Color))
-			{
-				log->Warn("This camera does not support to fetch the channels \"" + ChannelNames::Intensity + "\" and \"" + ChannelNames::Color + "\" in parallel. Deactivating channel \"" + ChannelNames::Color + "\"...");
-				DeactivateChannel(ChannelNames::Color);
-			}
+			log->Warn("This camera does not support to fetch the channels \"" + ChannelNames::Intensity + "\" and \"" + ChannelNames::Color + "\" in parallel. Deactivating channel \"" + ChannelNames::Color + "\"...");
+			DeactivateChannel(ChannelNames::Color);
 		}
 
 		//Changing the exposure is not possible if both depth and ir streams have been running parallel in one session.
@@ -704,37 +732,71 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 	}
 	else if (channelName->Equals(ChannelNames::Color))
 	{
-		if (IsChannelActive(ChannelNames::Intensity))
+		if (_hasOpenNIColor)
 		{
-			//Color cannot by activated if intensity is active -> Deactivate intensity channel.
-			log->Warn("This camera does not support to fetch the channels \"" + ChannelNames::Color + "\" and \"" + ChannelNames::Intensity + "\" in parallel. Deactivating channel \"" + ChannelNames::Intensity + "\"...");
-			DeactivateChannel(ChannelNames::Intensity);
+			if (IsChannelActive(ChannelNames::Intensity))
+			{
+				//Color cannot by activated if intensity is active -> Deactivate intensity channel.
+				log->Warn("This camera does not support to fetch the channels \"" + ChannelNames::Color + "\" and \"" + ChannelNames::Intensity + "\" in parallel. Deactivating channel \"" + ChannelNames::Intensity + "\"...");
+				DeactivateChannel(ChannelNames::Intensity);
+			}
+
+			openni::VideoMode colorVideoMode = ColorStream.getVideoMode();
+			//Setting the resolution to 1280/640 does not work, even if we start only the color channel (image is corrupted)
+			/*colorVideoMode.setResolution(1280, 960);
+			colorVideoMode.setFps(7);*/
+			colorVideoMode.setResolution(640, 480);
+			ColorStream.setVideoMode(colorVideoMode);
+
+			rc = ColorStream.start();
+			if (openni::STATUS_OK != rc)
+			{
+				log->Error("Couldn't start color stream:" + Environment::NewLine + gcnew String(openni::OpenNI::getExtendedError()));
+				ColorStream.destroy();
+				return;
+			}
+
+			if (!ColorStream.isValid())
+			{
+				log->Error("No valid color stream. Exiting.");
+				return;
+			}
+
+			colorVideoMode = ColorStream.getVideoMode();
+			_pCamData->colorWidth = colorVideoMode.getResolutionX();
+			_pCamData->colorHeight = colorVideoMode.getResolutionY();
 		}
-
-		openni::VideoMode colorVideoMode = ColorStream.getVideoMode();
-		//Setting the resolution to 1280/640 does not work, even if we start only the color channel (image is corrupted)
-		/*colorVideoMode.setResolution(1280, 960);
-		colorVideoMode.setFps(7);*/
-		colorVideoMode.setResolution(640, 480);
-		ColorStream.setVideoMode(colorVideoMode);
-
-		rc = ColorStream.start();
-		if (openni::STATUS_OK != rc)
+		else
 		{
-			log->Error("Couldn't start color stream:" + Environment::NewLine + gcnew String(openni::OpenNI::getExtendedError()));
-			ColorStream.destroy();
-			return;
-		}
+			if (ProductID == ProductIDs::StereoS)
+			{
+				//The Stereo S does not support the same resolutions as the Embedded S
+				if (UVCColorResolution != UvcColorResolution::Res640x480 && UVCColorResolution != UvcColorResolution::Res1920x1080)
+				{
+					UVCColorResolution = UvcColorResolution::Res640x480;
+				}
+			}
 
-		if (!ColorStream.isValid())
-		{
-			log->Error("No valid color stream. Exiting.");
-			return;
-		}
+			int uvcColorFps = ObUVCInit(_uvcColorWidth, _uvcColorHeight, ProductID == ProductIDs::EmbeddedS);
 
-		colorVideoMode = ColorStream.getVideoMode();
-		_pCamData->colorWidth = colorVideoMode.getResolutionX();
-		_pCamData->colorHeight = colorVideoMode.getResolutionY();
+			if (uvcColorFps > 0)
+			{
+				_numberConnectedDevicesWithUVCColor++;
+				if (_numberConnectedDevicesWithUVCColor >= 2)
+				{
+					throw gcnew MetriCam2::Exceptions::ConnectionFailedException("Due to possible, ambiguous color channel assignment, only one device with UVC color is supported");
+				}
+
+				//Log the fps which is specidfied in the USB video class (real fps is different and depends on not modifyable color auto-exposure)
+				log->Debug("UVC color initialization successful. The specified fps is: " + uvcColorFps.ToString());
+			}
+			else
+			{
+				log->Warn("This camera does not support the channel \"" + ChannelNames::Color + "\". Deactivating and removing channel \"" + ChannelNames::Color + "\"...");
+				DeactivateChannel(ChannelNames::Color);
+				Channels->Remove(GetChannelDescriptor(ChannelNames::Color));
+			}
+		}
 	}
 
 	// Activating depth or IR channel can modify Orbbec's internal emitter state, so we need to set it again manually.
@@ -750,9 +812,11 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 		return;
 	}
 
-	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
+	if ((channelName->Equals(ChannelNames::ZImage) && !IsChannelActive(ChannelNames::Point3DImage)) ||
+		(channelName->Equals(ChannelNames::Point3DImage) && !IsChannelActive(ChannelNames::ZImage)))
 	{
 		DepthStream.stop();
+		_depthStreamRunning = false;
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{
@@ -760,7 +824,15 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 	}
 	else if (channelName->Equals(ChannelNames::Color))
 	{
-		ColorStream.stop();
+		if (_hasOpenNIColor)
+		{
+			ColorStream.stop();			
+		}
+		else
+		{
+			ObUVCShutdown();
+			_numberConnectedDevicesWithUVCColor--;
+		}
 	}
 }
 
@@ -799,6 +871,18 @@ FloatImage ^ MetriCam2::Cameras::AstraOpenNI::CalcZImage()
 
 ColorImage ^ MetriCam2::Cameras::AstraOpenNI::CalcColor()
 {
+	if (!_hasOpenNIColor)
+	{
+		Bitmap^ bitmap = gcnew Bitmap(_uvcColorWidth, _uvcColorHeight, System::Drawing::Imaging::PixelFormat::Format24bppRgb);
+		System::Drawing::Rectangle^ imageRect = gcnew System::Drawing::Rectangle(0, 0, bitmap->Width, bitmap->Height);
+		System::Drawing::Imaging::BitmapData^ bmpData = bitmap->LockBits(*imageRect, System::Drawing::Imaging::ImageLockMode::WriteOnly, bitmap->PixelFormat);
+		ObUVCFillColorImage((unsigned char*)bmpData->Scan0.ToPointer());
+		bitmap->UnlockBits(bmpData);
+		ColorImage^ image = gcnew ColorImage(bitmap);
+		image->ChannelName = ChannelNames::Color;
+		return image;
+	}
+
 	if (!ColorStream.isValid())
 	{
 		return nullptr;
@@ -923,11 +1007,17 @@ FloatImage ^ MetriCam2::Cameras::AstraOpenNI::CalcIRImage()
 
 Metrilus::Util::ProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIntrinsics(String^ channelName)
 {
+	String^ intrinsicsKey = channelName;
+	if (channelName->Equals(ChannelNames::Color) && !_hasOpenNIColor)
+	{
+		intrinsicsKey = channelName + _uvcColorWidth.ToString() + "x" + _uvcColorHeight.ToString();
+	}
+
 	//We need to cache the intrinsics, since OpenNI 2.3.1.48 generates a black depth image, if Device.getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, ...) is called too often. 
-	if (_intrinsicsCache->ContainsKey(channelName) && _intrinsicsCache[channelName] != nullptr)
+	if (_intrinsicsCache->ContainsKey(intrinsicsKey) && _intrinsicsCache[intrinsicsKey] != nullptr)
 	{
 		log->DebugFormat("Found intrinsic calibration for channel {0} in cache.", channelName);
-		return _intrinsicsCache[channelName];
+		return _intrinsicsCache[intrinsicsKey];
 	}
 
 	log->Info("Trying to load projective transformation from file.");
@@ -971,6 +1061,7 @@ Metrilus::Util::ProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIn
 	{
 		char buffer[512];
 		sprintf_s(buffer, 512, "%s", openni::OpenNI::getExtendedError());
+		throw gcnew MetriCam2::Exceptions::MetriCam2Exception(gcnew String(buffer));
 	}
 
 	Metrilus::Util::ProjectiveTransformationRational^ pt = nullptr;
@@ -1005,8 +1096,33 @@ Metrilus::Util::ProjectiveTransformation^ MetriCam2::Cameras::AstraOpenNI::GetIn
 	}
 	else
 	{
+		if (channelName->Equals(ChannelNames::Color) && !_hasOpenNIColor)
+		{
+			//We need to modify the intrinscs correctly if the color resolution is not 640x480
+			int scaleFactorWidth = _uvcColorWidth / pt->Width;
+			int scaleFactorHeight = _uvcColorHeight / pt->Height;
+
+			int scaleFactor = Math::Max(scaleFactorWidth, scaleFactorHeight);
+
+			if (UVCColorResolution != UvcColorResolution::Res2592x1944 && (scaleFactor * pt->Width != _uvcColorWidth || scaleFactor * pt->Height != _uvcColorHeight))
+			{
+				throw gcnew NotSupportedException("Color intrinsis are not yet supported for the resolution " + UVCColorResolution.ToString());
+			}
+
+			//These principal point offsets are at least valid for resolution 2592x1944.
+			float offsetCx = _uvcColorWidth - scaleFactor * pt->Width;
+			float offsetCy = 0.0f;			
+
+			pt = gcnew Metrilus::Util::ProjectiveTransformationRational(
+				_uvcColorWidth, _uvcColorHeight,
+				pt->Fx * scaleFactor, pt->Fy * scaleFactor,
+				pt->Cx * (float)(scaleFactor * pt->Width - 1) / (pt->Width - 1) + offsetCx,
+				pt->Cy * (float)(scaleFactor * pt->Height - 1) / (pt->Height - 1) + offsetCy,
+				pt->K1, pt->K2, pt->K3, pt->K4, pt->K5, pt->K6, pt->P1, pt->P2, float::NaN);
+		}
+
 		pt->CameraSerial = SerialNumber;
-		_intrinsicsCache[channelName] = pt;
+		_intrinsicsCache[intrinsicsKey] = pt;
 	}
 
 	return pt;
