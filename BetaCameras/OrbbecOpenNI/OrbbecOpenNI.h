@@ -456,6 +456,7 @@ namespace MetriCam2
 			int _uvcColorWidth;
 			int _uvcColorHeight;
 			bool _uvcColorEnforceNewImageInUpdate;
+			bool _depthStreamRunning;
 			// Compensate for offset between IR and Distance images:
 			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.
 			int _intensityYTranslation;

@@ -27,6 +27,7 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	_uvcColorWidth = 1280;
 	_uvcColorHeight = 960;
 	_uvcColorEnforceNewImageInUpdate = false;
+	_depthStreamRunning = false;
 	_extrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>();
 	_intrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, ProjectiveTransformation^>();
 }
@@ -496,6 +497,7 @@ void MetriCam2::Cameras::AstraOpenNI::DisconnectImpl()
 		IrStream.stop();
 	}
 	DepthStream.destroy();
+	_depthStreamRunning = false;
 	IrStream.destroy();
 
 	if (_hasOpenNIColor)
@@ -660,8 +662,7 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 
 	openni::Status rc;
 
-	if ((channelName->Equals(ChannelNames::Point3DImage) && !IsChannelActive(ChannelNames::ZImage))
-		|| (channelName->Equals(ChannelNames::ZImage) && !IsChannelActive(ChannelNames::Point3DImage)))
+	if ((channelName->Equals(ChannelNames::Point3DImage) || channelName->Equals(ChannelNames::ZImage)) && !_depthStreamRunning)
 	{
 		auto irGainBefore = GetIRGain();
 
@@ -693,6 +694,8 @@ void MetriCam2::Cameras::AstraOpenNI::ActivateChannelImpl(String^ channelName)
 			// Activating the depth channel resets the IR gain to the default value -> we need to restore the value that was set before.
 			SetIRGain(irGainBefore);
 		}
+
+		_depthStreamRunning = true;
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{
@@ -812,6 +815,7 @@ void MetriCam2::Cameras::AstraOpenNI::DeactivateChannelImpl(String^ channelName)
 	if (channelName->Equals(ChannelNames::ZImage) || channelName->Equals(ChannelNames::Point3DImage))
 	{
 		DepthStream.stop();
+		_depthStreamRunning = false;
 	}
 	else if (channelName->Equals(ChannelNames::Intensity))
 	{
