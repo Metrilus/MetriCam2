@@ -9,10 +9,10 @@ pipeline {
         def V_MINOR = "${versionInfo['VERSION_MINOR']}"
         def V_BUILD = "${versionInfo['VERSION_BUILD']}"
 
-        def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.BaslerACE MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.MatrixVision MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.Sick.VisionaryT.Pro MetriCam2.Cameras.SVS MetriCam2.Cameras.TIVoxel MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam MetriCam2.Cameras.Pico'
-        def dllsToDeployAnyCPU = 'Microsoft.AzureKinect Intel.RealSense log4net MathNet.Numerics MetriCam2 MetriCam2.Cameras.RealSense2 MetriCam2.Cameras.Kinect4Azure MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
+        def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.BaslerACE MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.Kinect4Azure MetriCam2.Cameras.MatrixVision MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.Sick.VisionaryT.Pro MetriCam2.Cameras.SVS MetriCam2.Cameras.TIVoxel MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam MetriCam2.Cameras.Pico'
+        def dllsToDeployAnyCPU = 'Intel.RealSense log4net MathNet.Numerics MetriCam2 MetriCam2.Cameras.RealSense2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
         def dllsToDeployNetStandard = 'MetriCam2 MetriCam2.Cameras.RealSense2 Metrilus.Util'
-        def dllsToDeployX64StrongName = 'MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.VisionaryT'
+        def dllsToDeployX64StrongName = 'MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.Kinect4Azure MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.VisionaryT'
         def dllsToDeployAnyCPUStrongName = 'log4net MathNet.Numerics MetriCam2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
 
         def currentBranch = "${env.GITHUB_BRANCH_NAME}"
@@ -127,6 +127,10 @@ pipeline {
                     COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%"
                     if errorlevel 1 GOTO StepFailed
                     COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%%releaseSuffixDebug%"
+                    if errorlevel 1 GOTO StepFailed
+					COPY /Y "BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props" "%releaseLibraryDirectory%"
+                    if errorlevel 1 GOTO StepFailed
+                    COPY /Y "BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props" "%releaseLibraryDirectory%%releaseSuffixDebug%"
                     if errorlevel 1 GOTO StepFailed
                     FOR %%p IN (%dllsToDeployAnyCPU%) DO (
                         COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%releaseLibraryDirectory%"

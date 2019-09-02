@@ -7,9 +7,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
-using Microsoft.AzureKinect;
 using Metrilus.Util;
 using MetriCam2.Exceptions;
+using Microsoft.Azure.Kinect.Sensor;
+using System.Buffers;
 
 namespace MetriCam2.Cameras
 {
@@ -18,29 +19,28 @@ namespace MetriCam2.Cameras
         private Device _device = null;
         private Capture _capture = null;
         private bool _disposed = false;
-        private object _lock = new object();
 
         private Dictionary<string, RigidBodyTransformation> _extrinsicsCache = new Dictionary<string, RigidBodyTransformation>();
         private Dictionary<string, ProjectiveTransformation> _intrinsicsCache = new Dictionary<string, ProjectiveTransformation>();
-        private K4AColorResolution _lastValidColorResolution = K4AColorResolution.r720p; //Last valid mode != off
+        private K4AColorResolution _lastValidColorResolution = K4AColorResolution.R720p; //Last valid mode != off
         private K4ADepthMode _lastValidDepthMode = K4ADepthMode.WFOV_Unbinned; //Last valid mode != off
 
         public enum K4AColorResolution
         {
             Off = 0,
-            r720p = 1,
-            r1080p = 2,
-            r1440p = 3,
-            r1536p = 4,
-            r2160p = 5,
-            r3072p = 6
+            R720p = 1,
+            R1080p = 2,
+            R1440p = 3,
+            R1536p = 4,
+            R2160p = 5,
+            R3072p = 6
         }
 
         public enum K4AFPS
         {
-            fps5 = 0,
-            fps15 = 1,
-            fps30 = 2
+            FPS5 = 0,
+            FPS15 = 1,
+            FPS30 = 2
         }
 
         public enum K4ADepthMode
@@ -79,7 +79,7 @@ namespace MetriCam2.Cameras
             get { return "Microsoft"; }
         }
 
-        private ColorResolution _colorResolution = Microsoft.AzureKinect.ColorResolution.r720p;
+        private ColorResolution _colorResolution = Microsoft.Azure.Kinect.Sensor.ColorResolution.R720p;
         public K4AColorResolution ColorResolution
         {
             get
@@ -91,14 +91,17 @@ namespace MetriCam2.Cameras
             {
                 if ((ColorResolution)value != _colorResolution)
                 {
-                    _colorResolution = (ColorResolution)value;
-                    if(value != K4AColorResolution.Off)
+                    lock (cameraLock)
                     {
-                        _lastValidColorResolution = value;
-                    }
-                    if (IsConnected)
-                    {
-                        RestartCamera();
+                        _colorResolution = (ColorResolution)value;
+                        if (value != K4AColorResolution.Off)
+                        {
+                            _lastValidColorResolution = value;
+                        }
+                        if (IsConnected)
+                        {
+                            RestartCamera();
+                        }
                     }
                 }
             }
@@ -119,7 +122,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private FPS _fps = FPS.fps30;
+        private FPS _fps = FPS.FPS30;
         public K4AFPS Fps
         {
             get
@@ -142,7 +145,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        private DepthMode _depthMode = Microsoft.AzureKinect.DepthMode.WFOV_Unbinned;
+        private DepthMode _depthMode = Microsoft.Azure.Kinect.Sensor.DepthMode.WFOV_Unbinned;
         public K4ADepthMode DepthMode
         {
             get
@@ -154,14 +157,17 @@ namespace MetriCam2.Cameras
             {
                 if ((DepthMode)value != _depthMode)
                 {
-                    _depthMode = (DepthMode)value;
-                    if (value != K4ADepthMode.Off)
+                    lock (cameraLock)
                     {
-                        _lastValidDepthMode = value;
-                    }
-                    if (IsConnected)
-                    {
-                        RestartCamera();
+                        _depthMode = (DepthMode)value;
+                        if (value != K4ADepthMode.Off)
+                        {
+                            _lastValidDepthMode = value;
+                        }
+                        if (IsConnected)
+                        {
+                            RestartCamera();
+                        }
                     }
                 }
             }
@@ -189,7 +195,7 @@ namespace MetriCam2.Cameras
 
         public Kinect4Azure() : base("Kinect4Azure")
         {
-
+            enableImplicitThreadSafety = true;
         }
 
         public void Dispose()
@@ -239,7 +245,7 @@ namespace MetriCam2.Cameras
                         tmpDev = Device.Open(i);
                         break;
                     }
-                    catch (Microsoft.AzureKinect.Exception e)
+                    catch (AzureKinectException e)
                     {
                         log.Warn($"Could not open K4A Device number {i}. The device is probably already in use: {e.Message}");
                     }
@@ -262,7 +268,7 @@ namespace MetriCam2.Cameras
                         }
                         tmpDev.Dispose();
                     }
-                    catch (Microsoft.AzureKinect.Exception e)
+                    catch (AzureKinectException e)
                     {
                         log.Warn($"Could not open K4A Device number {i}. The device is probably already in use: {e.Message}");
                     }
@@ -289,29 +295,32 @@ namespace MetriCam2.Cameras
 
         private void RestartCamera()
         {
-            lock(_lock)
+            _device.StopCameras();
+            if (DepthMode == K4ADepthMode.WFOV_Unbinned)
             {
-                _device.StopCameras();
-                if (DepthMode == K4ADepthMode.WFOV_Unbinned)
-                {
-                    _fps = FPS.fps15;
-                }
-                else
-                {
-                    _fps = FPS.fps30;
-                }
-
-                bool synchronizedImagesOnly = _colorResolution != Microsoft.AzureKinect.ColorResolution.Off && _depthMode != Microsoft.AzureKinect.DepthMode.Off; //Off-mode does not support synchronization
-
-                _device.StartCameras(new DeviceConfiguration
-                {
-                    ColorFormat = Microsoft.AzureKinect.ImageFormat.ColorBGRA32,
-                    ColorResolution = _colorResolution,
-                    DepthMode = _depthMode,
-                    SynchronizedImagesOnly = synchronizedImagesOnly,
-                    CameraFPS = _fps,
-                });
+                _fps = FPS.FPS15;
             }
+            else
+            {
+                _fps = FPS.FPS30;
+            }
+
+            bool synchronizedImagesOnly = _colorResolution != Microsoft.Azure.Kinect.Sensor.ColorResolution.Off && _depthMode != Microsoft.Azure.Kinect.Sensor.DepthMode.Off; //Off-mode does not support synchronization
+
+            _device.StartCameras(new DeviceConfiguration
+            {
+                ColorFormat = Microsoft.Azure.Kinect.Sensor.ImageFormat.ColorBGRA32,
+                ColorResolution = _colorResolution,
+                DepthMode = _depthMode,
+                SynchronizedImagesOnly = synchronizedImagesOnly,
+                CameraFPS = _fps,
+            });
+
+            //We need to call "Update" here, otherwise we can run into problems:
+            //if "RestartCamera" is called between "Update" and "CalcChannel", the images can have the "old resolution", whereas 
+            //GetIntrinsics already returns the new intrinscs.
+            IsConnected = true; //Otherwise update will fail after "Connect".
+            Update();
         }
 
         protected override void DisconnectImpl()
@@ -328,18 +337,15 @@ namespace MetriCam2.Cameras
 
         protected override void UpdateImpl()
         {
-            lock(_lock)
+            try
             {
-                try
-                {
-                    _capture = _device.GetCapture();
-                }
-                catch (Microsoft.AzureKinect.Exception e)
-                {
-                    string msg = $"{Name}: getting new capture failed: {e.Message}";
-                    log.Error(msg);
-                    throw new ImageAcquisitionFailedException(msg);
-                }
+                _capture = _device.GetCapture();
+            }
+            catch (AzureKinectException e)
+            {
+                string msg = $"{Name}: getting new capture failed: {e.Message}";
+                log.Error(msg);
+                throw new ImageAcquisitionFailedException(msg);
             }
         }
 
@@ -378,7 +384,7 @@ namespace MetriCam2.Cameras
             int height = _capture.Color.HeightPixels;
             int width = _capture.Color.WidthPixels;
 
-            if (_capture.Color.Format != Microsoft.AzureKinect.ImageFormat.ColorBGRA32)
+            if (_capture.Color.Format != Microsoft.Azure.Kinect.Sensor.ImageFormat.ColorBGRA32)
             {
                 throw new ImageAcquisitionFailedException($"Expected format ColorBGRA32, found format {_capture.Color.Format.ToString()}");
             }
@@ -387,8 +393,10 @@ namespace MetriCam2.Cameras
             Rectangle imageRect = new Rectangle(0, 0, width, height);
             BitmapData bmpData = bitmap.LockBits(imageRect, ImageLockMode.WriteOnly, bitmap.PixelFormat);
 
-            byte* source = (byte*)_capture.Color.Buffer;
+            MemoryHandle sourceHandle = _capture.Color.Memory.Pin();
+            byte* source = (byte*)sourceHandle.Pointer;
             byte* target = (byte*)(void*)bmpData.Scan0;
+
             for (int y = 0; y < height; y++)
             {
                 byte* sourceLine = source + y * width * 4;
@@ -402,7 +410,9 @@ namespace MetriCam2.Cameras
                 }
             }
 
+            sourceHandle.Dispose();
             bitmap.UnlockBits(bmpData);
+
             return new ColorImage(bitmap);
         }
 
@@ -416,18 +426,21 @@ namespace MetriCam2.Cameras
             int height = _capture.Depth.HeightPixels;
             int width = _capture.Depth.WidthPixels;
 
-            if (_capture.Depth.Format != Microsoft.AzureKinect.ImageFormat.Depth16)
+            if (_capture.Depth.Format != Microsoft.Azure.Kinect.Sensor.ImageFormat.Depth16)
             {
                 throw new ImageAcquisitionFailedException($"Expected format Depth16, found format {_capture.Depth.Format.ToString()}");
             }
 
             FloatImage depthData = new FloatImage(width, height);
-            short* source = (short*)_capture.Depth.Buffer;
+            MemoryHandle sourceHandle = _capture.Depth.Memory.Pin();
+            short* source = (short*)sourceHandle.Pointer;
 
             for (int i = 0; i < depthData.Length; i++)
             {
                 depthData[i] = *source++ / 1000.0f;
             }
+
+            sourceHandle.Dispose();
 
             return depthData;
         }
@@ -437,18 +450,21 @@ namespace MetriCam2.Cameras
             int height = _capture.IR.HeightPixels;
             int width = _capture.IR.WidthPixels;
 
-            if (_capture.IR.Format != Microsoft.AzureKinect.ImageFormat.IR16)
+            if (_capture.IR.Format != Microsoft.Azure.Kinect.Sensor.ImageFormat.IR16)
             {
                 throw new ImageAcquisitionFailedException($"Expected format IR16, found format {_capture.IR.Format.ToString()}");
             }
 
-            FloatImage irData = new FloatImage(width, height);
-            short* source = (short*)_capture.IR.Buffer;
+            FloatImage irData = new FloatImage(width, height);           
+            MemoryHandle sourceHandle = _capture.IR.Memory.Pin();
+            short* source = (short*)sourceHandle.Pointer;
 
             for (int i = 0; i < irData.Length; i++)
             {
                 irData[i] = *source++;
             }
+
+            sourceHandle.Dispose();
 
             return irData;
         }
@@ -471,26 +487,26 @@ namespace MetriCam2.Cameras
 
             Calibration calibration = _device.GetCalibration();
             float metricRadius = 0.0f;
-            Calibration.Intrinsics intrinsics;
+            Microsoft.Azure.Kinect.Sensor.Intrinsics intrinsics;
             int width;
             int height;
 
             switch (channelName)
             {
                 case ChannelNames.Color:
-                    intrinsics = calibration.color_camera_calibration.intrinsics;
-                    width = calibration.color_camera_calibration.resolution_width;
-                    height = calibration.color_camera_calibration.resolution_height;
-                    metricRadius = calibration.color_camera_calibration.metric_radius;
+                    intrinsics = calibration.ColorCameraCalibration.Intrinsics;
+                    width = calibration.ColorCameraCalibration.ResolutionWidth;
+                    height = calibration.ColorCameraCalibration.ResolutionHeight;
+                    metricRadius = calibration.ColorCameraCalibration.MetricRadius;
                     break;
 
                 case ChannelNames.ZImage:
                 case ChannelNames.Intensity:
                 case ChannelNames.Distance:
-                    intrinsics = calibration.depth_camera_calibration.intrinsics;
-                    width = calibration.depth_camera_calibration.resolution_width;
-                    height = calibration.depth_camera_calibration.resolution_height;
-                    metricRadius = calibration.depth_camera_calibration.metric_radius;
+                    intrinsics = calibration.DepthCameraCalibration.Intrinsics;
+                    width = calibration.DepthCameraCalibration.ResolutionWidth;
+                    height = calibration.DepthCameraCalibration.ResolutionHeight;
+                    metricRadius = calibration.DepthCameraCalibration.MetricRadius;
                     break;
 
                 default:
@@ -502,18 +518,18 @@ namespace MetriCam2.Cameras
             ProjectiveTransformation projTrans = new ProjectiveTransformationRational(
                 width,
                 height,
-                intrinsics.parameters[(int)Intrinsics.Fx],
-                intrinsics.parameters[(int)Intrinsics.Fy],
-                intrinsics.parameters[(int)Intrinsics.Cx],
-                intrinsics.parameters[(int)Intrinsics.Cy],
-                intrinsics.parameters[(int)Intrinsics.K1],
-                intrinsics.parameters[(int)Intrinsics.K2],
-                intrinsics.parameters[(int)Intrinsics.K3],
-                intrinsics.parameters[(int)Intrinsics.K4],
-                intrinsics.parameters[(int)Intrinsics.K5],
-                intrinsics.parameters[(int)Intrinsics.K6],
-                intrinsics.parameters[(int)Intrinsics.P1],
-                intrinsics.parameters[(int)Intrinsics.P2],
+                intrinsics.Parameters[(int)Intrinsics.Fx],
+                intrinsics.Parameters[(int)Intrinsics.Fy],
+                intrinsics.Parameters[(int)Intrinsics.Cx],
+                intrinsics.Parameters[(int)Intrinsics.Cy],
+                intrinsics.Parameters[(int)Intrinsics.K1],
+                intrinsics.Parameters[(int)Intrinsics.K2],
+                intrinsics.Parameters[(int)Intrinsics.K3],
+                intrinsics.Parameters[(int)Intrinsics.K4],
+                intrinsics.Parameters[(int)Intrinsics.K5],
+                intrinsics.Parameters[(int)Intrinsics.K6],
+                intrinsics.Parameters[(int)Intrinsics.P1],
+                intrinsics.Parameters[(int)Intrinsics.P2],
                 metricRadius);
 
             _intrinsicsCache[keyName] = projTrans;
@@ -537,11 +553,11 @@ namespace MetriCam2.Cameras
             }
             else if ((channelFromName == ChannelNames.Distance || channelFromName == ChannelNames.ZImage || channelFromName == ChannelNames.Intensity) && channelToName == ChannelNames.Color)
             {
-                RotationMatrix rotMat = new RotationMatrix(calibration.color_camera_calibration.extrinsics.rotation);
+                RotationMatrix rotMat = new RotationMatrix(calibration.ColorCameraCalibration.Extrinsics.Rotation);
                 Point3f translation = new Point3f(
-                    calibration.color_camera_calibration.extrinsics.translation[0] / 1000f,
-                    calibration.color_camera_calibration.extrinsics.translation[1] / 1000f,
-                    calibration.color_camera_calibration.extrinsics.translation[2] / 1000f);
+                    calibration.ColorCameraCalibration.Extrinsics.Translation[0] / 1000f,
+                    calibration.ColorCameraCalibration.Extrinsics.Translation[1] / 1000f,
+                    calibration.ColorCameraCalibration.Extrinsics.Translation[2] / 1000f);
                 rbt = new RigidBodyTransformation(rotMat, translation);
             }
             else
