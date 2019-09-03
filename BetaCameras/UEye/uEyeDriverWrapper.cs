@@ -44,13 +44,7 @@ namespace MetriCam2.Cameras.Internal.uEye
     internal class uEyeDriverWrapper
     {
         #region Driver name
-
-        //TODO: This is not a good option, for some unknown reason _WIN64 has to be defined in 64-bit Assemblies using this DLL as well, otherwise, the wrong DLL is used (-> crash!)
-#if _WIN64
         public const string DRIVER_DLL_NAME = "ueye_api_64.dll";
-#else
-        public const string DRIVER_DLL_NAME = "ueye_api.dll";
-#endif
         #endregion
 
         #region API Constants, Structures, Enumeration and Exports

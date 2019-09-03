@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -11,6 +10,9 @@ using Metrilus.Util;
 using MetriCam2.Exceptions;
 using Microsoft.Azure.Kinect.Sensor;
 using System.Buffers;
+#if !NETSTANDARD2_0
+using System.Drawing.Imaging;
+#endif
 
 namespace MetriCam2.Cameras
 {
@@ -190,7 +192,16 @@ namespace MetriCam2.Cameras
         #endregion
 
 #if !NETSTANDARD2_0
-        public override Icon CameraIcon { get => Properties.Resources.MSIcon; }
+        public override Icon CameraIcon
+        {
+            get
+            {
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Properties.Resources.MSIcon))
+                {
+                    return new Icon(ms);
+                }
+            }
+        }
 #endif
 
         public Kinect4Azure() : base("Kinect4Azure")

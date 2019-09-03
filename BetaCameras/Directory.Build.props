@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <PropertyGroup>
+    <OutputPath>..\..\bin\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="MetriCam2.Attributes.ContainsCameraImplementations" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\.licenseheader">
+      <Link>.licenseheader</Link>
+    </None>
+  </ItemGroup>
+</Project>

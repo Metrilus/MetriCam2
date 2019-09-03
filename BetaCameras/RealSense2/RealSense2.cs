@@ -323,7 +323,16 @@ namespace MetriCam2.Cameras
         public override string Vendor { get => "Intel"; }
 
 #if !NETSTANDARD2_0
-        public override Icon CameraIcon { get => Properties.Resources.RealSense2Icon; }
+        public override Icon CameraIcon
+        {
+            get
+            {
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Properties.Resources.RealSense2Icon))
+                {
+                    return new Icon(ms);
+                }
+            }
+        }
 #endif
 
         #region RealSense Options
