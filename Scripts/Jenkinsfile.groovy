@@ -9,12 +9,6 @@ pipeline {
         def V_MINOR = "${versionInfo['VERSION_MINOR']}"
         def V_BUILD = "${versionInfo['VERSION_BUILD']}"
 
-        def dllsToDeployX64 = 'CookComputing.XmlRpcV2 MetriCam2.Cameras.BaslerACE MetriCam2.Cameras.BaslerToF MetriCam2.Cameras.ifm MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.Kinect4Azure MetriCam2.Cameras.MatrixVision MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.TiM561 MetriCam2.Cameras.Sick.VisionaryT MetriCam2.Cameras.Sick.VisionaryT.Pro MetriCam2.Cameras.SVS MetriCam2.Cameras.TIVoxel MetriCam2.Cameras.UEye MetriCam2.Cameras.WebCam MetriCam2.Cameras.Pico'
-        def dllsToDeployAnyCPU = 'Intel.RealSense log4net MathNet.Numerics MetriCam2 MetriCam2.Cameras.RealSense2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
-        def dllsToDeployNetStandard = 'MetriCam2 MetriCam2.Cameras.RealSense2 Metrilus.Util'
-        def dllsToDeployX64StrongName = 'MetriCam2.Cameras.Kinect2 MetriCam2.Cameras.Kinect4Azure MetriCam2.Cameras.OrbbecOpenNI MetriCam2.Cameras.Sick.VisionaryT'
-        def dllsToDeployAnyCPUStrongName = 'log4net MathNet.Numerics MetriCam2 MetriCam2.Controls Metrilus.Util Newtonsoft.Json'
-
         def currentBranch = "${env.GITHUB_BRANCH_NAME}"
         def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
         def solutionFilename = 'MetriCam2_SDK.sln'
@@ -23,11 +17,10 @@ pipeline {
         def niceVersion = "${releaseVersion}"
         def releaseFolder = getReleaseFolder(currentBranch, niceVersion)
 
+		def targetFrameworks = "net45 net472 netstandard2.0"
         def releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
-        def releaseLibraryDirectory = "${releaseDirectory}\\lib"
-        def releaseSuffixNetStandard20 = "_netstandard2.0"
-        def releaseSuffixDebug = "_debug"
-        def releaseSuffixStrongName = "_strongname"
+        def releaseLibraryDirectory = "lib"
+        def folderSuffixDebug = "_debug"
 
         def STATUS_CONTEXT = 'MetriCam2 CI'
         def BUILD_DATETIME = new Date(currentBuild.startTimeInMillis).format("yyyyMMdd-HHmm")
@@ -45,12 +38,11 @@ pipeline {
                     %NUGET_EXE% restore
                     '''
 
-                bat '''
-                    @echo Checking References ...
-                    %REFERENCE_CHECKER% -j "%JOB_NAME%" "%WORKSPACE%"
-                    '''
+			    echo "Setting version number for C# projects..."
+				bat "\"Scripts\\SetVersion.cmd\" \"Directory.Build.props\" ${releaseVersion}"
 
-                bat "\"Scripts\\Set Assembly-Info Version.cmd\" \"SolutionAssemblyInfo.cs\" ${releaseVersion}"
+				echo "Setting version for C++/CLI projects..."
+                bat "\"Scripts\\Set Assembly-Info Version.cmd\" \"SolutionAssemblyInfo.h\" ${releaseVersion}"
             }
         }
 
@@ -58,24 +50,10 @@ pipeline {
             steps {
                 bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=Release;Platform=x64"
                 bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=Debug;Platform=x64"
-                bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=ReleaseStrongName;Platform=x64"
-                bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=DebugStrongName;Platform=x64"
             }
         }
 
         stage('Publish') {
-            environment {
-                def RELEASE_DIR_X64 = 'bin\\x64\\Release\\'
-                def DEBUG_DIR_X64 = 'bin\\x64\\Debug\\'
-                def RELEASE_DIR_X64_STRONGNAME = 'bin\\x64\\ReleaseStrongName\\'
-                def DEBUG_DIR_X64_STRONGNAME = 'bin\\x64\\DebugStrongName\\'
-                def RELEASE_DIR_ANYCPU = 'bin\\Release\\'
-                def DEBUG_DIR_ANYCPU = 'bin\\Debug\\'
-                def RELEASE_DIR_ANYCPU_STRONGNAME = 'bin\\ReleaseStrongName\\'
-                def DEBUG_DIR_ANYCPU_STRONGNAME = 'bin\\DebugStrongName\\'
-                def RELEASE_DIR_NETSTANDARD = 'bin\\Release\\netstandard2.0\\'
-                def DEBUG_DIR_NETSTANDARD = 'bin\\Debug\\netstandard2.0\\'
-            }
             steps {
                 script {
                     if (fileExists(releaseDirectory)) {
@@ -91,19 +69,12 @@ pipeline {
 
                     mkdir \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
-                    mkdir \"${releaseLibraryDirectory}\"
-                    if errorlevel 1 GOTO StepFailed
-                    mkdir \"${releaseLibraryDirectory}${releaseSuffixDebug}\"
-                    if errorlevel 1 GOTO StepFailed
-                    mkdir \"${releaseLibraryDirectory}${releaseSuffixNetStandard20}\"
-                    if errorlevel 1 GOTO StepFailed
-                    mkdir \"${releaseLibraryDirectory}${releaseSuffixNetStandard20}${releaseSuffixDebug}\"
-                    if errorlevel 1 GOTO StepFailed
-                    mkdir \"${releaseLibraryDirectory}${releaseSuffixStrongName}\"
-                    if errorlevel 1 GOTO StepFailed
-                    mkdir \"${releaseLibraryDirectory}${releaseSuffixStrongName}${releaseSuffixDebug}\"
-                    if errorlevel 1 GOTO StepFailed
-
+                    for %%t in (%targetFrameworks%) do (
+                        mkdir \"${releaseDirectory}\\%%t\\${releaseLibraryDirectory}\"
+                        if errorlevel 1 GOTO StepFailed
+                        mkdir \"${releaseDirectory}\\%%t\\${releaseLibraryDirectory}${folderSuffixDebug}\"
+                        if errorlevel 1 GOTO StepFailed
+                    )
                     exit /b 0
 
                     :StepFailed
@@ -113,66 +84,24 @@ pipeline {
 
                 bat '''
                     echo Publishing Libraries and Dependencies ...
-                    REM No error check for PDB files, since dependencies don't have them.
 
-                    FOR %%p IN (%dllsToDeployX64%) DO (
-                        COPY /Y "%RELEASE_DIR_X64%%%p.dll" "%releaseLibraryDirectory%"
+					for %%t in (%targetFrameworks%) do (
+                        xcopy /Y /V \"bin\\Release\\%%t\\*.dll\" "%releaseDirectory%\\%%t\\%releaseLibraryDirectory%"
                         if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%RELEASE_DIR_X64%%%p.pdb" "%releaseLibraryDirectory%"
-
-                        COPY /Y "%DEBUG_DIR_X64%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixDebug%"
+						xcopy /Y /V \"bin\\Release\\%%t\\*.pdb\" "%releaseDirectory%\\%%t\\%releaseLibraryDirectory%"
                         if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%DEBUG_DIR_X64%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixDebug%"
-                    )
-                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%"
-                    if errorlevel 1 GOTO StepFailed
-                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%%releaseSuffixDebug%"
-                    if errorlevel 1 GOTO StepFailed
-					COPY /Y "BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props" "%releaseLibraryDirectory%"
-                    if errorlevel 1 GOTO StepFailed
-                    COPY /Y "BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props" "%releaseLibraryDirectory%%releaseSuffixDebug%"
-                    if errorlevel 1 GOTO StepFailed
-                    FOR %%p IN (%dllsToDeployAnyCPU%) DO (
-                        COPY /Y "%RELEASE_DIR_ANYCPU%%%p.dll" "%releaseLibraryDirectory%"
+                        xcopy /Y /V \"bin\\Debug\\%%t\\*.dll\" "%releaseDirectory%\\%%t\\%releaseLibraryDirectory%%folderSuffixDebug%"
                         if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%RELEASE_DIR_ANYCPU%%%p.pdb" "%releaseLibraryDirectory%"
-
-                        COPY /Y "%DEBUG_DIR_ANYCPU%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixDebug%"
+						xcopy /Y /V \"bin\\Debug\\%%t\\*.pdb\" "%releaseDirectory%\\%%t\\%releaseLibraryDirectory%%folderSuffixDebug%"
                         if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%DEBUG_DIR_ANYCPU%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixDebug%"
-                    )
-                    FOR %%p IN (%dllsToDeployNetStandard%) DO (
-                        COPY /Y "%RELEASE_DIR_NETSTANDARD%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixNetStandard20%"
-                        if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%RELEASE_DIR_NETSTANDARD%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixNetStandard20%"
-
-                        COPY /Y "%DEBUG_DIR_NETSTANDARD%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixNetStandard20%%releaseSuffixDebug%"
-                        if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%DEBUG_DIR_NETSTANDARD%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixNetStandard20%%releaseSuffixDebug%"
-                    )
-                    FOR %%p IN (%dllsToDeployX64StrongName%) DO (
-                        COPY /Y "%RELEASE_DIR_X64_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
-                        if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%RELEASE_DIR_X64_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
-
-                        COPY /Y "%DEBUG_DIR_X64_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
-                        if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%DEBUG_DIR_X64_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
-                    )
-                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
-                    if errorlevel 1 GOTO StepFailed
-                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
-                    if errorlevel 1 GOTO StepFailed
-                    FOR %%p IN (%dllsToDeployAnyCPUStrongName%) DO (
-                        COPY /Y "%RELEASE_DIR_ANYCPU_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
-                        if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%RELEASE_DIR_ANYCPU_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%"
-
-                        COPY /Y "%DEBUG_DIR_ANYCPU_STRONGNAME%%%p.dll" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
-                        if errorlevel 1 GOTO StepFailed
-                        COPY /Y "%DEBUG_DIR_ANYCPU_STRONGNAME%%%p.pdb" "%releaseLibraryDirectory%%releaseSuffixStrongName%%releaseSuffixDebug%"
                     )
 
+					echo Publishing Camera-specific .props Files ...
+                    
+                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseDirectory%"
+                    if errorlevel 1 GOTO StepFailed
+					COPY /Y "BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props" "%releaseDirectory%"
+                    if errorlevel 1 GOTO StepFailed
                     exit /b 0
 
                     :StepFailed
@@ -185,15 +114,6 @@ pipeline {
 
                     copy \"License.txt\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
-                    copy \"lib\\License-MathNet.Numerics.txt\" \"${releaseDirectory}\"
-                    if errorlevel 1 GOTO StepFailed
-                    copy \"lib\\License-Newtonsoft.Json.txt\" \"${releaseDirectory}\"
-                    if errorlevel 1 GOTO StepFailed
-                    copy \"lib\\License-Metrilus.Util.txt\" \"${releaseDirectory}\"
-                    if errorlevel 1 GOTO StepFailed
-                    copy \"lib\\Notice-log4net.md\" \"${releaseDirectory}\"
-                    if errorlevel 1 GOTO StepFailed
-                
                     exit /b 0
 
                     :StepFailed

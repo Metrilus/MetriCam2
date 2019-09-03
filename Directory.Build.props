@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <Authors>Metrilus</Authors>
+    <Version>0.0.0.0</Version>
+    <FileVersion>0.0.0.0</FileVersion>
+    <Product>MetriCam 2</Product>
+    <Company>Metrilus GmbH</Company>
+    <Description>A consistent .NET SDK for Depth Cameras</Description>
+    <Copyright>Copyright © Metrilus GmbH 2013 - 2019</Copyright>
+    <TargetFrameworks>net472</TargetFrameworks>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <OutputPath>..\bin\$(Configuration)\</OutputPath>
+    <RestoreSources Condition="Exists('Z:\releases\Metrilus.Util')">
+      Z:\releases\Metrilus.Util\.unstable;
+      Z:\releases\Metrilus.Util\.unstable\master;
+    </RestoreSources>
+    <RestoreSources>
+      $(RestoreSources);
+      https://api.nuget.org/v3/index.json;
+    </RestoreSources>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="Exists('Z:\protection\StrongNameKey\StrongName.snk')">
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>false</DelaySign>
+    <AssemblyOriginatorKeyFile>Z:\protection\StrongNameKey\StrongName.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Metrilus.Util" />
+  </ItemGroup>
+</Project>

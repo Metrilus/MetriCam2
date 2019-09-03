@@ -63,10 +63,10 @@ namespace MetriCam2.Cameras.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
-        public static System.Drawing.Icon MSIcon {
+        public static byte[] MSIcon {
             get {
                 object obj = ResourceManager.GetObject("MSIcon", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
+                return ((byte[])(obj));
             }
         }
     }
