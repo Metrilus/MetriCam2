@@ -1,24 +1,22 @@
-#!groovy?
+#!groovy
 
 pipeline {
     agent any
 
     environment {
-        def versionInfo = readProperties file:'version.properties'
-        def V_MAJOR = "${versionInfo['VERSION_MAJOR']}"
-        def V_MINOR = "${versionInfo['VERSION_MINOR']}"
-        def V_BUILD = "${versionInfo['VERSION_BUILD']}"
-
         def currentBranch = "${env.GITHUB_BRANCH_NAME}"
         def msbuildToolName = 'MSBuild Release/x64 [v15.0 / VS2017]'
         def solutionFilename = 'MetriCam2_SDK.sln'
 
-        def releaseVersion = getReleaseVersion(currentBranch, V_MAJOR, V_MINOR, V_BUILD);
-        def niceVersion = "${releaseVersion}"
-        def releaseFolder = getReleaseFolder(currentBranch, niceVersion)
+        // All these variables depend upon the version number, as defined by GitVersion during the build.
+        // The variables are defined here to make them globally available, and initialized in the Pre-Build stage.
+        def nugetVersion = ""     // Includes Major.Minor.Patch, Build (or some other counter), and the branch name, e.g. 16.0.1-build-nuget-package.1
+        def releaseVersion = ""   // Major.Minor.Patch.Build, e.g. 16.0.1.456
+        def niceVersion = ""      // Major.Minor.Patch, e.g. 16.0.1
+        def releaseFolder = ""    // Path where the release will be published, relative to RELEASE_PATH
+        def releaseDirectory = "" // Absolute path where the release will be published
 
 		def targetFrameworks = "net45 net472 netstandard2.0"
-        def releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
         def releaseLibraryDirectory = "lib"
         def folderSuffixDebug = "_debug"
 
@@ -38,10 +36,37 @@ pipeline {
                     %NUGET_EXE% restore
                     '''
 
-			    echo "Setting version number for C# projects..."
-				bat "\"Scripts\\SetVersion.cmd\" \"Directory.Build.props\" ${releaseVersion}"
+                bat '''
+                    @echo GitVersion
+                    %GitVersion%
+                    %GitVersion% /output buildserver
+                    '''
+                script {
+                    def props = readProperties  file: 'gitversion.properties'
+                    def vMajor = props['GitVersion_Major']
+                    def vMinor = props['GitVersion_Minor']
+                    def vPatch = props['GitVersion_Patch']
+                    def currentBuildNumber = currentBuild.number.toString();
+                    def releaseVersionInterfix = getReleaseVersionInterfix(currentBranch);
+                    // Update global variables
+                    releaseVersion = getFullReleaseVersion(currentBranch, vMajor, vMinor, vPatch);
+                    niceVersion = getNiceReleaseVersion(vMajor, vMinor, vPatch);
+                    nugetVersion = "${niceVersion}${releaseVersionInterfix}.${currentBuildNumber}"
+                    releaseFolder = getReleaseFolder(currentBranch, niceVersion)
+                    releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
+                    // Output which might be useful for debugging the build job
+                    echo "vMajor.MINOR.BUILD = ${vMajor}.${vMinor}.${vPatch}"
+                    echo "releaseVersion = ${releaseVersion}"
+                    echo "niceVersion = ${niceVersion}"
+                    echo "nugetVersion = ${nugetVersion}"
+                    echo "releaseFolder = ${releaseFolder}"
+                    echo "releaseDirectory = ${releaseDirectory}"
+                }
 
-				echo "Setting version for C++/CLI projects..."
+                echo "Setting version number for C# projects..."
+                bat "\"Scripts\\SetVersion.cmd\" \"Directory.Build.props\" ${releaseVersion} ${nugetVersion}"
+
+                echo "Setting version for C++/CLI projects..."
                 bat "\"Scripts\\Set Assembly-Info Version.cmd\" \"SolutionAssemblyInfo.h\" ${releaseVersion}"
             }
         }
@@ -82,35 +107,35 @@ pipeline {
                     exit /b 1
                     """
 
-                bat '''
-                    echo Publishing Libraries and Dependencies ...
+                bat """
+                    @echo Publishing Libraries and Dependencies ...
 
-					for %%t in (%targetFrameworks%) do (
-                        xcopy /Y /V \"bin\\Release\\%%t\\*.dll\" "%releaseDirectory%\\%%t\\%releaseLibraryDirectory%"
+                    for %%t in (%targetFrameworks%) do (
+                        xcopy /Y /V \"bin\\Release\\%%t\\*.dll\" \"${releaseDirectory}\\%%t\\${releaseLibraryDirectory}\"
                         if errorlevel 1 GOTO StepFailed
-						xcopy /Y /V \"bin\\Release\\%%t\\*.pdb\" "%releaseDirectory%\\%%t\\%releaseLibraryDirectory%"
+                        xcopy /Y /V \"bin\\Release\\%%t\\*.pdb\" \"${releaseDirectory}\\%%t\\${releaseLibraryDirectory}\"
                         if errorlevel 1 GOTO StepFailed
-                        xcopy /Y /V \"bin\\Debug\\%%t\\*.dll\" "%releaseDirectory%\\%%t\\%releaseLibraryDirectory%%folderSuffixDebug%"
+                        xcopy /Y /V \"bin\\Debug\\%%t\\*.dll\" \"${releaseDirectory}\\%%t\\${releaseLibraryDirectory}${folderSuffixDebug}\"
                         if errorlevel 1 GOTO StepFailed
-						xcopy /Y /V \"bin\\Debug\\%%t\\*.pdb\" "%releaseDirectory%\\%%t\\%releaseLibraryDirectory%%folderSuffixDebug%"
+                        xcopy /Y /V \"bin\\Debug\\%%t\\*.pdb\" \"${releaseDirectory}\\%%t\\${releaseLibraryDirectory}${folderSuffixDebug}\"
                         if errorlevel 1 GOTO StepFailed
                     )
 
-					echo Publishing Camera-specific .props Files ...
-                    
-                    COPY /Y "BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props" "%releaseDirectory%"
+                    @echo Publishing Camera-specific .props Files ...
+
+                    copy /Y \"BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
-					COPY /Y "BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props" "%releaseDirectory%"
+                    copy /Y \"BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
                     exit /b 0
 
                     :StepFailed
                     echo The step failed
                     exit /b 1
-                    '''
+                    """
 
                 bat """
-                    echo Publishing License Files ...
+                    @echo Publishing License Files ...
 
                     copy \"License.txt\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
@@ -124,17 +149,18 @@ pipeline {
                 bat """
                     @echo Creating last_build_datetime.txt ...
                     echo %BUILD_DATETIME%> \"${releaseDirectory}\\last_build_datetime.txt\"
-                    """
 
-                bat """
                     @echo Creating build_info.txt ...
-                    echo Build Trigger  : CI> \"${releaseDirectory}\\build_info.txt\"
-                    echo Build Name     : %JOB_NAME% >> \"${releaseDirectory}\\build_info.txt\"
-                    echo Build DateTime : %BUILD_DATETIME% >> \"${releaseDirectory}\\build_info.txt\"
-                    echo Build ID       : %BUILD_ID% >> \"${releaseDirectory}\\build_info.txt\"
-                    echo Build NR       : %BUILD_NUMBER% >> \"${releaseDirectory}\\build_info.txt\"
-                    echo Build Tag      : %BUILD_TAG% >> \"${releaseDirectory}\\build_info.txt\"
-                    echo Build URL      : %BUILD_URL% >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Build Trigger   : CI> \"${releaseDirectory}\\build_info.txt\"
+                    echo Release Version : ${releaseVersion} >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Nice Version    : ${niceVersion} >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Nuget Version   : ${nugetVersion} >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Build Name      : %JOB_NAME% >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Build DateTime  : %BUILD_DATETIME% >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Build ID        : %BUILD_ID% >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Build NR        : %BUILD_NUMBER% >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Build Tag       : %BUILD_TAG% >> \"${releaseDirectory}\\build_info.txt\"
+                    echo Build URL       : %BUILD_URL% >> \"${releaseDirectory}\\build_info.txt\"
                     """
             }
         }
@@ -188,18 +214,34 @@ def setBuildStatus(String message, String state, String context, String sha) {
     ]);
 }
 
-def getReleaseVersion(String branchName, String major, String minor, String build) {
-    def releaseRevision = currentBuild.number.toString();
-    return "stable" == branchName
-        ? "${major}.${minor}.${build}.${releaseRevision}"
-        : "0.0.0.${releaseRevision}";
+def getReleaseVersionInterfix(String branchName) {
+    return isStableBuild(branchName)
+        ? ""
+        : "-${branchName}";
 }
 
-def getReleaseFolder(String branchName, String releaseVersion) {
+def getFullReleaseVersion(String branchName, String major, String minor, String patch) {
+    def releaseRevision = currentBuild.number.toString();
+    return "${major}.${minor}.${patch}.${releaseRevision}";
+}
+
+def getNiceReleaseVersion(String major, String minor, String patch) {
+    return "${major}.${minor}.${patch}";
+}
+
+def getReleaseFolder(String branchName, String niceVersion) {
     def currentBuildNumber = currentBuild.number.toString();
-    if ("stable" == branchName) { return "v.${releaseVersion}"; }
-    if ("master" == branchName) { return ".unstable\\${branchName}\\${currentBuildNumber}"; }
+    if (isStableBuild(branchName)) { return "v.${niceVersion}"; }
+    if (isMasterBuild(branchName)) { return ".unstable\\${branchName}\\${currentBuildNumber}"; }
     return ".unstable\\${branchName}";
+}
+
+def isStableBuild(String branchName) {
+    return branchName == "stable";
+}
+
+def isMasterBuild(String branchName) {
+    return branchName == "master";
 }
 
 // Steps which are not converted to pipeline, yet (or untested with p.)
