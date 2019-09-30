@@ -31,10 +31,10 @@ pipeline {
                 echo "Set build status: pending"
                 setBuildStatus("Build started", "PENDING", "${STATUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
 
-                bat '''
-                    @echo Restoring NuGet Packages ...
-                    %NUGET_EXE% restore
-                    '''
+                // bat '''
+                //     @echo Restoring NuGet Packages ...
+                //     %NUGET_EXE% restore
+                //     '''
 
                 bat '''
                     @echo GitVersion
@@ -79,12 +79,17 @@ pipeline {
                         \"Scripts\\Create Git Release Tag.bat\" dummy.${releaseVersion}
                         """
                 }
-                bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=Release;Platform=x64"
-                bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=Debug;Platform=x64"
+                // bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=Release;Platform=x64"
+                // bat "\"${tool msbuildToolName}\" ${solutionFilename} /p:Configuration=Debug;Platform=x64"
             }
         }
 
         stage('Publish') {
+            when {
+                expression {
+                    return currentBranch == 'stable';
+                }
+            }
             steps {
                 script {
                     if (fileExists(releaseDirectory)) {
