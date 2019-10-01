@@ -28,7 +28,7 @@ pipeline {
     stages {
         stage('Pre-Build') {
             steps {
-                echo "Set build status: pending"
+                // echo "Set build status: pending"
                 // setBuildStatus("Build started", "PENDING", "${STATUS_CONTEXT}", "${GITHUB_BRANCH_HEAD_SHA}")
 
                 // bat '''
