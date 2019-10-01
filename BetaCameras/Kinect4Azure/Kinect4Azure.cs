@@ -263,7 +263,6 @@ namespace MetriCam2.Cameras
                 }
 
                 _device = tmpDev;
-                this.SerialNumber = _device.SerialNum;
             }
             else
             {
@@ -292,6 +291,8 @@ namespace MetriCam2.Cameras
                 log.Error(msg);
                 throw new ConnectionFailedException(msg);
             }
+
+            this.SerialNumber = _device.SerialNum;
 
             if (ActiveChannels.Count == 0)
             {
