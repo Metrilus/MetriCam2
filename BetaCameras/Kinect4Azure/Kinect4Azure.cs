@@ -350,7 +350,7 @@ namespace MetriCam2.Cameras
         {
             try
             {
-                _capture = _device.GetCapture();
+                _capture = _device.GetCapture(new TimeSpan(0, 0, 0, 1, 0));
             }
             catch (AzureKinectException e)
             {
