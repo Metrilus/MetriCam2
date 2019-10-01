@@ -37,7 +37,7 @@ pipeline {
                 //     '''
 
                 bat '''
-                    @echo GitVersion
+                    @echo Running GitVersion
                     %GitVersion%
                     %GitVersion% /output buildserver
                     '''
@@ -55,12 +55,12 @@ pipeline {
                     releaseFolder = getReleaseFolder(currentBranch, niceVersion)
                     releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
                     // Output which might be useful for debugging the build job
-                    echo "vMajor.MINOR.BUILD = ${vMajor}.${vMinor}.${vPatch}"
-                    echo "releaseVersion = ${releaseVersion}"
-                    echo "niceVersion = ${niceVersion}"
-                    echo "nugetVersion = ${nugetVersion}"
-                    echo "releaseFolder = ${releaseFolder}"
-                    echo "releaseDirectory = ${releaseDirectory}"
+                    echo "Major.Minor.Patch = ${vMajor}.${vMinor}.${vPatch}"
+                    echo "releaseVersion    = ${releaseVersion}"
+                    echo "niceVersion       = ${niceVersion}"
+                    echo "nugetVersion      = ${nugetVersion}"
+                    echo "releaseFolder     = ${releaseFolder}"
+                    echo "releaseDirectory  = ${releaseDirectory}"
                 }
 
                 echo "Setting version number for C# projects..."
