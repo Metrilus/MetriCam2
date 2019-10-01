@@ -10,10 +10,10 @@ pipeline {
 
         // All these variables depend upon the version number, as defined by GitVersion during the build.
         // The variables are defined here to make them globally available, and initialized in the Pre-Build stage.
-        def nugetVersion = ""     // Includes Major.Minor.Patch, Build (or some other counter), and the branch name, e.g. 16.0.1-build-nuget-package.1
-        def releaseVersion = ""   // Major.Minor.Patch.Build, e.g. 16.0.1.456
-        def niceVersion = ""      // Major.Minor.Patch, e.g. 16.0.1
-        def releaseFolder = ""    // Path where the release will be published, relative to RELEASE_PATH
+        def nugetVersion     = "" // Includes Major.Minor.Patch, Build (or some other counter), and the branch name, e.g. 16.0.1-build-nuget-package.1
+        def releaseVersion   = "" // Major.Minor.Patch.Build, e.g. 16.0.1.456
+        def niceVersion      = "" // Major.Minor.Patch, e.g. 16.0.1
+        def releaseFolder    = "" // Path where the release will be published, relative to RELEASE_PATH
         def releaseDirectory = "" // Absolute path where the release will be published
 
 		def targetFrameworks = "net45 net472 netstandard2.0"
@@ -37,7 +37,7 @@ pipeline {
                     '''
 
                 bat '''
-                    @echo GitVersion
+                    @echo Running GitVersion
                     %GitVersion%
                     %GitVersion% /output buildserver
                     '''
@@ -55,12 +55,12 @@ pipeline {
                     releaseFolder = getReleaseFolder(currentBranch, niceVersion)
                     releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
                     // Output which might be useful for debugging the build job
-                    echo "vMajor.MINOR.BUILD = ${vMajor}.${vMinor}.${vPatch}"
-                    echo "releaseVersion = ${releaseVersion}"
-                    echo "niceVersion = ${niceVersion}"
-                    echo "nugetVersion = ${nugetVersion}"
-                    echo "releaseFolder = ${releaseFolder}"
-                    echo "releaseDirectory = ${releaseDirectory}"
+                    echo "Major.Minor.Patch = ${vMajor}.${vMinor}.${vPatch}"
+                    echo "releaseVersion    = ${releaseVersion}"
+                    echo "niceVersion       = ${niceVersion}"
+                    echo "nugetVersion      = ${nugetVersion}"
+                    echo "releaseFolder     = ${releaseFolder}"
+                    echo "releaseDirectory  = ${releaseDirectory}"
                 }
 
                 echo "Setting version number for C# projects..."
