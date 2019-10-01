@@ -76,6 +76,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'f51d6ab2-5e0c-423f-b8e0-456933291446', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
                     bat """
                         echo Tagging the Git Repository ...
+                        git config credential.helper \"!f() { echo \\\"username=${GIT_USERNAME}\\\"; echo \\\"password=${GIT_PASSWORD}\\\"; }; f\"
                         \"Scripts\\Create Git Release Tag.bat\" dummy.${releaseVersion}
                         """
                 }
