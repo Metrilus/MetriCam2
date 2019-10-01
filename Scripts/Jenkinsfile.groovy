@@ -16,7 +16,7 @@ pipeline {
         def releaseFolder    = "" // Path where the release will be published, relative to RELEASE_PATH
         def releaseDirectory = "" // Absolute path where the release will be published
 
-		def targetFrameworks = "net45 net472 netstandard2.0"
+        def targetFrameworks = "net45 net472 netstandard2.0"
         def releaseLibraryDirectory = "lib"
         def folderSuffixDebug = "_debug"
 
