@@ -137,11 +137,11 @@ pipeline {
 
                     copy \"License.txt\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
-                    exit /b 0
 
                     @echo Publishing nuget packages locally...
                     copy \"bin\\Release\\*.nupkg\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
+                    exit /b 0
 
                     :StepFailed
                     echo The step failed
