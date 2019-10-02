@@ -3,6 +3,12 @@
     <TargetFrameworks>net472;net45;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Remove="Resources\DefaultIcon.ico" />
   </ItemGroup>
@@ -13,6 +19,7 @@
 
   <ItemGroup>
     <None Include="..\.licenseheader" Link=".licenseheader" />
+    <None Include="..\License.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
 
   <ItemGroup>

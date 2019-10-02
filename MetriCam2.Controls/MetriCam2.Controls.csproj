@@ -1,7 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net472;net45</TargetFrameworks>
+    <Description>WinForms controls for MetriCam2</Description>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
@@ -97,6 +105,7 @@
     <None Include="..\.licenseheader">
       <Link>.licenseheader</Link>
     </None>
+    <None Include="..\License.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Resources\ConnectedOverlay.ico" />
