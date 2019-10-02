@@ -125,8 +125,6 @@ pipeline {
 
                     copy /Y \"BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
-                    copy /Y \"BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props\" \"${releaseDirectory}\"
-                    if errorlevel 1 GOTO StepFailed
                     exit /b 0
 
                     :StepFailed
