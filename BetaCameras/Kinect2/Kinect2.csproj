@@ -2,16 +2,12 @@
   <PropertyGroup>
     <RootNamespace>MetriCam2.Cameras</RootNamespace>
     <AssemblyName>MetriCam2.Cameras.Kinect2</AssemblyName>
-    <Description>Wrapper for Kinect2 camera</Description>
-    <Product>MetriCam2: Microsoft Kinect2 wrapper</Product>
+    <Description>Wrapper for Microsoft Kinect for Windows v2 camera</Description>
+    <Product>MetriCam2: Microsoft Kinect for Windows v2 wrapper</Product>
     <TargetFrameworks>net472;net45</TargetFrameworks>    
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>    
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>    
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.Kinect">
-      <HintPath>Z:\external-libraries\Microsoft\Kinect2\v2.0_1409\Assemblies\Microsoft.Kinect.dll</HintPath>
-    </Reference>
-  </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -21,6 +17,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="KinectIcon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Kinect" Version="2.0.1410.19000" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj" />
