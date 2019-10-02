@@ -1,13 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>MetriCam2.Cameras</RootNamespace>
-    <AssemblyName>MetriCam2.Cameras.Kinect4Azure</AssemblyName>
+    <AssemblyName>MetriCam2.Cameras.AzureKinect</AssemblyName>
     <Description>Wrapper for Microsoft Azure Kinect (K4A) cameras</Description>
     <Product>MetriCam2: Microsoft Azure Kinect wrapper</Product>
     <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
     <Platforms>x64</Platforms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -18,6 +25,11 @@
   <ItemGroup>
     <EmbeddedResource Include="MSIcon.ico" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\License.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Kinect.Sensor" Version="1.2.0" />
   </ItemGroup>

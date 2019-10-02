@@ -125,8 +125,6 @@ pipeline {
 
                     copy /Y \"BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
-                    copy /Y \"BetaCameras\\Kinect4Azure\\MetriCam2.Kinect4Azure.props\" \"${releaseDirectory}\"
-                    if errorlevel 1 GOTO StepFailed
                     exit /b 0
 
                     :StepFailed
@@ -138,6 +136,10 @@ pipeline {
                     @echo Publishing License Files ...
 
                     copy \"License.txt\" \"${releaseDirectory}\"
+                    if errorlevel 1 GOTO StepFailed
+
+                    @echo Publishing nuget packages locally...
+                    copy \"bin\\Release\\*.nupkg\" \"${releaseDirectory}\"
                     if errorlevel 1 GOTO StepFailed
                     exit /b 0
 
@@ -166,12 +168,27 @@ pipeline {
         }
 
         stage('Tag') {
+            environment {
+                NUGET_API_KEY = credentials('nuget-api-key')
+            }
             when {
                 expression {
                     return currentBranch == 'stable';
                 }
             }
             steps {
+                bat """
+                    @echo Pushing nuget packages to nuget.org...
+                    set DOTNET_CLI_TELEMETRY_OPTOUT=1
+                    dotnet nuget push \"bin\\Release\\*.nupkg\" --api-key ${NUGET_API_KEY} --source https://api.nuget.org/v3/index.json --no-symbols 1
+                    if errorlevel 1 GOTO StepFailed
+                    exit /b 0
+
+                    :StepFailed
+                    echo The step failed
+                    exit /b 1
+                    """
+
                 bat """
                     echo Tagging the Git Repository ...
                     \"Scripts\\Create Git Release Tag.bat\" v.${releaseVersion}
