@@ -1,3 +1,11 @@
+# Version 15.1.1
+
+## General
+
+* K4A fixes
+* Use GitVersion
+* build NuGet packages for MetriCam2 and both Kinect cameras
+
 # Version 15.1.0
 
 ## General
