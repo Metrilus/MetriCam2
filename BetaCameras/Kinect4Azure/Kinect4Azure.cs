@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 using Metrilus.Util;
 using MetriCam2.Exceptions;
 using Microsoft.Azure.Kinect.Sensor;
@@ -76,18 +71,12 @@ namespace MetriCam2.Cameras
 
         #region Properties
 
-        public override string Vendor
-        {
-            get { return "Microsoft"; }
-        }
+        public override string Vendor { get => "Microsoft"; }
 
         private ColorResolution _colorResolution = Microsoft.Azure.Kinect.Sensor.ColorResolution.R720p;
         public K4AColorResolution ColorResolution
         {
-            get
-            {
-                return (K4AColorResolution)_colorResolution;
-            }
+            get => (K4AColorResolution)_colorResolution;
 
             set
             {
@@ -109,13 +98,13 @@ namespace MetriCam2.Cameras
             }
         }
 
-        ListParamDesc<K4AColorResolution> ColorResolutionDesc
+        private ListParamDesc<K4AColorResolution> ColorResolutionDesc
         {
             get
             {
                 ListParamDesc<K4AColorResolution> res = new ListParamDesc<K4AColorResolution>(typeof(K4AColorResolution))
                 {
-                    Description = "Resolution of the Color Image",
+                    Description = "Resolution of the Color channel",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
                     WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
                 };
@@ -125,15 +114,9 @@ namespace MetriCam2.Cameras
         }
 
         private FPS _fps = FPS.FPS30;
-        public K4AFPS Fps
-        {
-            get
-            {
-                return (K4AFPS)_fps;
-            }
-        }
+        public K4AFPS Fps { get => (K4AFPS)_fps; }
 
-        ListParamDesc<K4AFPS> FpsDesc
+        private ListParamDesc<K4AFPS> FpsDesc
         {
             get
             {
@@ -150,10 +133,7 @@ namespace MetriCam2.Cameras
         private DepthMode _depthMode = Microsoft.Azure.Kinect.Sensor.DepthMode.WFOV_Unbinned;
         public K4ADepthMode DepthMode
         {
-            get
-            {
-                return (K4ADepthMode)_depthMode;
-            }
+            get => (K4ADepthMode)_depthMode;
 
             set
             {
@@ -175,7 +155,7 @@ namespace MetriCam2.Cameras
             }
         }
 
-        ListParamDesc<K4ADepthMode> DepthModeDesc
+        private ListParamDesc<K4ADepthMode> DepthModeDesc
         {
             get
             {
@@ -204,7 +184,7 @@ namespace MetriCam2.Cameras
         }
 #endif
 
-        public Kinect4Azure() : base("Kinect4Azure")
+        public Kinect4Azure() : base("Azure Kinect")
         {
             enableImplicitThreadSafety = true;
         }
@@ -246,53 +226,37 @@ namespace MetriCam2.Cameras
         {
             bool haveSerial = !string.IsNullOrWhiteSpace(SerialNumber);
 
-            if (!haveSerial)
+            for (int i = 0; i < Device.GetInstalledCount(); i++)
             {
-                Device tmpDev = null;
-                for (int i = 0; i < Device.GetInstalledCount(); i++)
+                try
                 {
-                    try
+                    Device tmpDev = Device.Open(i);
+                    if (!haveSerial)
                     {
-                        tmpDev = Device.Open(i);
+                        _device = tmpDev;
                         break;
                     }
-                    catch (AzureKinectException e)
+                    if (SerialNumber == tmpDev.SerialNum)
                     {
-                        log.Warn($"Could not open K4A Device number {i}. The device is probably already in use: {e.Message}");
+                        _device = tmpDev;
+                        break;
                     }
+                    tmpDev.Dispose();
                 }
-
-                _device = tmpDev;
-            }
-            else
-            {
-                for(int i = 0; i < Device.GetInstalledCount(); i++)
+                catch (AzureKinectException e)
                 {
-                    try
-                    {
-                        Device tmpDev = Device.Open(i);
-                        if (SerialNumber == tmpDev.SerialNum)
-                        {
-                            _device = tmpDev;
-                            break;
-                        }
-                        tmpDev.Dispose();
-                    }
-                    catch (AzureKinectException e)
-                    {
-                        log.Warn($"Could not open K4A Device number {i}. The device is probably already in use: {e.Message}");
-                    }
+                    log.Warn($"Could not open Azure Kinect device number {i}. The device is probably already in use: {e.Message}");
                 }
             }
 
             if (null == _device)
             {
-                string msg = "No available Kinect4Azure device found.";
+                string msg = "No available Azure Kinect device found.";
                 log.Error(msg);
                 throw new ConnectionFailedException(msg);
             }
 
-            this.SerialNumber = _device.SerialNum;
+            SerialNumber = _device.SerialNum;
 
             if (ActiveChannels.Count == 0)
             {
@@ -330,7 +294,7 @@ namespace MetriCam2.Cameras
 
             //We need to call "Update" here, otherwise we can run into problems:
             //if "RestartCamera" is called between "Update" and "CalcChannel", the images can have the "old resolution", whereas 
-            //GetIntrinsics already returns the new intrinscs.
+            //GetIntrinsics already returns the new intrinsics.
             IsConnected = true; //Otherwise update will fail after "Connect".
             Update();
         }
@@ -351,13 +315,13 @@ namespace MetriCam2.Cameras
         {
             try
             {
-                _capture = _device.GetCapture(new TimeSpan(0, 0, 0, 2, 0));
+                _capture = _device.GetCapture(TimeSpan.FromSeconds(2));
             }
             catch (AzureKinectException e)
             {
                 string msg = $"{Name}: getting new capture failed: {e.Message}";
                 log.Error(msg);
-                throw new ImageAcquisitionFailedException(msg);
+                throw new ImageAcquisitionFailedException(msg, e);
             }
         }
 
@@ -365,7 +329,7 @@ namespace MetriCam2.Cameras
         {
             if (null == _capture)
             {
-                throw new ImageAcquisitionFailedException("Call 'update' before calculating an image");
+                throw new ImageAcquisitionFailedException($"Call '{nameof(Update)}' before calculating an image");
             }
 
             switch (channelName)
@@ -383,14 +347,14 @@ namespace MetriCam2.Cameras
                     return CalcIntensityImage();
             }
 
-            throw new ImageAcquisitionFailedException($"Channel {channelName} not supported!");
+            throw new ImageAcquisitionFailedException($"Channel '{channelName}' not supported!");
         }
 
         unsafe private ColorImage CalcColor()
         {
             if (_capture.Color == null)
             {
-                throw new ImageAcquisitionFailedException($"Cannot acquire color channel. Please check, if it has been turned off.");
+                throw new ImageAcquisitionFailedException($"Cannot acquire '{ChannelNames.Color}' channel. Please check if it has been deactivated.");
             }
 
             int height = _capture.Color.HeightPixels;
@@ -432,7 +396,7 @@ namespace MetriCam2.Cameras
         {
             if (_capture.Depth == null)
             {
-                throw new ImageAcquisitionFailedException($"Cannot acquire depth channel. Please check, if it has been turned off.");
+                throw new ImageAcquisitionFailedException($"Cannot acquire depth channel. Please check if it has been deactivated.");
             }
 
             int height = _capture.Depth.HeightPixels;
@@ -522,7 +486,7 @@ namespace MetriCam2.Cameras
                     break;
 
                 default:
-                    string msg = string.Format("{0}: no valid intrinsics for channel {1}", Name, channelName);
+                    string msg = $"{Name}: no valid intrinsics for channel {channelName}";
                     log.Error(msg);
                     throw new System.Exception(msg);
             }
@@ -574,7 +538,7 @@ namespace MetriCam2.Cameras
             }
             else
             {
-                string msg = string.Format("{0}: no valid extrinsics from channel {1} to {2}", Name, channelFromName, channelToName);
+                string msg = $"{Name}: no valid extrinsics from channel {channelFromName} to {channelToName}";
                 log.Error(msg);
                 throw new System.Exception(msg);
             }
@@ -622,14 +586,6 @@ namespace MetriCam2.Cameras
             if(numberActivatedDepthChannels == 1 && (channelName == ChannelNames.Intensity || channelName == ChannelNames.Distance || channelName == ChannelNames.ZImage))
             {
                 DepthMode = K4ADepthMode.Off;
-            }
-        }
-
-        private void CheckConnected([CallerMemberName] String propertyName = "")
-        {
-            if (!IsConnected)
-            {
-                throw new InvalidOperationException(string.Format("The property '{0}' can only be read or written when the camera is connected!", propertyName));
             }
         }
     }
