@@ -31,7 +31,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Kinect.Sensor" Version="1.2.0" />
+    <PackageReference Include="Microsoft.Azure.Kinect.Sensor" Version="1.2.0">
+      <PrivateAssets>analyzers</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj" />
