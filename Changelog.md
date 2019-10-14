@@ -2,8 +2,11 @@
 
 ## General
 
-* Azure Kinect: Stability improvements
 * Build NuGet packages for MetriCam2 and both Kinect cameras
+
+## Azure Kinect
+
+* Stability improvements
 
 
 
