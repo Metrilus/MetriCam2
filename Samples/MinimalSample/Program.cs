@@ -22,11 +22,11 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("Get MetriCam 2 at http://www.metricam.net/");
             Console.WriteLine("------------------------------------------");
 
-            Kinect4Azure camera1 = new Kinect4Azure();
+            AzureKinect camera1 = new AzureKinect();
             //camera1.SerialNumber = "000067192412";
             camera1.Connect();
 
-            Kinect4Azure camera2 = new Kinect4Azure();
+            AzureKinect camera2 = new AzureKinect();
             //camera2.SerialNumber = "000049192312";
             camera2.Connect();
 

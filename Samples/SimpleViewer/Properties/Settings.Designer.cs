@@ -25,7 +25,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.Kinect4Azure.dll")]
+        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.AzureKinect.dll")]
         public string CameraDLLPath {
             get {
                 return ((string)(this["CameraDLLPath"]));
@@ -37,7 +37,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.Kinect4Azure")]
+        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.AzureKinect")]
         public string CameraName {
             get {
                 return ((string)(this["CameraName"]));

@@ -91,7 +91,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pico", "BetaCameras\Pico\Pi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sick.VisionaryT.Pro", "BetaCameras\Sick.VisionaryT.Pro\Sick.VisionaryT.Pro.csproj", "{D01829D2-B553-4C4B-B392-2437E6A130B5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kinect4Azure", "BetaCameras\Kinect4Azure\Kinect4Azure.csproj", "{9A292249-66EE-4C9C-A6B7-DD5112E3625F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureKinect", "BetaCameras\AzureKinect\AzureKinect.csproj", "{9A292249-66EE-4C9C-A6B7-DD5112E3625F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

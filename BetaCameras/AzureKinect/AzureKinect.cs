@@ -11,7 +11,7 @@ using System.Drawing.Imaging;
 
 namespace MetriCam2.Cameras
 {
-    public class Kinect4Azure : Camera, IDisposable
+    public class AzureKinect : Camera, IDisposable
     {
         private Device _device = null;
         private Capture _capture = null;
@@ -184,7 +184,7 @@ namespace MetriCam2.Cameras
         }
 #endif
 
-        public Kinect4Azure() : base("Azure Kinect")
+        public AzureKinect() : base("Azure Kinect")
         {
             enableImplicitThreadSafety = true;
         }
