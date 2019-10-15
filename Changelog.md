@@ -1,3 +1,15 @@
+# Version 15.1.1
+
+## General
+
+* Build NuGet packages for MetriCam2 and both Kinect cameras
+
+## Azure Kinect
+
+* Stability improvements
+
+
+
 # Version 15.1.0
 
 ## General
