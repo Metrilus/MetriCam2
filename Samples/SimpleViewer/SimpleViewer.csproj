@@ -51,7 +51,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\Kinect4Azure\Kinect4Azure.csproj" />
+    <ProjectReference Include="..\..\BetaCameras\AzureKinect\AzureKinect.csproj" />
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj" />
     <ProjectReference Include="..\..\MetriCam2.Controls\MetriCam2.Controls.csproj" />
   </ItemGroup>  

@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="CameraDLLPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">MetriCam2.Cameras.Kinect4Azure.dll</Value>
+      <Value Profile="(Default)">MetriCam2.Cameras.AzureKinect.dll</Value>
     </Setting>
     <Setting Name="CameraName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">MetriCam2.Cameras.Kinect4Azure</Value>
+      <Value Profile="(Default)">MetriCam2.Cameras.AzureKinect</Value>
     </Setting>
     <Setting Name="ChannelName" Type="System.String" Scope="User">
       <Value Profile="(Default)">Distance</Value>
