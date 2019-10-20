@@ -41,11 +41,9 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="MetriCam2.Orbbec.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -99,6 +97,9 @@
       <EmbedManagedResourceFile>OrbbecIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
       <AdditionalOptions>/ignore:4248 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>"$(MSBuildBinPath)\msbuild.exe" -t:restore -t:pack "$(ProjectDir)Nuget\$(TargetName).csproj" -p:NoBuild=true -p:Configuration=Release</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Reference Include="Metrilus.Util">
@@ -153,7 +154,9 @@
     <EmbeddedResource Include="Resource.resx" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="MetriCam2.Orbbec.props" />
+    <None Include="Directory.Build.props" />
+    <None Include="Nuget\MetriCam2.Cameras.OrbbecOpenNI.csproj" />
+    <None Include="Nuget\MetriCam2.Cameras.OrbbecOpenNI.targets" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

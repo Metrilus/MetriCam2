@@ -78,6 +78,9 @@
       <AdditionalDependencies>strmiids.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EmbedManagedResourceFile>WebcamIcon.ico;%(EmbedManagedResourceFile)</EmbedManagedResourceFile>
     </Link>
+    <PostBuildEvent>
+      <Command>"$(MSBuildBinPath)\msbuild.exe" -t:restore -t:pack "$(ProjectDir)Nuget\$(TargetName).csproj" -p:NoBuild=true -p:Configuration=Release</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Reference Include="Metrilus.Util">
@@ -118,6 +121,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resource.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Nuget\MetriCam2.Cameras.WebCam.csproj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

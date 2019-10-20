@@ -1,0 +1,21 @@
+﻿<!-- 
+  With this '.targets'-file we make sure that the native dependencies are copied to the output directory when referencing MetriCam2.Cameras.OrbbecOpenNI using the Nuget package.
+  A compile time error is thrown, if the application runtime identifier does not match the supported runtime identifiers (currently only win-x64 and AnyCPU).
+  Copying the correct dependencies from the Nuget 'runtimes' directory to the output is done automatically in VS 2019 (using runtime-identifier), in VS 2017 we must do that manually.
+  TODO: After upgrading to VS 2019 we could delete the second part of the ItemGroup, which copies the files from 'runtimes'.
+  -->
+<Project>
+  <Target Name="EnsureOrbbecOpenNIPlatform" BeforeTargets="PrepareForBuild">
+    <Error Condition="!('$(RuntimeIdentifier)' == '' OR ($(RuntimeIdentifier.Contains('win')) AND $(RuntimeIdentifier.Contains('x64'))))" Text="MetriCam2.Cameras.OrbbecOpenNI only supports 'win*-x64'-runtimes for the target framework '$(TargetFramework)'" />
+  </Target>  
+  <ItemGroup Condition=" '$(RuntimeIdentifier)' == '' OR ($(RuntimeIdentifier.Contains('win')) AND $(RuntimeIdentifier.Contains('x64'))) ">
+    <None Include="$(MSBuildThisFileDirectory)..\..\lib\net472\win\native\**\*">
+        <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\win\native\**\*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

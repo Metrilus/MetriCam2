@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net472</TargetFrameworks>
+    <OutputPath>..\..\..\bin\$(Configuration)\</OutputPath>
+    <Description>Wrapper for Orbbec Astra cameras</Description>
+    <Product>MetriCam2: Orbbec Astra wrapper</Product>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\..\License.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\MetriCam2\MetriCam2.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="MetriCam2.Cameras.OrbbecOpenNI.targets" PackagePath="build\net472" Visible="true" />
+    <Content Include="Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Redist\OpenNI2\**" PackagePath="lib\net472\win\native\OpenNI2" Visible="false" />
+    <Content Include="Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Redist\OpenNI2.dll" PackagePath="runtimes\win\native" Visible="false" />
+    <Content Include="Z:\external-libraries\Orbbec\OpenNI2\$(OrbbecOpenNIVersion)\Redist\OpenNI.ini" PackagePath="runtimes\win\native" Visible="false" />
+  </ItemGroup>
+</Project>
