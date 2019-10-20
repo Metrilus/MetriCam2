@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>    
+    <TargetFrameworks>net472</TargetFrameworks>
+    <OutputPath>..\..\..\bin\$(Configuration)\</OutputPath>
+    <Description>Wrapper for WebCams</Description>
+    <Product>MetriCam2: WebCam wrapper</Product>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\..\License.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\MetriCam2\MetriCam2.csproj" />
+  </ItemGroup>
+</Project>

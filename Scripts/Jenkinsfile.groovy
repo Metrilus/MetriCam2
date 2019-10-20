@@ -120,11 +120,6 @@ pipeline {
                         xcopy /Y /V \"bin\\Debug\\%%t\\*.pdb\" \"${releaseDirectory}\\%%t\\${releaseLibraryDirectory}${folderSuffixDebug}\"
                         if errorlevel 1 GOTO StepFailed
                     )
-
-                    @echo Publishing Camera-specific .props Files ...
-
-                    copy /Y \"BetaCameras\\OrbbecOpenNI\\MetriCam2.Orbbec.props\" \"${releaseDirectory}\"
-                    if errorlevel 1 GOTO StepFailed
                     exit /b 0
 
                     :StepFailed
@@ -140,6 +135,10 @@ pipeline {
 
                     @echo Publishing nuget packages locally...
                     copy \"bin\\Release\\*.nupkg\" \"${releaseDirectory}\"
+                    if errorlevel 1 GOTO StepFailed
+
+                    @echo Deleting nuget packages, which should not be published to nuget.org...
+                    del /s \"bin\\Release\\MetriCam2.Cameras.OrbbecOpenNI*.nupkg\"
                     if errorlevel 1 GOTO StepFailed
                     exit /b 0
 

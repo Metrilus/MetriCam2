@@ -10,6 +10,7 @@
     <Copyright>Copyright © Metrilus GmbH 2013 - 2019</Copyright>
     <TargetFrameworks>net472</TargetFrameworks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <NoWarn>$(NoWarn);NU5105</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <OutputPath>..\bin\$(Configuration)\</OutputPath>

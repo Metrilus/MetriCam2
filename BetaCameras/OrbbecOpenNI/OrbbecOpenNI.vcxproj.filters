@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Nuget">
+      <UniqueIdentifier>{66e3c602-de39-4bfd-a775-ae38c31ace0a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stdafx.h">
@@ -70,6 +73,12 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="MetriCam2.Orbbec.props" />
+    <None Include="Nuget\MetriCam2.Cameras.OrbbecOpenNI.csproj">
+      <Filter>Nuget</Filter>
+    </None>
+    <None Include="Nuget\MetriCam2.Cameras.OrbbecOpenNI.targets">
+      <Filter>Nuget</Filter>
+    </None>
+    <None Include="Directory.Build.props" />
   </ItemGroup>
 </Project>
