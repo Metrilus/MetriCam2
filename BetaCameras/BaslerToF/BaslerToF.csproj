@@ -8,10 +8,20 @@
     <Platforms>x64</Platforms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SignAssembly>false</SignAssembly>
+    <ToFCameraWrapperPath>Z:\external-libraries\Basler\ToF Camera\v1.3.2.1322\ToFCameraWrapper.dll</ToFCameraWrapperPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="$(ToFCameraWrapperPath)" PackagePath="lib\net472;lib\net45" Visible="false" />
+    <None Include="..\..\License.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="ToFCameraWrapper">
-      <HintPath>Z:\external-libraries\Basler\ToF Camera\v1.3.2.1322\ToFCameraWrapper.dll</HintPath>
+      <HintPath>$(ToFCameraWrapperPath)</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -22,7 +32,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="BaslerIcon.ico" />
+    <EmbeddedResource Include="BaslerIcon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj" />
