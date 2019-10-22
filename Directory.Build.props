@@ -2,7 +2,7 @@
 <Project>
   <PropertyGroup>
     <Authors>Metrilus</Authors>
-    <Version>0.0.0.0</Version>
+    <Version>0.0.0-local-build-$(UserName)-at-$(ComputerName).0</Version>
     <FileVersion>0.0.0.0</FileVersion>
     <Product>MetriCam 2</Product>
     <Company>Metrilus GmbH</Company>
