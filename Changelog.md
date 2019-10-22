@@ -1,8 +1,23 @@
+# Version 16.0.0
+
+## General
+
+* Build public NuGet packages for `ifm`, `Sick.VisionaryT` and `WebCam`
+* Build non-public NuGet packages for `BaslerACE`, `BaslerToF` and `OrbbecOpenNI`
+* Add pre-release string to version numbers of local builds
+
+## Azure Kinect
+
+* [breaking] Rename type `Kinect4Azure` to `AzureKinect`
+* [bugfix] Copy native dependencies when using the NuGet package
+
+
+
 # Version 15.1.1
 
 ## General
 
-* Build NuGet packages for MetriCam2 and both Kinect cameras
+* Build public NuGet packages for MetriCam2 and both Kinect cameras
 
 ## Azure Kinect
 
