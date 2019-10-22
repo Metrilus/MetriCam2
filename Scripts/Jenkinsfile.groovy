@@ -138,6 +138,8 @@ pipeline {
                     if errorlevel 1 GOTO StepFailed
 
                     @echo Deleting nuget packages, which should not be published to nuget.org...
+                    del /s \"bin\\Release\\MetriCam2.Cameras.Basler*.nupkg\"
+                    if errorlevel 1 GOTO StepFailed
                     del /s \"bin\\Release\\MetriCam2.Cameras.OrbbecOpenNI*.nupkg\"
                     if errorlevel 1 GOTO StepFailed
                     exit /b 0
