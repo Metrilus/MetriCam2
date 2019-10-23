@@ -1,31 +1,74 @@
 # MetriCam2
-A consistent .NET SDK for Depth Cameras
 
-## Prerequisites
-### Documentation
-The SDK documentation sources are in the sub-folder _doc_. Please use doxygen to build the documentation with the _doxyfile_ in this folder.
+MetriCam 2 is a consistent .NET SDK for depth cameras.
+It makes it simple to exchange 3D cameras during development without changing the code of your application.
 
-### Cameras
-To actually use the cameras, you need to connect the camera to your PC or network. For most cameras you also need to install the respective camera drivers which can be obtained from the camera vendor. Some cameras also require the appropriate SDK-DLL to be placed in the execution directory of your application.
 
-### Development 
-You need Visual Studio 2012 develop and build the sources. 
+# Contributing
 
-## Structure
-# BetaCameras
-This folder contains the individual camera SDK implementations. These are usually Visual Studio Projects that compile a .NET DLL
+MetriCam2 accepts contributions. Please open a pull request on GitHub.
 
-# MetriCam2
-The sources for the core component _MetriCam2.dll_ for all camera implementations. Refer to CameraTemplate (in _BetaCameras_) if you want to implement a new MetriCam2-camera based on this library.
 
-# Samples
-Sample applications that show how to use MetriCam-implementations.
+# Usage
 
-# Test Programs / Tests
+MetriCam2 and several camera implementations are available [on nuget.org](https://www.nuget.org/profiles/Metrilus). Just add a package reference to the camera you want to use to your project:
+
+```PowerShell
+PM> Install-Package MetriCam2.Cameras.AzureKinect
+```
+or
+```
+dotnet add package MetriCam2.Cameras.AzureKinect
+```
+
+Note that some cameras need a driver and/or plain DLLs from the manufacturer to work.
+Also, we don't build or publish nuget packages for all cameras (yet), so you might have to build MetriCam2 yourself.
+
+
+# Documentation
+
+The sub-folder _doc_ contains some documentation and a `Doxyfile` which can be used to build the documentation with `doxygen`.
+
+
+# Development 
+
+You need Visual Studio 2017 to build MetriCam2.
+You also need the dependencies of the cameras you want to build (sorry, we don't have the permission to redistribute them) and you have to place them in the correct location, usually `Z:\external-libraries\`. You can mount a folder as drive `Z` using
+```bat
+subst Z: .
+```
+and remove that mapping using
+```bat
+subst Z: /d
+```
+
+
+## Folder Structure
+
+### BetaCameras
+
+This folder contains the individual camera wrappers.
+
+### doc
+
+Some documentation and a `Doxyfile` which can be used to build the documentation with `doxygen`.
+
+### MetriCam2
+
+The sources for the core component _MetriCam2.dll_ for all camera implementations. Refer to `BetaCameras\CameraTemplate` if you want to implement a new MetriCam2 camera wrapper.
+
+### MetriCam2.Controls
+
+Some WinForms controls for interacting with the cameras.
+
+### Samples
+
+Sample applications that show how to use MetriCam2.
+
+### Scripts
+
+Scripts used for building and deployment.
+
+### Test Programs, Tests
+
 Test applications, unit tests and test related code.
-
-# doc
-The doxygen sources for the developer documentation.
-
-# libraries
-Contains the pre-compiled _Metrilus.Util.dll_ which holds all the relevant data types to handle camera data.
