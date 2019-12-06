@@ -7,9 +7,10 @@
     <TargetFramework>net472</TargetFramework>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BetaCameras\AzureKinect\AzureKinect.csproj" />
+    <ProjectReference Include="..\..\BetaCameras\Hikvision\Hikvision.csproj" />
     <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj" />
   </ItemGroup>
   <ItemGroup>
