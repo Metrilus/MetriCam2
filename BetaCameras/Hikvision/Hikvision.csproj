@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MetriCam2.Cameras</RootNamespace>
+    <AssemblyName>MetriCam2.Cameras.Hikvision</AssemblyName>     
+    <Description>Wrapper for Hikvision security cameras</Description>
+    <Product>MetriCam2: Hikvision security cameras</Product>
+    <TargetFrameworks>net472</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>  
+  <ItemGroup>
+    <PackageReference Include="Metrilus.Util" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\MetriCam2\MetriCam2.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="RtspClientSharp">
+      <Version>1.3.3</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FFmpeg.AutoGen">
+      <HintPath>Z:\external-libraries\FFmpeg.Autogen\Release\FFmpeg.AutoGen.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog">
+      <HintPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="Rtsp">
+      <HintPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af\Rtsp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

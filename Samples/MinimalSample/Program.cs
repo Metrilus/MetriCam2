@@ -30,7 +30,7 @@ namespace MetriCam2.Samples.MinimalSample
             camera1.Connect();
 
             camera1.Update();
-            //ColorImage fCImg1 = (ColorImage)camera1.CalcChannel(ChannelNames.Color);
+             ColorImage fCImg1 = (ColorImage)camera1.CalcChannel(ChannelNames.Color);
 
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();
