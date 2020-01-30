@@ -147,7 +147,15 @@ namespace MetriCam2.Samples.SimpleViewer
             int fps = 0;
             while (!backgroundWorker.CancellationPending)
             {
-                cam.Update();
+                try
+                {
+                    cam.Update();
+                }
+                catch (Exception ex)
+                {
+                    log.Debug("Update failed", ex);
+                    continue;
+                }
 
                 ImageBase camImg = cam.CalcSelectedChannel();
                 if (null == camImg)

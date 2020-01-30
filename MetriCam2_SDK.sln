@@ -94,6 +94,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sick.VisionaryT.Pro", "Beta
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureKinect", "BetaCameras\AzureKinect\AzureKinect.csproj", "{9A292249-66EE-4C9C-A6B7-DD5112E3625F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hikvision", "BetaCameras\Hikvision\Hikvision.csproj", "{8B343646-35D9-4697-A466-14161ECB48CE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -204,6 +206,10 @@ Global
 		{9A292249-66EE-4C9C-A6B7-DD5112E3625F}.Debug|x64.Build.0 = Debug|x64
 		{9A292249-66EE-4C9C-A6B7-DD5112E3625F}.Release|x64.ActiveCfg = Release|x64
 		{9A292249-66EE-4C9C-A6B7-DD5112E3625F}.Release|x64.Build.0 = Release|x64
+		{8B343646-35D9-4697-A466-14161ECB48CE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8B343646-35D9-4697-A466-14161ECB48CE}.Debug|x64.Build.0 = Debug|Any CPU
+		{8B343646-35D9-4697-A466-14161ECB48CE}.Release|x64.ActiveCfg = Release|Any CPU
+		{8B343646-35D9-4697-A466-14161ECB48CE}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -233,6 +239,7 @@ Global
 		{1FAD1F90-D37E-40CA-BBF0-6A33E82F8812} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{D01829D2-B553-4C4B-B392-2437E6A130B5} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 		{9A292249-66EE-4C9C-A6B7-DD5112E3625F} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
+		{8B343646-35D9-4697-A466-14161ECB48CE} = {4817E415-1337-4CA1-BF30-23D3EA0F806B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E4CD8F0D-A50B-44DC-80D3-0C789213BF2B}

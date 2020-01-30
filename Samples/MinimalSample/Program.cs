@@ -22,18 +22,15 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("Get MetriCam 2 at http://www.metricam.net/");
             Console.WriteLine("------------------------------------------");
 
-            AzureKinect camera1 = new AzureKinect();
-            //camera1.SerialNumber = "000067192412";
+            Hikvision camera1 = new Hikvision();
+            camera1.IPAddress = "192.168.1.114";
+            camera1.Port = 554;
+            camera1.Username = "admin";
+            camera1.Password = "MetriX123";
             camera1.Connect();
 
-            AzureKinect camera2 = new AzureKinect();
-            //camera2.SerialNumber = "000049192312";
-            camera2.Connect();
-
             camera1.Update();
-            camera2.Update();
-            FloatImage fCImg1 = (FloatImage)camera1.CalcChannel(ChannelNames.ZImage);
-            FloatImage fCImg2 = (FloatImage)camera2.CalcChannel(ChannelNames.ZImage);
+             ColorImage fCImg1 = (ColorImage)camera1.CalcChannel(ChannelNames.Color);
 
             Console.WriteLine("Finished. Press any key to exit.");
             Console.ReadKey();
