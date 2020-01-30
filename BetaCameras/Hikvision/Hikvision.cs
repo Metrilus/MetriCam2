@@ -81,7 +81,7 @@ namespace MetriCam2.Cameras
                 return res;
             }
         }
-        public string Password { get; set; }
+        public string Password { get; set; } = "";
 
 
         public Hikvision()
