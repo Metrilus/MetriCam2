@@ -66,7 +66,7 @@ namespace MetriCam2.Cameras
                 return res;
             }
         }
-        public string Username { get; set; }
+        public string Username { get; set; } = "";
 
         ParamDesc<string> PasswordDesc
         {
