@@ -2,23 +2,23 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MetriCam2.Samples.SimpleViewer.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="CameraDLLPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">MetriCam2.Cameras.AzureKinect.dll</Value>
-    </Setting>
-    <Setting Name="CameraName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">MetriCam2.Cameras.AzureKinect</Value>
-    </Setting>
     <Setting Name="ChannelName" Type="System.String" Scope="User">
       <Value Profile="(Default)">Distance</Value>
     </Setting>
     <Setting Name="PreConnectParameters" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">IPAddress=192.168.1.159;Port=554;Username=admin;Password=MetriX123;</Value>
     </Setting>
     <Setting Name="MinDepthToDisplay" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
     <Setting Name="MaxDepthToDisplay" Type="System.Single" Scope="User">
       <Value Profile="(Default)">3</Value>
+    </Setting>
+    <Setting Name="CameraDLLPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MetriCam2.Cameras.Hikvision.dll</Value>
+    </Setting>
+    <Setting Name="CameraName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MetriCam2.Cameras.Hikvision</Value>
     </Setting>
   </Settings>
 </SettingsFile>

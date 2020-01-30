@@ -10,7 +10,7 @@ namespace MetriCam2.Cameras
 {
     public class H264Decoder
     {
-        private static bool initialized = false;
+        //private static bool initialized = false;
         private static unsafe AVFormatContext* ic = null;
         private static unsafe AVStream* video_st = null;
         private static unsafe SwsContext* img_convert_ctx = null;
@@ -27,16 +27,16 @@ namespace MetriCam2.Cameras
 
         public unsafe H264Decoder(List<byte[]> nalUnits)
         {
-            if (initialized)
-            {
-                //Sequence of freeing all ffmpeg resources and calling constructor again caused an error in avcodec_send_packet in rare cases.
-                //Thus, the init sequence can only be called once.
-                //Important: Avoiding the re-init only works if the firstCompressedPacket contains a key frame.
-                //This should be guaranteed, since the H264 encoding on server side is re-initialized, too.
-                return;
-            }
+            //if (initialized)
+            //{
+            //    //Sequence of freeing all ffmpeg resources and calling constructor again caused an error in avcodec_send_packet in rare cases.
+            //    //Thus, the init sequence can only be called once.
+            //    //Important: Avoiding the re-init only works if the firstCompressedPacket contains a key frame.
+            //    //This should be guaranteed, since the H264 encoding on server side is re-initialized, too.
+            //    return;
+            //}
 
-            initialized = true;
+            //initialized = true;
 
             ffmpeg.av_register_all();
 

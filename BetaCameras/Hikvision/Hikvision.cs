@@ -144,10 +144,16 @@ namespace MetriCam2.Cameras
         {
             long timestamp = 0;
             Bitmap bitmap = null;
+            long startTime = DateTime.Now.Ticks;
+            long maxFrameTime = TimeSpan.FromSeconds(3).Ticks;
 
             do
             {
                 (bitmap, timestamp) = _client.GetCurrentBitmap();
+                if (DateTime.Now.Ticks > startTime + maxFrameTime)
+                {
+                    throw new ImageAcquisitionFailedException("error?!");
+                }
             }
             while (timestamp <= _currentBitmapTimestamp);
 

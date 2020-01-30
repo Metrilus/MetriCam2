@@ -25,30 +25,6 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.AzureKinect.dll")]
-        public string CameraDLLPath {
-            get {
-                return ((string)(this["CameraDLLPath"]));
-            }
-            set {
-                this["CameraDLLPath"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.AzureKinect")]
-        public string CameraName {
-            get {
-                return ((string)(this["CameraName"]));
-            }
-            set {
-                this["CameraName"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Distance")]
         public string ChannelName {
             get {
@@ -61,7 +37,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("IPAddress=192.168.1.159;Port=554;Username=admin;Password=MetriX123;")]
         public string PreConnectParameters {
             get {
                 return ((string)(this["PreConnectParameters"]));
@@ -92,6 +68,30 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
             }
             set {
                 this["MaxDepthToDisplay"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.Hikvision.dll")]
+        public string CameraDLLPath {
+            get {
+                return ((string)(this["CameraDLLPath"]));
+            }
+            set {
+                this["CameraDLLPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.Hikvision")]
+        public string CameraName {
+            get {
+                return ((string)(this["CameraName"]));
+            }
+            set {
+                this["CameraName"] = value;
             }
         }
     }
