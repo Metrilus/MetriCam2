@@ -51,7 +51,7 @@ namespace MetriCam2.Cameras
                 return res;
             }
         }
-        public uint Port { get; set; }
+        public uint Port { get; set; } = 554;
 
         ParamDesc<string> UsernameDesc
         {
