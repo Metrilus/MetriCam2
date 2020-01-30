@@ -36,7 +36,7 @@ namespace MetriCam2.Cameras
                 return res;
             }
         }
-        public string IPAddress { get; set; }
+        public string IPAddress { get; set; } = "";
 
         ParamDesc<uint> PortDesc
         {
