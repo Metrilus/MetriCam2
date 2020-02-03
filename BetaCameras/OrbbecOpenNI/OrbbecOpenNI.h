@@ -132,6 +132,13 @@ namespace MetriCam2
 				void set(int value) { SetIRGain(value); }
 			}
 
+			/// Timeout for method <see cref="UpdateImpl"/>.
+			property int UpdateTimeoutMilliseconds
+			{
+				int get() { return _updateTimeoutMilliseconds; }
+				void set(int value) { _updateTimeoutMilliseconds = value; }
+			}
+
 			property UvcColorResolution UVCColorResolution
 			{
 				UvcColorResolution get() 
@@ -361,6 +368,19 @@ namespace MetriCam2
 				}
 			}
 
+			property ParamDesc<int>^ UpdateTimeoutMillisecondsDesc
+			{
+				inline ParamDesc<int>^ get()
+				{
+					ParamDesc<int>^ res = ParamDesc::BuildRangeParamDesc(0, 30000);
+					res->Unit = "";
+					res->Description = "Update timeout [ms]";
+					res->ReadableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					res->WritableWhen = ParamDesc::ConnectionStates::Connected | ParamDesc::ConnectionStates::Disconnected;
+					return res;
+				}
+			}
+
 			property ParamDesc<bool>^ ProximitySensorEnabledDesc
 			{
 				inline ParamDesc<bool>^ get()
@@ -460,6 +480,7 @@ namespace MetriCam2
 			// Compensate for offset between IR and Distance images:
 			// Translate infrared frame by a certain number of pixels in vertical direction to match infrared with depth image.
 			int _intensityYTranslation;
+			int _updateTimeoutMilliseconds;
 			System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>^ _extrinsicsCache;
 			System::Collections::Generic::Dictionary<String^, ProjectiveTransformation^>^ _intrinsicsCache;
 

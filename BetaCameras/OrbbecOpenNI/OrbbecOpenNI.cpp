@@ -28,6 +28,7 @@ MetriCam2::Cameras::AstraOpenNI::AstraOpenNI()
 	_uvcColorHeight = 960;
 	_uvcColorEnforceNewImageInUpdate = false;
 	_depthStreamRunning = false;
+	_updateTimeoutMilliseconds = 500;
 	_extrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, RigidBodyTransformation^>();
 	_intrinsicsCache = gcnew System::Collections::Generic::Dictionary<String^, ProjectiveTransformation^>();
 }
@@ -558,19 +559,21 @@ void MetriCam2::Cameras::AstraOpenNI::UpdateImpl()
 	while (!gotAllRequestedStreams)
 	{
 		int changedIndex;
-		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, numberActivatedOpenNIStreams, &changedIndex, 500);
+		openni::Status rc = openni::OpenNI::waitForAnyStream(ppStreams, numberActivatedOpenNIStreams, &changedIndex, UpdateTimeoutMilliseconds);
 		if (openni::STATUS_OK != rc)
 		{
+			String^ errorString;
 			if (openni::STATUS_TIME_OUT == rc)
 			{
-				log->ErrorFormat("{0} {1}: Wait failed: timeout", Name, SerialNumber);
+				errorString = String::Format("{0} {1}: Wait failed: timeout", Name, SerialNumber);				
 			}
 			else
 			{
-				log->ErrorFormat("{0} {1}: Wait failed: rc={2}", Name, SerialNumber, (int)rc);
+				errorString = String::Format("{0} {1}: Wait failed: rc={2}", Name, SerialNumber, (int)rc);
 			}
+			log->Error(errorString);			
 			delete ppStreams;
-			return;
+			throw gcnew MetriCam2::Exceptions::MetriCam2Exception(errorString);
 		}
 		ppStreams[changedIndex] = NULL;
 
