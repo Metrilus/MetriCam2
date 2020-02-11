@@ -168,7 +168,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 3)
+                RangeParamDesc<int> res = new RangeParamDesc<int>(-1, 3)
                 {
                     Description = "Frequency Channel",
                     Unit = "",
@@ -202,6 +202,11 @@ namespace MetriCam2.Cameras
             }
             set
             {
+                if(value <= 0f)
+                {
+                    return;
+                }
+
                 _framerate = value;
                 if (!IsConnected)
                 {
@@ -217,7 +222,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RangeParamDesc<float> res = new RangeParamDesc<float>(0f, 25f)
+                RangeParamDesc<float> res = new RangeParamDesc<float>(-1f, 25f)
                 {
                     Description = "Framerate",
                     Unit = "fps",
@@ -251,6 +256,11 @@ namespace MetriCam2.Cameras
             }
             set
             {
+                if(value <= 0)
+                {
+                    return;
+                }
+
                 _exposureTime = value;
                 if (!IsConnected)
                 {
@@ -266,7 +276,7 @@ namespace MetriCam2.Cameras
         {
             get
             {
-                RangeParamDesc<int> res = new RangeParamDesc<int>(0, 10000)
+                RangeParamDesc<int> res = new RangeParamDesc<int>(-1, 10000)
                 {
                     Description = "Integration time",
                     Unit = "us",
@@ -421,6 +431,14 @@ namespace MetriCam2.Cameras
             _applicationId = applicationId;
             _updateThread = new Thread(new ThreadStart(UpdateLoop));
         }
+
+        /// <summary>
+        /// Default constructor. Creates a new application with default MetriCam 2 parameter values.
+        /// </summary>
+        public O3D3xx()
+            : this(-1)
+        {
+        }
         #endregion
 
         #region MetriCam2 Camera Interface
@@ -513,7 +531,7 @@ namespace MetriCam2.Cameras
             ActivateChannel(ChannelNames.ZImage);
             ActivateChannel(ChannelNames.ConfidenceMap);
             ActivateChannel(ChannelNames.RawConfidenceMap);
-            SelectChannel(ChannelNames.Amplitude);
+            SelectChannel(ChannelNames.Distance);
             _clientSocket = ConnectSocket(CameraIP, ImageOutputPort);
 
             _updateThread.Start();
@@ -558,6 +576,12 @@ namespace MetriCam2.Cameras
                 }
                 catch (SocketException e)
                 {
+                    // Ignore timeouts in edit mode
+                    if (_configurationMode == Mode.Edit)
+                    {
+                        continue;
+                    }
+
                     // Ignore timeouts in triggered mode
                     if (_triggerMode == O3D3xxTriggerMode.FreeRun)
                     {

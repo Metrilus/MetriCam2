@@ -37,7 +37,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("IPAddress=192.168.1.159;Port=554;Username=admin;Password=MetriX123;")]
+        [global::System.Configuration.DefaultSettingValueAttribute("CameraIP=192.168.1.78")]
         public string PreConnectParameters {
             get {
                 return ((string)(this["PreConnectParameters"]));
@@ -73,7 +73,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.Hikvision.dll")]
+        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.ifm.dll")]
         public string CameraDLLPath {
             get {
                 return ((string)(this["CameraDLLPath"]));
@@ -85,7 +85,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.Hikvision")]
+        [global::System.Configuration.DefaultSettingValueAttribute("MetriCam2.Cameras.O3D3xx")]
         public string CameraName {
             get {
                 return ((string)(this["CameraName"]));
