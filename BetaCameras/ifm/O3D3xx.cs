@@ -234,6 +234,63 @@ namespace MetriCam2.Cameras
         }
         #endregion
 
+        #region Integration Time Mode
+        private O3D3xxIntegrationMode _integrationMode = O3D3xxIntegrationMode.TwoIntegrationTimes;
+        public O3D3xxIntegrationMode IntegrationTimeMode
+        {
+            get
+            {
+                DoEdit((_edit) => {
+                    string[] typeString = _appImager.GetParameter("Type").Split('_');
+                    _integrationMode = (O3D3xxIntegrationMode)EnumUtils.GetEnum(typeof(O3D3xxIntegrationMode), typeString[1]);
+                });
+
+                return _integrationMode;
+            }
+        }
+        private ListParamDesc<O3D3xxIntegrationMode> IntegrationTimeModeDesc
+        {
+            get
+            {
+                ListParamDesc<O3D3xxIntegrationMode> res = new ListParamDesc<O3D3xxIntegrationMode>(typeof(O3D3xxIntegrationMode))
+                {
+                    Description = "Number of different Integration used to process a single frame.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+                return res;
+            }
+        }
+        #endregion
+
+        #region BackgroundDistance
+        private O3D3xxBackgroundDistanceMode _backgroundDistance = O3D3xxBackgroundDistanceMode.MoreThan30;
+        public O3D3xxBackgroundDistanceMode BackgroundDistance
+        {
+            get
+            {
+                DoEdit((_edit) => {
+                    string[] typeString = _appImager.GetParameter("Type").Split('_');
+                    _backgroundDistance = (O3D3xxBackgroundDistanceMode)EnumUtils.GetEnum(typeof(O3D3xxBackgroundDistanceMode), typeString[0]);
+                });
+
+                return _backgroundDistance;
+            }
+        }
+
+        private ListParamDesc<O3D3xxBackgroundDistanceMode> BackgroundDistanceDesc
+        {
+            get
+            {
+                ListParamDesc<O3D3xxBackgroundDistanceMode> res = new ListParamDesc<O3D3xxBackgroundDistanceMode>(typeof(O3D3xxBackgroundDistanceMode))
+                {
+                    Description = "",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+                return res;
+            }
+        }
+        #endregion
+
         #region Integration Time
         /// <summary>
         /// Integration (exposure time)
