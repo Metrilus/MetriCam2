@@ -345,6 +345,58 @@ namespace MetriCam2.Cameras
         }
         #endregion
 
+        #region IntegrationTimeRatio
+        private int _exposureTimeRatio = 2;
+        public int IntegrationTimeRatio
+        {
+            get
+            {
+                if (!IsConnected)
+                {
+                    return -1;
+                }
+
+                DoEdit((_edit) => {
+                    // only works with Exposure Mode on "moderate"
+                    _exposureTimeRatio = Convert.ToInt32(_appImager.GetParameter("ExposureTimeRatio"));
+                });
+
+                return _exposureTimeRatio;
+            }
+            set
+            {
+                if (value <= 0)
+                {
+                    return;
+                }
+
+                _exposureTimeRatio = value;
+                if (!IsConnected)
+                {
+                    return;
+                }
+
+                DoEdit((_edit) => {
+                    // only works with Exposure Mode on "moderate"
+                    _appImager.SetParameter("ExposureTimeRatio", value.ToString());
+                });
+            }
+        }
+        private RangeParamDesc<int> IntegrationTimeRatioDesc
+        {
+            get
+            {
+                RangeParamDesc<int> res = new RangeParamDesc<int>(2, 50)
+                {
+                    Description = "Integration time ratio",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
+                return res;
+            }
+        }
+        #endregion
+
         #region Camera IP
         /// <summary>
         /// IP Address of camera.
@@ -537,21 +589,37 @@ namespace MetriCam2.Cameras
             if (_applicationId == -1)
             {
                 Application[] apps = _server.GetApplicationList();
-                int deleted = CleanupApplications(apps);
-                if (apps.Length - deleted == _maxApplications)
+                bool metriCamAppExists = false;
+                foreach (var app in apps)
                 {
-                    throw new InvalidOperationException(
-                        $"{Name}: Maximum number of applications on the device reached. " +
-                        $"Please either delete one of them or specify one for MetriCam2 to use");
+                    if (app.Name == _applicationName)
+                    {
+                        _applicationId = app.Index;
+                        _edit.EditApplication(_applicationId);
+                        metriCamAppExists = true;
+                        break;
+                    }
                 }
 
-                _applicationId = _edit.CreateApplication();
-                _edit.EditApplication(_applicationId);
-                _app.SetParameter("Name", _applicationName);
-                _app.SetParameter("Description", "MetriCam2 default application.");
-                TriggerMode = _triggerMode;
-                _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
-                _appImager.SetParameter("FrameRate", _framerate.ToString());
+                if (!metriCamAppExists)
+                {
+                    //int deleted = CleanupApplications(apps);
+                    //if (apps.Length - deleted == _maxApplications)
+                    if (apps.Length == _maxApplications)
+                    {
+                        throw new InvalidOperationException(
+                            $"{Name}: Maximum number of applications on the device reached. " +
+                            $"Please either delete one of them or specify one for MetriCam2 to use");
+                    }
+
+                    _applicationId = _edit.CreateApplication();
+                    _edit.EditApplication(_applicationId);
+                    _app.SetParameter("Name", _applicationName);
+                    _app.SetParameter("Description", "MetriCam2 default application.");
+                    TriggerMode = _triggerMode;
+                    _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
+                    _appImager.SetParameter("FrameRate", _framerate.ToString());
+                }
             }
             else
             {
