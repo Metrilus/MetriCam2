@@ -1063,7 +1063,7 @@ namespace MetriCam2.Cameras
                     }
                 }
 
-                reader.BaseStream.Position += 36;
+                reader.BaseStream.Position = CalcBufferPosition(3);
                 for (int y = 0; y < _height; y++)
                 {
                     for (int x = 0; x < _width; x++)
@@ -1072,7 +1072,7 @@ namespace MetriCam2.Cameras
                     }
                 }
 
-                reader.BaseStream.Position += 36;
+                reader.BaseStream.Position = CalcBufferPosition(4);
                 for (int y = 0; y < _height; y++)
                 {
                     for (int x = 0; x < _width; x++)
@@ -1142,7 +1142,7 @@ namespace MetriCam2.Cameras
             // After the start sequence of 8 bytes, the images follow in chunks
             // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
             // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
-            return 44 + image * (_height * _width * 2 + 36);
+            return 56 + image * (_height * _width * 2 + 48);            
         }
 
         private void DoEdit(Action<IEdit> editAction)
