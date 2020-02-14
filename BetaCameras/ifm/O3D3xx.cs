@@ -401,7 +401,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// IP Address of camera.
         /// </summary>
-        public string CameraIP { get; set; } = null;
+        public string IPAddress { get; set; } = null;
         private ParamDesc<String> CameraIPDesc
         {
             get
@@ -505,6 +505,8 @@ namespace MetriCam2.Cameras
         private int _width;
         private int _height;
 
+        private readonly int _headerSize = 48;
+
         private ISession _session;
         private IDevice _device;
         private IAppImager _appImager;
@@ -579,7 +581,7 @@ namespace MetriCam2.Cameras
         {
             _updateThreadError = null;
 
-            if (String.IsNullOrWhiteSpace(CameraIP))
+            if (String.IsNullOrWhiteSpace(IPAddress))
             {
                 throw new ConnectionFailedException($"{Name}: No camera IP specified");
             }
@@ -657,7 +659,7 @@ namespace MetriCam2.Cameras
             ActivateChannel(ChannelNames.ConfidenceMap);
             ActivateChannel(ChannelNames.RawConfidenceMap);
             SelectChannel(ChannelNames.Distance);
-            _clientSocket = ConnectSocket(CameraIP, ImageOutputPort);
+            _clientSocket = ConnectSocket(IPAddress, ImageOutputPort);
 
             _updateThread.Start();
         }
@@ -735,7 +737,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Serial number of camera. The camera does not provide a serial number therefore we use the MAC address.
         /// </summary>
-        public override string SerialNumber { get => RequestMACAddress(CameraIP); }
+        public override string SerialNumber { get => RequestMACAddress(IPAddress); }
 
         /// <summary>
         /// Name of camera vendor.
@@ -920,7 +922,7 @@ namespace MetriCam2.Cameras
             Exception caughtException = null;
 
             // Try to connect to IP first
-            if (IPAddress.TryParse(server, out IPAddress ipAddress))
+            if (System.Net.IPAddress.TryParse(server, out IPAddress ipAddress))
             {
                 try
                 {
@@ -967,7 +969,7 @@ namespace MetriCam2.Cameras
 
         private void SetUrls()
         {
-            _serverUrl = "http://" + CameraIP + ":" + XMLRPCPort.ToString() + "/api/rpc/v1/com.ifm.efector/";
+            _serverUrl = "http://" + IPAddress + ":" + XMLRPCPort.ToString() + "/api/rpc/v1/com.ifm.efector/";
             _server.Url = _serverUrl;
             _session.Url = _serverUrl + "session_" + RequestSessionId() + "/";
             _edit.Url = _session.Url + "edit/";
@@ -986,7 +988,7 @@ namespace MetriCam2.Cameras
             byte[] mac = new byte[6];
             int length = mac.Length;
 
-            IPAddress tempA = IPAddress.Parse(ip);
+            IPAddress tempA = System.Net.IPAddress.Parse(ip);
             byte[] bytes = tempA.GetAddressBytes();
             string strAddress = "";
             for (int index = bytes.Length - 1; index >= 0; index--)
@@ -1140,9 +1142,9 @@ namespace MetriCam2.Cameras
             // Image    | amplitude | distance | x | y | z | rawConfidence |
 
             // After the start sequence of 8 bytes, the images follow in chunks
-            // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
+            // Each image chunk contains 48 bytes header including information such as image dimensions and pixel format.
             // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
-            return 56 + image * (_height * _width * 2 + 48);            
+            return 8 + _headerSize + image * (_height * _width * 2 + _headerSize);
         }
 
         private void DoEdit(Action<IEdit> editAction)
