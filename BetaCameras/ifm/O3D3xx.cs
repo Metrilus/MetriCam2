@@ -122,8 +122,8 @@ namespace MetriCam2.Cameras
                 ListParamDesc<O3D3xxTriggerMode> res = new ListParamDesc<O3D3xxTriggerMode>(typeof(O3D3xxTriggerMode))
                 {
                     Description = "Trigger mode",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
@@ -172,8 +172,8 @@ namespace MetriCam2.Cameras
                 {
                     Description = "Frequency Channel",
                     Unit = "",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
@@ -226,8 +226,8 @@ namespace MetriCam2.Cameras
                 {
                     Description = "Framerate",
                     Unit = "fps",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
@@ -337,8 +337,8 @@ namespace MetriCam2.Cameras
                 {
                     Description = "Integration time",
                     Unit = "us",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
@@ -401,8 +401,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// IP Address of camera.
         /// </summary>
-        public string IPAddress { get; set; } = null;
-        private ParamDesc<String> CameraIPDesc
+        public string IPAddress { get; set; } = "0.0.0.0";
+        private ParamDesc<String> IPAddressDesc
         {
             get
             {
@@ -478,8 +478,8 @@ namespace MetriCam2.Cameras
                 {
                     Description = "Receive timeout",
                     Unit = "ms",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
