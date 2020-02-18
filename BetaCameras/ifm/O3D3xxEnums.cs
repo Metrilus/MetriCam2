@@ -26,7 +26,7 @@ namespace MetriCam2.Cameras
         ThreeIntegrationTimes = 2,
     }
 
-    public enum O3D3xxBackgroundDistanceMode
+    public enum NonAmbiguityRange
     {
         [Description("lessthan5m")]
         LessThan5 = 0,

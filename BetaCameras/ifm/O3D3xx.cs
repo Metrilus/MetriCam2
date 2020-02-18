@@ -263,25 +263,25 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region BackgroundDistance
-        private O3D3xxBackgroundDistanceMode _backgroundDistance = O3D3xxBackgroundDistanceMode.MoreThan30;
-        public O3D3xxBackgroundDistanceMode BackgroundDistance
+        private NonAmbiguityRange _nonAmbiguityRange = NonAmbiguityRange.MoreThan30;
+        public NonAmbiguityRange NonAmbiguityRange
         {
             get
             {
                 DoEdit((_edit) => {
                     string[] typeString = _appImager.GetParameter("Type").Split('_');
-                    _backgroundDistance = (O3D3xxBackgroundDistanceMode)EnumUtils.GetEnum(typeof(O3D3xxBackgroundDistanceMode), typeString[0]);
+                    _nonAmbiguityRange = (NonAmbiguityRange)EnumUtils.GetEnum(typeof(NonAmbiguityRange), typeString[0]);
                 });
 
-                return _backgroundDistance;
+                return _nonAmbiguityRange;
             }
         }
 
-        private ListParamDesc<O3D3xxBackgroundDistanceMode> BackgroundDistanceDesc
+        private ListParamDesc<NonAmbiguityRange> NonAmbiguityRangeDesc
         {
             get
             {
-                ListParamDesc<O3D3xxBackgroundDistanceMode> res = new ListParamDesc<O3D3xxBackgroundDistanceMode>(typeof(O3D3xxBackgroundDistanceMode))
+                ListParamDesc<NonAmbiguityRange> res = new ListParamDesc<NonAmbiguityRange>(typeof(NonAmbiguityRange))
                 {
                     Description = "",
                     ReadableWhen = ParamDesc.ConnectionStates.Connected,
