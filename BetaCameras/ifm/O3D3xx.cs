@@ -599,6 +599,8 @@ namespace MetriCam2.Cameras
                         _applicationId = app.Index;
                         _edit.EditApplication(_applicationId);
                         metriCamAppExists = true;
+                        _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
+                        _appImager.SetParameter("FrameRate", _framerate.ToString());
                         break;
                     }
                 }
@@ -619,8 +621,6 @@ namespace MetriCam2.Cameras
                     _app.SetParameter("Name", _applicationName);
                     _app.SetParameter("Description", "MetriCam2 default application.");
                     TriggerMode = _triggerMode;
-                    _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
-                    _appImager.SetParameter("FrameRate", _framerate.ToString());
                 }
             }
             else
