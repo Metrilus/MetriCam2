@@ -11,13 +11,15 @@ namespace MetriCam2.Cameras
     public class H264Decoder
     {
         //private static bool initialized = false;
-        private static unsafe AVFormatContext* ic = null;
-        private static unsafe AVStream* video_st = null;
-        private static unsafe SwsContext* img_convert_ctx = null;
-        private static unsafe AVFrame* yuv_image = null;
-        private static unsafe AVFrame* rgb_image = null;
+        private unsafe AVFormatContext* ic = null;
+        private unsafe AVStream* video_st = null;
+        private unsafe SwsContext* img_convert_ctx = null;
+        private unsafe AVFrame* yuv_image = null;
+        private unsafe AVFrame* rgb_image = null;
         private static int bufferSize = 3840 * 2160 * 4;
         private static byte[] startSequence = { 0x00, 0x00, 0x00, 0x01 };
+        private static bool initialized = false;
+        private static int streamSuffix = 0;
 
         //private avio_alloc_context_read_packet readCallback;
 
@@ -27,18 +29,13 @@ namespace MetriCam2.Cameras
 
         public unsafe H264Decoder(List<byte[]> nalUnits)
         {
-            //if (initialized)
-            //{
-            //    //Sequence of freeing all ffmpeg resources and calling constructor again caused an error in avcodec_send_packet in rare cases.
-            //    //Thus, the init sequence can only be called once.
-            //    //Important: Avoiding the re-init only works if the firstCompressedPacket contains a key frame.
-            //    //This should be guaranteed, since the H264 encoding on server side is re-initialized, too.
-            //    return;
-            //}
-
-            //initialized = true;
-
-            ffmpeg.av_register_all();
+            if (!initialized)
+            {
+                ffmpeg.av_register_all();
+                initialized = true;
+            }
+            int localStreamSuffix = streamSuffix;
+            streamSuffix++;
 
             int dataSize = 0;
             foreach (byte[] nalUnit in nalUnits)
@@ -86,7 +83,7 @@ namespace MetriCam2.Cameras
             // Need to probe buffer for input format unless you already know it
             AVProbeData probe_data;
             probe_data.buf_size = dataSize;
-            probe_data.filename = (byte*)Marshal.StringToHGlobalAnsi("stream");
+            probe_data.filename = (byte*)Marshal.StringToHGlobalAnsi($"stream_{localStreamSuffix}");
             probe_data.buf = (byte*)UnmanagedMemory.Alloc(probe_data.buf_size);
             UnmanagedMemory.CopyMemory(probe_data.buf, dat, (uint)probe_data.buf_size);
 
@@ -103,7 +100,7 @@ namespace MetriCam2.Cameras
 
             pAVInputFormat->flags |= ffmpeg.AVFMT_NOFILE;
 
-            ffmpeg.avformat_open_input(&icLocal, "stream", pAVInputFormat, null);       
+            ffmpeg.avformat_open_input(&icLocal, $"stream_{localStreamSuffix}", pAVInputFormat, null);
 
             for (int i = 0; i < icLocal->nb_streams; i++)
             {

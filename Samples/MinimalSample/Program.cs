@@ -29,12 +29,12 @@ namespace MetriCam2.Samples.MinimalSample
             camera1.Password = "MetriX123";
             camera1.Connect();
 
-            //Hikvision camera2 = new Hikvision();
-            //camera2.IPAddress = "192.168.1.159";
-            //camera2.Port = 554;
-            //camera2.Username = "admin";
-            //camera2.Password = "MetriX123";
-            //camera2.Connect();
+            Hikvision camera2 = new Hikvision();
+            camera2.IPAddress = "192.168.1.159";
+            camera2.Port = 554;
+            camera2.Username = "admin";
+            camera2.Password = "MetriX123";
+            camera2.Connect();
 
             // Hikvision camera3 = new Hikvision();
             // camera3.IPAddress = "192.168.1.121";
@@ -50,13 +50,13 @@ namespace MetriCam2.Samples.MinimalSample
 
                 camera1.Update();
                 ColorImage img1 = (ColorImage)camera1.CalcChannel(ChannelNames.Color);
-                //camera2.Update();
-                //ColorImage img2 = (ColorImage)camera2.CalcChannel(ChannelNames.Color);
+                camera2.Update();
+                ColorImage img2 = (ColorImage)camera2.CalcChannel(ChannelNames.Color);
                 //camera3.Update();
                 //ColorImage img3 = (ColorImage)camera3.CalcChannel(ChannelNames.Color);
                 //
-                img1.ToBitmap().Save($@"G:\hik1_{i}.jpg");
-                //img2.ToBitmap().Save($@"G:\hik2_{i}.jpg");
+                img1.ToBitmap().Save($@"G:\hikvision\hik1_{i}.jpg");
+                img2.ToBitmap().Save($@"G:\hikvision\hik2_{i}.jpg");
                 //img3.ToBitmap().Save(@"d:\data\hik3.jpg");
 
                 i++;
