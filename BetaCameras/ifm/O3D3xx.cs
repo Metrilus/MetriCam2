@@ -42,7 +42,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Resolution100k)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Resolution100k)} cannot be read while disconnected.");
                 }
 
                 int imageResolution = -1;
@@ -57,7 +57,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Resolution100k)} connect be set while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Resolution100k)} cannot be set while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -93,7 +93,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(TriggerMode)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(TriggerMode)} cannot be read while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -106,7 +106,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(TriggerMode)} connect be set while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(TriggerMode)} cannot be set while disconnected.");
                 }
 
                 _triggerMode = value;
@@ -141,7 +141,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(FrequencyChannel)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(FrequencyChannel)} cannot be read while disconnected.");
                 }
 
                 int frequencyChannel = 0;
@@ -155,7 +155,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(FrequencyChannel)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(FrequencyChannel)} cannot be read while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -191,7 +191,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Framerate)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Framerate)} cannot be read while disconnected.");
                 }
 
                 float frameRate = 0;
@@ -210,7 +210,7 @@ namespace MetriCam2.Cameras
 
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Framerate)} connect be set while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Framerate)} cannot be set while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -241,7 +241,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeMode)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeMode)} cannot be read while disconnected.");
                 }
 
                 O3D3xxIntegrationMode integrationMode = O3D3xxIntegrationMode.SingleIntegrationTime;
@@ -275,7 +275,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(NonAmbiguityRange)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(NonAmbiguityRange)} cannot be read while disconnected.");
                 }
 
                 NonAmbiguityRange nonAmbiguityRange = NonAmbiguityRange.UpTo30;
@@ -314,7 +314,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} cannot be read while disconnected.");
                 }
 
                 int integrationTime = _defaultExposureTime;
@@ -333,7 +333,7 @@ namespace MetriCam2.Cameras
 
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} connect be set while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} cannot be set while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -364,7 +364,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} connect be read while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} cannot be read while disconnected.");
                 }
 
                 int exposureTimeRatio = 0;
@@ -379,7 +379,7 @@ namespace MetriCam2.Cameras
             {
                 if (value <= 0)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} connect be set while disconnected.");
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} cannot be set while disconnected.");
                 }
 
                 if (!IsConnected)
