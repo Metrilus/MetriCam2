@@ -197,12 +197,33 @@ namespace MetriCam2.Cameras
                 ffmpeg.av_frame_get_buffer(rgb_image, 32);
             }
 
+            AVCodecContext* pCodecCtx = video_st->codec;
+            AVPixelFormat pixFormat;
+            switch (pCodecCtx->pix_fmt)
+            {
+                case AVPixelFormat.AV_PIX_FMT_YUVJ420P:
+                    pixFormat = AVPixelFormat.AV_PIX_FMT_YUV420P;
+                    break;
+                case AVPixelFormat.AV_PIX_FMT_YUVJ422P:
+                    pixFormat = AVPixelFormat.AV_PIX_FMT_YUV422P;
+                    break;
+                case AVPixelFormat.AV_PIX_FMT_YUVJ444P:
+                    pixFormat = AVPixelFormat.AV_PIX_FMT_YUV444P;
+                    break;
+                case AVPixelFormat.AV_PIX_FMT_YUVJ440P:
+                    pixFormat = AVPixelFormat.AV_PIX_FMT_YUV440P;
+                    break;
+                default:
+                    pixFormat = pCodecCtx->pix_fmt;
+                    break;
+            }
+
             //Convert from one of the YUV color formats provided by H264 decompression to RGB.
-            img_convert_ctx = ffmpeg.sws_getCachedContext(img_convert_ctx, yuv_image->width, yuv_image->height, video_st->codec->pix_fmt, rgb_image->width, rgb_image->height, AVPixelFormat.AV_PIX_FMT_BGR24, 0, null, null, null);
+            img_convert_ctx = ffmpeg.sws_getCachedContext(img_convert_ctx, yuv_image->width, yuv_image->height, pixFormat, rgb_image->width, rgb_image->height, (AVPixelFormat)rgb_image->format, 0, null, null, null);
             ffmpeg.sws_scale(img_convert_ctx, yuv_image->data, yuv_image->linesize, 0, yuv_image->height, rgb_image->data, rgb_image->linesize);
 
-            Bitmap bmp = new Bitmap(yuv_image->width, yuv_image->height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            BitmapData bmpData = bmp.LockBits(new Rectangle(new Point(0, 0), new Size(bmp.Width, bmp.Height)), System.Drawing.Imaging.ImageLockMode.ReadWrite, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            Bitmap bmp = new Bitmap(yuv_image->width, yuv_image->height, PixelFormat.Format24bppRgb);
+            BitmapData bmpData = bmp.LockBits(new Rectangle(new Point(0, 0), new Size(bmp.Width, bmp.Height)), ImageLockMode.ReadWrite, bmp.PixelFormat);
             UnmanagedMemory.CopyMemory((IntPtr)bmpData.Scan0, (IntPtr)rgb_image->extended_data[0], bmp.Width * bmp.Height * 3);
             bmp.UnlockBits(bmpData);
             return bmp;
