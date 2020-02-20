@@ -1,3 +1,11 @@
+# Version 16.1.0
+
+# Hikvision
+
+* Make binary strongnamed
+
+
+
 # Version 16.0.1
 
 ## Hikvision
