@@ -6,7 +6,6 @@
     <Product>MetriCam2: Hikvision security cameras</Product>
     <TargetFrameworks>net472</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <SignAssembly>false</SignAssembly>
   </PropertyGroup>  
   <ItemGroup>
     <PackageReference Include="Metrilus.Util" />
@@ -23,11 +22,8 @@
     <Reference Include="FFmpeg.AutoGen">
       <HintPath>Z:\external-libraries\FFmpeg.Autogen\Release\FFmpeg.AutoGen.dll</HintPath>
     </Reference>
-    <Reference Include="NLog">
-      <HintPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af\NLog.dll</HintPath>
-    </Reference>
     <Reference Include="Rtsp">
-      <HintPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af\Rtsp.dll</HintPath>
+      <HintPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af.strongname\Rtsp.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
