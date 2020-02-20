@@ -23,17 +23,47 @@ namespace MetriCam2.Samples.MinimalSample
             Console.WriteLine("------------------------------------------");
 
             Hikvision camera1 = new Hikvision();
-            camera1.IPAddress = "192.168.1.114";
+            camera1.IPAddress = "192.168.1.190";
             camera1.Port = 554;
             camera1.Username = "admin";
             camera1.Password = "MetriX123";
             camera1.Connect();
 
-            camera1.Update();
-             ColorImage fCImg1 = (ColorImage)camera1.CalcChannel(ChannelNames.Color);
+            Hikvision camera2 = new Hikvision();
+            camera2.IPAddress = "192.168.1.159";
+            camera2.Port = 554;
+            camera2.Username = "admin";
+            camera2.Password = "MetriX123";
+            camera2.Connect();
 
-            Console.WriteLine("Finished. Press any key to exit.");
-            Console.ReadKey();
+            // Hikvision camera3 = new Hikvision();
+            // camera3.IPAddress = "192.168.1.121";
+            // camera3.Port = 554;
+            // camera3.Username = "admin";
+            // camera3.Password = "MetriX123";
+            // camera3.Connect();
+
+            int i = 0;
+
+            while (true)
+            {
+
+                camera1.Update();
+                ColorImage img1 = (ColorImage)camera1.CalcChannel(ChannelNames.Color);
+                camera2.Update();
+                ColorImage img2 = (ColorImage)camera2.CalcChannel(ChannelNames.Color);
+                //camera3.Update();
+                //ColorImage img3 = (ColorImage)camera3.CalcChannel(ChannelNames.Color);
+                //
+                img1.ToBitmap().Save($@"G:\hikvision\hik1_{i}.jpg");
+                img2.ToBitmap().Save($@"G:\hikvision\hik2_{i}.jpg");
+                //img3.ToBitmap().Save(@"d:\data\hik3.jpg");
+
+                i++;
+            }
+
+            //Console.WriteLine("Finished. Press any key to exit.");
+            //Console.ReadKey();
         }
     }
 }
