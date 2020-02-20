@@ -1,3 +1,20 @@
+# Version 16.0.1
+
+## Hikvision
+
+* Add support for Hikvision cameras
+
+## Orbbec
+
+* [bugfix] Throw exception on timeout and make it configurable.
+
+## ifm
+
+* [bugfix] Don't delete existing MetriCam app on the O3D3XX on connect & reuse it if possible
+* [bugfix] Fix MetriCam2 camera GUI for ifm
+
+
+
 # Version 16.0.0
 
 ## General
