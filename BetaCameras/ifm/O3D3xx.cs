@@ -42,7 +42,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    return false;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Resolution100k)} cannot be read while disconnected.");
                 }
 
                 int imageResolution = -1;
@@ -57,7 +57,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    return;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Resolution100k)} cannot be set while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -93,7 +93,7 @@ namespace MetriCam2.Cameras
             {
                 if (!IsConnected)
                 {
-                    return O3D3xxTriggerMode.FreeRun;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(TriggerMode)} cannot be read while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -104,11 +104,12 @@ namespace MetriCam2.Cameras
             }
             set
             {
-                _triggerMode = value;
                 if (!IsConnected)
                 {
-                    return;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(TriggerMode)} cannot be set while disconnected.");
                 }
+
+                _triggerMode = value;
 
                 DoEdit((_edit) => {
                     _app.SetParameter("TriggerMode", ((int)value).ToString());
@@ -122,8 +123,8 @@ namespace MetriCam2.Cameras
                 ListParamDesc<O3D3xxTriggerMode> res = new ListParamDesc<O3D3xxTriggerMode>(typeof(O3D3xxTriggerMode))
                 {
                     Description = "Trigger mode",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
@@ -134,28 +135,27 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Frequency channel
         /// </summary>
-        private int _frequencyChannel = 0;
         public int FrequencyChannel
         {
             get
             {
                 if (!IsConnected)
                 {
-                    return -1;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(FrequencyChannel)} cannot be read while disconnected.");
                 }
 
+                int frequencyChannel = 0;
                 DoEdit((_edit) => {
-                    _frequencyChannel = Convert.ToInt32(_appImager.GetParameter("Channel"));
+                    frequencyChannel = Convert.ToInt32(_appImager.GetParameter("Channel"));
                 });
 
-                return _frequencyChannel;
+                return frequencyChannel;
             }
             set
             {
-                _frequencyChannel = value;
                 if (!IsConnected)
                 {
-                    return;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(FrequencyChannel)} cannot be read while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -172,8 +172,8 @@ namespace MetriCam2.Cameras
                 {
                     Description = "Frequency Channel",
                     Unit = "",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
@@ -184,28 +184,33 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// The camera framerate.
         /// </summary>
-        private float _framerate = 25f;
+        private float _defaultFramerate = 25f;
         public float Framerate
         {
             get
             {
                 if (!IsConnected)
                 {
-                    return -1f;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Framerate)} cannot be read while disconnected.");
                 }
 
+                float frameRate = 0;
                 DoEdit((_edit) => {
-                    _framerate = Convert.ToSingle(_appImager.GetParameter("FrameRate"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+                    frameRate = Convert.ToSingle(_appImager.GetParameter("FrameRate"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
                 });
 
-                return _framerate;
+                return frameRate;
             }
             set
             {
-                _framerate = value;
+                if(value <= 0f)
+                {
+                    throw new ParameterNotSupportedException($"{nameof(O3D3xx)}: {nameof(Framerate)} cannot be smaller than 0.");
+                }
+
                 if (!IsConnected)
                 {
-                    return;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Framerate)} cannot be set while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -221,8 +226,77 @@ namespace MetriCam2.Cameras
                 {
                     Description = "Framerate",
                     Unit = "fps",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
+                return res;
+            }
+        }
+        #endregion
+
+        #region Integration Time Mode
+        public O3D3xxIntegrationMode IntegrationTimeMode
+        {
+            get
+            {
+                if (!IsConnected)
+                {
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeMode)} cannot be read while disconnected.");
+                }
+
+                O3D3xxIntegrationMode integrationMode = O3D3xxIntegrationMode.SingleIntegrationTime;
+
+                DoEdit((_edit) => {
+                    string[] typeString = _appImager.GetParameter("Type").Split('_');
+                    integrationMode = (O3D3xxIntegrationMode)EnumUtils.GetEnum(typeof(O3D3xxIntegrationMode), typeString[1]);
+                });
+
+                return integrationMode;
+            }
+        }
+        private ListParamDesc<O3D3xxIntegrationMode> IntegrationTimeModeDesc
+        {
+            get
+            {
+                ListParamDesc<O3D3xxIntegrationMode> res = new ListParamDesc<O3D3xxIntegrationMode>(typeof(O3D3xxIntegrationMode))
+                {
+                    Description = "Number of different Integration used to process a single frame.",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                };
+                return res;
+            }
+        }
+        #endregion
+
+        #region BackgroundDistance
+        public NonAmbiguityRange NonAmbiguityRange
+        {
+            get
+            {
+                if (!IsConnected)
+                {
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(NonAmbiguityRange)} cannot be read while disconnected.");
+                }
+
+                NonAmbiguityRange nonAmbiguityRange = NonAmbiguityRange.UpTo30;
+
+                DoEdit((_edit) => {
+                    string[] typeString = _appImager.GetParameter("Type").Split('_');
+                    nonAmbiguityRange = (NonAmbiguityRange)EnumUtils.GetEnum(typeof(NonAmbiguityRange), typeString[0]);
+                });
+
+                return nonAmbiguityRange;
+            }
+        }
+
+        private ListParamDesc<NonAmbiguityRange> NonAmbiguityRangeDesc
+        {
+            get
+            {
+                ListParamDesc<NonAmbiguityRange> res = new ListParamDesc<NonAmbiguityRange>(typeof(NonAmbiguityRange))
+                {
+                    Description = "",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
                 };
                 return res;
             }
@@ -233,28 +307,33 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Integration (exposure time)
         /// </summary>
-        private int _exposureTime = 1234;
+        private int _defaultExposureTime = 1234;
         public int IntegrationTime
         {
             get
             {
                 if (!IsConnected)
                 {
-                    return -1;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} cannot be read while disconnected.");
                 }
 
+                int integrationTime = _defaultExposureTime;
                 DoEdit((_edit) => {
-                    _exposureTime = Convert.ToInt32(_appImager.GetParameter("ExposureTime"));
+                    integrationTime = Convert.ToInt32(_appImager.GetParameter("ExposureTime"));
                 });
 
-                return _exposureTime;
+                return integrationTime;
             }
             set
             {
-                _exposureTime = value;
+                if(value <= 0)
+                {
+                    throw new ParameterNotSupportedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} cannot be smaller than 0.");
+                }
+
                 if (!IsConnected)
                 {
-                    return;
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} cannot be set while disconnected.");
                 }
 
                 DoEdit((_edit) => {
@@ -270,8 +349,59 @@ namespace MetriCam2.Cameras
                 {
                     Description = "Integration time",
                     Unit = "us",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
+                };
+                return res;
+            }
+        }
+        #endregion
+
+        #region IntegrationTimeRatio
+        public int IntegrationTimeRatio
+        {
+            get
+            {
+                if (!IsConnected)
+                {
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} cannot be read while disconnected.");
+                }
+
+                int exposureTimeRatio = 0;
+                DoEdit((_edit) => {
+                    // only works with Exposure Mode on "moderate"
+                    exposureTimeRatio = Convert.ToInt32(_appImager.GetParameter("ExposureTimeRatio"));
+                });
+
+                return exposureTimeRatio;
+            }
+            set
+            {
+                if (value <= 0)
+                {
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} cannot be set while disconnected.");
+                }
+
+                if (!IsConnected)
+                {
+                    return;
+                }
+
+                DoEdit((_edit) => {
+                    // only works with Exposure Mode on "moderate"
+                    _appImager.SetParameter("ExposureTimeRatio", value.ToString());
+                });
+            }
+        }
+        private RangeParamDesc<int> IntegrationTimeRatioDesc
+        {
+            get
+            {
+                RangeParamDesc<int> res = new RangeParamDesc<int>(2, 50)
+                {
+                    Description = "Integration time ratio",
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
@@ -282,8 +412,8 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// IP Address of camera.
         /// </summary>
-        public string CameraIP { get; set; } = null;
-        private ParamDesc<String> CameraIPDesc
+        public string IPAddress { get; set; } = "0.0.0.0";
+        private ParamDesc<String> IPAddressDesc
         {
             get
             {
@@ -359,8 +489,8 @@ namespace MetriCam2.Cameras
                 {
                     Description = "Receive timeout",
                     Unit = "ms",
-                    ReadableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected,
-                    WritableWhen = ParamDesc.ConnectionStates.Connected | ParamDesc.ConnectionStates.Disconnected
+                    ReadableWhen = ParamDesc.ConnectionStates.Connected,
+                    WritableWhen = ParamDesc.ConnectionStates.Connected
                 };
                 return res;
             }
@@ -385,6 +515,8 @@ namespace MetriCam2.Cameras
 
         private int _width;
         private int _height;
+
+        private readonly int _headerSize = 48;
 
         private ISession _session;
         private IDevice _device;
@@ -421,6 +553,14 @@ namespace MetriCam2.Cameras
             _applicationId = applicationId;
             _updateThread = new Thread(new ThreadStart(UpdateLoop));
         }
+
+        /// <summary>
+        /// Default constructor. Creates a new application with default MetriCam 2 parameter values.
+        /// </summary>
+        public O3D3xx()
+            : this(-1)
+        {
+        }
         #endregion
 
         #region MetriCam2 Camera Interface
@@ -452,7 +592,7 @@ namespace MetriCam2.Cameras
         {
             _updateThreadError = null;
 
-            if (String.IsNullOrWhiteSpace(CameraIP))
+            if (String.IsNullOrWhiteSpace(IPAddress))
             {
                 throw new ConnectionFailedException($"{Name}: No camera IP specified");
             }
@@ -462,21 +602,37 @@ namespace MetriCam2.Cameras
             if (_applicationId == -1)
             {
                 Application[] apps = _server.GetApplicationList();
-                int deleted = CleanupApplications(apps);
-                if (apps.Length - deleted == _maxApplications)
+                bool metriCamAppExists = false;
+                foreach (var app in apps)
                 {
-                    throw new InvalidOperationException(
-                        $"{Name}: Maximum number of applications on the device reached. " +
-                        $"Please either delete one of them or specify one for MetriCam2 to use");
+                    if (app.Name == _applicationName)
+                    {
+                        _applicationId = app.Index;
+                        _edit.EditApplication(_applicationId);
+                        metriCamAppExists = true;
+                        _appImager.SetParameter("ExposureTime", _defaultExposureTime.ToString());
+                        _appImager.SetParameter("FrameRate", _defaultFramerate.ToString());
+                        break;
+                    }
                 }
 
-                _applicationId = _edit.CreateApplication();
-                _edit.EditApplication(_applicationId);
-                _app.SetParameter("Name", _applicationName);
-                _app.SetParameter("Description", "MetriCam2 default application.");
-                TriggerMode = _triggerMode;
-                _appImager.SetParameter("ExposureTime", _exposureTime.ToString());
-                _appImager.SetParameter("FrameRate", _framerate.ToString());
+                if (!metriCamAppExists)
+                {
+                    //int deleted = CleanupApplications(apps);
+                    //if (apps.Length - deleted == _maxApplications)
+                    if (apps.Length == _maxApplications)
+                    {
+                        throw new InvalidOperationException(
+                            $"{Name}: Maximum number of applications on the device reached. " +
+                            $"Please either delete one of them or specify one for MetriCam2 to use");
+                    }
+
+                    _applicationId = _edit.CreateApplication();
+                    _edit.EditApplication(_applicationId);
+                    _app.SetParameter("Name", _applicationName);
+                    _app.SetParameter("Description", "MetriCam2 default application.");
+                    TriggerMode = _triggerMode;
+                }
             }
             else
             {
@@ -513,8 +669,8 @@ namespace MetriCam2.Cameras
             ActivateChannel(ChannelNames.ZImage);
             ActivateChannel(ChannelNames.ConfidenceMap);
             ActivateChannel(ChannelNames.RawConfidenceMap);
-            SelectChannel(ChannelNames.Amplitude);
-            _clientSocket = ConnectSocket(CameraIP, ImageOutputPort);
+            SelectChannel(ChannelNames.Distance);
+            _clientSocket = ConnectSocket(IPAddress, ImageOutputPort);
 
             _updateThread.Start();
         }
@@ -558,6 +714,12 @@ namespace MetriCam2.Cameras
                 }
                 catch (SocketException e)
                 {
+                    // Ignore timeouts in edit mode
+                    if (_configurationMode == Mode.Edit)
+                    {
+                        continue;
+                    }
+
                     // Ignore timeouts in triggered mode
                     if (_triggerMode == O3D3xxTriggerMode.FreeRun)
                     {
@@ -586,7 +748,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Serial number of camera. The camera does not provide a serial number therefore we use the MAC address.
         /// </summary>
-        public override string SerialNumber { get => RequestMACAddress(CameraIP); }
+        public override string SerialNumber { get => RequestMACAddress(IPAddress); }
 
         /// <summary>
         /// Name of camera vendor.
@@ -771,7 +933,7 @@ namespace MetriCam2.Cameras
             Exception caughtException = null;
 
             // Try to connect to IP first
-            if (IPAddress.TryParse(server, out IPAddress ipAddress))
+            if (System.Net.IPAddress.TryParse(server, out IPAddress ipAddress))
             {
                 try
                 {
@@ -818,7 +980,7 @@ namespace MetriCam2.Cameras
 
         private void SetUrls()
         {
-            _serverUrl = "http://" + CameraIP + ":" + XMLRPCPort.ToString() + "/api/rpc/v1/com.ifm.efector/";
+            _serverUrl = "http://" + IPAddress + ":" + XMLRPCPort.ToString() + "/api/rpc/v1/com.ifm.efector/";
             _server.Url = _serverUrl;
             _session.Url = _serverUrl + "session_" + RequestSessionId() + "/";
             _edit.Url = _session.Url + "edit/";
@@ -837,7 +999,7 @@ namespace MetriCam2.Cameras
             byte[] mac = new byte[6];
             int length = mac.Length;
 
-            IPAddress tempA = IPAddress.Parse(ip);
+            IPAddress tempA = System.Net.IPAddress.Parse(ip);
             byte[] bytes = tempA.GetAddressBytes();
             string strAddress = "";
             for (int index = bytes.Length - 1; index >= 0; index--)
@@ -914,7 +1076,7 @@ namespace MetriCam2.Cameras
                     }
                 }
 
-                reader.BaseStream.Position += 36;
+                reader.BaseStream.Position = CalcBufferPosition(3);
                 for (int y = 0; y < _height; y++)
                 {
                     for (int x = 0; x < _width; x++)
@@ -923,7 +1085,7 @@ namespace MetriCam2.Cameras
                     }
                 }
 
-                reader.BaseStream.Position += 36;
+                reader.BaseStream.Position = CalcBufferPosition(4);
                 for (int y = 0; y < _height; y++)
                 {
                     for (int x = 0; x < _width; x++)
@@ -991,9 +1153,9 @@ namespace MetriCam2.Cameras
             // Image    | amplitude | distance | x | y | z | rawConfidence |
 
             // After the start sequence of 8 bytes, the images follow in chunks
-            // Each image chunk contains 36 bytes header including information such as image dimensions and pixel format.
+            // Each image chunk contains 48 bytes header including information such as image dimensions and pixel format.
             // We do not need to parse the header of each chunk as it is should be the same for every frame (except for a timestamp)
-            return 44 + image * (_height * _width * 2 + 36);
+            return 8 + _headerSize + image * (_height * _width * 2 + _headerSize);
         }
 
         private void DoEdit(Action<IEdit> editAction)
