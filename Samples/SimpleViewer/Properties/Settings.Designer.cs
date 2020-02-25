@@ -37,7 +37,7 @@ namespace MetriCam2.Samples.SimpleViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("CameraIP=192.168.1.78")]
+        [global::System.Configuration.DefaultSettingValueAttribute("IPAddress=192.168.1.232")]
         public string PreConnectParameters {
             get {
                 return ((string)(this["PreConnectParameters"]));

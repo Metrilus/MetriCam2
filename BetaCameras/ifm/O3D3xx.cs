@@ -33,6 +33,8 @@ namespace MetriCam2.Cameras
         #region Public Properties
 
         #region 100kMode
+        private int _imageResolution = -1;
+
         /// <summary>
         /// Control pixel binning.
         /// </summary>
@@ -45,13 +47,7 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Resolution100k)} cannot be read while disconnected.");
                 }
 
-                int imageResolution = -1;
-                DoEdit((_edit) => {
-                    imageResolution = Convert.ToInt32(_appImager.GetParameter("Resolution"));
-                });
-
-                // a Resolution value of 1 means binning is disabled (i.e. 100k pixels resolution)
-                return (1 == imageResolution);
+                return (1 == _imageResolution);
             }
             set
             {
@@ -60,10 +56,19 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Resolution100k)} cannot be set while disconnected.");
                 }
 
+                int newImageResolution = value ? 1 : 0;
+
+                if (_imageResolution == newImageResolution)
+                {
+                    return;
+                }
+
                 DoEdit((_edit) => {
-                    string res = _appImager.SetParameter("Resolution", (value ? "1" : "0"));
+                    string res = _appImager.SetParameter("Resolution", newImageResolution.ToString());
                     GetResolution();
                 });
+
+                _imageResolution = newImageResolution;
 
                 // reset frame available to force a new frame with the correct resolution 
                 _frameAvailable.Reset();
@@ -95,11 +100,6 @@ namespace MetriCam2.Cameras
                 {
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(TriggerMode)} cannot be read while disconnected.");
                 }
-
-                DoEdit((_edit) => {
-                    _triggerMode = (O3D3xxTriggerMode)Convert.ToInt32(_app.GetParameter("TriggerMode"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
-                });
-
                 return _triggerMode;
             }
             set
@@ -109,11 +109,16 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(TriggerMode)} cannot be set while disconnected.");
                 }
 
-                _triggerMode = value;
+                if (_triggerMode == value)
+                {
+                    return;
+                }
 
                 DoEdit((_edit) => {
                     _app.SetParameter("TriggerMode", ((int)value).ToString());
                 });
+
+                _triggerMode = value;
             }
         }
         private ListParamDesc<O3D3xxTriggerMode> TriggerModeDesc
@@ -132,6 +137,7 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Frequency Channel
+        private int _frequencyChannel = -1;
         /// <summary>
         /// Frequency channel
         /// </summary>
@@ -144,12 +150,7 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(FrequencyChannel)} cannot be read while disconnected.");
                 }
 
-                int frequencyChannel = 0;
-                DoEdit((_edit) => {
-                    frequencyChannel = Convert.ToInt32(_appImager.GetParameter("Channel"));
-                });
-
-                return frequencyChannel;
+                return _frequencyChannel;
             }
             set
             {
@@ -158,9 +159,16 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(FrequencyChannel)} cannot be read while disconnected.");
                 }
 
+                if (_frequencyChannel == value)
+                {
+                    return;
+                }
+
                 DoEdit((_edit) => {
                     _appImager.SetParameter("Channel", value.ToString());
                 });
+
+                _frequencyChannel = value;
             }
         }
 
@@ -184,7 +192,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// The camera framerate.
         /// </summary>
-        private float _defaultFramerate = 25f;
+        private float _framerate = float.NaN;
         public float Framerate
         {
             get
@@ -194,12 +202,7 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Framerate)} cannot be read while disconnected.");
                 }
 
-                float frameRate = 0;
-                DoEdit((_edit) => {
-                    frameRate = Convert.ToSingle(_appImager.GetParameter("FrameRate"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
-                });
-
-                return frameRate;
+                return _framerate;
             }
             set
             {
@@ -213,9 +216,16 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(Framerate)} cannot be set while disconnected.");
                 }
 
+                if (_framerate == value)
+                {
+                    return;
+                }
+
                 DoEdit((_edit) => {
                     _appImager.SetParameter("FrameRate", value.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 });
+
+                _framerate = value;
             }
         }
         private RangeParamDesc<float> FramerateDesc
@@ -235,6 +245,7 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region Integration Time Mode
+        private O3D3xxIntegrationMode _integrationMode = O3D3xxIntegrationMode.SingleIntegrationTime;
         public O3D3xxIntegrationMode IntegrationTimeMode
         {
             get
@@ -244,14 +255,7 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeMode)} cannot be read while disconnected.");
                 }
 
-                O3D3xxIntegrationMode integrationMode = O3D3xxIntegrationMode.SingleIntegrationTime;
-
-                DoEdit((_edit) => {
-                    string[] typeString = _appImager.GetParameter("Type").Split('_');
-                    integrationMode = (O3D3xxIntegrationMode)EnumUtils.GetEnum(typeof(O3D3xxIntegrationMode), typeString[1]);
-                });
-
-                return integrationMode;
+                return _integrationMode;
             }
         }
         private ListParamDesc<O3D3xxIntegrationMode> IntegrationTimeModeDesc
@@ -269,6 +273,7 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region BackgroundDistance
+        private NonAmbiguityRange _nonAmbiguityRange = NonAmbiguityRange.UpTo30;
         public NonAmbiguityRange NonAmbiguityRange
         {
             get
@@ -278,14 +283,7 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(NonAmbiguityRange)} cannot be read while disconnected.");
                 }
 
-                NonAmbiguityRange nonAmbiguityRange = NonAmbiguityRange.UpTo30;
-
-                DoEdit((_edit) => {
-                    string[] typeString = _appImager.GetParameter("Type").Split('_');
-                    nonAmbiguityRange = (NonAmbiguityRange)EnumUtils.GetEnum(typeof(NonAmbiguityRange), typeString[0]);
-                });
-
-                return nonAmbiguityRange;
+                return _nonAmbiguityRange;
             }
         }
 
@@ -307,7 +305,7 @@ namespace MetriCam2.Cameras
         /// <summary>
         /// Integration (exposure time)
         /// </summary>
-        private int _defaultExposureTime = 1234;
+        private int _integrationTime = -1;
         public int IntegrationTime
         {
             get
@@ -317,12 +315,7 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} cannot be read while disconnected.");
                 }
 
-                int integrationTime = _defaultExposureTime;
-                DoEdit((_edit) => {
-                    integrationTime = Convert.ToInt32(_appImager.GetParameter("ExposureTime"));
-                });
-
-                return integrationTime;
+                return _integrationTime;
             }
             set
             {
@@ -336,9 +329,16 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} cannot be set while disconnected.");
                 }
 
+                if (_integrationTime == value)
+                {
+                    return;
+                }
+
                 DoEdit((_edit) => {
                     _appImager.SetParameter("ExposureTime", value.ToString());
                 });
+
+                _integrationTime = value;
             }
         }
         private RangeParamDesc<int> IntegrationTimeDesc
@@ -358,6 +358,7 @@ namespace MetriCam2.Cameras
         #endregion
 
         #region IntegrationTimeRatio
+        private int _integrationTimeRatio = -1;
         public int IntegrationTimeRatio
         {
             get
@@ -367,22 +368,21 @@ namespace MetriCam2.Cameras
                     throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} cannot be read while disconnected.");
                 }
 
-                int exposureTimeRatio = 0;
-                DoEdit((_edit) => {
-                    // only works with Exposure Mode on "moderate"
-                    exposureTimeRatio = Convert.ToInt32(_appImager.GetParameter("ExposureTimeRatio"));
-                });
-
-                return exposureTimeRatio;
+                return _integrationTimeRatio;
             }
             set
             {
                 if (value <= 0)
                 {
-                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} cannot be set while disconnected.");
+                    throw new ParameterNotSupportedException($"{nameof(O3D3xx)}: {nameof(IntegrationTime)} cannot be smaller than or equal 0.");
                 }
 
                 if (!IsConnected)
+                {
+                    throw new NotConnectedException($"{nameof(O3D3xx)}: {nameof(IntegrationTimeRatio)} cannot be set while disconnected.");
+                }
+
+                if (_integrationTimeRatio == value)
                 {
                     return;
                 }
@@ -391,6 +391,8 @@ namespace MetriCam2.Cameras
                     // only works with Exposure Mode on "moderate"
                     _appImager.SetParameter("ExposureTimeRatio", value.ToString());
                 });
+
+                _integrationTimeRatio = value;
             }
         }
         private RangeParamDesc<int> IntegrationTimeRatioDesc
@@ -610,8 +612,6 @@ namespace MetriCam2.Cameras
                         _applicationId = app.Index;
                         _edit.EditApplication(_applicationId);
                         metriCamAppExists = true;
-                        _appImager.SetParameter("ExposureTime", _defaultExposureTime.ToString());
-                        _appImager.SetParameter("FrameRate", _defaultFramerate.ToString());
                         break;
                     }
                 }
@@ -631,7 +631,6 @@ namespace MetriCam2.Cameras
                     _edit.EditApplication(_applicationId);
                     _app.SetParameter("Name", _applicationName);
                     _app.SetParameter("Description", "MetriCam2 default application.");
-                    TriggerMode = _triggerMode;
                 }
             }
             else
@@ -656,6 +655,20 @@ namespace MetriCam2.Cameras
             }
 
             GetResolution();
+
+            // All O3D3xx parameters, which are related to the supported operation modes, can only be set after the camera has been connnected.
+            // Fetching a parameter during runtime takes some time (2-3 seconds), since it would require to switch to "EditMode". 
+            // For that reason, all parameters are queried in the following, and the property setters keep track of the changes, so that communication
+            // with the camera is not required for the getters.
+            _triggerMode = (O3D3xxTriggerMode)Convert.ToInt32(_app.GetParameter("TriggerMode"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+            _framerate = Convert.ToSingle(_appImager.GetParameter("FrameRate"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+            _frequencyChannel = Convert.ToInt32(_appImager.GetParameter("Channel"));
+            _imageResolution = Convert.ToInt32(_appImager.GetParameter("Resolution"));
+            string ambiguityAndExposureMode = _appImager.GetParameter("Type");
+            _nonAmbiguityRange = (NonAmbiguityRange)EnumUtils.GetEnum(typeof(NonAmbiguityRange), ambiguityAndExposureMode.Split('_')[0]);
+            _integrationMode = (O3D3xxIntegrationMode)EnumUtils.GetEnum(typeof(O3D3xxIntegrationMode), ambiguityAndExposureMode.Split('_')[1]);
+            _integrationTime = Convert.ToInt32(_appImager.GetParameter("ExposureTime"));
+            _integrationTimeRatio = Convert.ToInt32(_appImager.GetParameter("ExposureTimeRatio"));
 
             _app.Save();
             _edit.StopEditingApplication();
