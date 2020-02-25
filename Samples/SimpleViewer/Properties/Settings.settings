@@ -6,7 +6,7 @@
       <Value Profile="(Default)">Distance</Value>
     </Setting>
     <Setting Name="PreConnectParameters" Type="System.String" Scope="User">
-      <Value Profile="(Default)">CameraIP=192.168.1.78</Value>
+      <Value Profile="(Default)">IPAddress=192.168.1.232</Value>
     </Setting>
     <Setting Name="MinDepthToDisplay" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0</Value>
