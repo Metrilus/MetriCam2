@@ -16,6 +16,7 @@ pipeline {
         def releaseFolder    = "" // Path where the release will be published, relative to RELEASE_PATH
         def releaseDirectory = "" // Absolute path where the release will be published
 
+        def nugetDirectory = "MetriCam2" // Subdirectory name, where all nuget packages of this solution are stored (stable + unstable)
         def targetFrameworks = "net45 net472 netstandard2.0"
         def releaseLibraryDirectory = "lib"
         def folderSuffixDebug = "_debug"
@@ -134,7 +135,12 @@ pipeline {
                     if errorlevel 1 GOTO StepFailed
 
                     @echo Publishing nuget packages locally...
-                    copy \"bin\\Release\\*.nupkg\" \"${releaseDirectory}\"
+                    set "nugetBaseFolder=%UnstableNugetDirectory%"
+                    if ${currentBranch}==stable set "nugetBaseFolder=%StableNugetDirectory%"
+                    set "nugetPath=%nugetBaseFolder%\\${nugetDirectory}"
+                    if not exist "%nugetPath%" mkdir "%nugetPath%"
+                    if errorlevel 1 GOTO StepFailed
+                    copy \"bin\\Release\\*.nupkg\" "%nugetPath%" 
                     if errorlevel 1 GOTO StepFailed
 
                     @echo Deleting nuget packages, which should not be published to nuget.org...
