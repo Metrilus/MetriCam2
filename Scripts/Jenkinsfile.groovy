@@ -136,15 +136,23 @@ pipeline {
 
                     @echo Publishing nuget packages locally...
                     set "nugetBaseFolder=%UnstableNugetDirectory%"
-                    if ${currentBranch}==stable set "nugetBaseFolder=%StableNugetDirectory%"
+                    set "branchName=${currentBranch}"
+                    if %branchName%==stable set "nugetBaseFolder=%StableNugetDirectory%"
                     set "nugetPath=%nugetBaseFolder%\\${nugetDirectory}"
                     if not exist "%nugetPath%" mkdir "%nugetPath%"
+                    if not %branchName%==stable (
+                        @echo Deleting old nuget packages of this non-stable branch...
+                        del /s \"%nugetPath%\\*-%branchName%.*.nupkg\"
+                        if errorlevel 1 GOTO StepFailed
+                    )
                     if errorlevel 1 GOTO StepFailed
                     copy \"bin\\Release\\*.nupkg\" "%nugetPath%" 
                     if errorlevel 1 GOTO StepFailed
 
                     @echo Deleting nuget packages, which should not be published to nuget.org...
                     del /s \"bin\\Release\\MetriCam2.Cameras.Basler*.nupkg\"
+                    if errorlevel 1 GOTO StepFailed
+                    del /s \"bin\\Release\\MetriCam2.Cameras.Hikvision*.nupkg\"
                     if errorlevel 1 GOTO StepFailed
                     del /s \"bin\\Release\\MetriCam2.Cameras.OrbbecOpenNI*.nupkg\"
                     if errorlevel 1 GOTO StepFailed

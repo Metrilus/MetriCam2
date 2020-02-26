@@ -6,7 +6,32 @@
     <Product>MetriCam2: Hikvision security cameras</Product>
     <TargetFrameworks>net472</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>  
+    <Platforms>x64</Platforms>
+    <FFmpegPath>Z:\external-libraries\ffmpeg-3.3.2-win64-shared\bin\</FFmpegPath>
+    <FFmpegAutoGenPath>Z:\external-libraries\FFmpeg.Autogen\Release\FFmpeg.AutoGen.dll</FFmpegAutoGenPath>
+    <RtspPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af.strongname\Rtsp.dll</RtspPath>    
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="MetriCam2.Cameras.Hikvision.targets" PackagePath="build\net472" Visible="true" />
+    <Content Include="$(FFmpegPath)avcodec-57.dll" PackagePath="runtimes\win\native" Visible="false" />
+    <Content Include="$(FFmpegPath)avdevice-57.dll" PackagePath="runtimes\win\native" Visible="false" />
+    <Content Include="$(FFmpegPath)avfilter-6.dll" PackagePath="runtimes\win\native" Visible="false" />
+    <Content Include="$(FFmpegPath)avformat-57.dll" PackagePath="runtimes\win\native" Visible="false" />
+    <Content Include="$(FFmpegPath)avutil-55.dll" PackagePath="runtimes\win\native" Visible="false" />
+    <Content Include="$(FFmpegPath)postproc-54.dll" PackagePath="runtimes\win\native" Visible="false" />
+    <Content Include="$(FFmpegPath)swresample-2.dll" PackagePath="runtimes\win\native" Visible="false" />
+    <Content Include="$(FFmpegPath)swscale-4.dll" PackagePath="runtimes\win\native" Visible="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(FFmpegAutoGenPath)" PackagePath="lib\net472" Visible="false" />
+    <Content Include="$(RtspPath)" PackagePath="lib\net472" Visible="false" />
+    <None Include="..\..\License.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Metrilus.Util" />
   </ItemGroup>
@@ -20,10 +45,10 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FFmpeg.AutoGen">
-      <HintPath>Z:\external-libraries\FFmpeg.Autogen\Release\FFmpeg.AutoGen.dll</HintPath>
+      <HintPath>$(FFmpegAutoGenPath)</HintPath>
     </Reference>
     <Reference Include="Rtsp">
-      <HintPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af.strongname\Rtsp.dll</HintPath>
+      <HintPath>$(RtspPath)</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
