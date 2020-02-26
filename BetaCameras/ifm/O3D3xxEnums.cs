@@ -28,7 +28,7 @@ namespace MetriCam2.Cameras
 
     public enum NonAmbiguityRange
     {
-        [Description("lessthan5m")]
+        [Description("under5m")]
         LessThan5 = 0,
         [Description("upto30m")]
         UpTo30 = 1,
