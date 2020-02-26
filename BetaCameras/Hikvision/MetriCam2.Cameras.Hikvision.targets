@@ -1,0 +1,17 @@
+﻿<!-- 
+  With this '.targets'-file we make sure that the native dependency (MetriPrimitivesNative) is copied to the output directory when referencing MetriPrimitives using the Nuget package.
+  A compile time error is thrown, if the application runtime identifier does not match the supported runtime identifiers (currently only win-x64 and AnyCPU).
+  Copying the correct library from the Nuget 'runtimes' directory to the output is done automatically in VS 2019 (using runtime-identifier), in VS 2017 we must do that manually.
+  TODO: After upgrading to VS 2019 we could delete at least the second part (ItemGroup), or maybe the complete '.targets'-file
+  -->
+<Project>
+  <Target Name="EnsureHikvisionPlatform" BeforeTargets="PrepareForBuild">
+    <Error Condition="!('$(RuntimeIdentifier)' == '' OR ($(RuntimeIdentifier.Contains('win')) AND $(RuntimeIdentifier.Contains('x64'))))" Text="Hikvision only supports 'win*-x64'-runtimes for the target framework '$(TargetFramework)'" />
+  </Target>  
+  <ItemGroup Condition=" '$(RuntimeIdentifier)' == '' OR ($(RuntimeIdentifier.Contains('win')) AND $(RuntimeIdentifier.Contains('x64'))) ">
+    <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\win\native\**\*">
+        <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
