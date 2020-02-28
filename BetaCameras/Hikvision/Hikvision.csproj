@@ -9,7 +9,7 @@
     <Platforms>x64</Platforms>
     <FFmpegPath>Z:\external-libraries\ffmpeg-3.3.2-win64-shared\bin\</FFmpegPath>
     <FFmpegAutoGenPath>Z:\external-libraries\FFmpeg.Autogen\Release\FFmpeg.AutoGen.dll</FFmpegAutoGenPath>
-    <RtspPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af.strongname\Rtsp.dll</RtspPath>    
+    <RtspPath>Z:\external-libraries\SharpRTSP\master.c9ff4604fe2aabf426637c911d76ccc9eadb57af.strongname\</RtspPath>    
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -29,7 +29,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(FFmpegAutoGenPath)" PackagePath="lib\net472" Visible="false" />
-    <Content Include="$(RtspPath)" PackagePath="lib\net472" Visible="false" />
+    <Content Include="$(RtspPath)Rtsp.dll" PackagePath="lib\net472" Visible="false" />
+    <Content Include="$(RtspPath)NLog.dll" PackagePath="lib\net472" Visible="false" />
     <None Include="..\..\License.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
   <ItemGroup>
