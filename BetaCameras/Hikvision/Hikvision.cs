@@ -171,5 +171,40 @@ namespace MetriCam2.Cameras
 
             throw new ImageAcquisitionFailedException($"{Name}: No valid channel name");
         }
+
+        /// <summary>
+        /// Overrides the standard GetIntrinsic method.
+        /// </summary>
+        /// <param name="channelName">The channel name.</param>
+        /// <returns>The ProjectiveTransformationRational</returns>
+        /// <remarks>The method first searches for a pt file on disk. If this fails it provides default intrinsics for the model WL-IC8BE.</remarks>
+        public override ProjectiveTransformation GetIntrinsics(string channelName)
+        {
+            ProjectiveTransformation result = null;
+
+            log.Info("Trying to load projective transformation from file.");
+            try
+            {
+                result = base.GetIntrinsics(channelName);
+            }
+            catch { /* empty */ }
+
+            if (result == null)
+            {
+                log.Info("Projective transformation file not found.");
+                log.Info("Using default intrinsics for type Hikvision WL-IC8BE as projective transformation.");
+                switch (channelName)
+                {
+                    case ChannelNames.Color:
+                        result = new ProjectiveTransformationRational(3840, 2160, 3068.753f, 3073.629f, 1892.428f, 1245.486f,
+                            -0.5675009f, 0.4332804f, -0.183668f, 0, 0, 0, -0.001460855f, -0.0001179822f);
+                        break;
+                    default:
+                        log.Error("Unsupported channel in GetIntrinsics().");
+                        return null;
+                }
+            }
+            return result;
+        }
     }
 }
