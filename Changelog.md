@@ -1,3 +1,22 @@
+# Version 16.1.1
+
+# General
+
+* Update to latest `Metrilus.Util` release `16.1.1`
+* Change local Nuget output directory to `Z:\releases\nuget{-unstable}`
+
+# Hikvision
+
+* Build non-public Nuget package including all managed and native dependencies
+* Implement `GetIntrinsics`
+
+# ifm
+
+* [performance] Reduce delays in parameter getters and setters
+* [bugfix] ifm used diffferent string for non-ambiguity mode `LessThan5`
+
+
+
 # Version 16.1.0
 
 # Hikvision
