@@ -48,11 +48,10 @@ pipeline {
                     def vMinor = props['GitVersion_Minor']
                     def vPatch = props['GitVersion_Patch']
                     def currentBuildNumber = currentBuild.number.toString();
-                    def releaseVersionInterfix = getReleaseVersionInterfix(currentBranch);
                     // Update global variables
                     releaseVersion = getFullReleaseVersion(currentBranch, vMajor, vMinor, vPatch);
                     niceVersion = getNiceReleaseVersion(vMajor, vMinor, vPatch);
-                    nugetVersion = "${niceVersion}${releaseVersionInterfix}.${currentBuildNumber}"
+                    nugetVersion = getNugetVersion(currentBranch, niceVersion, currentBuildNumber);
                     releaseFolder = getReleaseFolder(currentBranch, niceVersion)
                     releaseDirectory = "Z:\\releases\\MetriCam2\\${releaseFolder}"
                     // Output which might be useful for debugging the build job
@@ -246,12 +245,6 @@ def setBuildStatus(String message, String state, String context, String sha) {
     ]);
 }
 
-def getReleaseVersionInterfix(String branchName) {
-    return isStableBuild(branchName)
-        ? ""
-        : "-${branchName}";
-}
-
 def getFullReleaseVersion(String branchName, String major, String minor, String patch) {
     def releaseRevision = currentBuild.number.toString();
     return "${major}.${minor}.${patch}.${releaseRevision}";
@@ -259,6 +252,12 @@ def getFullReleaseVersion(String branchName, String major, String minor, String 
 
 def getNiceReleaseVersion(String major, String minor, String patch) {
     return "${major}.${minor}.${patch}";
+}
+
+def getNugetVersion(String branchName, String niceVersion, String currentBuildNumber) {
+    return isStableBuild(branchName)
+        ? "${niceVersion}"
+        : "${niceVersion}-${branchName}.${currentBuildNumber}";
 }
 
 def getReleaseFolder(String branchName, String niceVersion) {
