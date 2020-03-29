@@ -40,7 +40,7 @@ namespace MetriCam2.Cameras
             int dataSize = 0;
             foreach (byte[] nalUnit in nalUnits)
             {
-                dataSize += nalUnit.Length + 4;
+                dataSize += nalUnit.Length + startSequence.Length;
             }
 
             byte* dat = (byte*)ffmpeg.av_malloc((ulong)dataSize);
@@ -138,29 +138,13 @@ namespace MetriCam2.Cameras
             AVPacket packet;
 
             int dataSize = 0;
-            foreach(byte[] nalUnit in nalUnits)
+            foreach (byte[] nalUnit in nalUnits)
             {
-                dataSize += nalUnit.Length + 4;
+                dataSize += nalUnit.Length + startSequence.Length;
             }
 
             byte* dat = (byte*)ffmpeg.av_malloc((ulong)dataSize);
-
-
-            fixed (byte* start = startSequence)
-            {
-                foreach (byte[] nalUnit in nalUnits)
-                {
-                    fixed (byte* dataPtr = nalUnit)
-                    {
-                        UnmanagedMemory.CopyMemory(dat, start, (uint)startSequence.Length);
-                        dat += startSequence.Length;
-                        UnmanagedMemory.CopyMemory(dat, dataPtr, (uint)nalUnit.Length);
-                        dat += nalUnit.Length;
-                    }
-                }
-                dat -= dataSize;
-            }
-            
+            FillDataPacket(nalUnits, dat);
 
             ffmpeg.av_packet_from_data(&packet, dat, dataSize);
 
@@ -194,6 +178,11 @@ namespace MetriCam2.Cameras
                 ffmpeg.av_frame_get_buffer(rgb_image, 32);
             }
 
+            if(rgb_image->width != yuv_image->width || rgb_image->height != yuv_image->height)
+            {
+                throw new Exception("Dimensions of RGB and YUV image do not match.");
+            }
+
             AVCodecContext* pCodecCtx = video_st->codec;
             AVPixelFormat pixFormat;
             switch (pCodecCtx->pix_fmt)
@@ -219,11 +208,28 @@ namespace MetriCam2.Cameras
             img_convert_ctx = ffmpeg.sws_getCachedContext(img_convert_ctx, yuv_image->width, yuv_image->height, pixFormat, rgb_image->width, rgb_image->height, (AVPixelFormat)rgb_image->format, 0, null, null, null);
             ffmpeg.sws_scale(img_convert_ctx, yuv_image->data, yuv_image->linesize, 0, yuv_image->height, rgb_image->data, rgb_image->linesize);
 
-            Bitmap bmp = new Bitmap(yuv_image->width, yuv_image->height, PixelFormat.Format24bppRgb);
+            Bitmap bmp = new Bitmap(rgb_image->width, rgb_image->height, PixelFormat.Format24bppRgb);
             BitmapData bmpData = bmp.LockBits(new Rectangle(new Point(0, 0), new Size(bmp.Width, bmp.Height)), ImageLockMode.ReadWrite, bmp.PixelFormat);
             UnmanagedMemory.CopyMemory((IntPtr)bmpData.Scan0, (IntPtr)rgb_image->extended_data[0], bmp.Width * bmp.Height * 3);
             bmp.UnlockBits(bmpData);
             return bmp;
+        }
+
+        private static unsafe void FillDataPacket(List<byte[]> nalUnits, byte* dat)
+        {
+            fixed (byte* start = startSequence)
+            {
+                foreach (byte[] nalUnit in nalUnits)
+                {
+                    fixed (byte* dataPtr = nalUnit)
+                    {
+                        UnmanagedMemory.CopyMemory(dat, start, (uint)startSequence.Length);
+                        dat += startSequence.Length;
+                        UnmanagedMemory.CopyMemory(dat, dataPtr, (uint)nalUnit.Length);
+                        dat += nalUnit.Length;
+                    }
+                }
+            }
         }
     }
 
