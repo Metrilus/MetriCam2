@@ -17,10 +17,9 @@ namespace MetriCam2.Cameras
         private int _videoDataChannel = 0;
         private H264Decoder _decoder = null;
         private H264Payload _h264Payload = new H264Payload();
-
-        private object _mutex = new object();
         private Bitmap _currentBitmap = null;
-        private long _currentTimestamp = 0;
+
+        public System.Threading.AutoResetEvent NewBitmapAvailable { get; set; } = new System.Threading.AutoResetEvent(false);
 
         public RTSPClient(string ipAddress, uint port, string username, string password)
         {
@@ -54,12 +53,9 @@ namespace MetriCam2.Cameras
             _h264Payload = new H264Payload();
         }
 
-        public (Bitmap, long) GetCurrentBitmap()
+        public Bitmap GetCurrentBitmap()
         {
-            lock(_mutex)
-            {
-                return (_currentBitmap, _currentTimestamp);
-            }
+            return _currentBitmap;
         }
 
         private void MessageReceived(object sender, RtspChunkEventArgs e)
@@ -187,13 +183,9 @@ namespace MetriCam2.Cameras
                                 _decoder = new H264Decoder(nal_units);
                             }
 
-                            Bitmap bmp = _decoder.Update(nal_units);
+                            _currentBitmap = _decoder.Update(nal_units);
 
-                            lock (_mutex)
-                            {
-                                _currentBitmap = bmp;
-                                _currentTimestamp = DateTime.Now.Ticks;
-                            }
+                            NewBitmapAvailable.Set();
                         }
                         catch (Exception error)
                         {

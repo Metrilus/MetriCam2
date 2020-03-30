@@ -18,9 +18,10 @@ namespace MetriCam2.Cameras
 {
     public class Hikvision : Camera, IDisposable
     {
+        private const double _timeoutSeconds = 30.0f;
+
         private bool _disposed = false;
         private RTSPClient _client = null;
-        private long _currentBitmapTimestamp = 0;
         private Bitmap _currentBitmap = null;
 
         ParamDesc<string> IPAddressDesc
@@ -142,23 +143,11 @@ namespace MetriCam2.Cameras
 
         protected override void UpdateImpl()
         {
-            long timestamp = 0;
-            Bitmap bitmap = null;
-            long startTime = DateTime.Now.Ticks;
-            long maxFrameTime = TimeSpan.FromSeconds(10).Ticks;
-
-            do
+            if(!_client.NewBitmapAvailable.WaitOne(TimeSpan.FromSeconds(_timeoutSeconds)))
             {
-                (bitmap, timestamp) = _client.GetCurrentBitmap();
-                if (DateTime.Now.Ticks > startTime + maxFrameTime)
-                {
-                    //throw new ImageAcquisitionFailedException("error?!");
-                }
+                throw new ImageAcquisitionFailedException($"Timeout: no image sent within the last {_timeoutSeconds} seconds.");
             }
-            while (timestamp <= _currentBitmapTimestamp);
-
-            _currentBitmapTimestamp = timestamp;
-            _currentBitmap = bitmap;
+            _currentBitmap = _client.GetCurrentBitmap();
         }
 
         protected override ImageBase CalcChannelImpl(string channelName)
