@@ -1,16 +1,25 @@
+# Version 16.1.2
+
+## Hikvision
+
+* [bugfix] Avoid potential access violation if resolution of YUV image changes.
+* [performance] Avoid busy waiting in update and switch to event based approach.
+
+
+
 # Version 16.1.1
 
-# General
+## General
 
 * Update to latest `Metrilus.Util` release `16.1.1`
 * Change local Nuget output directory to `Z:\releases\nuget{-unstable}`
 
-# Hikvision
+## Hikvision
 
 * Build non-public Nuget package including all managed and native dependencies
 * Implement `GetIntrinsics`
 
-# ifm
+## ifm
 
 * [performance] Reduce delays in parameter getters and setters
 * [bugfix] ifm used diffferent string for non-ambiguity mode `LessThan5`
@@ -19,7 +28,7 @@
 
 # Version 16.1.0
 
-# Hikvision
+## Hikvision
 
 * Make binary strongnamed
 
