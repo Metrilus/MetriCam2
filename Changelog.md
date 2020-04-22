@@ -1,3 +1,11 @@
+# Version 16.1.3
+
+## OrbbecOpenNI / MatrixVision / WebCam / TIVoxel
+
+* Fix wrong assembly version attribute (version was hardcoded to 11.0.0.0)
+
+
+
 # Version 16.1.2
 
 ## Hikvision
